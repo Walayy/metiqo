@@ -25,3 +25,4 @@ minimumReleaseAgeExclude:
   - cspell-lib@10.2.2
   - cspell-trie-lib@10.2.2
   - cspell@10.2.2
+  - lucide-react@1.41.0

@@ -155,9 +155,13 @@ services:
     build:
       context: .
       dockerfile: infra/compose/web.Dockerfile
+      args:
+        APP_DATA_MODE: ${APP_DATA_MODE:-mock}
     init: true
     read_only: true
     command: ["node", "apps/web/server.js"]
+    environment:
+      APP_DATA_MODE: ${APP_DATA_MODE:-mock}
     depends_on:
       api:
         condition: service_healthy
