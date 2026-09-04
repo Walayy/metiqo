@@ -217,3 +217,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le ticket applique le thème système, le shell responsive et l’identification explicite du mode imposés par la SFG sans modifier une décision structurante.
 - **Commit/hash :** `221f118688c0dad4acd7e11b7fcab3240458cc85` (`feat: add responsive themed app shell`).
+
+## UI-003 — Bibliothèque d’états distants
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `UI-001` est `DONE` et présent sur `origin/main` après fusion protégée de la PR #8.
+- **Fichiers créés/modifiés :** `packages/ui/src/remote-states.tsx`, `packages/ui/src/remote-states.test.tsx`, `packages/ui/src/index.ts`, `packages/ui/src/styles.css`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** tests Vitest ciblés ; typecheck strict du package UI ; ESLint ciblé ; formatage Prettier ; build Next.js de production local ; `make check` via GNU Make installé ; `make docker-build` ; `git diff --check`.
+- **Résultat exact :** la bibliothèque exporte un skeleton à dimensions réservées, les états loading, vide, erreur récupérable avec retry clavier, erreur bloquante, stale, permission refusée, mock, hors connexion et reconnexion, ainsi qu’une frontière de données qui conserve explicitement le contenu précédent pendant un refetch sûr et permet de le masquer lorsqu’il ne l’est pas. Aucun spinner n’est utilisé ; le shimmer respecte `prefers-reduced-motion`, les états dynamiques ont des rôles accessibles et les états plein écran réservent la même hauteur que le chargement. La matrice de composants couvre tous les états demandés, les dimensions, le retry et les deux politiques de refetch. Validation finale : 16 tests UI et 1 test web réussissent ; 90 tests Python réussissent et 3 tests PostgreSQL conditionnels sont ignorés ; Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy et OpenAPI passent ; les cinq images Compose sont construites avec succès.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la bibliothèque applique directement les exigences d’états, d’accessibilité et de stabilité visuelle de la SFG sans modifier une décision structurante.
+- **Commit/hash :** `57b523a8f317d4221440eb91e68a98129ee40b99` (`feat: add remote state library`).
