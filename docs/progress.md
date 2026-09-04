@@ -124,12 +124,12 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 
 ## MCK-001 — Définir les contrats de domaine
 
-- **Statut :** `IN_PROGRESS`
+- **Statut :** `DONE`
 - **Dépendances vérifiées :** `FND-007` est `DONE` ; la phase P0 est intégralement terminée avec `FND-010` protégé par CI sur `main`.
 - **Fichiers créés/modifiés :** `python/metiquo/contracts/`, `python/metiquo/config.py`, `python/metiquo/api/dto.py`, `python/metiquo/api/app.py`, `python/metiquo/api/openapi.py`, `python/metiquo/api/contract_schema.py`, `infra/scripts/export_openapi.py`, `Makefile`, `tests/contracts/test_domain_contracts.py`, `tests/test_openapi.py`, `packages/contracts/openapi/v1.json`, `docs/progress.md`.
 - **Migrations :** aucune.
-- **Commandes/tests exécutés :** validations en cours.
-- **Résultat exact :** contrats et tests implémentés ; validations en cours.
-- **Blocker éventuel :** aucun à ce stade.
+- **Commandes/tests exécutés :** recherches ciblées des exigences SFG de cotes, fraîcheur, abstention, value, modèles, backtests, paper trading et mapping ; Ruff format/check ; mypy strict ; tests de contrats et OpenAPI ciblés ; `make openapi` ; `make format` ; `make check` ; recherches de dépendances ORM/HTML/provider, de `Any`, casts, ignores et TODO ; `git diff --check` ; commit, push et contrôles protégés de la PR GitHub #2.
+- **Résultat exact :** les 11 DTO demandés et leurs enums canoniques sont stricts, immuables, sérialisés avec aliases camelCase et indépendants de SQLAlchemy ou d’un provider concret. Les décimaux refusent les `float` et valeurs non finies ; tous les instants exigent un fuseau et sont normalisés en UTC ; les références événement/marché/sélection, cutoff, intervalles de probabilité, règlements paper, décisions de mapping, promotions et backtests financiers sont validés. Les composants sont publiés dans OpenAPI sans ajouter de route et toutes les références se résolvent. Suite locale : 55 tests réussis et 2 tests PostgreSQL conditionnels ignorés ; Ruff, mypy sur 49 fichiers, TypeScript strict, ESLint, Prettier et CSpell passent ; OpenAPI versionné est courant. PR #2 : `Build Docker` passe en `19 s`, `Qualité` en `40 s` et `Migrations PostgreSQL` en `41 s`.
+- **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les DTO appliquent les contrats mock/réel et les invariants normatifs sans modifier une décision SFG §33.
-- **Commit/hash :** à créer après validation.
+- **Commit/hash :** `68617fcf0e78c545aa04f6d953891f27dc56e948` (`feat: add shared domain contracts`).
