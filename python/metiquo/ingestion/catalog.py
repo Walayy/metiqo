@@ -28,6 +28,7 @@ _YEAR_PATTERN = re.compile(r"(?<!\d)(20\d{2})(?!\d)")
 _FILE_PATH_PATTERN = re.compile(r"/(?:file/d|folders)/([A-Za-z0-9_-]+)(?:/|$)")
 
 type DriveLinkKind = Literal["file", "folder"]
+type CatalogOrigin = Literal["discovered", "validated-bootstrap"]
 type DecisionStatus = Literal["confirmed", "new", "changed", "ambiguous", "missing"]
 type AlertKind = Literal["duplicate", "unresolved"]
 type PageLoader = Callable[[str, float, int], bytes]
@@ -59,6 +60,7 @@ class DriveLink:
     source_name: str
     kind: DriveLinkKind
     year: int | None
+    mutable: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,6 +69,7 @@ class CatalogDiscovery:
     payload_hash: str
     fetched_at: datetime
     links: tuple[DriveLink, ...]
+    origin: CatalogOrigin = "discovered"
 
     @property
     def annual_links(self) -> Mapping[int, tuple[DriveLink, ...]]:
@@ -300,7 +303,11 @@ class SourceCatalogRepository:
                     "ambiguous": "ambiguous",
                 }[decision.status]
                 for candidate in decision.candidates:
-                    mutable = decision.year == observed_at.year
+                    mutable = (
+                        candidate.mutable
+                        if candidate.mutable is not None
+                        else decision.year == observed_at.year
+                    )
                     statement = insert(self._table).values(
                         id=uuid4(),
                         provider=PROVIDER,
@@ -309,7 +316,7 @@ class SourceCatalogRepository:
                         landing_page=reconciliation.discovery.landing_page,
                         drive_file_id=candidate.drive_file_id,
                         source_name=candidate.source_name,
-                        origin="discovered",
+                        origin=reconciliation.discovery.origin,
                         status=persisted_status,
                         discovered_at=observed_at,
                         last_confirmed_at=observed_at,

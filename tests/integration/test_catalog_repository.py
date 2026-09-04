@@ -9,6 +9,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine, delete, select
 
 from metiquo.db.raw_models import SourceCatalog
+from metiquo.foundation.time import FixedClock, UtcInstant
 from metiquo.ingestion.catalog import (
     DATASET,
     OFFICIAL_LANDING_PAGE,
@@ -19,8 +20,10 @@ from metiquo.ingestion.catalog import (
     discover_catalog,
     reconcile_catalog,
 )
+from metiquo.ingestion.fallback_catalog import VersionedFallbackCatalog
 
 ROOT = Path(__file__).resolve().parents[2]
+FALLBACK_CONFIG = ROOT / "config" / "oracles_elixir_sources.yml"
 
 
 def alembic_config(url: str) -> Config:
@@ -109,5 +112,45 @@ def test_catalog_persistence_confirms_and_audits_divergence(postgresql_url: str)
         assert isinstance(changed_hash, str)
         assert len(changed_hash) == 64
         assert by_status["ambiguous"]["drive_file_id"] == "file_C"
+
+    engine.dispose()
+
+
+@pytest.mark.integration
+def test_bootstrap_origin_and_mutability_are_persisted(postgresql_url: str) -> None:
+    command.upgrade(alembic_config(postgresql_url), "head")
+    engine = create_engine(postgresql_url)
+    instant = datetime(2026, 9, 5, 14, tzinfo=UTC)
+    discovery = VersionedFallbackCatalog.load(FALLBACK_CONFIG).as_discovery(
+        FixedClock(UtcInstant(instant))
+    )
+
+    with engine.begin() as connection:
+        connection.execute(
+            delete(SourceCatalog).where(
+                SourceCatalog.provider == PROVIDER,
+                SourceCatalog.dataset == DATASET,
+            )
+        )
+        repository = SourceCatalogRepository(connection)
+        repository.apply(reconcile_catalog(discovery, repository.active_records()))
+
+    with engine.connect() as connection:
+        table = SourceCatalog.__table__
+        row = (
+            connection.execute(
+                select(table).where(
+                    table.c.provider == PROVIDER,
+                    table.c.dataset == DATASET,
+                    table.c.season_year == 2026,
+                )
+            )
+            .mappings()
+            .one()
+        )
+        assert row["origin"] == "validated-bootstrap"
+        assert row["mutable"] is True
+        assert row["drive_file_id"] == "1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm"
+        assert row["discovery_payload_hash"] == discovery.payload_hash
 
     engine.dispose()
