@@ -23,3 +23,29 @@ body {
 * {
   box-sizing: border-box;
 }
+
+:where(a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+:where(a[href], button, input:not([type="radio"]):not([type="checkbox"]), select, textarea) {
+  transition-duration: var(--duration-interaction);
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-timing-function: ease-out;
+}
+
+:where(input:not([type="radio"]):not([type="checkbox"]), select, textarea) {
+  min-block-size: 2.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

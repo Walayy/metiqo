@@ -21,8 +21,9 @@
     "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1",
+    "@axe-core/playwright": "4.13.0",
     "@cspell/dict-fr-fr": "2.3.2",
+    "@playwright/test": "1.62.1",
     "@types/node": "24.13.3",
     "cspell": "10.2.2",
     "eslint": "10.9.1",

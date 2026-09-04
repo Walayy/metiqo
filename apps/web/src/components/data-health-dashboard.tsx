@@ -118,11 +118,11 @@ function Stat({
 }: Readonly<{ icon: ReactNode; label: string; value: ReactNode }>) {
   return (
     <div className="grid min-w-0 gap-2 rounded-lg border border-border-subtle bg-surface-muted p-4">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-ink-secondary">
+      <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-ink-secondary">
         <span aria-hidden="true">{icon}</span>
         <span>{label}</span>
-      </div>
-      <div className="break-words text-sm font-semibold">{value}</div>
+      </dt>
+      <dd className="break-words text-sm font-semibold">{value}</dd>
     </div>
   );
 }

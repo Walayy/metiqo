@@ -8,6 +8,7 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
+  snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
   webServer: [
     {
       command:
