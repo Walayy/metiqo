@@ -126,7 +126,7 @@ services:
     build: *python-build
     init: true
     read_only: true
-    command: ["python", "/opt/metiquo-bootstrap/worker.py"]
+    command: ["python", "-m", "metiquo.worker"]
     environment: *app-environment
     depends_on:
       postgres:

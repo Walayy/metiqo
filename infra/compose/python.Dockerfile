@@ -21,7 +21,6 @@ COPY python ./python
 RUN uv sync --frozen --no-dev --no-editable
 
 COPY infra/compose/bootstrap/mock_mode_check.py /opt/metiquo-bootstrap/mock_mode_check.py
-COPY infra/compose/bootstrap/worker.py /opt/metiquo-bootstrap/worker.py
 
 USER 10001:10001
 

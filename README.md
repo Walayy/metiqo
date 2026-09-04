@@ -27,7 +27,7 @@ Après avoir défini `DATABASE_URL` pour une base PostgreSQL vide, appliquer les
 
 ## Conteneurs locaux
 
-Le socle local démarre avec `docker compose --profile mock up -d --build --wait`. L’API FastAPI expose `/health`, `/ready` et `/api/v1/system/status`. Les conteneurs worker et web exécutent encore des processus de santé explicitement temporaires ; leurs implémentations applicatives arrivent dans les tickets dédiés.
+Le socle local démarre avec `docker compose --profile mock up -d --build --wait`. L’API FastAPI expose `/health`, `/ready` et `/api/v1/system/status`. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
 
 Les ports web et API sont liés uniquement à `127.0.0.1`. PostgreSQL reste sur un réseau Docker interne. Le profil `production` ajoute le gateway HTTPS et `object-store` ajoute également MinIO ; ce dernier refuse de démarrer tant que ses identifiants ne sont pas fournis hors du dépôt.
 
