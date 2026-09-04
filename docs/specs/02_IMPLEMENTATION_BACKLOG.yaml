@@ -3,7 +3,7 @@ source_of_truth: 00_SFG_METIQUO.md
 rules:
 - La SFG est normative; le plan ne peut pas la contredire.
 - Un ticket n’est DONE que lorsque ses critères et tests ont réellement passé.
-- Aucun scraper Stake, contournement anti-bot/geoblocage/CAPTCHA ni pari réel automatisé.
+- Aucun scraper Stake, contournement anti-bot/géoblocage/CAPTCHA ni pari réel automatisé.
 - Oracle’s Elixir est l’unique source statistique LoL.
 - Mock et réel partagent DTO/endpoints/composants.
 - Raw, odds, predictions, signals, paper bets, evaluations publiées et audit sont immuables/append-only selon la SFG.
@@ -503,7 +503,7 @@ tickets:
   - Catalogue, dernière tentative/succès, fraîcheur année, hash actif, lignes/plage dates, schéma, anomalies, quarantaine,
     jobs, sync contrôlée.
   done_when:
-  - Les actions affichent progress/resultat sans polling agressif.
+  - Les actions affichent progression/résultat sans polling agressif.
   - Erreurs récupérables et bloquantes différenciées.
   tests:
   - Playwright admin data states

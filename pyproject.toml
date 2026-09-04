@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling==1.32.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "metiquo"
+version = "0.1.0"
+description = "Moteur personnel de pricing esport Metiquo"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "mypy==2.3.1",
+    "pytest==9.1.1",
+    "ruff==0.16.6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["python/metiquo"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["python", "infra/scripts", "tests"]
+
+[tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers"]
+pythonpath = ["python"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["python", "services", "infra/scripts", "tests"]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"

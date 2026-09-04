@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 REQUIRED_DIRECTORIES = (
     "apps/web",
     "services/api",
@@ -46,9 +45,7 @@ def repository_root() -> Path:
 
 
 def missing_paths(root: Path) -> list[str]:
-    missing_directories = [
-        path for path in REQUIRED_DIRECTORIES if not (root / path).is_dir()
-    ]
+    missing_directories = [path for path in REQUIRED_DIRECTORIES if not (root / path).is_dir()]
     missing_files = [path for path in REQUIRED_FILES if not (root / path).is_file()]
     return [*missing_directories, *missing_files]
 

@@ -1,0 +1,1 @@
+"""Metiquo application package."""
