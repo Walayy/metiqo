@@ -1,0 +1,151 @@
+"""Configuration serveur validée à la frontière du processus."""
+
+from datetime import UTC, tzinfo
+from decimal import Decimal
+from enum import StrEnum
+from functools import lru_cache
+from pathlib import Path
+from typing import Self
+from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class AppEnvironment(StrEnum):
+    """Environnements d'exécution acceptés."""
+
+    DEVELOPMENT = "development"
+    TEST = "test"
+    PRODUCTION = "production"
+
+
+class DataMode(StrEnum):
+    """Origine isolée des données applicatives."""
+
+    MOCK = "mock"
+    REAL = "real"
+
+
+class ObjectStoreBackend(StrEnum):
+    """Stockages objet prévus par l'architecture."""
+
+    FILESYSTEM = "filesystem"
+    S3 = "s3"
+
+
+class OddsProvider(StrEnum):
+    """Providers de cotes activables à ce stade."""
+
+    DISABLED = "disabled"
+    MOCK = "mock"
+
+
+class Settings(BaseSettings):
+    """Source de vérité typée de la configuration serveur Metiquo."""
+
+    model_config = SettingsConfigDict(
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="forbid",
+        frozen=True,
+    )
+
+    app_env: AppEnvironment
+    app_data_mode: DataMode
+    database_url: SecretStr
+
+    object_store_backend: ObjectStoreBackend = ObjectStoreBackend.FILESYSTEM
+    object_store_root: Path = Path("/data")
+    display_timezone: str = "Europe/Paris"
+
+    oe_allow_stale: bool = True
+    oe_require_fresh: bool = False
+    oe_current_year: int = Field(default=2026, ge=2014, le=9999)
+    oe_source_catalog_path: Path = Path("/app/config/oracles_elixir_sources.yml")
+
+    odds_provider: OddsProvider = OddsProvider.MOCK
+    odds_max_age_seconds: int = Field(default=90, gt=0)
+
+    signal_min_edge: Decimal = Field(default=Decimal("0.03"), ge=0, le=1)
+    signal_min_ev: Decimal = Field(default=Decimal("0.05"), ge=0, le=1)
+    signal_min_conservative_ev: Decimal = Field(default=Decimal("0.00"), ge=0, le=1)
+    signal_max_kelly_fraction: Decimal = Field(default=Decimal("0.25"), ge=0, le=1)
+    signal_min_mapping_confidence: Decimal = Field(default=Decimal("0.80"), ge=0, le=1)
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, value: SecretStr) -> SecretStr:
+        """Refuser une URL non PostgreSQL ou incomplète sans exposer sa valeur."""
+
+        parsed = urlsplit(value.get_secret_value())
+        if parsed.scheme not in {"postgresql", "postgresql+psycopg"}:
+            raise ValueError("DATABASE_URL doit utiliser PostgreSQL avec le driver psycopg")
+        if parsed.hostname is None or parsed.path in {"", "/"}:
+            raise ValueError("DATABASE_URL doit préciser un hôte et une base")
+        return value
+
+    @field_validator("display_timezone")
+    @classmethod
+    def validate_display_timezone(cls, value: str) -> str:
+        """Valider un identifiant IANA réservé au rendu de l'interface."""
+
+        try:
+            ZoneInfo(value)
+        except ZoneInfoNotFoundError as error:
+            raise ValueError("DISPLAY_TIMEZONE doit être un fuseau IANA connu") from error
+        return value
+
+    @model_validator(mode="after")
+    def validate_modes(self) -> Self:
+        """Empêcher les configurations ambiguës et le mélange mock/réel."""
+
+        if self.oe_allow_stale and self.oe_require_fresh:
+            raise ValueError(
+                "OE_ALLOW_STALE et OE_REQUIRE_FRESH ne peuvent pas être vrais ensemble"
+            )
+        if self.app_data_mode is DataMode.REAL and self.odds_provider is OddsProvider.MOCK:
+            raise ValueError("APP_DATA_MODE=real interdit ODDS_PROVIDER=mock")
+        if self.app_data_mode is DataMode.MOCK and self.odds_provider not in {
+            OddsProvider.DISABLED,
+            OddsProvider.MOCK,
+        }:
+            raise ValueError("APP_DATA_MODE=mock interdit tout provider de cotes réel")
+        return self
+
+    @property
+    def display_tzinfo(self) -> ZoneInfo:
+        """Fuseau appliqué exclusivement lors du rendu."""
+
+        return ZoneInfo(self.display_timezone)
+
+    @property
+    def internal_tzinfo(self) -> tzinfo:
+        """Fuseau invariant pour les instants persistés et calculés."""
+
+        return UTC
+
+
+class ConfigurationError(RuntimeError):
+    """Erreur de démarrage lisible et dépourvue de valeurs sensibles."""
+
+
+def _format_validation_error(error: ValidationError) -> str:
+    problems: list[str] = []
+    for detail in error.errors(include_input=False, include_url=False):
+        location = ".".join(str(part).upper() for part in detail["loc"])
+        problems.append(f"{location}: {detail['msg']}")
+    return "; ".join(problems)
+
+
+@lru_cache(maxsize=1)
+def load_settings() -> Settings:
+    """Charger une fois la configuration et échouer avant le démarrage applicatif."""
+
+    try:
+        return Settings()
+    except ValidationError as error:
+        message = _format_validation_error(error)
+        raise ConfigurationError(f"Configuration Metiquo invalide : {message}") from None

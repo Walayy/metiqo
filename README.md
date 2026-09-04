@@ -15,4 +15,10 @@ Le dépôt est actuellement au stade des fondations. Les commandes d’installat
 
 Les dépendances sont installées exclusivement depuis les lockfiles avec `pnpm install --frozen-lockfile` et `uv sync --frozen`.
 
+## Configuration serveur
+
+Copier `.env.example` vers `.env`, puis remplacer uniquement les valeurs propres à l’environnement local. Le chargement typé est centralisé dans `metiquo.config` ; une valeur absente, incohérente ou invalide interrompt le démarrage avec le nom de la variable concernée, sans afficher sa valeur sensible.
+
+`DISPLAY_TIMEZONE` contrôle uniquement le rendu. Les instants internes restent en UTC.
+
 Ce logiciel n’exécute aucun pari réel et ne garantit aucun gain.
