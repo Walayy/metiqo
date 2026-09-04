@@ -97,3 +97,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; processus worker séparé et sans scheduler conformément à la SFG. L’acquisition PostgreSQL des jobs reste explicitement hors de ce squelette et sera ajoutée par son ticket métier.
 - **Commit/hash :** `b7081a8658873b99b5577848c6a91d614e742332` (`feat: add worker lifecycle skeleton`).
+
+## FND-009 — Makefile et commandes développeur
+
+- **Statut :** `IN_PROGRESS`
+- **Dépendances vérifiées :** `FND-005`, `FND-007` et `FND-008` sont `DONE` et présents sur `origin/main`.
+- **Fichiers créés/modifiés :** `Makefile`, `README.md`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** installation utilisateur de GNU Make `4.4.1` via le paquet `ezwinports.make` ; validations en cours.
+- **Résultat exact :** GNU Make `4.4.1` est exécutable ; validations du ticket en cours.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le ticket expose les commandes prévues sans décision architecturale.
+- **Commit/hash :** à créer après validation.

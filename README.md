@@ -4,16 +4,46 @@ Metiquo est un projet personnel Dockerisé de pricing et de détection de value 
 
 La spécification normative se trouve dans [`docs/specs/00_SFG_METIQUO.md`](docs/specs/00_SFG_METIQUO.md). Le plan d’exécution et le backlog se trouvent dans le même dossier. L’avancement vérifié est consigné dans [`docs/progress.md`](docs/progress.md).
 
-Le dépôt est actuellement au stade des fondations. Les commandes d’installation et de démarrage seront ajoutées par les tickets dédiés ; aucune commande non encore implémentée n’est présentée comme fonctionnelle.
-
 ## Outillage
 
 - Node.js `24.20.0` et pnpm `11.25.0` ;
 - Python `3.13.14` et uv ;
+- GNU Make `4.4.1` ou une version compatible ;
 - TypeScript strict, ESLint, Prettier et Playwright ;
 - Ruff, mypy et pytest.
 
 Les dépendances sont installées exclusivement depuis les lockfiles avec `pnpm install --frozen-lockfile` et `uv sync --frozen`.
+
+## Parcours local reproductible
+
+Docker Desktop doit être démarré. Depuis la racine du dépôt :
+
+```console
+pnpm install --frozen-lockfile
+uv sync --frozen
+make up
+make db-migrate
+```
+
+L’API est alors disponible sur `http://127.0.0.1:8000`. Les sondes `GET /health` et `GET /ready` doivent répondre avec le statut HTTP `200` après la migration. Le service web temporaire répond sur `http://127.0.0.1:3000` jusqu’à son remplacement par l’interface du MVP.
+
+Arrêter la stack sans supprimer ses volumes persistants :
+
+```console
+make down
+```
+
+Les contrôles locaux, également destinés à la CI, sont :
+
+```console
+make format
+make lint
+make typecheck
+make test
+make openapi-check
+```
+
+`make test-e2e` est câblé sur Playwright ; les scénarios E2E seront ajoutés avec l’interface. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
 
 ## Configuration serveur
 
@@ -23,11 +53,11 @@ Copier `.env.example` vers `.env`, puis remplacer uniquement les valeurs propres
 
 ## Base de données
 
-Après avoir défini `DATABASE_URL` pour une base PostgreSQL vide, appliquer les migrations avec `uv run alembic upgrade head`. La révision initiale crée uniquement les schémas logiques `raw`, `core`, `odds`, `features`, `ml`, `signals` et `ops` ; elle n’insère aucune donnée.
+Dans la stack locale, `make db-migrate` applique les migrations à la base PostgreSQL. Hors Compose, après avoir défini `DATABASE_URL` pour une base vide, la commande équivalente est `uv run alembic upgrade head`. La révision initiale crée uniquement les schémas logiques `raw`, `core`, `odds`, `features`, `ml`, `signals` et `ops` ; elle n’insère aucune donnée.
 
 ## Conteneurs locaux
 
-Le socle local démarre avec `docker compose --profile mock up -d --build --wait`. L’API FastAPI expose `/health`, `/ready` et `/api/v1/system/status`. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
+`make up` démarre le profil Compose `mock`. L’API FastAPI expose `/health`, `/ready` et `/api/v1/system/status`. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
 
 Les ports web et API sont liés uniquement à `127.0.0.1`. PostgreSQL reste sur un réseau Docker interne. Le profil `production` ajoute le gateway HTTPS et `object-store` ajoute également MinIO ; ce dernier refuse de démarrer tant que ses identifiants ne sont pas fournis hors du dépôt.
 
