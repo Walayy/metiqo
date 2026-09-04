@@ -338,6 +338,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le modèle matérialise directement les invariants de provenance et d'immutabilité exigés par la SFG.
 - **Commit/hash :** `47f701243ed8af2c518c8dbfcd18b1c4bdb6b6e9` (`feat(raw): add ingestion provenance model`).
 
+## OE-002 — ObjectStore filesystem adressé par hash
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-001` est `DONE` dans le commit `47f7012`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/__init__.py`, `python/metiquo/ingestion/object_store.py`, `tests/ingestion/test_object_store.py`, suppression du marqueur `.gitkeep`, `docs/progress.md`.
+- **Migrations :** aucune ; le backend produit les clés relatives destinées à `raw.snapshots.object_key`.
+- **Commandes/tests exécutés :** Ruff format/check ciblé ; mypy strict ciblé ; 5 tests ObjectStore ; suite Python complète sans infrastructure ; `git diff --check`.
+- **Résultat exact :** le protocole `ObjectStore` et son backend `FilesystemObjectStore` écrivent par défaut sous `/data`. Chaque flux est d'abord consommé dans un répertoire temporaire situé sur le même filesystem, haché en SHA-256 pendant l'écriture et synchronisé, puis le répertoire complet est renommé atomiquement vers `year=YYYY/sha256=<digest>`. Le layout accepte `source.bin` ou `source.csv` et les documents JSON déterministes `manifest.json`, `schema.json` et `quality-report.json`. Une seconde écriture du même contenu réutilise l'objet physique sans changer fichier, métadonnée ni mtime ; une corruption au même emplacement lève une collision. Un flux interrompu ne laisse ni objet partiel ni répertoire temporaire. Les clés retournées sont relatives au store et indépendantes du chemin temporaire. Les 5 tests ciblés passent ; la suite globale sans PostgreSQL retourne 97 tests réussis et 6 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'interface permet un autre backend sans exposer le chemin temporaire, tandis que l'implémentation MVP reste le volume filesystem exigé.
+- **Commit/hash :** `a8f96037eda3d1f2eba80138b86cf1f314a976ce` (`feat(ingestion): add immutable filesystem object store`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
