@@ -9,11 +9,15 @@
     "pnpm": ">=11.0.0 <12"
   },
   "scripts": {
+    "build:web": "pnpm --filter @metiquo/web build",
+    "contracts:check": "pnpm run contracts:generate && git diff --exit-code -- packages/contracts/src/generated",
+    "contracts:generate": "pnpm --filter @metiquo/contracts generate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint --max-warnings=0 .",
     "spellcheck": "cspell --no-progress --show-suggestions README.md docs/**/*.md docs/**/*.yaml",
-    "typecheck": "tsc --noEmit",
+    "test:components": "pnpm --filter @metiquo/ui --filter @metiquo/web test",
+    "typecheck": "pnpm --recursive --if-present run typecheck",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

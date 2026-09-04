@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@metiquo/ui/styles.css";
+
+@source "../../../../packages/ui/src";
+
+html {
+  background: var(--color-surface-canvas);
+  color: var(--color-ink-primary);
+  font-family: var(--font-sans);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}

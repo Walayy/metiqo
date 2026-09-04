@@ -157,7 +157,7 @@ services:
       dockerfile: infra/compose/web.Dockerfile
     init: true
     read_only: true
-    command: ["node", "/opt/metiquo-bootstrap/web-health.mjs"]
+    command: ["node", "apps/web/server.js"]
     depends_on:
       api:
         condition: service_healthy

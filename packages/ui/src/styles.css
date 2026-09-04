@@ -1,0 +1,48 @@
+@theme inline {
+  --color-accent: var(--metiquo-accent);
+  --color-accent-contrast: var(--metiquo-accent-contrast);
+  --color-accent-soft: var(--metiquo-accent-soft);
+  --color-accent-strong: var(--metiquo-accent-strong);
+  --color-border-strong: var(--metiquo-border-strong);
+  --color-border-subtle: var(--metiquo-border-subtle);
+  --color-focus: var(--metiquo-focus);
+  --color-ink-primary: var(--metiquo-ink-primary);
+  --color-ink-secondary: var(--metiquo-ink-secondary);
+  --color-surface-canvas: var(--metiquo-surface-canvas);
+  --color-surface-muted: var(--metiquo-surface-muted);
+  --color-surface-raised: var(--metiquo-surface-raised);
+  --duration-interaction: 160ms;
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --radius-md: 0.625rem;
+  --radius-xl: 1rem;
+  --shadow-panel: 0 1px 2px rgb(15 23 42 / 0.04), 0 12px 36px rgb(15 23 42 / 0.07);
+  --spacing: 0.25rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.625;
+  --text-title: 2rem;
+  --text-title--line-height: 1.15;
+}
+
+:root {
+  color-scheme: light dark;
+  --metiquo-accent: oklch(0.47 0.12 203);
+  --metiquo-accent-contrast: oklch(0.99 0.005 203);
+  --metiquo-accent-soft: oklch(0.95 0.03 203);
+  --metiquo-accent-strong: oklch(0.4 0.12 203);
+  --metiquo-border-strong: oklch(0.72 0.018 240);
+  --metiquo-border-subtle: oklch(0.87 0.012 240);
+  --metiquo-focus: oklch(0.56 0.17 243);
+  --metiquo-ink-primary: oklch(0.22 0.025 250);
+  --metiquo-ink-secondary: oklch(0.46 0.025 250);
+  --metiquo-surface-canvas: oklch(0.97 0.007 230);
+  --metiquo-surface-muted: oklch(0.94 0.01 230);
+  --metiquo-surface-raised: oklch(0.995 0.003 230);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@metiquo/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/generated/index.ts",
+    "./client": "./src/generated/client/index.ts",
+    "./query": "./src/generated/@tanstack/react-query.gen.ts"
+  },
+  "scripts": {
+    "generate": "openapi-ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.102.8"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0"
+  }
+}

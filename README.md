@@ -27,7 +27,7 @@ make up
 make db-migrate
 ```
 
-L’API est alors disponible sur `http://127.0.0.1:8000`. Les sondes `GET /health` et `GET /ready` doivent répondre avec le statut HTTP `200` après la migration. Le service web temporaire répond sur `http://127.0.0.1:3000` jusqu’à son remplacement par l’interface du MVP.
+L’API est alors disponible sur `http://127.0.0.1:8000`. Les sondes `GET /health` et `GET /ready` doivent répondre avec le statut HTTP `200` après la migration. L’application Next.js répond sur `http://127.0.0.1:3000` et expose sa propre sonde `GET /health`.
 
 Arrêter la stack sans supprimer ses volumes persistants :
 
@@ -46,7 +46,7 @@ make openapi-check
 make docker-build
 ```
 
-`make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` est câblé sur Playwright ; les scénarios E2E seront ajoutés avec l’interface. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
+`make test` exécute les tests de composants frontend puis la suite Python. `make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` est câblé sur Playwright ; les scénarios E2E seront ajoutés avec les écrans. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
 
 La CI appelle ces mêmes cibles locales. Toute modification d’une décision structurante de la SFG §33 exige un ADR accepté dans `docs/adr/`.
 
@@ -70,11 +70,23 @@ En mode mock, l’API expose les collections et détails versionnés sous `/api/
 
 Le contrat complet et reproductible est versionné dans `packages/contracts/openapi/v1.json`.
 
+Le package `@metiquo/contracts` génère depuis ce fichier les DTO, le client Fetch et les options TanStack Query. `make openapi` régénère le contrat backend puis le client ; `make openapi-check` échoue si l’un des deux n’est plus synchronisé. Aucun DTO API n’est recopié à la main dans le frontend.
+
+## Frontend et design system
+
+L’application `apps/web` utilise Next.js et React avec TypeScript strict. Le package `@metiquo/ui` centralise les tokens de couleur, espacement, typographie, rayon, élévation et durée, ainsi que les primitives accessibles. Le provider TanStack Query est installé à la racine de l’application. Les animations d’interaction passent uniquement par `opacity` ou `transform` et respectent `prefers-reduced-motion`.
+
+Pour travailler sans Docker :
+
+```console
+pnpm --filter @metiquo/web dev
+```
+
 Les actions mock de synchronisation, cycle de vie modèle, paper betting, décision de mapping et création d’alias exigent l’en-tête `Idempotency-Key`. Une même clé et une même requête retournent le résultat initial sans dupliquer l’effet ; réutiliser la clé avec un payload différent retourne un conflit. Ces actions restent locales au processus mock et alimentent `/api/v1/admin/audit-log` sans conserver la clé brute.
 
 ## Conteneurs locaux
 
-`make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
+`make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web sert le build standalone Next.js sous un utilisateur non privilégié et avec une racine en lecture seule.
 
 Les ports web et API sont liés uniquement à `127.0.0.1`. PostgreSQL reste sur un réseau Docker interne. Le profil `production` ajoute le gateway HTTPS et `object-store` ajoute également MinIO ; ce dernier refuse de démarrer tant que ses identifiants ne sont pas fournis hors du dépôt.
 

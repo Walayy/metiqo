@@ -21,6 +21,7 @@ out/
 coverage/
 playwright-report/
 test-results/
+*.tsbuildinfo
 
 # Données et artefacts locaux
 data/

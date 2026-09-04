@@ -14,7 +14,7 @@ help:
 	@echo "  make format         Formate les sources"
 	@echo "  make lint           Vérifie format, lint et orthographe"
 	@echo "  make typecheck      Vérifie les types TypeScript et Python"
-	@echo "  make test           Exécute les tests Python"
+	@echo "  make test           Exécute les tests frontend et Python"
 	@echo "  make test-migrations Exécute les tests sur PostgreSQL réel"
 	@echo "  make test-e2e       Exécute les tests Playwright"
 	@echo "  make openapi        Régénère le contrat OpenAPI"
@@ -49,6 +49,7 @@ typecheck:
 	uv run --frozen mypy
 
 test:
+	pnpm run test:components
 	uv run --frozen pytest
 
 test-migrations:
@@ -60,9 +61,11 @@ test-e2e:
 
 openapi:
 	uv run --frozen python infra/scripts/export_openapi.py
+	pnpm run contracts:generate
 
 openapi-check:
 	uv run --frozen python infra/scripts/export_openapi.py --check
+	pnpm run contracts:check
 
 check: lint typecheck test openapi-check
 

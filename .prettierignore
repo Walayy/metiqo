@@ -10,3 +10,4 @@ uv.lock
 pnpm-lock.yaml
 docs/specs/
 packages/contracts/openapi/*.json
+packages/contracts/src/generated/

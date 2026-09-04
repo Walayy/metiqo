@@ -3,10 +3,11 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     ignores: [
-      ".next/**",
+      "**/.next/**",
       "coverage/**",
       "node_modules/**",
       "out/**",
+      "packages/contracts/src/generated/**",
       "playwright-report/**",
       "test-results/**",
     ],
