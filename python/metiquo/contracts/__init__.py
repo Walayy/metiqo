@@ -12,7 +12,13 @@ from metiquo.contracts.odds_provider import (
     ProviderMarket,
     ProviderSelection,
 )
-from metiquo.contracts.operations import DataQualityIssue, IngestionRunSummary, JobSummary
+from metiquo.contracts.operations import (
+    AliasRecord,
+    AuditEntry,
+    DataQualityIssue,
+    IngestionRunSummary,
+    JobSummary,
+)
 from metiquo.contracts.paper import PaperBet
 from metiquo.contracts.pricing import (
     ContractMetadata,
@@ -44,10 +50,14 @@ DOMAIN_CONTRACT_MODELS: tuple[type[BaseModel], ...] = (
     IngestionRunSummary,
     DataQualityIssue,
     JobSummary,
+    AuditEntry,
+    AliasRecord,
 )
 
 __all__ = [
     "DOMAIN_CONTRACT_MODELS",
+    "AliasRecord",
+    "AuditEntry",
     "BacktestSummary",
     "ContractMetadata",
     "DataQualityIssue",

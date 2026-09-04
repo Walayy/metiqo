@@ -22,6 +22,7 @@ from metiquo.api.messages import (
     INVALID_REQUEST_TITLE,
     NOT_FOUND_TITLE,
 )
+from metiquo.api.mutation_routes import build_mutation_router
 from metiquo.api.read_routes import build_read_router
 from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, ReadinessProbe
 from metiquo.config import Settings, load_settings
@@ -29,7 +30,7 @@ from metiquo.contracts.enums import DataMode
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
-from metiquo.services import ReadService, build_mock_read_service
+from metiquo.services import MockMutationService, ReadService, build_mock_read_service
 
 ERROR_STATUSES: Final[dict[ErrorCode, int]] = {
     ErrorCode.INVALID_INPUT: 400,
@@ -115,6 +116,7 @@ def create_app(
     readiness_probe: ReadinessProbe | None = None,
     clock: Clock | None = None,
     read_service: ReadService | None = None,
+    mutation_service: MockMutationService | None = None,
 ) -> FastAPI:
     """Construire l'API après validation de la configuration."""
 
@@ -126,10 +128,11 @@ def create_app(
     app = FastAPI(title="Metiquo API", version=version("metiquo"))
     app.include_router(_router(resolved_settings, resolved_probe, resolved_clock))
     if resolved_settings.app_data_mode is DataMode.MOCK:
-        resolved_service = read_service or build_mock_read_service(
-            build_mock_scenario_catalog(resolved_settings.mock_seed, resolved_clock)
-        )
+        catalog = build_mock_scenario_catalog(resolved_settings.mock_seed, resolved_clock)
+        resolved_service = read_service or build_mock_read_service(catalog)
         app.include_router(build_read_router(resolved_service, resolved_clock))
+        resolved_mutation_service = mutation_service or MockMutationService(catalog, resolved_clock)
+        app.include_router(build_mutation_router(resolved_mutation_service, resolved_clock))
 
     @app.exception_handler(BusinessError)
     async def business_error_handler(request: Request, error: BusinessError) -> JSONResponse:

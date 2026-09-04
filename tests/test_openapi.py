@@ -81,6 +81,15 @@ def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> 
         "/api/v1/admin/quality-issues",
         "/api/v1/admin/jobs",
         "/api/v1/admin/mappings/pending",
+        "/api/v1/admin/audit-log",
+        "/api/v1/admin/oracles-elixir/sync",
+        "/api/v1/admin/models/train",
+        "/api/v1/admin/models/{model_version_id}/promote",
+        "/api/v1/admin/models/{model_version_id}/retire",
+        "/api/v1/admin/paper-bets/settle",
+        "/api/v1/admin/mappings/{mapping_review_id}/approve",
+        "/api/v1/admin/mappings/{mapping_review_id}/reject",
+        "/api/v1/admin/aliases",
     } == set(document["paths"])
 
 

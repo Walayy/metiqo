@@ -49,3 +49,25 @@ class JobSummary(ContractModel):
     status: Literal["idle", "succeeded", "failed", "running"]
     last_run_at: UtcDateTime | None = Field(default=None, alias="lastRunAt")
     data_mode: DataMode = Field(alias="dataMode")
+
+
+class AuditEntry(ContractModel):
+    """Trace immutable d'une mutation applicative mock."""
+
+    audit_id: UUID = Field(alias="auditId")
+    action: NonEmptyText
+    resource_id: NonEmptyText | None = Field(default=None, alias="resourceId")
+    idempotency_fingerprint: str = Field(alias="idempotencyFingerprint", pattern=r"^[0-9a-f]{64}$")
+    occurred_at: UtcDateTime = Field(alias="occurredAt")
+    data_mode: DataMode = Field(alias="dataMode")
+
+
+class AliasRecord(ContractModel):
+    """Alias provider résolu vers une entité canonique."""
+
+    alias_id: UUID = Field(alias="aliasId")
+    provider: NonEmptyText
+    alias: NonEmptyText
+    canonical_id: UUID = Field(alias="canonicalId")
+    created_at: UtcDateTime = Field(alias="createdAt")
+    data_mode: DataMode = Field(alias="dataMode")

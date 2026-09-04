@@ -23,6 +23,104 @@
         "title": "AbstentionReason",
         "type": "string"
       },
+      "AliasRecord": {
+        "additionalProperties": false,
+        "description": "Alias provider résolu vers une entité canonique.",
+        "properties": {
+          "alias": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Alias",
+            "type": "string"
+          },
+          "aliasId": {
+            "format": "uuid",
+            "title": "Aliasid",
+            "type": "string"
+          },
+          "canonicalId": {
+            "format": "uuid",
+            "title": "Canonicalid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "dataMode": {
+            "$ref": "#/components/schemas/DataMode"
+          },
+          "provider": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "aliasId",
+          "provider",
+          "alias",
+          "canonicalId",
+          "createdAt",
+          "dataMode"
+        ],
+        "title": "AliasRecord",
+        "type": "object"
+      },
+      "AuditEntry": {
+        "additionalProperties": false,
+        "description": "Trace immutable d'une mutation applicative mock.",
+        "properties": {
+          "action": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Action",
+            "type": "string"
+          },
+          "auditId": {
+            "format": "uuid",
+            "title": "Auditid",
+            "type": "string"
+          },
+          "dataMode": {
+            "$ref": "#/components/schemas/DataMode"
+          },
+          "idempotencyFingerprint": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Idempotencyfingerprint",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "resourceId": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resourceid"
+          }
+        },
+        "required": [
+          "auditId",
+          "action",
+          "idempotencyFingerprint",
+          "occurredAt",
+          "dataMode"
+        ],
+        "title": "AuditEntry",
+        "type": "object"
+      },
       "BacktestKind": {
         "description": "Nature statistique ou financière d'un backtest.",
         "enum": [
@@ -165,6 +263,70 @@
           "appVersion"
         ],
         "title": "ContractMetadata",
+        "type": "object"
+      },
+      "CreateAliasRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "alias": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Alias",
+            "type": "string"
+          },
+          "canonicalId": {
+            "format": "uuid",
+            "title": "Canonicalid",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "alias",
+          "canonicalId"
+        ],
+        "title": "CreateAliasRequest",
+        "type": "object"
+      },
+      "CreatePaperBetRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "default": "EUR",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "signalId": {
+            "format": "uuid",
+            "title": "Signalid",
+            "type": "string"
+          },
+          "stakeAmount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Stakeamount"
+          }
+        },
+        "required": [
+          "signalId",
+          "stakeAmount"
+        ],
+        "title": "CreatePaperBetRequest",
         "type": "object"
       },
       "DataMode": {
@@ -471,6 +633,23 @@
         "title": "IngestionRunSummary",
         "type": "object"
       },
+      "ItemResponse_AliasRecord_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AliasRecord"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[AliasRecord]",
+        "type": "object"
+      },
       "ItemResponse_BacktestSummary_": {
         "additionalProperties": false,
         "properties": {
@@ -503,6 +682,40 @@
           "meta"
         ],
         "title": "ItemResponse[Event]",
+        "type": "object"
+      },
+      "ItemResponse_IngestionRunSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IngestionRunSummary"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[IngestionRunSummary]",
+        "type": "object"
+      },
+      "ItemResponse_MappingReview_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MappingReview"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[MappingReview]",
         "type": "object"
       },
       "ItemResponse_ModelSummary_": {
@@ -660,6 +873,29 @@
           "reasons"
         ],
         "title": "MappingCandidate",
+        "type": "object"
+      },
+      "MappingDecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "reviewer": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewer",
+          "reason"
+        ],
+        "title": "MappingDecisionRequest",
         "type": "object"
       },
       "MappingReview": {
@@ -877,6 +1113,22 @@
         ],
         "title": "MarketType",
         "type": "string"
+      },
+      "ModelDecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ModelDecisionRequest",
+        "type": "object"
       },
       "ModelStatus": {
         "description": "Cycle de vie d'une version de modèle.",
@@ -1268,6 +1520,31 @@
           "total"
         ],
         "title": "PageInfo",
+        "type": "object"
+      },
+      "PageResponse_AuditEntry_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "meta"
+        ],
+        "title": "PageResponse[AuditEntry]",
         "type": "object"
       },
       "PageResponse_BacktestSummary_": {
@@ -2196,6 +2473,45 @@
         "title": "SelectionType",
         "type": "string"
       },
+      "SettlePaperBetRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "paperBetId": {
+            "format": "uuid",
+            "title": "Paperbetid",
+            "type": "string"
+          },
+          "profitLoss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Profitloss"
+          },
+          "reason": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaperBetStatus"
+          }
+        },
+        "required": [
+          "paperBetId",
+          "status",
+          "profitLoss",
+          "reason"
+        ],
+        "title": "SettlePaperBetRequest",
+        "type": "object"
+      },
       "SystemStatusResponse": {
         "additionalProperties": false,
         "description": "État minimal versionné du système.",
@@ -2236,6 +2552,21 @@
           "dependencies"
         ],
         "title": "SystemStatusResponse",
+        "type": "object"
+      },
+      "TrainModelRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "gameTitle": {
+            "$ref": "#/components/schemas/GameTitle",
+            "default": "lol"
+          },
+          "marketType": {
+            "$ref": "#/components/schemas/MarketType",
+            "default": "MATCH_WINNER"
+          }
+        },
+        "title": "TrainModelRequest",
         "type": "object"
       },
       "ValidationError": {
@@ -2336,6 +2667,116 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/aliases": {
+      "post": {
+        "operationId": "create_alias_api_v1_admin_aliases_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAliasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_AliasRecord_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Alias",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/audit-log": {
+      "get": {
+        "operationId": "audit_log_api_v1_admin_audit_log_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponse_AuditEntry_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Audit Log",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
     "/api/v1/admin/data-sources": {
       "get": {
         "operationId": "list_data_sources_api_v1_admin_data_sources_get",
@@ -2599,6 +3040,414 @@
         "summary": "List Pending Mappings",
         "tags": [
           "reads"
+        ]
+      }
+    },
+    "/api/v1/admin/mappings/{mapping_review_id}/approve": {
+      "post": {
+        "operationId": "approve_mapping_api_v1_admin_mappings__mapping_review_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mapping_review_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Mapping Review Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_MappingReview_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Mapping",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/mappings/{mapping_review_id}/reject": {
+      "post": {
+        "operationId": "reject_mapping_api_v1_admin_mappings__mapping_review_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mapping_review_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Mapping Review Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_MappingReview_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Mapping",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/models/train": {
+      "post": {
+        "operationId": "train_api_v1_admin_models_train_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainModelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_ModelSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Train",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/models/{model_version_id}/promote": {
+      "post": {
+        "operationId": "promote_api_v1_admin_models__model_version_id__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "model_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Model Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_ModelSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/models/{model_version_id}/retire": {
+      "post": {
+        "operationId": "retire_api_v1_admin_models__model_version_id__retire_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "model_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Model Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_ModelSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retire",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/oracles-elixir/sync": {
+      "post": {
+        "operationId": "sync_api_v1_admin_oracles_elixir_sync_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_IngestionRunSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync",
+        "tags": [
+          "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/paper-bets/settle": {
+      "post": {
+        "operationId": "settle_paper_bet_api_v1_admin_paper_bets_settle_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlePaperBetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_PaperBet_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Settle Paper Bet",
+        "tags": [
+          "mock-actions"
         ]
       }
     },
@@ -3631,6 +4480,58 @@
         "summary": "List Paper Bets",
         "tags": [
           "reads"
+        ]
+      },
+      "post": {
+        "operationId": "create_paper_bet_api_v1_paper_bets_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaperBetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_PaperBet_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Paper Bet",
+        "tags": [
+          "mock-actions"
         ]
       }
     },

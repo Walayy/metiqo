@@ -70,6 +70,8 @@ En mode mock, l’API expose les collections et détails versionnés sous `/api/
 
 Le contrat complet et reproductible est versionné dans `packages/contracts/openapi/v1.json`.
 
+Les actions mock de synchronisation, cycle de vie modèle, paper betting, décision de mapping et création d’alias exigent l’en-tête `Idempotency-Key`. Une même clé et une même requête retournent le résultat initial sans dupliquer l’effet ; réutiliser la clé avec un payload différent retourne un conflit. Ces actions restent locales au processus mock et alimentent `/api/v1/admin/audit-log` sans conserver la clé brute.
+
 ## Conteneurs locaux
 
 `make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
