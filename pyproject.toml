@@ -30,7 +30,7 @@ packages = ["python/metiquo"]
 python_version = "3.13"
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["python", "infra/scripts", "tests"]
+files = ["python", "infra", "tests"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -44,7 +44,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
-src = ["python", "services", "infra/scripts", "tests"]
+src = ["python", "services", "infra", "tests"]
 target-version = "py313"
 
 [tool.ruff.lint]

@@ -1,0 +1,239 @@
+name: metiquo
+
+x-python-build: &python-build
+  context: .
+  dockerfile: infra/compose/python.Dockerfile
+
+x-app-environment: &app-environment
+  APP_ENV: ${APP_ENV:-development}
+  APP_DATA_MODE: ${APP_DATA_MODE:-mock}
+  DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://metiquo@postgres:5432/metiquo}
+  OBJECT_STORE_BACKEND: ${OBJECT_STORE_BACKEND:-filesystem}
+  OBJECT_STORE_ROOT: ${OBJECT_STORE_ROOT:-/data}
+  DISPLAY_TIMEZONE: ${DISPLAY_TIMEZONE:-Europe/Paris}
+  OE_ALLOW_STALE: ${OE_ALLOW_STALE:-true}
+  OE_REQUIRE_FRESH: ${OE_REQUIRE_FRESH:-false}
+  OE_CURRENT_YEAR: ${OE_CURRENT_YEAR:-2026}
+  OE_SOURCE_CATALOG_PATH: ${OE_SOURCE_CATALOG_PATH:-/app/config/oracles_elixir_sources.yml}
+  ODDS_PROVIDER: ${ODDS_PROVIDER:-mock}
+  ODDS_MAX_AGE_SECONDS: ${ODDS_MAX_AGE_SECONDS:-90}
+  SIGNAL_MIN_EDGE: ${SIGNAL_MIN_EDGE:-0.03}
+  SIGNAL_MIN_EV: ${SIGNAL_MIN_EV:-0.05}
+  SIGNAL_MIN_CONSERVATIVE_EV: ${SIGNAL_MIN_CONSERVATIVE_EV:-0.00}
+  SIGNAL_MAX_KELLY_FRACTION: ${SIGNAL_MAX_KELLY_FRACTION:-0.25}
+  SIGNAL_MIN_MAPPING_CONFIDENCE: ${SIGNAL_MIN_MAPPING_CONFIDENCE:-0.80}
+
+services:
+  postgres:
+    image: postgres:18@sha256:4aabea78cf39b90e834caf3af7d602a18565f6fe2508705c8d01aa63245c2e20
+    environment:
+      POSTGRES_DB: metiquo
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_USER: metiquo
+      PGTZ: UTC
+      TZ: UTC
+    command: ["postgres", "-c", "timezone=UTC"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U metiquo -d metiquo"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - backend
+
+  volume-init:
+    image: metiquo-volume-init:local
+    build: *python-build
+    user: "0:0"
+    read_only: true
+    command:
+      - /bin/sh
+      - -ec
+      - chown -R 10001:10001 /data/raw /data/models /data/backups
+    volumes:
+      - raw_snapshots:/data/raw
+      - model_artifacts:/data/models
+      - backups:/data/backups
+    network_mode: none
+    restart: "no"
+
+  mock-mode-check:
+    image: metiquo-mock-check:local
+    build: *python-build
+    profiles: ["mock"]
+    user: "10001:10001"
+    read_only: true
+    command: ["python", "/opt/metiquo-bootstrap/mock_mode_check.py"]
+    environment: *app-environment
+    network_mode: none
+    restart: "no"
+
+  minio-volume-init:
+    image: metiquo-minio-init:local
+    build: *python-build
+    profiles: ["object-store"]
+    user: "0:0"
+    read_only: true
+    command: ["/bin/sh", "-ec", "chown -R 10001:10001 /data/object-store"]
+    volumes:
+      - minio_data:/data/object-store
+    network_mode: none
+    restart: "no"
+
+  api:
+    image: metiquo-api:local
+    build: *python-build
+    init: true
+    read_only: true
+    command: ["python", "/opt/metiquo-bootstrap/api_health.py"]
+    environment: *app-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      volume-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 3s
+    ports:
+      - "127.0.0.1:8000:8000"
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    volumes:
+      - raw_snapshots:/data/raw:ro
+      - model_artifacts:/data/models:ro
+    networks:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+  worker:
+    image: metiquo-worker:local
+    build: *python-build
+    init: true
+    read_only: true
+    command: ["python", "/opt/metiquo-bootstrap/worker.py"]
+    environment: *app-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      volume-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    volumes:
+      - raw_snapshots:/data/raw
+      - model_artifacts:/data/models
+      - backups:/data/backups
+    networks:
+      - backend
+    restart: unless-stopped
+
+  web:
+    image: metiquo-web:local
+    build:
+      context: .
+      dockerfile: infra/compose/web.Dockerfile
+    init: true
+    read_only: true
+    command: ["node", "/opt/metiquo-bootstrap/web-health.mjs"]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 3s
+    ports:
+      - "127.0.0.1:3000:3000"
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    networks:
+      - frontend
+    restart: unless-stopped
+
+  gateway:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    profiles: ["production", "object-store"]
+    user: "1000:1000"
+    read_only: true
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8443:8443"
+    tmpfs:
+      - /config:size=8m,mode=0700,uid=1000,gid=1000
+      - /data:size=32m,mode=0700,uid=1000,gid=1000
+      - /tmp:size=8m,mode=1777
+    volumes:
+      - ./infra/gateway/Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - frontend
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    profiles: ["object-store"]
+    user: "10001:10001"
+    read_only: true
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        test -n "$${MINIO_ROOT_USER}" && test -n "$${MINIO_ROOT_PASSWORD}" ||
+        { echo 'Identifiants MinIO requis pour le profil object-store' >&2; exit 1; };
+        exec minio server /data --address :9000 --console-address :9001
+    environment:
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-}
+    depends_on:
+      minio-volume-init:
+        condition: service_completed_successfully
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    volumes:
+      - minio_data:/data
+    networks:
+      - backend
+    restart: unless-stopped
+
+networks:
+  backend:
+    internal: true
+  frontend:
+
+volumes:
+  postgres_data:
+  raw_snapshots:
+  model_artifacts:
+  backups:
+  minio_data:

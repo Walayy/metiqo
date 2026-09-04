@@ -25,4 +25,10 @@ Copier `.env.example` vers `.env`, puis remplacer uniquement les valeurs propres
 
 Après avoir défini `DATABASE_URL` pour une base PostgreSQL vide, appliquer les migrations avec `uv run alembic upgrade head`. La révision initiale crée uniquement les schémas logiques `raw`, `core`, `odds`, `features`, `ml`, `signals` et `ops` ; elle n’insère aucune donnée.
 
+## Conteneurs locaux
+
+Le socle local démarre avec `docker compose --profile mock up -d --build --wait`. À ce stade de la fondation, les conteneurs API, worker et web exécutent uniquement des processus de santé explicitement temporaires ; leurs implémentations applicatives arrivent dans les tickets dédiés.
+
+Les ports web et API sont liés uniquement à `127.0.0.1`. PostgreSQL reste sur un réseau Docker interne. Le profil `production` ajoute le gateway HTTPS et `object-store` ajoute également MinIO ; ce dernier refuse de démarrer tant que ses identifiants ne sont pas fournis hors du dépôt.
+
 Ce logiciel n’exécute aucun pari réel et ne garantit aucun gain.
