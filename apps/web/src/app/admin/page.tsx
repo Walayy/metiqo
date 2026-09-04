@@ -1,11 +1,11 @@
-import { PlaceholderPage } from "../../components/placeholder-page";
+import { Suspense } from "react";
+
+import { AdminOperationsDashboard } from "../../components/data-health-dashboard";
 
 export default function AdminPage() {
   return (
-    <PlaceholderPage
-      description="Jobs, synchronisations, mappings en attente et journal des décisions auditées."
-      eyebrow="Opérations"
-      title="Administration"
-    />
+    <Suspense fallback={<div className="min-h-[32rem]" />}>
+      <AdminOperationsDashboard />
+    </Suspense>
   );
 }

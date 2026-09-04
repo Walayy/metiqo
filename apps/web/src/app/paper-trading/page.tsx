@@ -1,11 +1,11 @@
-import { PlaceholderPage } from "../../components/placeholder-page";
+import { Suspense } from "react";
+
+import { PaperTradingDashboard } from "../../components/paper-trading-dashboard";
 
 export default function PaperTradingPage() {
   return (
-    <PlaceholderPage
-      description="Décisions simulées, règlement et performance sans aucune exécution réelle."
-      eyebrow="Simulation"
-      title="Paper trading"
-    />
+    <Suspense fallback={<div className="min-h-[32rem]" />}>
+      <PaperTradingDashboard />
+    </Suspense>
   );
 }

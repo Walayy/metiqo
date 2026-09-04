@@ -241,3 +241,100 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le dashboard applique les contrats, règles d’admission, colonnes et états distants déjà imposés sans modifier une décision structurante.
 - **Commit/hash :** `0b613e485c530c970b672d17dc49d69a9deb8b96` (`feat: add opportunity dashboard`).
+
+## UI-005 — Fiche événement
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-005`, `UI-002` et `UI-003` sont `DONE` et présents sur `main` ; `UI-004` est fusionné par la PR #11.
+- **Fichiers créés/modifiés :** `apps/web/src/app/events/page.tsx`, `apps/web/src/app/events/[eventId]/page.tsx`, `apps/web/src/components/events-explorer.tsx`, `apps/web/src/components/event-detail.tsx`, `apps/web/src/components/opportunities-dashboard.tsx`, `tests/e2e/event-detail.spec.ts`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Prettier ; typecheck web strict ; ESLint ciblé ; tests Playwright ciblés ; inspection visuelle et fonctionnelle dans le navigateur intégré des vues liste et détail en thème sombre ; inspection de la capture desktop claire ; `make check` ; `make test-e2e` ; `git diff --check`.
+- **Résultat exact :** la navigation Événements expose les 12 matchs mock puis une fiche partageable par identifiant canonique. La fiche regroupe participants et format, marchés supportés et non supportés, probabilités marché/modèle et intervalle, EV prudente, facteurs de qualité, données manquantes, confiance du mapping, version modèle, feature/odds snapshots, provenance source et timeline cutoff-prédiction-cote-début. Les rosters individuels absents ne sont pas inventés et le mode mock indique explicitement qu’aucun snapshot Oracle’s Elixir réel n’est utilisé. La courbe de cotes possède un titre, une description SVG et un résumé textuel équivalent. Le seul CTA transactionnel crée un paper bet depuis un signal admissible ; aucune mise réelle ni connexion bookmaker n’est proposée. Validation : 16 tests UI et 4 tests web réussissent ; 90 tests Python réussissent et 3 sont ignorés ; les 14 scénarios Playwright réussissent, dont deux nouveaux tests détail/mobile ; Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy et OpenAPI passent.
+- **Blocker éventuel :** aucun pour le mode mock. Les rosters détaillés et snapshots Oracle’s Elixir réels restent correctement absents avant les phases de données réelles.
+- **ADR éventuel :** aucun ; la fiche agrège les endpoints et DTO existants sans modifier l’architecture.
+- **Commit/hash :** `406b95ad893895c334c0b3c6ae345c7b48c27d30` (`feat: add event detail experience`).
+
+## UI-006 — Fiche signal et explicabilité UI
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-005`, `UI-002` et `UI-003` sont `DONE` et présents sur `main`.
+- **Fichiers créés/modifiés :** `apps/web/src/app/opportunities/[signalId]/page.tsx`, `apps/web/src/components/signal-detail.tsx`, `apps/web/src/components/event-detail.tsx`, `apps/web/src/components/opportunities-dashboard.tsx`, `tests/e2e/signal-detail.spec.ts`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Prettier ; typecheck web strict ; ESLint ciblé ; tests Playwright ciblés admissible/stale/mobile ; inspection de la capture desktop claire ; inspection fonctionnelle et visuelle dans le navigateur intégré en thème sombre ; `git diff --check`.
+- **Résultat exact :** chaque signal possède une URL dédiée reliant prix marché observé et prix modèle indépendant, intervalle et confiance, edge/EV central et prudent, facteurs structurés, risques, qualité/fraîcheur, raisons d’abstention, référence d’explication, historique horodaté des cotes et règles paper versionnées. Un snapshot stale reste consultable pour audit avec décision et création paper bloquées. Les facteurs sont explicitement décrits comme indicateurs non causaux et aucun langage de certitude ou de résultat garanti n’est présent. Le tableau d’historique est contenu dans sa propre zone de défilement clavier sur mobile. Les 3 nouveaux tests Playwright passent ; typecheck strict, ESLint et Prettier passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la fiche assemble les endpoints existants et partage le graphique accessible de la fiche événement.
+- **Commit/hash :** `5ab21f5bf1fc7ac060c60160b78f768a722f494b` (`feat: add explainable signal detail`).
+
+## UI-007 — Catalogue modèles et backtests
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-005`, `UI-002` et `UI-003` sont `DONE` et présents sur `main`.
+- **Fichiers créés/modifiés :** `apps/web/src/app/models/page.tsx`, `apps/web/src/components/models-dashboard.tsx`, `tests/e2e/models.spec.ts`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Prettier ciblé ; typecheck web strict ; ESLint ciblé ; build Next.js de production ; tests Playwright ciblés desktop/mobile ; inspection fonctionnelle, sémantique et visuelle dans le navigateur intégré en thème sombre ; `git diff --check`.
+- **Résultat exact :** le catalogue affiche les 12 versions champion exactes, leur algorithme, métriques, feature version et justification de promotion sans créer de challenger absent des données. La comparaison de calibration montre log loss et score de Brier face à leurs baselines avec barres accessibles et résumé textuel équivalent. La table expose les périodes walk-forward, segments, effectifs, métriques et préservation du test final ; chaque backtest mock de 240 observations porte un avertissement de faible échantillon. La capacité `MATCH_WINNER` est active et les autres marchés restent explicitement désactivés jusqu’à leur gate. Les 2 nouveaux tests Playwright passent, dont la zone de défilement clavier du tableau mobile ; typecheck strict, ESLint et Prettier passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le catalogue restitue les DTO et capability gates existants sans modifier l’architecture.
+- **Commit/hash :** `d0453d29753377c636ebf4827e2cc2e791b47f3a` (`feat: add models and backtests dashboard`).
+
+## UI-008 — Santé data et administration UI
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-005`, `MCK-006`, `UI-002` et `UI-003` sont `DONE` et présents sur `main`.
+- **Fichiers créés/modifiés :** `apps/web/src/app/data/page.tsx`, `apps/web/src/app/admin/page.tsx`, `apps/web/src/app/api/backend/[...path]/route.ts`, `apps/web/src/components/data-health-dashboard.tsx`, `tests/e2e/admin-data.spec.ts`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Prettier ciblé ; typecheck web strict ; ESLint ciblé ; build Next.js de production ; 3 tests Playwright ciblés ; inspection fonctionnelle, sémantique et visuelle dans le navigateur intégré en thème sombre ; déclenchement d’une synchronisation mock depuis l’interface ; `git diff --check`.
+- **Résultat exact :** la vue Données expose le catalogue source, dernière tentative et dernier succès, statut de fraîcheur annuelle, lignes validées, snapshot actif, historique d’ingestion, anomalies bloquantes et quarantaine. Les hash, plage métier et changements de schéma absents du DTO mock sont signalés explicitement au lieu d’être déduits. Un échec avec dernier snapshot valide apparaît comme récupérable ; l’absence du catalogue primaire est bloquante, tandis qu’une erreur isolée de qualité conserve un retry. La vue Administration affiche les jobs, lance une mutation POST avec clé d’idempotence, montre progression puis résultat direct et actualise une seule fois le journal d’audit, sans polling. Les 3 nouveaux tests Playwright passent et le parcours Navigateur confirme 12 lignes synchronisées avec une nouvelle trace `mock.sync` ; typecheck strict, ESLint et Prettier passent.
+- **Blocker éventuel :** aucun. Les métadonnées détaillées réelles seront branchées par `OE-023` sur les mêmes composants.
+- **ADR éventuel :** aucun ; le proxy transmet uniquement les en-têtes métier nécessaires et n’expose ni cookies ni configuration privée.
+- **Commit/hash :** `43e61e5a89fc1e1c76573808e3f2ab824615d60f` (`feat: add data health administration`).
+
+## UI-009 — File de mapping UI
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-005`, `MCK-006`, `UI-002` et `UI-003` sont `DONE` et présents sur `main`.
+- **Fichiers créés/modifiés :** `apps/web/src/components/data-health-dashboard.tsx`, `apps/web/src/components/mapping-review-queue.tsx`, `tests/e2e/mapping-review.spec.ts`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Prettier ciblé ; typecheck web strict ; ESLint ciblé ; build Next.js de production ; 2 tests Playwright ciblés ; inspection fonctionnelle, sémantique et visuelle dans le navigateur intégré en thème sombre ; `git diff --check`.
+- **Résultat exact :** la file Administration affiche l’événement fournisseur brut, compétition et participants, les deux candidats canoniques, leur confiance globale, les composantes textuelles réellement présentes et l’absence explicite de pondérations individuelles dans le DTO mock. Le choix radio alimente un aperçu d’impact qui précise qu’aucun historique n’est réécrit. L’ambiguïté reste signalée comme bloquante et les décisions sont désactivées tant que relecteur et motif ne sont pas valides. La création d’alias enregistre sa date serveur ; approbation et rejet sont idempotents, et le candidat retenu est inclus dans le motif audité. Les 2 tests Playwright passent : changement d’aperçu puis parcours alias + approbation, avec traces `alias.create` et `mapping.approved` visibles dans le journal ; typecheck strict, ESLint et Prettier passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l’interface respecte les DTO de revue et mutations existants sans inventer de score de composante.
+- **Commit/hash :** `3f88139440118f8b4f5c96c8fe8d912bfad72ea5` (`feat: add audited mapping review queue`).
+
+## UI-010 — Paper trading UI mock
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-005`, `MCK-006`, `UI-002` et `UI-003` sont `DONE` et présents sur `main`.
+- **Fichiers créés/modifiés :** `apps/web/src/app/paper-trading/page.tsx`, `apps/web/src/app/paper-trading/[paperBetId]/page.tsx`, `apps/web/src/components/paper-trading-dashboard.tsx`, `apps/web/src/components/paper-bet-detail.tsx`, `tests/e2e/paper-trading.spec.ts`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Prettier ciblé ; typecheck web strict ; ESLint ciblé ; builds Next.js de production ; 3 tests Playwright ciblés exécutés après correction visuelle ; inspection fonctionnelle, sémantique et visuelle dans le navigateur intégré des vues liste/création et détail en thème sombre ; `git diff --check`.
+- **Résultat exact :** la page Paper trading présente l’historique, les fiches dédiées, snapshots, règles de règlement versionnées et les six statuts contractuels, avec `open` libellé comme en attente. Un signal admissible préremplit la sélection et la cote figée ; une clé d’idempotence protège création et règlement fictifs. Le résultat créé reste visible dans la session et peut être réglé en `won`, `lost`, `push` ou `void`. Gains, pertes et solde ont des cartes de poids identique ; un scénario contrôlé prouve l’affichage simultané de `+14,00 €` et `-10,00 €`. Le Navigateur a révélé puis fait corriger le signe positif trompeur sur un P&L nul. Les écrans répètent qu’aucune mise bookmaker ni exécution réelle n’existe. Les 3 nouveaux tests Playwright passent ; typecheck strict, ESLint et Prettier passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les flux utilisent les mutations paper existantes et conservent la séparation stricte du mode réel.
+- **Commit/hash :** `e4d0a7a5ace7a1470a6f42c9e2ca1599e7bcfbc9` (`feat: add paper trading workflow`).
+
+## UI-011 — Micro-interactions, responsive et accessibilité
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `UI-004`, `UI-005`, `UI-006`, `UI-007`, `UI-008`, `UI-009` et `UI-010` sont `DONE`.
+- **Fichiers créés/modifiés :** `apps/web/src/app/globals.css`, `apps/web/src/components/data-health-dashboard.tsx`, `tests/e2e/accessibility.spec.ts`, six baselines Windows/Linux sous `tests/e2e/accessibility.spec.ts-snapshots/`, `playwright.config.ts`, `package.json`, `pnpm-lock.yaml`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** vérification de la version `@axe-core/playwright` auprès du registre pnpm ; installation verrouillée de `4.13.0` ; Prettier ; typecheck web strict ; ESLint ciblé ; plusieurs builds Next.js de production ; exécutions ciblées puis complète des 6 tests Playwright UI-011 ; génération puis comparaison des baselines visuelles desktop/tablette/mobile sous Windows et dans l'image Linux officielle Playwright `1.62.1` ; inspection des captures mobile et tablette ; `make check` via le chemin absolu de GNU Make installé ; `git diff --check`.
+- **Résultat exact :** les contrôles axe WCAG A/AA passent sans violation sur 9 routes clés en même temps que l'absence d'erreur ou avertissement d'hydratation. Axe a d'abord détecté puis fait corriger une structure `<dl>` invalide dans les statistiques de données. Le CLS mesuré sur cinq dashboards reste sous la cible stricte `0,05`. La file de mapping est parcourue au clavier, le focus possède un contour calculé d'au moins 2 px, les quatre commandes mobiles critiques mesurent au moins 44 px de haut et la réduction de mouvement ramène animations/transitions à `0,01 ms`. Les transitions globales utilisent le token de 160 ms ; trois captures stables, chacune versionnée pour Windows et Linux, couvrent Opportunités desktop, Administration tablette et Paper mobile sans débordement global. La séparation par plateforme et Inter embarquée évitent de confondre les différences de rendu typographique des polices avec une régression visuelle. `make check` passe : 16 tests UI et 4 tests web, 90 tests Python réussis et 3 ignorés, Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy et OpenAPI verts. Le premier appel `make` nu n'a exécuté aucun contrôle car son dossier n'était pas dans le `PATH` ; la relance absolue retourne `0`.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l’audit automatise les exigences UX existantes sans modifier l’architecture.
+- **Commit/hash :** `7fcf60f240719cc94d686f89842c50a7740dc996` (`test: enforce responsive accessibility gate`).
+
+## MCK-007 — Gate P1 — démo mock complète
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-006` et `UI-011` sont `DONE` ; l'ensemble des livrables P1 est présent dans le même lot de fusion.
+- **Fichiers créés/modifiés :** `Makefile`, `README.md`, `python/metiqo/mock/demo.py`, `infra/scripts/seed_mock_demo.py`, `tests/mock/test_seed_mock_demo.py`, `docs/progress.md`.
+- **Migrations :** les migrations existantes `20260904_0001` et `20260904_0002` ont été appliquées avec succès sur un volume PostgreSQL Compose neuf ; aucune nouvelle migration.
+- **Commandes/tests exécutés :** `make mock-seed` ; `make mock-demo`, qui exécute le profil `docker compose --profile mock up -d --build --wait` puis `make db-migrate` ; vérification HTTP de `/health`, `/ready`, `/api/v1/system/status` et du web ; inspection Navigateur des vues Opportunités et Paper trading sur les images fraîchement construites ; `make test-e2e` sur la stack Compose ; `make check` ; `git diff --check`.
+- **Résultat exact :** la graine `metiquo-demo-v1` produit de façon déterministe les 12 scénarios normatifs et le manifeste SHA-256 `65e4fc0cdcd680ba4bd7bd5efdef79b0cee1465f07eeb54833438b7572b77d43`, avec identifiants événement/signal stables et `externalNetworkAccess=false`. PostgreSQL, API, worker et web deviennent tous `healthy`; les sondes API et web répondent `200`, et le statut système confirme `dataMode=mock` avec la base disponible. Le README documente le démarrage neuf, la validation et l'arrêt. Les 33 tests Playwright passent sur Compose, dont axe WCAG A/AA sur 9 routes sans erreur console/hydratation, CLS, clavier/tactile et trois baselines responsive. `make check` passe : 16 tests UI et 4 tests web, 92 tests Python réussis et 3 ignorés, Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy et OpenAPI verts.
+- **Blocker éventuel :** aucun ; le gate P1 est vert et autorise le démarrage de P2.
+- **ADR éventuel :** aucun ; le script expose et vérifie le catalogue mock existant sans introduire de persistance ou d'accès réseau métier.
+- **Commit/hash :** `6ee0186e6632f9a5cbbc0506a395202d96c9ba51` (`feat: complete the mock demo gate`).
+- **Correctifs CI/hashes :** `55d9d77758e6f47acafa840279a99bc60dfc83af` (`test: stabilize Playwright across platforms`) ajoute les baselines Linux et rend les clés d'idempotence du parcours mapping stables ; `95eb64cdc4a1d504a6394215cbf3fae17e769912` (`fix: bundle Inter for stable rendering`) ajoute la police au bundle ; `fe11ec634c1fc05f2bd7f94550593aa5554e0cea` (`fix: use the bundled variable font`) relie le token du design system à la famille embarquée et régénère les références. Le test mapping passe deux fois de suite contre le même processus mock, les références visuelles passent sous Windows et dans l'image Linux Playwright, puis les 33 tests E2E passent ensemble.

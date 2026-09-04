@@ -367,9 +367,14 @@ function OpportunityTable({
                 {opportunity.event.competition}
               </td>
               <td className="min-w-44 px-3 py-4 font-semibold">
-                {opportunity.event.teamA}
-                <span className="mx-1.5 text-ink-secondary">vs</span>
-                {opportunity.event.teamB}
+                <Link
+                  className="rounded underline decoration-border-strong underline-offset-4 outline-none hover:decoration-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  href={`/events/${encodeURIComponent(opportunity.event.eventId)}`}
+                >
+                  {opportunity.event.teamA}
+                  <span className="mx-1.5 text-ink-secondary">vs</span>
+                  {opportunity.event.teamB}
+                </Link>
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-ink-secondary">Vainqueur · Série</td>
               <td className="whitespace-nowrap px-3 py-4 font-medium">
@@ -405,7 +410,14 @@ function OpportunityTable({
                 <FreshnessBadge freshness={opportunity.meta.freshness} />
               </td>
               <td className="px-3 py-4">
-                <Explanation opportunity={opportunity} />
+                <div className="grid gap-3">
+                  <Button asChild size="small" variant="outline">
+                    <Link href={`/opportunities/${encodeURIComponent(opportunity.signalId)}`}>
+                      Ouvrir le signal
+                    </Link>
+                  </Button>
+                  <Explanation opportunity={opportunity} />
+                </div>
               </td>
             </tr>
           ))}
@@ -447,8 +459,13 @@ function OpportunityCards({
                   {opportunity.event.competition}
                 </p>
                 <h2 className="mt-1 text-xl font-semibold tracking-tight">
-                  {opportunity.event.teamA} <span className="text-ink-secondary">vs</span>{" "}
-                  {opportunity.event.teamB}
+                  <Link
+                    className="rounded underline decoration-border-strong underline-offset-4 outline-none hover:decoration-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                    href={`/events/${encodeURIComponent(opportunity.event.eventId)}`}
+                  >
+                    {opportunity.event.teamA} <span className="text-ink-secondary">vs</span>{" "}
+                    {opportunity.event.teamB}
+                  </Link>
                 </h2>
                 <p className="mt-1 text-xs text-ink-secondary">
                   {formatDateTime(opportunity.event.startsAt)} ·{" "}
@@ -487,7 +504,14 @@ function OpportunityCards({
               <p className="text-xs text-ink-secondary">
                 Vainqueur du match · {opportunity.market.selectionLabel}
               </p>
-              <Explanation opportunity={opportunity} />
+              <div className="flex flex-wrap items-center gap-3">
+                <Button asChild size="small" variant="outline">
+                  <Link href={`/opportunities/${encodeURIComponent(opportunity.signalId)}`}>
+                    Ouvrir le signal
+                  </Link>
+                </Button>
+                <Explanation opportunity={opportunity} />
+              </div>
             </div>
           </CardContent>
         </Card>

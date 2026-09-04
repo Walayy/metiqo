@@ -26,30 +26,46 @@ function problemResponse() {
   );
 }
 
-export async function GET(request: Request, context: ProxyRouteContext) {
+async function forward(request: Request, context: ProxyRouteContext) {
   const { path } = await context.params;
   const encodedPath = path.map((segment) => encodeURIComponent(segment)).join("/");
   const upstreamUrl = new URL(encodedPath, `${apiBaseUrl().replace(/\/$/, "")}/`);
   upstreamUrl.search = new URL(request.url).search;
 
   try {
+    const headers = new Headers({ accept: "application/json" });
+    const contentType = request.headers.get("content-type");
+    const idempotencyKey = request.headers.get("idempotency-key");
+    if (contentType) headers.set("content-type", contentType);
+    if (idempotencyKey) headers.set("idempotency-key", idempotencyKey);
+    const body = request.method === "GET" ? "" : await request.text();
     const upstreamResponse = await fetch(upstreamUrl, {
+      ...(body.length > 0 ? { body } : {}),
       cache: "no-store",
-      headers: { accept: "application/json" },
+      headers,
+      method: request.method,
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MILLISECONDS),
     });
-    const contentType = upstreamResponse.headers.get("content-type");
-    const headers = new Headers({ "cache-control": "no-store" });
-    if (contentType) {
-      headers.set("content-type", contentType);
+    const responseContentType = upstreamResponse.headers.get("content-type");
+    const responseHeaders = new Headers({ "cache-control": "no-store" });
+    if (responseContentType) {
+      responseHeaders.set("content-type", responseContentType);
     }
 
     return new Response(upstreamResponse.body, {
-      headers,
+      headers: responseHeaders,
       status: upstreamResponse.status,
       statusText: upstreamResponse.statusText,
     });
   } catch {
     return problemResponse();
   }
+}
+
+export async function GET(request: Request, context: ProxyRouteContext) {
+  return forward(request, context);
+}
+
+export async function POST(request: Request, context: ProxyRouteContext) {
+  return forward(request, context);
 }

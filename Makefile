@@ -3,7 +3,7 @@
 PYTHON_PATHS := python services infra tests
 OE_TARGETS := oe-catalog oe-backfill oe-sync oe-sync-current oe-validate oe-diff oe-rebuild-canonical
 
-.PHONY: help up down db-migrate docker-build format lint typecheck test test-migrations test-e2e openapi openapi-check check $(OE_TARGETS)
+.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-migrations test-e2e openapi openapi-check check $(OE_TARGETS)
 
 help:
 	@echo "Metiquo - commandes développeur"
@@ -11,6 +11,8 @@ help:
 	@echo "  make down           Arrête la stack locale"
 	@echo "  make db-migrate     Applique les migrations dans la stack"
 	@echo "  make docker-build   Valide et construit les images Compose"
+	@echo "  make mock-seed      Vérifie les 12 scénarios de la graine mock"
+	@echo "  make mock-demo      Prépare et démarre la démo mock complète"
 	@echo "  make format         Formate les sources"
 	@echo "  make lint           Vérifie format, lint et orthographe"
 	@echo "  make typecheck      Vérifie les types TypeScript et Python"
@@ -32,6 +34,15 @@ db-migrate:
 docker-build:
 	docker compose config --quiet
 	docker compose --profile mock build
+
+mock-seed:
+	uv run --frozen python infra/scripts/seed_mock_demo.py --check
+
+mock-demo:
+	$(MAKE) mock-seed
+	$(MAKE) up
+	$(MAKE) db-migrate
+	@echo "Démo mock prête : http://127.0.0.1:3000"
 
 format:
 	pnpm run format
