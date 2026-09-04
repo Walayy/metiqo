@@ -1,6 +1,6 @@
 """Conventions SQLAlchemy partagées par les futurs modèles persistés."""
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Final
 from uuid import UUID, uuid4
 
@@ -8,6 +8,8 @@ from sqlalchemy import DateTime, MetaData, func
 from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
+
+from metiquo.foundation.time import normalize_utc_datetime
 
 NAMING_CONVENTION: Final[dict[str, str]] = {
     "ix": "ix_%(column_0_label)s",
@@ -28,9 +30,7 @@ class UtcDateTime(TypeDecorator[datetime]):
         del dialect
         if value is None:
             return None
-        if value.tzinfo is None or value.utcoffset() is None:
-            raise ValueError("Un datetime persistant doit être conscient de son fuseau")
-        return value.astimezone(UTC)
+        return normalize_utc_datetime(value)
 
     def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         del dialect
@@ -38,7 +38,7 @@ class UtcDateTime(TypeDecorator[datetime]):
             return None
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("PostgreSQL a renvoyé un datetime sans fuseau")
-        return value.astimezone(UTC)
+        return normalize_utc_datetime(value)
 
 
 class Base(DeclarativeBase):
