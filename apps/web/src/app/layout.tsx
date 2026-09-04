@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import "@fontsource-variable/inter";
+
 import { AppShell, type DataMode } from "../components/app-shell";
 import "./globals.css";
 import { Providers } from "./providers";
