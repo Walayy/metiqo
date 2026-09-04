@@ -43,6 +43,7 @@ import {
 import type { ReactNode } from "react";
 
 import { formatDateTime } from "./opportunity-presenters";
+import { MappingReviewQueue } from "./mapping-review-queue";
 
 const API_BASE = "/api/backend/api/v1/admin";
 
@@ -521,6 +522,8 @@ export function AdminOperationsDashboard() {
           <RemoteEmptyState description="Aucun job n’est déclaré." />
         )}
       </Panel>
+
+      <MappingReviewQueue />
 
       <Panel icon={<ListChecks className="size-5" />} title="Journal d’audit">
         {audit.isError ? (
