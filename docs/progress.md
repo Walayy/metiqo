@@ -145,3 +145,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le schéma mock séparé et l’interdiction réseau appliquent directement la SFG.
 - **Commit/hash :** `b805cb701ae1c4727a9e39f3d740dc1060d3b92d` (`feat: isolate mock and real data access`).
+
+## MCK-003 — Créer les 12 scénarios mock normatifs
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-001` et `MCK-002` sont `DONE` et présents sur `origin/main` après fusion protégée de la PR #3.
+- **Fichiers créés/modifiés :** `python/metiquo/mock/`, `tests/mock/test_scenarios.py`, `tests/fixtures/mock_scenarios_v1.sha256`, `python/metiquo/config.py`, `.env.example`, `docker-compose.yml`, `tests/test_config.py`, `README.md`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** lecture ciblée de la SFG §8.2, §25.1, §26.5, §31 et §33 ainsi que de `MCK-003` dans le plan, le backlog et la traçabilité ; Ruff format/check ; mypy strict ; tests ciblés scénarios/configuration ; calcul et vérification du snapshot SHA-256 ; `make check` via le chemin absolu de GNU Make ; `make docker-build` ; recherche de TODO, ignores, casts et `Any` ; `git diff --check`. Une première invocation de `make` nu dans la copie de travail a échoué avant tout contrôle car son dossier utilisateur n’était pas dans le `PATH` de ce processus ; elle a été relancée avec l’exécutable installé explicitement.
+- **Résultat exact :** catalogue de 12 scénarios, chacun adressable par une clé stable et composé des DTO canoniques ; une même graine et une même horloge produisent une sérialisation identique, une autre horloge décale uniquement les timestamps relatifs, et une autre graine produit des IDs disjoints. Les scénarios couvrent faible value, outsider à vraie value, cote stale, marché suspendu, mapping ambigu, données Oracle incomplètes, modèle stale, forte incertitude, sync échouée avec dernier snapshot valide, changement de cote append-only, void et résultat en quarantaine. Le snapshot complet est verrouillé par le digest `180ffd4e3c3159fecf41416ff81219b0d06c4b9d6a75a16c0e3b16428348909f`. Suite finale : 76 tests réussis et 3 tests PostgreSQL conditionnels ignorés ; Ruff, mypy sur 59 fichiers, TypeScript strict, ESLint, Prettier, CSpell et OpenAPI passent. Les cinq images Compose du profil mock sont construites avec succès. Premier run protégé de la PR #4 : `Build Docker` passe en `20 s`, `Migrations PostgreSQL` en `21 s` et `Qualité` en `52 s`.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le catalogue applique directement les scénarios et l’horloge déterministe imposés par la SFG sans modifier une décision structurante.
+- **Commit/hash :** `51713aee12138d1558bf31cd1591a40d2b9f00cd` (`feat: add deterministic mock scenarios`).
