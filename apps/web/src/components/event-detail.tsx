@@ -75,7 +75,7 @@ function DetailCard({
   );
 }
 
-function OddsChart({ snapshots }: Readonly<{ snapshots: readonly OddsSnapshot[] }>) {
+export function OddsChart({ snapshots }: Readonly<{ snapshots: readonly OddsSnapshot[] }>) {
   const points = [...snapshots].sort((left, right) =>
     left.capturedAt.localeCompare(right.capturedAt),
   );
@@ -486,11 +486,18 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                 </p>
               </div>
               {signal && isAdmissible(signal, referenceTime) ? (
-                <Button asChild>
-                  <Link href={`/paper-trading?signalId=${encodeURIComponent(signal.signalId)}`}>
-                    Créer un paper bet
-                  </Link>
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="outline">
+                    <Link href={`/opportunities/${encodeURIComponent(signal.signalId)}`}>
+                      Voir le signal
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href={`/paper-trading?signalId=${encodeURIComponent(signal.signalId)}`}>
+                      Créer un paper bet
+                    </Link>
+                  </Button>
+                </div>
               ) : (
                 <Button disabled>Paper bet non admissible</Button>
               )}

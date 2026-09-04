@@ -410,7 +410,14 @@ function OpportunityTable({
                 <FreshnessBadge freshness={opportunity.meta.freshness} />
               </td>
               <td className="px-3 py-4">
-                <Explanation opportunity={opportunity} />
+                <div className="grid gap-3">
+                  <Button asChild size="small" variant="outline">
+                    <Link href={`/opportunities/${encodeURIComponent(opportunity.signalId)}`}>
+                      Ouvrir le signal
+                    </Link>
+                  </Button>
+                  <Explanation opportunity={opportunity} />
+                </div>
               </td>
             </tr>
           ))}
@@ -497,7 +504,14 @@ function OpportunityCards({
               <p className="text-xs text-ink-secondary">
                 Vainqueur du match · {opportunity.market.selectionLabel}
               </p>
-              <Explanation opportunity={opportunity} />
+              <div className="flex flex-wrap items-center gap-3">
+                <Button asChild size="small" variant="outline">
+                  <Link href={`/opportunities/${encodeURIComponent(opportunity.signalId)}`}>
+                    Ouvrir le signal
+                  </Link>
+                </Button>
+                <Explanation opportunity={opportunity} />
+              </div>
             </div>
           </CardContent>
         </Card>
