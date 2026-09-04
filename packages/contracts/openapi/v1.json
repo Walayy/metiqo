@@ -730,6 +730,37 @@
         "title": "ModelSummary",
         "type": "object"
       },
+      "OddsCaptureResult": {
+        "additionalProperties": false,
+        "description": "Résultat immuable d'une collecte pour un événement fournisseur.",
+        "properties": {
+          "capturedAt": {
+            "format": "date-time",
+            "title": "Capturedat",
+            "type": "string"
+          },
+          "providerEventId": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providereventid",
+            "type": "string"
+          },
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/OddsSnapshot"
+            },
+            "title": "Snapshots",
+            "type": "array"
+          }
+        },
+        "required": [
+          "providerEventId",
+          "capturedAt",
+          "snapshots"
+        ],
+        "title": "OddsCaptureResult",
+        "type": "object"
+      },
       "OddsSnapshot": {
         "additionalProperties": false,
         "description": "Observation de cote immuable, horodatée et traçable.",
@@ -1186,6 +1217,241 @@
           "code"
         ],
         "title": "ProblemDetails",
+        "type": "object"
+      },
+      "ProviderEvent": {
+        "additionalProperties": false,
+        "description": "Projection minimale d'un événement dans le vocabulaire du fournisseur.",
+        "properties": {
+          "bestOf": {
+            "anyOf": [
+              {
+                "maximum": 9,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bestof"
+          },
+          "collectedAt": {
+            "format": "date-time",
+            "title": "Collectedat",
+            "type": "string"
+          },
+          "competition": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Competition",
+            "type": "string"
+          },
+          "gameTitle": {
+            "$ref": "#/components/schemas/GameTitle"
+          },
+          "participants": {
+            "items": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 2,
+            "title": "Participants",
+            "type": "array"
+          },
+          "providerEventId": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providereventid",
+            "type": "string"
+          },
+          "sourceReference": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Sourcereference",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "title": "Startsat",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EventStatus"
+          }
+        },
+        "required": [
+          "providerEventId",
+          "gameTitle",
+          "competition",
+          "participants",
+          "startsAt",
+          "status",
+          "collectedAt",
+          "sourceReference"
+        ],
+        "title": "ProviderEvent",
+        "type": "object"
+      },
+      "ProviderHealth": {
+        "additionalProperties": false,
+        "description": "Santé observable d'un fournisseur sans révéler sa configuration.",
+        "properties": {
+          "checkedAt": {
+            "format": "date-time",
+            "title": "Checkedat",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Detail"
+          },
+          "lastSuccessAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lastsuccessat"
+          },
+          "providerCode": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providercode",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          }
+        },
+        "required": [
+          "providerCode",
+          "status",
+          "checkedAt"
+        ],
+        "title": "ProviderHealth",
+        "type": "object"
+      },
+      "ProviderMarket": {
+        "additionalProperties": false,
+        "description": "Marché fournisseur suffisant pour le mapping et la capture.",
+        "properties": {
+          "capturedAt": {
+            "format": "date-time",
+            "title": "Capturedat",
+            "type": "string"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Line"
+          },
+          "marketType": {
+            "$ref": "#/components/schemas/MarketType"
+          },
+          "period": {
+            "$ref": "#/components/schemas/MarketPeriod"
+          },
+          "providerEventId": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providereventid",
+            "type": "string"
+          },
+          "providerMarketId": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providermarketid",
+            "type": "string"
+          },
+          "rawLabel": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Rawlabel",
+            "type": "string"
+          },
+          "selections": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderSelection"
+            },
+            "minItems": 1,
+            "title": "Selections",
+            "type": "array"
+          },
+          "settlementRulesVersion": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Settlementrulesversion",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MarketStatus"
+          }
+        },
+        "required": [
+          "providerEventId",
+          "providerMarketId",
+          "rawLabel",
+          "marketType",
+          "period",
+          "selections",
+          "status",
+          "capturedAt",
+          "settlementRulesVersion"
+        ],
+        "title": "ProviderMarket",
+        "type": "object"
+      },
+      "ProviderSelection": {
+        "additionalProperties": false,
+        "description": "Sélection brute accompagnée de sa normalisation canonique.",
+        "properties": {
+          "decimalOdds": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Decimalodds",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/SelectionType"
+          }
+        },
+        "required": [
+          "selection",
+          "label",
+          "decimalOdds"
+        ],
+        "title": "ProviderSelection",
         "type": "object"
       },
       "ProviderStatus": {
