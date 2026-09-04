@@ -21,4 +21,8 @@ Copier `.env.example` vers `.env`, puis remplacer uniquement les valeurs propres
 
 `DISPLAY_TIMEZONE` contrôle uniquement le rendu. Les instants internes restent en UTC.
 
+## Base de données
+
+Après avoir défini `DATABASE_URL` pour une base PostgreSQL vide, appliquer les migrations avec `uv run alembic upgrade head`. La révision initiale crée uniquement les schémas logiques `raw`, `core`, `odds`, `features`, `ml`, `signals` et `ops` ; elle n’insère aucune donnée.
+
 Ce logiciel n’exécute aucun pari réel et ne garantit aucun gain.

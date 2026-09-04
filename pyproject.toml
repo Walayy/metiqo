@@ -9,7 +9,10 @@ description = "Moteur personnel de pricing esport Metiquo"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "alembic==1.19.1",
     "pydantic-settings==2.15.0",
+    "psycopg[binary]==3.3.5",
+    "sqlalchemy==2.0.52",
     "tzdata==2026.3",
 ]
 
@@ -35,6 +38,7 @@ init_typed = true
 
 [tool.pytest.ini_options]
 addopts = ["--strict-config", "--strict-markers"]
+markers = ["integration: nécessite une dépendance d'infrastructure locale"]
 pythonpath = ["python"]
 testpaths = ["tests"]
 
