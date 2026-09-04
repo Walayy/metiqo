@@ -1,11 +1,14 @@
-import { PlaceholderPage } from "../../components/placeholder-page";
+import { RemoteLoadingState } from "@metiquo/ui";
+import { Suspense } from "react";
+
+import { ModelsDashboard } from "../../components/models-dashboard";
 
 export default function ModelsPage() {
   return (
-    <PlaceholderPage
-      description="Versions champion et challengers, calibration, baselines et performance temporelle."
-      eyebrow="Validation"
-      title="Modèles & backtests"
-    />
+    <Suspense
+      fallback={<RemoteLoadingState label="Chargement des modèles" minHeight="32rem" rows={8} />}
+    >
+      <ModelsDashboard />
+    </Suspense>
   );
 }
