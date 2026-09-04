@@ -363,6 +363,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; Oracle’s Elixir reste l'unique source statistique LoL et la page officielle demeure le premier mécanisme obligatoire.
 - **Commit/hash :** `65ef6c8244a587b68dee0872edf730099c2233d1` (`feat(ingestion): discover official source catalog`).
 
+## OE-004 — Catalogue de secours versionné
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-003` est `DONE` et expose distinctement indisponibilité, page invalide et divergence.
+- **Fichiers créés/modifiés :** `config/oracles_elixir_sources.yml`, `python/metiquo/ingestion/fallback_catalog.py`, `python/metiquo/ingestion/catalog.py`, `infra/compose/python.Dockerfile`, `.prettierignore`, `tests/ingestion/test_fallback_catalog.py`, `tests/integration/test_catalog_repository.py`, formatage de deux fixtures HTML, `docs/progress.md`.
+- **Migrations :** aucune nouvelle migration ; l'origine et la mutabilité du bootstrap sont persistées dans `raw.source_catalog`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 12 tests unitaires catalogue/fallback ; 2 tests d'intégration de persistance PostgreSQL ; suite complète avec PostgreSQL ; contrôle Prettier global ; validation Compose ; build neuf des images API et worker avec le fichier de configuration embarqué ; `git diff --check`.
+- **Résultat exact :** le fichier versionné contient uniquement l'entrée 2026 exigée, ID `1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm`, `mutable=true` et `origin=validated-bootstrap`. Son parseur strict contrôle version, schéma, types, IDs et unicité annuelle, puis conserve le SHA-256 du fichier pour audit. Le service sélectionne ce fallback uniquement après `LandingPageUnavailable`; une page officielle accessible mais limitée au dossier Drive, trop volumineuse, invalide ou divergente n'est jamais masquée. L'origine bootstrap, la mutabilité, l'ID et le hash sont prouvés en PostgreSQL. La configuration est copiée dans `/app/config` des images runtime, cohérent avec `OE_SOURCE_CATALOG_PATH`. Les 117 tests de la suite complète passent, ainsi que la construction des deux images Python.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le fichier `.yml` emploie le sous-ensemble JSON strict de YAML 1.2 afin de rester lisible sans ajouter de parseur runtime.
+- **Commit/hash :** `f6d9694c48685d92446941c5c01c64ce09511716` (`feat(ingestion): add controlled fallback catalog`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
