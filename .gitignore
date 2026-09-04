@@ -25,6 +25,8 @@ test-results/
 
 # Données et artefacts locaux
 data/
+!apps/web/src/app/data/
+!apps/web/src/app/data/**
 raw_snapshots/
 model_artifacts/
 backups/
