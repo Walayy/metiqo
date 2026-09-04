@@ -83,3 +83,39 @@
     scroll-behavior: auto !important;
   }
 }
+
+@keyframes metiquo-skeleton-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.metiquo-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.metiquo-skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--color-surface-raised) 70%, transparent),
+    transparent
+  );
+  animation: metiquo-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metiquo-skeleton::after {
+    animation: none;
+  }
+}
