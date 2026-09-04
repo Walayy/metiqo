@@ -16,6 +16,26 @@ La spécification normative se trouve dans [`docs/specs/00_SFG_METIQUO.md`](docs
 
 Les dépendances sont installées exclusivement depuis les lockfiles avec `pnpm install --frozen-lockfile` et `uv sync --frozen`.
 
+## Démarrer en mock
+
+Docker Desktop doit être démarré. Sur une machine neuve disposant de l’outillage ci-dessus, la démo complète se prépare depuis la racine du dépôt avec :
+
+```console
+pnpm install --frozen-lockfile
+uv sync --frozen
+make mock-demo
+```
+
+`make mock-demo` vérifie d’abord la graine déterministe et les 12 scénarios normatifs, construit le profil Compose `mock`, attend la santé des services puis applique les migrations. L’application est ensuite accessible sur `http://127.0.0.1:3000`. Ce profil ne contacte ni Oracle’s Elixir ni un fournisseur de cotes : toutes les données métier sont générées localement à partir de `MOCK_SEED` et isolées du mode réel.
+
+Le parcours de démonstration couvre Opportunités, Événements, Modèles, Données, Administration, mapping et Paper trading. Pour vérifier les parcours critiques et l’accessibilité sur la stack démarrée :
+
+```console
+make test-e2e
+```
+
+Arrêter la démo sans supprimer ses volumes persistants avec `make down`.
+
 ## Parcours local reproductible
 
 Docker Desktop doit être démarré. Depuis la racine du dépôt :
@@ -46,7 +66,7 @@ make openapi-check
 make docker-build
 ```
 
-`make test` exécute les tests de composants frontend puis la suite Python. `make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` exécute les scénarios Playwright du shell responsive et produit un rapport HTML avec les captures clair/sombre. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
+`make test` exécute les tests de composants frontend puis la suite Python. `make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` exécute le parcours mock complet, l’audit axe A/AA, le contrôle CLS, les parcours clavier/tactiles et la régression visuelle desktop/tablette/mobile. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
 
 La CI appelle ces mêmes cibles locales. Toute modification d’une décision structurante de la SFG §33 exige un ADR accepté dans `docs/adr/`.
 
