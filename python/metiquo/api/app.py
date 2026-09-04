@@ -8,6 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from metiquo.api.contract_schema import install_domain_contract_schemas
 from metiquo.api.dto import (
     DependencyStatus,
     HealthResponse,
@@ -162,4 +163,5 @@ def create_app(
             )
         )
 
+    install_domain_contract_schemas(app)
     return app

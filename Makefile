@@ -61,8 +61,8 @@ test-e2e:
 openapi:
 	uv run --frozen python infra/scripts/export_openapi.py
 
-openapi-check: openapi
-	git diff --exit-code -- packages/contracts/openapi/v1.json
+openapi-check:
+	uv run --frozen python infra/scripts/export_openapi.py --check
 
 check: lint typecheck test openapi-check
 
