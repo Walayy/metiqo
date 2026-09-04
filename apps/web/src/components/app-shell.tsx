@@ -116,7 +116,7 @@ export function AppShell({ children, dataMode }: AppShellProperties) {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-surface-canvas text-ink-primary">
+    <div className="min-h-screen overflow-x-clip bg-surface-canvas text-ink-primary">
       <a
         className="fixed left-4 top-4 z-[70] -translate-y-24 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast shadow-panel outline-none transition-transform focus:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus motion-reduce:transition-none"
         href="#main-content"

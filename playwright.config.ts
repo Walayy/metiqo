@@ -8,12 +8,27 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
-  webServer: {
-    command: "pnpm --filter @metiquo/web build && pnpm --filter @metiquo/web start",
-    reuseExistingServer: process.env.CI !== "true",
-    timeout: 120_000,
-    url: "http://127.0.0.1:3000/health",
-  },
+  webServer: [
+    {
+      command:
+        "uv run --frozen uvicorn metiquo.api.app:create_app --factory --host 127.0.0.1 --port 8000",
+      env: {
+        APP_DATA_MODE: "mock",
+        APP_ENV: "test",
+        DATABASE_URL: "postgresql+psycopg://metiquo@127.0.0.1:5432/metiquo",
+        ODDS_PROVIDER: "mock",
+      },
+      reuseExistingServer: process.env.CI !== "true",
+      timeout: 120_000,
+      url: "http://127.0.0.1:8000/health",
+    },
+    {
+      command: "pnpm --filter @metiquo/web build && pnpm --filter @metiquo/web start",
+      reuseExistingServer: process.env.CI !== "true",
+      timeout: 120_000,
+      url: "http://127.0.0.1:3000/health",
+    },
+  ],
   use: {
     baseURL: "http://127.0.0.1:3000",
     browserName: "chromium",

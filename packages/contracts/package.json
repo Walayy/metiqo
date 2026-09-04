@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/generated/index.ts",
     "./client": "./src/generated/client/index.ts",
-    "./query": "./src/generated/@tanstack/react-query.gen.ts"
+    "./query": "./src/generated/@tanstack/react-query.gen.ts",
+    "./types": "./src/generated/types.gen.ts"
   },
   "scripts": {
     "generate": "openapi-ts",
