@@ -20,6 +20,19 @@ test("keeps an ambiguous raw event blocked and previews each candidate", async (
 });
 
 test("creates a dated alias and records an explicit approval", async ({ page }) => {
+  await page.route("**/api/backend/api/v1/admin/**", async (route) => {
+    const request = route.request();
+    if (request.method() !== "POST") {
+      await route.continue();
+      return;
+    }
+    const idempotencyKey = request.url().includes("/admin/aliases")
+      ? "e2e-mapping-alias-v1"
+      : "e2e-mapping-approval-v1";
+    await route.continue({
+      headers: { ...request.headers(), "idempotency-key": idempotencyKey },
+    });
+  });
   await page.goto("/admin");
 
   const queue = page.getByRole("region", { name: "File de mapping" });

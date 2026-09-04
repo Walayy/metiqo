@@ -1,5 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
+const apiUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8000";
+const baseUrl = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -8,7 +11,7 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
-  snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
+  snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}",
   webServer: [
     {
       command:
@@ -21,17 +24,17 @@ export default defineConfig({
       },
       reuseExistingServer: process.env.CI !== "true",
       timeout: 120_000,
-      url: "http://127.0.0.1:8000/health",
+      url: `${apiUrl}/health`,
     },
     {
       command: "pnpm --filter @metiquo/web build && pnpm --filter @metiquo/web start",
       reuseExistingServer: process.env.CI !== "true",
       timeout: 120_000,
-      url: "http://127.0.0.1:3000/health",
+      url: `${baseUrl}/health`,
     },
   ],
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: baseUrl,
     browserName: "chromium",
     locale: "fr-FR",
     screenshot: "only-on-failure",
