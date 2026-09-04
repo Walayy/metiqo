@@ -1,11 +1,14 @@
-import { PlaceholderPage } from "../../components/placeholder-page";
+import { RemoteLoadingState } from "@metiquo/ui";
+import { Suspense } from "react";
+
+import { EventsExplorer } from "../../components/events-explorer";
 
 export default function EventsPage() {
   return (
-    <PlaceholderPage
-      description="Calendrier, participants, marchés et historique des cotes observées."
-      eyebrow="Compétition"
-      title="Événements"
-    />
+    <Suspense
+      fallback={<RemoteLoadingState label="Chargement des événements" minHeight="32rem" rows={8} />}
+    >
+      <EventsExplorer />
+    </Suspense>
   );
 }
