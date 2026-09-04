@@ -112,12 +112,12 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 
 ## FND-010 — CI de base et discipline ADR
 
-- **Statut :** `IN_PROGRESS`
+- **Statut :** `BLOCKED`
 - **Dépendances vérifiées :** `FND-009` est `DONE` et présent sur `origin/main`.
 - **Fichiers créés/modifiés :** `.github/workflows/ci.yml`, `Makefile`, `README.md`, `docs/adr/README.md`, `docs/adr/0000-template.md`, `docs/progress.md`.
 - **Migrations :** aucune nouvelle migration.
-- **Commandes/tests exécutés :** validations en cours.
-- **Résultat exact :** pipeline et discipline ADR implémentés ; validations en cours.
-- **Blocker éventuel :** aucun à ce stade.
+- **Commandes/tests exécutés :** contrôle des versions et SHA des actions officielles ; `make format` ; `make lint` ; `make typecheck` ; `make test` ; `make openapi-check` ; test négatif `make test-migrations` sans URL ; conteneur PostgreSQL `18` jetable sur port aléatoire ; `TEST_DATABASE_URL=... make test-migrations` ; `make docker-build` ; `make check` ; `git diff --check` ; commit et push ; `gh run watch 33879548552 --exit-status` ; lecture des protections de branche et rulesets via l’API GitHub.
+- **Résultat exact :** contrôles locaux intégralement verts : Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy sur 39 fichiers, 43 tests réussis et 2 tests PostgreSQL conditionnels ignorés ; la garde sans `TEST_DATABASE_URL` échoue fermement ; sur PostgreSQL réel, les 2 tests de migration passent en `1.26 s` ; le build des cinq images Compose passe. Le run GitHub Actions réel `33879548552` est vert : `Build Docker` en `30 s`, `Migrations PostgreSQL` en `31 s` et `Qualité` en `51 s`. Les actions tierces sont figées par SHA, les permissions sont en lecture seule et le template ADR couvre explicitement les décisions SFG §33.
+- **Blocker éventuel :** la CI existe et échoue correctement si un job échoue, mais GitHub refuse l’activation de la protection de `main` et des rulesets en HTTP `403` : le dépôt est privé et le compte doit passer à GitHub Pro ou rendre le dépôt public. Sans l’une de ces décisions utilisateur, une CI rouge ne peut pas techniquement bloquer une fusion ; ce critère n’est donc pas déclaré satisfait.
 - **ADR éventuel :** ajout du template et de la règle de création ; aucune décision structurante n’est modifiée par le ticket.
-- **Commit/hash :** à créer après validation.
+- **Commit/hash :** `6b44b323ac9a076bacadb6960806ecf5ebb8d5fa` (`ci: add base validation pipeline`).
