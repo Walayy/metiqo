@@ -109,3 +109,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le ticket expose les commandes prévues sans décision architecturale.
 - **Commit/hash :** `bc1903b6b708c437ba6b870db9b7e22a07c6f225` (`chore: add developer Make targets`).
+
+## FND-010 — CI de base et discipline ADR
+
+- **Statut :** `IN_PROGRESS`
+- **Dépendances vérifiées :** `FND-009` est `DONE` et présent sur `origin/main`.
+- **Fichiers créés/modifiés :** `.github/workflows/ci.yml`, `Makefile`, `README.md`, `docs/adr/README.md`, `docs/adr/0000-template.md`, `docs/progress.md`.
+- **Migrations :** aucune nouvelle migration.
+- **Commandes/tests exécutés :** validations en cours.
+- **Résultat exact :** pipeline et discipline ADR implémentés ; validations en cours.
+- **Blocker éventuel :** aucun à ce stade.
+- **ADR éventuel :** ajout du template et de la règle de création ; aucune décision structurante n’est modifiée par le ticket.
+- **Commit/hash :** à créer après validation.

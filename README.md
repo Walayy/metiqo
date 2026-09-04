@@ -1,5 +1,7 @@
 # Metiquo
 
+[![CI](https://github.com/Walayy/metiqo/actions/workflows/ci.yml/badge.svg)](https://github.com/Walayy/metiqo/actions/workflows/ci.yml)
+
 Metiquo est un projet personnel Dockerisé de pricing et de détection de value betting esport. Le MVP initial couvre exclusivement League of Legends et utilise Oracle’s Elixir comme unique source statistique LoL.
 
 La spécification normative se trouve dans [`docs/specs/00_SFG_METIQUO.md`](docs/specs/00_SFG_METIQUO.md). Le plan d’exécution et le backlog se trouvent dans le même dossier. L’avancement vérifié est consigné dans [`docs/progress.md`](docs/progress.md).
@@ -41,9 +43,12 @@ make lint
 make typecheck
 make test
 make openapi-check
+make docker-build
 ```
 
-`make test-e2e` est câblé sur Playwright ; les scénarios E2E seront ajoutés avec l’interface. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
+`make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` est câblé sur Playwright ; les scénarios E2E seront ajoutés avec l’interface. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
+
+La CI appelle ces mêmes cibles locales. Toute modification d’une décision structurante de la SFG §33 exige un ADR accepté dans `docs/adr/`.
 
 ## Configuration serveur
 

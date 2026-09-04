@@ -3,17 +3,19 @@
 PYTHON_PATHS := python services infra tests
 OE_TARGETS := oe-catalog oe-backfill oe-sync oe-sync-current oe-validate oe-diff oe-rebuild-canonical
 
-.PHONY: help up down db-migrate format lint typecheck test test-e2e openapi openapi-check check $(OE_TARGETS)
+.PHONY: help up down db-migrate docker-build format lint typecheck test test-migrations test-e2e openapi openapi-check check $(OE_TARGETS)
 
 help:
 	@echo "Metiquo - commandes développeur"
 	@echo "  make up             Démarre la stack locale mock"
 	@echo "  make down           Arrête la stack locale"
 	@echo "  make db-migrate     Applique les migrations dans la stack"
+	@echo "  make docker-build   Valide et construit les images Compose"
 	@echo "  make format         Formate les sources"
 	@echo "  make lint           Vérifie format, lint et orthographe"
 	@echo "  make typecheck      Vérifie les types TypeScript et Python"
 	@echo "  make test           Exécute les tests Python"
+	@echo "  make test-migrations Exécute les tests sur PostgreSQL réel"
 	@echo "  make test-e2e       Exécute les tests Playwright"
 	@echo "  make openapi        Régénère le contrat OpenAPI"
 
@@ -26,6 +28,10 @@ down:
 
 db-migrate:
 	docker compose exec -T api alembic upgrade head
+
+docker-build:
+	docker compose config --quiet
+	docker compose --profile mock build
 
 format:
 	pnpm run format
@@ -44,6 +50,10 @@ typecheck:
 
 test:
 	uv run --frozen pytest
+
+test-migrations:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour les tests de migration))
+	uv run --frozen pytest tests/integration/test_migrations.py -vv
 
 test-e2e:
 	pnpm run test:e2e
