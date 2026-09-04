@@ -16,10 +16,10 @@ RUN groupadd --gid 10001 metiquo \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md ./
+COPY alembic.ini ./
 COPY python ./python
 RUN uv sync --frozen --no-dev --no-editable
 
-COPY infra/compose/bootstrap/api_health.py /opt/metiquo-bootstrap/api_health.py
 COPY infra/compose/bootstrap/mock_mode_check.py /opt/metiquo-bootstrap/mock_mode_check.py
 COPY infra/compose/bootstrap/worker.py /opt/metiquo-bootstrap/worker.py
 

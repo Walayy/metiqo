@@ -89,7 +89,8 @@ services:
     build: *python-build
     init: true
     read_only: true
-    command: ["python", "/opt/metiquo-bootstrap/api_health.py"]
+    command:
+      ["uvicorn", "metiquo.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
     environment: *app-environment
     depends_on:
       postgres:

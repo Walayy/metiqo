@@ -8,6 +8,11 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, text
 
+from metiquo.api.readiness import (
+    MIGRATIONS_NOT_AT_HEAD,
+    DatabaseReadinessProbe,
+    ReadinessCheck,
+)
 from metiquo.db.schemas import LOGICAL_SCHEMAS
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +37,23 @@ def test_initial_migration_upgrade_downgrade_upgrade() -> None:
     config = alembic_config(url)
 
     command.upgrade(config, "head")
+
+
+@pytest.mark.integration
+def test_database_readiness_requires_migrations_at_head() -> None:
+    url = database_url()
+    config = alembic_config(url)
+    probe = DatabaseReadinessProbe(url, alembic_config=ROOT / "alembic.ini")
+
+    command.downgrade(config, "base")
+    unavailable = probe.check()
+
+    assert unavailable.available is False
+    assert unavailable.reason_code == MIGRATIONS_NOT_AT_HEAD
+
+    command.upgrade(config, "head")
+
+    assert probe.check() == ReadinessCheck(available=True)
 
     engine = create_engine(url, connect_args={"options": "-c timezone=UTC"})
     with engine.connect() as connection:
