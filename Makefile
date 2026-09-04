@@ -53,7 +53,7 @@ test:
 
 test-migrations:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour les tests de migration))
-	uv run --frozen pytest tests/integration/test_migrations.py -vv
+	uv run --frozen pytest tests/integration -vv
 
 test-e2e:
 	pnpm run test:e2e

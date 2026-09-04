@@ -11,3 +11,6 @@ LOGICAL_SCHEMAS: Final[tuple[str, ...]] = (
     "signals",
     "ops",
 )
+
+MOCK_SCHEMA: Final = "mock"
+ALL_SCHEMAS: Final[tuple[str, ...]] = (*LOGICAL_SCHEMAS, MOCK_SCHEMA)

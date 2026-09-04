@@ -133,3 +133,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les DTO appliquent les contrats mock/réel et les invariants normatifs sans modifier une décision SFG §33.
 - **Commit/hash :** `68617fcf0e78c545aa04f6d953891f27dc56e948` (`feat: add shared domain contracts`).
+
+## MCK-002 — Implémenter l’isolation mock/réel
+
+- **Statut :** `IN_PROGRESS`
+- **Dépendances vérifiées :** `FND-003` et `MCK-001` sont `DONE` et présents sur `origin/main`.
+- **Fichiers créés/modifiés :** `python/metiquo/repositories/`, `python/metiquo/db/schemas.py`, migration `20260904_0002`, `tests/repositories/test_mode_boundary.py`, `tests/integration/conftest.py`, `tests/integration/test_migrations.py`, `tests/integration/test_mode_isolation.py`, `README.md`, `docs/progress.md`.
+- **Migrations :** `20260904_0002_create_mock_schema.py`, réversible, crée uniquement le schéma physique `mock`.
+- **Commandes/tests exécutés :** validations en cours.
+- **Résultat exact :** frontière de mode, factories distinctes et isolation de schéma implémentées ; validations en cours.
+- **Blocker éventuel :** aucun à ce stade.
+- **ADR éventuel :** aucun ; le schéma mock séparé et l’interdiction réseau appliquent directement la SFG.
+- **Commit/hash :** à créer après validation.
