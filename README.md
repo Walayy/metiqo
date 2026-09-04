@@ -60,6 +60,8 @@ Copier `.env.example` vers `.env`, puis remplacer uniquement les valeurs propres
 
 Dans la stack locale, `make db-migrate` applique les migrations à la base PostgreSQL. Hors Compose, après avoir défini `DATABASE_URL` pour une base vide, la commande équivalente est `uv run alembic upgrade head`. La révision initiale crée uniquement les schémas logiques `raw`, `core`, `odds`, `features`, `ml`, `signals` et `ops` ; elle n’insère aucune donnée.
 
+Le mode réel conserve ces sept namespaces. Le mode mock traduit tous ses accès applicatifs vers le schéma physique séparé `mock` et interdit les accès réseau Oracle’s Elixir ou fournisseur de cotes avant appel du transport. Une factory liée à un mode refuse toute donnée portant l’autre mode.
+
 ## Conteneurs locaux
 
 `make up` démarre le profil Compose `mock`. L’API FastAPI expose `/health`, `/ready` et `/api/v1/system/status`. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
