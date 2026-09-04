@@ -15,6 +15,14 @@ from metiquo.api.readiness import (
 from metiquo.db.schemas import ALL_SCHEMAS
 
 ROOT = Path(__file__).resolve().parents[2]
+RAW_TABLES = {
+    "ingestion_runs",
+    "quality_issues",
+    "quarantine_items",
+    "row_revisions",
+    "snapshots",
+    "source_catalog",
+}
 
 
 def alembic_config(url: str) -> Config:
@@ -49,7 +57,12 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
     with engine.connect() as connection:
         schema_names = set(inspect(connection).get_schema_names())
         assert set(ALL_SCHEMAS) <= schema_names
-        assert all(inspect(connection).get_table_names(schema=name) == [] for name in ALL_SCHEMAS)
+        assert set(inspect(connection).get_table_names(schema="raw")) == RAW_TABLES
+        assert all(
+            inspect(connection).get_table_names(schema=name) == []
+            for name in ALL_SCHEMAS
+            if name != "raw"
+        )
         assert connection.execute(text("SHOW TIME ZONE")).scalar_one() == "UTC"
     engine.dispose()
 
