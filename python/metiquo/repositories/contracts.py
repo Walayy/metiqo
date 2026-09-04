@@ -5,7 +5,11 @@ from typing import Protocol
 from uuid import UUID
 
 from metiquo.contracts import (
+    BacktestSummary,
+    DataQualityIssue,
     Event,
+    IngestionRunSummary,
+    JobSummary,
     MappingReview,
     Market,
     ModelSummary,
@@ -43,6 +47,10 @@ class ModelRepository(Protocol):
 
     def get(self, model_version_id: UUID) -> ModelSummary | None: ...
 
+    def list_backtests(self) -> tuple[BacktestSummary, ...]: ...
+
+    def get_backtest(self, backtest_id: UUID) -> BacktestSummary | None: ...
+
 
 class PaperRepository(Protocol):
     def list(self) -> tuple[PaperBet, ...]: ...
@@ -60,6 +68,14 @@ class MappingRepository(Protocol):
     def list_pending(self) -> tuple[MappingReview, ...]: ...
 
     def get(self, mapping_review_id: UUID) -> MappingReview | None: ...
+
+
+class OperationsRepository(Protocol):
+    def list_ingestion_runs(self) -> tuple[IngestionRunSummary, ...]: ...
+
+    def list_quality_issues(self) -> tuple[DataQualityIssue, ...]: ...
+
+    def list_jobs(self) -> tuple[JobSummary, ...]: ...
 
 
 class OddsProvider(Protocol):

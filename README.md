@@ -64,9 +64,15 @@ Le mode réel conserve ces sept namespaces. Le mode mock traduit tous ses accès
 
 `MOCK_SEED` fixe les identifiants et les valeurs des douze scénarios normatifs. Leur catalogue utilise les contrats métier communs, une horloge injectée et des timestamps relatifs ; il ne lit ni le réseau ni l’heure système implicitement.
 
+## API de lecture mock
+
+En mode mock, l’API expose les collections et détails versionnés sous `/api/v1` : opportunités avec explication, événements avec marchés et historique de cotes, modèles, backtests, paper bets, sources de données, ingestions, problèmes de qualité, jobs et mappings en attente. Les collections utilisent `offset` et `limit` et acceptent des filtres typés propres à leur domaine. Chaque réponse contient `dataMode`, `freshness`, `asOf` et `appVersion` dans `meta`.
+
+Le contrat complet et reproductible est versionné dans `packages/contracts/openapi/v1.json`.
+
 ## Conteneurs locaux
 
-`make up` démarre le profil Compose `mock`. L’API FastAPI expose `/health`, `/ready` et `/api/v1/system/status`. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
+`make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web exécute toujours un processus de santé explicitement temporaire avant son ticket dédié.
 
 Les ports web et API sont liés uniquement à `127.0.0.1`. PostgreSQL reste sur un réseau Docker interne. Le profil `production` ajoute le gateway HTTPS et `object-store` ajoute également MinIO ; ce dernier refuse de démarrer tant que ses identifiants ne sont pas fournis hors du dépôt.
 

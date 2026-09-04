@@ -169,3 +169,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; ports/adaptateurs et façade de lecture appliquent l'indépendance provider et l'isolation mock/réel déjà imposées par la SFG.
 - **Commit/hash :** `c383f283140ef786cc020da2eec39eddf0737995` (`feat: add mock repositories and services`).
+
+## MCK-005 — Exposer toutes les lectures API en mock
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-004` est `DONE` et présent sur `origin/main` après fusion protégée de la PR #5.
+- **Fichiers créés/modifiés :** `python/metiquo/api/app.py`, `python/metiquo/api/read_routes.py`, `python/metiquo/api/dto.py`, `python/metiquo/api/contract_schema.py`, `python/metiquo/contracts/operations.py`, `python/metiquo/contracts/__init__.py`, `python/metiquo/repositories/contracts.py`, `python/metiquo/repositories/mock.py`, `python/metiquo/repositories/__init__.py`, `python/metiquo/services/`, `tests/api/test_mock_reads.py`, `tests/repositories/test_mock_repositories.py`, `tests/test_openapi.py`, `packages/contracts/openapi/v1.json`, `README.md`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** tests API ciblés ; Ruff format/check ; mypy strict ; Prettier, ESLint, CSpell et TypeScript strict ; suite Pytest complète ; régénération et contrôle OpenAPI ; `docker compose config --quiet` ; `docker compose --profile mock build` ; `git diff --check`.
+- **Résultat exact :** les lectures `/api/v1` couvrent opportunités/détail/explication, événements/détail/marchés/historique de cotes, modèles/backtests et leurs détails, paper bets et détail, sources, ingestions, qualité, jobs et mappings en attente. Les collections ont une pagination bornée et des filtres typés ; les ressources inconnues retournent des Problem Details 404 et les requêtes invalides des Problem Details 422/400 sans reprendre les entrées. Toutes les réponses métier utilisent une enveloppe immuable contenant `dataMode`, `freshness`, `asOf`, `computedAt` et `appVersion`. Les routes ne dépendent que de `ReadService`, tandis que le mode mock assemble automatiquement le catalogue déterministe. Validation finale : 85 tests réussis et 3 tests PostgreSQL conditionnels ignorés ; Ruff, mypy sur 68 fichiers, TypeScript strict, ESLint, Prettier, CSpell et OpenAPI passent ; les cinq images Compose sont construites avec succès.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l’enveloppe, la pagination et les routes appliquent les contrats et la surface HTTP déjà imposés par la SFG.
+- **Commit/hash :** `4a4f4ec1cd4443bc0c44071eab73dbb2d06f9684` (`feat: expose mock read API`).
