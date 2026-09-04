@@ -136,12 +136,12 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 
 ## MCK-002 — Implémenter l’isolation mock/réel
 
-- **Statut :** `IN_PROGRESS`
+- **Statut :** `DONE`
 - **Dépendances vérifiées :** `FND-003` et `MCK-001` sont `DONE` et présents sur `origin/main`.
 - **Fichiers créés/modifiés :** `python/metiquo/repositories/`, `python/metiquo/db/schemas.py`, migration `20260904_0002`, `tests/repositories/test_mode_boundary.py`, `tests/integration/conftest.py`, `tests/integration/test_migrations.py`, `tests/integration/test_mode_isolation.py`, `README.md`, `docs/progress.md`.
 - **Migrations :** `20260904_0002_create_mock_schema.py`, réversible, crée uniquement le schéma physique `mock`.
-- **Commandes/tests exécutés :** validations en cours.
-- **Résultat exact :** frontière de mode, factories distinctes et isolation de schéma implémentées ; validations en cours.
-- **Blocker éventuel :** aucun à ce stade.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ; tests unitaires ciblés de configuration et frontière de mode ; `uv run --frozen alembic history` ; conteneur PostgreSQL `18` jetable sur port aléatoire ; `TEST_DATABASE_URL=... make test-migrations` ; suppression du conteneur jetable ; `make format` ; `make check` ; recherche de TODO, `Any`, casts, ignores et exceptions trop larges ; `git diff --check` ; commit, push et contrôles protégés de la PR GitHub #3.
+- **Résultat exact :** le schéma `mock` est créé par une migration réversible après les sept schémas réels. Toute table logique d’une `MockRepositoryFactory` est traduite vers `mock`, tandis qu’une `RealRepositoryFactory` conserve son schéma réel ; frontières, moteurs et payloads de modes opposés sont refusés. Le mode mock bloque Oracle’s Elixir et le provider de cotes avant appel du transport. Sur PostgreSQL réel, 5 tests d’intégration passent en `2.37 s`, dont migration complète et coexistence de deux lignes de même clé avec valeurs `real-only` et `mock-only`, chacune invisible depuis la factory opposée. Suite locale : 61 tests réussis et 3 tests PostgreSQL conditionnels ignorés ; Ruff, mypy sur 56 fichiers, TypeScript strict, ESLint, Prettier, CSpell et OpenAPI passent. PR #3 : `Build Docker` passe en `16 s`, `Migrations PostgreSQL` en `27 s` et `Qualité` en `41 s`.
+- **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le schéma mock séparé et l’interdiction réseau appliquent directement la SFG.
-- **Commit/hash :** à créer après validation.
+- **Commit/hash :** `b805cb701ae1c4727a9e39f3d740dc1060d3b92d` (`feat: isolate mock and real data access`).
