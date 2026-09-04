@@ -1,11 +1,11 @@
-import { PlaceholderPage } from "../../components/placeholder-page";
+import { Suspense } from "react";
+
+import { DataHealthDashboard } from "../../components/data-health-dashboard";
 
 export default function DataPage() {
   return (
-    <PlaceholderPage
-      description="Fraîcheur, snapshots actifs, couverture et qualité des données historiques."
-      eyebrow="Provenance"
-      title="Données"
-    />
+    <Suspense fallback={<div className="min-h-[32rem]" />}>
+      <DataHealthDashboard />
+    </Suspense>
   );
 }
