@@ -326,6 +326,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; l’audit automatise les exigences UX existantes sans modifier l’architecture.
 - **Commit/hash :** `7fcf60f240719cc94d686f89842c50a7740dc996` (`test: enforce responsive accessibility gate`).
 
+## OE-001 — Modèle raw : catalogue, snapshots, runs et qualité
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `FND-004` est `DONE` et le gate `MCK-007` autorise le démarrage de P2.
+- **Fichiers créés/modifiés :** `python/metiquo/db/raw_models.py`, migration `20260905_0003`, `python/metiquo/db/migrations/env.py`, `tests/integration/test_migrations.py`, `tests/integration/test_raw_migration.py`, `docs/progress.md`.
+- **Migrations :** `20260905_0003_create_raw_ingestion_model.py` crée `raw.source_catalog`, `raw.snapshots`, `raw.ingestion_runs`, `raw.quality_issues`, `raw.quarantine_items` et `raw.row_revisions`, leurs contraintes de statut/unicité, les liens de provenance et le trigger PostgreSQL d'immutabilité des snapshots validés. Le cycle `upgrade → downgrade base → upgrade` passe sur PostgreSQL 18 jetable.
+- **Commandes/tests exécutés :** Ruff format/check ciblé ; mypy strict ciblé puis global ; tests unitaires des conventions DB ; tests d'intégration migrations et contraintes exécutés deux fois sur `postgresql+psycopg://…@127.0.0.1:55432/metiqo_test` ; `make check` via le chemin absolu de GNU Make ; contrôle OpenAPI et génération TypeScript sans diff ; `git diff --check`.
+- **Résultat exact :** les six tables raw existent avec UUID, timestamps UTC, statuts fermés, hashes SHA-256 contrôlés et clés étrangères `RESTRICT`. Une unicité partielle interdit deux sources actives pour un même provider/dataset/année. Les exécutions, anomalies, quarantaines et révisions gardent leur run et leur snapshot d'origine. Un trigger `BEFORE UPDATE OR DELETE` refuse en base toute mutation d'un snapshot dont le statut est `validated`; les tests prouvent séparément l'échec de l'`UPDATE`, l'échec du `DELETE` et la conservation de la taille initiale. Les 5 tests de migration passent, puis la suite complète retourne 98 tests réussis ; Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy et OpenAPI sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le modèle matérialise directement les invariants de provenance et d'immutabilité exigés par la SFG.
+- **Commit/hash :** `47f701243ed8af2c518c8dbfcd18b1c4bdb6b6e9` (`feat(raw): add ingestion provenance model`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
