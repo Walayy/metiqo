@@ -157,3 +157,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le catalogue applique directement les scénarios et l’horloge déterministe imposés par la SFG sans modifier une décision structurante.
 - **Commit/hash :** `51713aee12138d1558bf31cd1591a40d2b9f00cd` (`feat: add deterministic mock scenarios`).
+
+## MCK-004 — Implémenter repositories/services mock
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-003` est `DONE` et présent sur `origin/main` après fusion protégée de la PR #4.
+- **Fichiers créés/modifiés :** `python/metiquo/contracts/odds_provider.py`, `python/metiquo/contracts/__init__.py`, `python/metiquo/repositories/contracts.py`, `python/metiquo/repositories/mock.py`, `python/metiquo/repositories/__init__.py`, `python/metiquo/services/`, `tests/repositories/test_mock_repositories.py`, `packages/contracts/openapi/v1.json`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** tests ciblés repositories/scénarios ; Ruff format/check ; mypy strict ; Prettier, ESLint, CSpell et TypeScript strict ; suite Pytest complète ; régénération et contrôle OpenAPI ; `docker compose config --quiet` ; `docker compose --profile mock build` ; `git diff --check`.
+- **Résultat exact :** les six repositories mock demandés lisent le catalogue normatif immuable et exposent opportunités, événements/marchés/historique append-only, modèles, paper bets, santé fournisseur et mappings en attente. `ReadService` dépend uniquement de ports communs, sans import de fixtures ou d'adaptateur mock, afin que l'API utilise la même orchestration en modes mock et réel. `MockOddsProvider` respecte le contrat interchangeable complet `list_events`/`get_event_markets`/`capture_snapshot`/`health`, sans accès réseau, et ses DTO provider stricts sont publiés dans OpenAPI. Validation finale : 80 tests réussis et 3 tests PostgreSQL conditionnels ignorés ; Ruff, mypy sur 65 fichiers, TypeScript strict, ESLint, Prettier, CSpell et OpenAPI passent ; les cinq images Compose sont construites avec succès.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; ports/adaptateurs et façade de lecture appliquent l'indépendance provider et l'isolation mock/réel déjà imposées par la SFG.
+- **Commit/hash :** `c383f283140ef786cc020da2eec39eddf0737995` (`feat: add mock repositories and services`).

@@ -13,6 +13,17 @@ from metiquo.repositories.factory import (
     RepositoryFactory,
     build_repository_factory,
 )
+from metiquo.repositories.mock import (
+    MockDataHealthRepository,
+    MockEventRepository,
+    MockMappingRepository,
+    MockModelRepository,
+    MockOddsProvider,
+    MockOpportunityRepository,
+    MockPaperRepository,
+    MockRepositoryBundle,
+    build_mock_repository_bundle,
+)
 
 __all__ = [
     "ConcreteRepositoryFactory",
@@ -20,8 +31,17 @@ __all__ = [
     "DataModeViolation",
     "ExternalDataSource",
     "LogicalSchema",
+    "MockDataHealthRepository",
+    "MockEventRepository",
+    "MockMappingRepository",
+    "MockModelRepository",
+    "MockOddsProvider",
+    "MockOpportunityRepository",
+    "MockPaperRepository",
+    "MockRepositoryBundle",
     "MockRepositoryFactory",
     "RealRepositoryFactory",
     "RepositoryFactory",
+    "build_mock_repository_bundle",
     "build_repository_factory",
 ]

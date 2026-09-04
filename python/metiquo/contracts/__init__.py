@@ -5,6 +5,13 @@ from pydantic import BaseModel
 from metiquo.contracts.entities import Event, Market, OddsSnapshot
 from metiquo.contracts.mapping import MappingCandidate, MappingReview
 from metiquo.contracts.ml import BacktestSummary, ModelSummary
+from metiquo.contracts.odds_provider import (
+    OddsCaptureResult,
+    ProviderEvent,
+    ProviderHealth,
+    ProviderMarket,
+    ProviderSelection,
+)
 from metiquo.contracts.paper import PaperBet
 from metiquo.contracts.pricing import (
     ContractMetadata,
@@ -28,6 +35,11 @@ DOMAIN_CONTRACT_MODELS: tuple[type[BaseModel], ...] = (
     PaperBet,
     MappingCandidate,
     MappingReview,
+    ProviderEvent,
+    ProviderSelection,
+    ProviderMarket,
+    OddsCaptureResult,
+    ProviderHealth,
 )
 
 __all__ = [
@@ -39,10 +51,15 @@ __all__ = [
     "MappingReview",
     "Market",
     "ModelSummary",
+    "OddsCaptureResult",
     "OddsSnapshot",
     "Opportunity",
     "PaperBet",
     "Prediction",
+    "ProviderEvent",
+    "ProviderHealth",
+    "ProviderMarket",
+    "ProviderSelection",
     "Quality",
     "Value",
 ]
