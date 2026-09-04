@@ -337,6 +337,7 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le modèle matérialise directement les invariants de provenance et d'immutabilité exigés par la SFG.
 - **Commit/hash :** `47f701243ed8af2c518c8dbfcd18b1c4bdb6b6e9` (`feat(raw): add ingestion provenance model`).
+- **Correctif/hash :** `5529754466501b268a07012d9e9b69d521415fb5` (`fix(raw): align source catalog with SFG fields`) aligne le catalogue sur les champs normatifs `season_year`, `landing_page`, `drive_file_id`, `source_name`, métadonnées source et `discovery_payload_hash`, tout en conservant les statuts d'alerte explicites.
 
 ## OE-002 — ObjectStore filesystem adressé par hash
 
@@ -349,6 +350,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'interface permet un autre backend sans exposer le chemin temporaire, tandis que l'implémentation MVP reste le volume filesystem exigé.
 - **Commit/hash :** `a8f96037eda3d1f2eba80138b86cf1f314a976ce` (`feat(ingestion): add immutable filesystem object store`).
+
+## OE-003 — Découverte du catalogue Oracle’s Elixir
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-001` est `DONE`, y compris son alignement complet sur les champs SFG.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/catalog.py`, trois fixtures HTML sous `tests/fixtures/oracles_elixir/`, `tests/ingestion/test_catalog.py`, `tests/integration/test_catalog_repository.py`, `docs/progress.md`.
+- **Migrations :** aucune nouvelle migration ; la persistance utilise `raw.source_catalog` créé par `20260905_0003`.
+- **Commandes/tests exécutés :** inspection de la page officielle `https://oracleselixir.com/tools/downloads` dans le Navigateur intégré ; Ruff format/check ; mypy strict ; 6 tests unitaires de découverte ; tests de persistance et de contraintes PostgreSQL exécutés puis rejoués sur PostgreSQL 18 jetable ; suite Python complète avec PostgreSQL ; `git diff --check`.
+- **Résultat exact :** le fetcher est borné en durée et taille et ne charge que la page officielle Oracle’s Elixir. L'extracteur HTML ignore tout domaine statistique tiers, accepte les formes Drive `/file/d/...`, `open?id=...` et `/folders/...`, puis associe une année uniquement lorsqu'un libellé possède une année unique. Le mécanisme de rapprochement détecte confirmation, nouvelle année, changement d'ID, doublon, disparition, lien non associable et plusieurs IDs ambigus. Une divergence ou ambiguïté est persistée en ligne séparée sans remplacer ni mettre à jour l'actif. Les confirmations mettent à jour `last_confirmed_at` et le SHA-256 du payload ; le premier `discovered_at` reste inchangé. Le 5 septembre 2026, le Navigateur a confirmé que la page officielle accessible expose seulement le dossier Drive `1gLSw0RLjBbtaNy0dgnGQDAZOHIgCe-HH`, sans lien annuel : la fixture correspondante produit donc `missing` et `unresolved`, et non une fausse confirmation. La suite complète retourne 110 tests réussis.
+- **Blocker éventuel :** aucun ; le changement actuel de présentation est précisément rendu visible et sera traité par le fallback contrôlé de `OE-004` sans masquer la divergence.
+- **ADR éventuel :** aucun ; Oracle’s Elixir reste l'unique source statistique LoL et la page officielle demeure le premier mécanisme obligatoire.
+- **Commit/hash :** `65ef6c8244a587b68dee0872edf730099c2233d1` (`feat(ingestion): discover official source catalog`).
 
 ## MCK-007 — Gate P1 — démo mock complète
 
