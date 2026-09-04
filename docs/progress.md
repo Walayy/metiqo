@@ -193,3 +193,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l’idempotence, l’audit et les transitions appliquent les exigences existantes sans modifier une décision structurante.
 - **Commit/hash :** `1709834977053554f3b6ea14b6f6f6c8fe7e12b8` (`feat: add idempotent mock mutations`).
+
+## UI-001 — Initialiser le frontend et le design system
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `FND-002` et `MCK-001` sont `DONE` et présents sur `origin/main`.
+- **Fichiers créés/modifiés :** application Next.js sous `apps/web/`, design system sous `packages/ui/`, client et DTO TypeScript générés sous `packages/contracts/src/generated/`, configurations workspace pnpm/TypeScript/ESLint/Prettier, `Makefile`, image web et service Compose, `.dockerignore`, `.gitignore`, `README.md`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** consultation des documentations officielles Tailwind CSS, TanStack Query, Hey API et Motion ; vérification des versions via le registre pnpm ; `pnpm install` ; `pnpm run contracts:generate` ; tests et contrôles de types frontend ciblés ; build Next.js local ; `make check` via GNU Make installé ; `make docker-build` ; démarrage isolé `docker compose up -d --build --no-deps web` ; appels HTTP `/health` et `/` ; inspection de l’utilisateur et de la racine du conteneur ; arrêt Compose et suppression des volumes et réseaux de smoke test ; `git diff --check`.
+- **Résultat exact :** Next.js `16.3.4`, React `19.2.8`, Tailwind CSS `4.3.3` et TypeScript strict sont opérationnels ; les tokens couvrent couleurs, espacement, rayons, typographie, élévation et durée d’interaction. Les primitives `Button`, `MotionButton`, `Badge` et `Card` exposent focus visible, sémantique native, tailles tactiles, état désactivé et réduction du mouvement. Le contrat OpenAPI versionné génère les DTO, le client Fetch, le SDK et les options TanStack Query sans copie manuelle ; le provider Query est monté une seule fois côté client. Quatre tests de composants réussissent, dont activation clavier, sémantique désactivée/section et disponibilité du client Query. `make check` passe avec Prettier, ESLint, CSpell, Ruff, mypy sur 71 fichiers, TypeScript sur les trois workspaces, 90 tests Python réussis et 3 tests PostgreSQL conditionnels ignorés ; le contrat OpenAPI et le client généré sont courants. Les cinq images Compose se construisent ; le conteneur Next.js réel répond `200` sur `/health` et `/`, contient le rendu Metiquo, tourne sous `node` avec une racine en lecture seule, puis ne laisse aucun conteneur, volume ou réseau de test. Le premier build web a détecté l’inclusion des `node_modules` Windows imbriqués dans le contexte Docker ; les exclusions récursives empêchent désormais leur copie dans les builds Linux.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le ticket applique directement la stack frontend et les exigences d’accessibilité de la SFG sans modifier une décision structurante.
+- **Commit/hash :** `fa8e7716c923a33ebc19722aa9d4de7ba0b7c788` (`feat: add frontend foundation`).
