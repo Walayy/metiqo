@@ -37,6 +37,7 @@ def test_valid_configuration_is_typed_and_uses_utc_internally() -> None:
     assert settings.app_env is AppEnvironment.TEST
     assert settings.app_data_mode is DataMode.MOCK
     assert settings.odds_provider is OddsProvider.MOCK
+    assert settings.mock_seed == "metiquo-demo-v1"
     assert settings.display_tzinfo.key == "Europe/Paris"
     assert settings.internal_tzinfo is UTC
 
@@ -47,6 +48,7 @@ def test_valid_configuration_is_typed_and_uses_utc_internally() -> None:
         ({"odds_max_age_seconds": 0}, "greater than 0"),
         ({"database_url": "sqlite:///metiquo.db"}, "doit utiliser PostgreSQL"),
         ({"display_timezone": "Paris"}, "fuseau IANA connu"),
+        ({"mock_seed": "   "}, "at least 1 character"),
         ({"oe_allow_stale": True, "oe_require_fresh": True}, "ne peuvent pas être vrais"),
         (
             {"app_data_mode": "real", "odds_provider": "mock"},
@@ -69,6 +71,10 @@ def test_database_url_is_redacted() -> None:
 
     assert password not in repr(settings)
     assert "**********" in repr(settings)
+
+
+def test_mock_seed_is_normalized_at_the_configuration_boundary() -> None:
+    assert build_settings(mock_seed="  stable-seed  ").mock_seed == "stable-seed"
 
 
 def test_startup_error_names_invalid_variable_without_its_value(

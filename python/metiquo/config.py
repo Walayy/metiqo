@@ -5,11 +5,18 @@ from decimal import Decimal
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-from typing import Self
+from typing import Annotated, Self
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
+from pydantic import (
+    Field,
+    SecretStr,
+    StringConstraints,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from metiquo.contracts.enums import DataMode as DataMode
@@ -63,6 +70,10 @@ class Settings(BaseSettings):
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
+    mock_seed: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=128),
+    ] = "metiquo-demo-v1"
 
     signal_min_edge: Decimal = Field(default=Decimal("0.03"), ge=0, le=1)
     signal_min_ev: Decimal = Field(default=Decimal("0.05"), ge=0, le=1)
