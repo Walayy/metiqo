@@ -2,11 +2,15 @@
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from datetime import datetime
-from uuid import UUID
+from datetime import datetime, timedelta
+from uuid import UUID, uuid5
 
 from metiquo.contracts import (
+    BacktestSummary,
+    DataQualityIssue,
     Event,
+    IngestionRunSummary,
+    JobSummary,
     MappingReview,
     Market,
     ModelSummary,
@@ -14,7 +18,13 @@ from metiquo.contracts import (
     Opportunity,
     PaperBet,
 )
-from metiquo.contracts.enums import DataMode, GameTitle, MappingReviewStatus, ProviderStatus
+from metiquo.contracts.enums import (
+    BacktestKind,
+    DataMode,
+    GameTitle,
+    MappingReviewStatus,
+    ProviderStatus,
+)
 from metiquo.contracts.odds_provider import (
     OddsCaptureResult,
     ProviderEvent,
@@ -109,6 +119,31 @@ class MockModelRepository:
             None,
         )
 
+    def list_backtests(self) -> tuple[BacktestSummary, ...]:
+        return tuple(
+            BacktestSummary(
+                backtest_id=uuid5(model.model_version_id, "statistical-backtest"),
+                model_version_id=model.model_version_id,
+                kind=BacktestKind.STATISTICAL,
+                starts_at=model.created_at - timedelta(days=90),
+                ends_at=model.created_at - timedelta(days=1),
+                sample_count=240,
+                metrics=model.metrics,
+                baseline_metrics=model.baseline_metrics,
+                observed_odds_count=0,
+                uses_only_observed_odds=False,
+                final_test_untouched=True,
+                completed_at=model.created_at,
+            )
+            for model in self.list()
+        )
+
+    def get_backtest(self, backtest_id: UUID) -> BacktestSummary | None:
+        return next(
+            (backtest for backtest in self.list_backtests() if backtest.backtest_id == backtest_id),
+            None,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class MockPaperRepository:
@@ -179,6 +214,77 @@ class MockMappingRepository:
         return next(
             (item for item in self.list_pending() if item.mapping_review_id == mapping_review_id),
             None,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class MockOperationsRepository:
+    catalog: MockScenarioCatalog
+
+    def __post_init__(self) -> None:
+        _validate_catalog(self.catalog)
+
+    def list_ingestion_runs(self) -> tuple[IngestionRunSummary, ...]:
+        failed = next(
+            scenario for scenario in self.catalog.scenarios if scenario.source_sync_failed
+        )
+        latest = max(
+            snapshot.captured_at
+            for scenario in self.catalog.scenarios
+            for snapshot in scenario.odds_history
+        )
+        return (
+            IngestionRunSummary(
+                run_id=uuid5(failed.opportunity.signal_id, "failed-ingestion-run"),
+                source=MockOddsProvider.provider_code,
+                status="failed",
+                started_at=self.catalog.reference_time - timedelta(minutes=2),
+                completed_at=self.catalog.reference_time - timedelta(minutes=1),
+                row_count=0,
+                data_mode=DataMode.MOCK,
+                last_valid_snapshot_id=failed.last_valid_snapshot_id,
+            ),
+            IngestionRunSummary(
+                run_id=uuid5(failed.opportunity.signal_id, "successful-ingestion-run"),
+                source=MockOddsProvider.provider_code,
+                status="succeeded",
+                started_at=latest - timedelta(seconds=2),
+                completed_at=latest,
+                row_count=len(self.catalog.scenarios),
+                data_mode=DataMode.MOCK,
+            ),
+        )
+
+    def list_quality_issues(self) -> tuple[DataQualityIssue, ...]:
+        return tuple(
+            DataQualityIssue(
+                issue_id=uuid5(scenario.opportunity.signal_id, "quality-issue"),
+                source=MockOddsProvider.provider_code,
+                code=scenario.opportunity.quality.abstention_reasons[0].value,
+                severity="blocking",
+                status=("quarantined" if scenario.quarantine_reason is not None else "open"),
+                detail=(
+                    scenario.quarantine_reason
+                    or "Le scénario normatif bloque explicitement la publication"
+                ),
+                observed_at=scenario.opportunity.meta.as_of,
+                data_mode=DataMode.MOCK,
+            )
+            for scenario in self.catalog.scenarios
+            if scenario.opportunity.quality.abstention_reasons
+        )
+
+    def list_jobs(self) -> tuple[JobSummary, ...]:
+        names = ("odds-sync", "pricing-refresh", "paper-settlement")
+        return tuple(
+            JobSummary(
+                job_id=uuid5(self.catalog.scenarios[0].opportunity.signal_id, name),
+                name=name,
+                status="idle",
+                last_run_at=self.catalog.reference_time - timedelta(minutes=index + 1),
+                data_mode=DataMode.MOCK,
+            )
+            for index, name in enumerate(names)
         )
 
 
@@ -280,6 +386,7 @@ class MockRepositoryBundle:
     paper: MockPaperRepository
     data_health: MockDataHealthRepository
     mappings: MockMappingRepository
+    operations: MockOperationsRepository
     odds_provider: MockOddsProvider
 
 
@@ -294,5 +401,6 @@ def build_mock_repository_bundle(catalog: MockScenarioCatalog) -> MockRepository
         paper=MockPaperRepository(catalog),
         data_health=MockDataHealthRepository(catalog),
         mappings=MockMappingRepository(catalog),
+        operations=MockOperationsRepository(catalog),
         odds_provider=MockOddsProvider(catalog),
     )

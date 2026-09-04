@@ -25,6 +25,7 @@ def build_service() -> tuple[ReadService, MockOddsProvider]:
         paper=bundle.paper,
         data_health=bundle.data_health,
         mappings=bundle.mappings,
+        operations=bundle.operations,
     )
     return service, bundle.odds_provider
 
@@ -38,6 +39,10 @@ def test_all_mock_reads_cross_the_common_service_boundary() -> None:
     assert len(service.list_paper_bets()) == 2
     assert len(service.list_data_sources()) == 1
     assert len(service.list_pending_mappings()) == 1
+    assert len(service.list_backtests()) == 12
+    assert len(service.list_ingestion_runs()) == 2
+    assert service.list_quality_issues()
+    assert len(service.list_jobs()) == 3
 
     opportunity = service.list_opportunities()[0]
     assert service.get_opportunity(opportunity.signal_id) == opportunity

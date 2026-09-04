@@ -32,7 +32,7 @@ def test_openapi_contract_contains_versioned_system_routes() -> None:
     assert '"application/problem+json"' in rendered
 
 
-def test_openapi_contract_publishes_domain_components_without_new_routes() -> None:
+def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> None:
     document = json.loads(render_openapi())
     schemas = document["components"]["schemas"]
 
@@ -59,11 +59,29 @@ def test_openapi_contract_publishes_domain_components_without_new_routes() -> No
         "MarketStatus",
         "EventStatus",
     } <= set(schemas)
-    assert set(document["paths"]) == {
+    assert {
         "/health",
         "/ready",
         "/api/v1/system/status",
-    }
+        "/api/v1/opportunities",
+        "/api/v1/opportunities/{signal_id}",
+        "/api/v1/opportunities/{signal_id}/explanation",
+        "/api/v1/events",
+        "/api/v1/events/{event_id}",
+        "/api/v1/events/{event_id}/markets",
+        "/api/v1/events/{event_id}/odds-history",
+        "/api/v1/models",
+        "/api/v1/models/{model_version_id}",
+        "/api/v1/backtests",
+        "/api/v1/backtests/{backtest_id}",
+        "/api/v1/paper-bets",
+        "/api/v1/paper-bets/{paper_bet_id}",
+        "/api/v1/admin/data-sources",
+        "/api/v1/admin/ingestion-runs",
+        "/api/v1/admin/quality-issues",
+        "/api/v1/admin/jobs",
+        "/api/v1/admin/mappings/pending",
+    } == set(document["paths"])
 
 
 def test_all_openapi_component_references_resolve() -> None:

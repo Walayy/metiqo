@@ -2,11 +2,13 @@
 
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import Field
 
 from metiquo.config import DataMode
-from metiquo.contracts.base import ContractModel
+from metiquo.contracts import ContractMetadata
+from metiquo.contracts.base import ContractModel, NonEmptyText
 
 
 class ApiModel(ContractModel):
@@ -53,3 +55,35 @@ class ProblemDetails(ApiModel):
     instance: str
     code: str
     context: dict[str, str | int | bool | None] = Field(default_factory=dict)
+
+
+class PageInfo(ApiModel):
+    """Fenêtre de pagination stable pour toute collection."""
+
+    offset: int = Field(ge=0)
+    limit: int = Field(ge=1, le=100)
+    total: int = Field(ge=0)
+
+
+class PageResponse[ResponseData](ApiModel):
+    """Collection métier paginée avec provenance commune."""
+
+    data: tuple[ResponseData, ...]
+    page: PageInfo
+    meta: ContractMetadata
+
+
+class ItemResponse[ResponseData](ApiModel):
+    """Ressource métier unitaire avec provenance commune."""
+
+    data: ResponseData
+    meta: ContractMetadata
+
+
+class OpportunityExplanation(ApiModel):
+    """Explication stable d'une décision de pricing mock."""
+
+    signal_id: UUID = Field(alias="signalId")
+    reference: NonEmptyText
+    publishable: bool
+    reasons: tuple[NonEmptyText, ...]

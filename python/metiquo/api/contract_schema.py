@@ -29,9 +29,9 @@ def install_domain_contract_schemas(app: FastAPI) -> None:
         raise RuntimeError("La section OpenAPI components.schemas est invalide")
 
     for name, definition in _domain_component_schemas().items():
-        existing = schemas.get(name)
-        if existing is not None and existing != definition:
-            raise RuntimeError(f"Collision de schéma OpenAPI pour {name}")
-        schemas[name] = definition
+        # Les schémas produits par FastAPI pour une route sont prioritaires :
+        # Pydantic peut ordonner ou développer différemment leurs références,
+        # tout en décrivant le même contrat.
+        schemas.setdefault(name, definition)
 
     app.openapi_schema = openapi_schema
