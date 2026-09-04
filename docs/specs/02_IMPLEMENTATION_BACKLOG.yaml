@@ -1,0 +1,2933 @@
+project: Metiquo
+source_of_truth: 00_SFG_METIQUO.md
+rules:
+- La SFG est normative; le plan ne peut pas la contredire.
+- Un ticket n’est DONE que lorsque ses critères et tests ont réellement passé.
+- Aucun scraper Stake, contournement anti-bot/geoblocage/CAPTCHA ni pari réel automatisé.
+- Oracle’s Elixir est l’unique source statistique LoL.
+- Mock et réel partagent DTO/endpoints/composants.
+- Raw, odds, predictions, signals, paper bets, evaluations publiées et audit sont immuables/append-only selon la SFG.
+- Toute feature respecte le cutoff temporel.
+- Aucune infrastructure distribuée lourde au MVP sans ADR et besoin mesuré.
+phases:
+- id: P0
+  name: Garde-fous et fondations
+  objective: Rendre le dépôt reproductible, Dockerisé et strict avant toute logique métier.
+- id: P1
+  name: Contrats, mock et interface
+  objective: Livrer une démonstration complète sans aucune source externe, avec les mêmes contrats que le réel.
+- id: P2
+  name: Oracle's Elixir
+  objective: Rendre l'historique LoL reproductible, versionné, idempotent, observable et sûr.
+- id: P3
+  name: Canonique LoL et features as-of
+  objective: Transformer le raw en données métier puis en features strictement antérieures au cutoff.
+- id: P4
+  name: ML game winner et pricing indépendant
+  objective: Produire des probabilités calibrées, incertaines et reproductibles, sans utiliser la cote comme feature.
+- id: P5
+  name: Cotes et résolution d'entités
+  objective: Recevoir des cotes autorisées, immuables et les mapper sans ambiguïté aux événements LoL.
+- id: P6
+  name: Value engine et opportunités
+  objective: Comparer prix modèle et prix marché, appliquer les garde-fous et accepter l'abstention.
+- id: P7
+  name: Paper trading et règlement
+  objective: Mesurer honnêtement les performances à partir de cotes réellement observées.
+- id: P8
+  name: Operations et sécurité
+  objective: Fiabiliser jobs, audit, sauvegarde, restauration, sécurité réseau et observabilité.
+- id: P9
+  name: Durcissement et recette MVP
+  objective: Prouver que la Definition of Done de la SFG est satisfaite de bout en bout.
+- id: P10
+  name: Marchés LoL supplémentaires
+  objective: Ajouter les marchés uniquement derrière le capability registry et après validation statistique.
+- id: P11
+  name: SaaS et multi-jeux — bloqués
+  objective: Préparer les extensions sans les activer avant levée des portes conformité/licence.
+tickets:
+- id: FND-001
+  phase: P0
+  title: Initialiser le monorepo
+  dependencies: []
+  deliverables:
+  - 'Arborescence conforme à la SFG: apps/web, services/api, services/worker, packages/contracts, packages/ui, packages/config,
+    python/metiquo, infra, tests, docs.'
+  - Gitignore, EditorConfig, README minimal, fichiers de version et scripts racine.
+  done_when:
+  - Le dépôt se clone et possède tous les répertoires attendus sans code métier factice.
+  - Aucun notebook n’est requis par la production.
+  tests:
+  - Vérification arborescence
+  - git status propre après bootstrap
+  sfg:
+  - SFG-INFRA-001
+- id: FND-002
+  phase: P0
+  title: Figer l’outillage et les dépendances
+  dependencies:
+  - FND-001
+  deliverables:
+  - Workspace pnpm pour TypeScript.
+  - Projet Python géré par uv et uv.lock.
+  - TypeScript strict, Ruff, type checker Python, pytest, Playwright.
+  - Versions stables compatibles choisies au moment de l’implémentation puis verrouillées dans les lockfiles; aucune version
+    n’est inventée dans cette spécification.
+  done_when:
+  - Installation reproductible depuis zéro avec les lockfiles.
+  - Aucune dépendance ajoutée sans usage identifié.
+  tests:
+  - pnpm install --frozen-lockfile
+  - uv sync --frozen
+  sfg:
+  - SFG-INFRA-001
+- id: FND-003
+  phase: P0
+  title: Créer la configuration typée
+  dependencies:
+  - FND-002
+  deliverables:
+  - Configuration serveur unique avec validation au démarrage.
+  - Variables APP_ENV, APP_DATA_MODE, DATABASE_URL, OBJECT_STORE_*, DISPLAY_TIMEZONE, OE_*, ODDS_PROVIDER, ODDS_MAX_AGE_SECONDS,
+    seuils de signal.
+  - .env.example sans secret.
+  done_when:
+  - Une variable invalide provoque une erreur lisible avant démarrage.
+  - Tous les timestamps internes sont UTC; Europe/Paris ne sert qu’au rendu.
+  tests:
+  - Tests config valide/invalide
+  - Scan .env.example pour absence de secret
+  sfg:
+  - SFG-MOCK-002
+  - SFG-SEC-001
+- id: FND-004
+  phase: P0
+  title: Créer PostgreSQL et les schémas logiques
+  dependencies:
+  - FND-003
+  deliverables:
+  - Alembic initial.
+  - Schémas PostgreSQL raw, core, odds, features, ml, signals, ops.
+  - Extension(s) strictement nécessaires seulement.
+  - Convention d’ID, created_at, updated_at et timestamps UTC.
+  done_when:
+  - Une base vide migre jusqu’à HEAD.
+  - Une migration downgrade est fournie lorsque raisonnablement possible.
+  - Les schémas existent sans données mock.
+  tests:
+  - alembic upgrade head sur DB vide
+  - test downgrade/upgrade sur migration N-1
+  sfg:
+  - SFG-OPS-001
+- id: FND-005
+  phase: P0
+  title: Créer Docker Compose minimal
+  dependencies:
+  - FND-004
+  deliverables:
+  - Services web, api, worker, postgres.
+  - Profils mock, production, object-store; gateway/minio seulement dans leurs profils.
+  - Healthchecks et volumes persistants postgres_data, raw_snapshots, model_artifacts, backups.
+  - Images non root lorsque possible.
+  done_when:
+  - docker compose config valide.
+  - Le profil mock démarre sans service externe.
+  - Aucun Kafka, Kubernetes, Airflow, Spark, Redis/Celery ni feature store.
+  tests:
+  - docker compose --profile mock up -d --build
+  - healthcheck postgres/api/web
+  sfg:
+  - SFG-INFRA-001
+  - SFG-SEC-001
+- id: FND-006
+  phase: P0
+  title: Créer les primitives transverses
+  dependencies:
+  - FND-002
+  - FND-004
+  deliverables:
+  - IDs opaques par domaine.
+  - Clock injectable pour tests.
+  - Types Money/DecimalOdds/Probability/UTC datetime.
+  - Erreurs métier structurées.
+  - Journal JSON avec trace_id et correlation ids.
+  done_when:
+  - Aucun calcul financier ne repose sur float non contrôlé si la précision décimale est nécessaire.
+  - Tests déterministes grâce à l’horloge injectable.
+  tests:
+  - Unit tests primitives
+  - Typecheck
+  sfg:
+  - SFG-PRICE-001
+  - SFG-OPS-001
+- id: FND-007
+  phase: P0
+  title: Squelette FastAPI et contrat OpenAPI
+  dependencies:
+  - FND-003
+  - FND-006
+  deliverables:
+  - FastAPI /health, /ready, /api/v1/system/status.
+  - Format d’erreur RFC7807 ou équivalent.
+  - DTO Pydantic séparés des ORM.
+  - Génération OpenAPI versionnée.
+  done_when:
+  - /health ne dépend pas des sources externes.
+  - /ready échoue si DB/migrations indisponibles.
+  - Le schéma OpenAPI est exportable en CI.
+  tests:
+  - pytest API health/ready
+  - openapi generation smoke test
+  sfg:
+  - SFG-OPS-001
+- id: FND-008
+  phase: P0
+  title: Squelette worker
+  dependencies:
+  - FND-003
+  - FND-004
+  - FND-006
+  deliverables:
+  - Process worker séparé du serveur web.
+  - Interface JobHandler et contexte de job.
+  - Pas encore de scheduler métier; seulement le lifecycle.
+  done_when:
+  - Le worker démarre et s’arrête proprement sans job.
+  - Aucun calcul lourd dans le process web.
+  tests:
+  - worker startup/shutdown test
+  sfg:
+  - SFG-OPS-001
+- id: FND-009
+  phase: P0
+  title: Makefile et commandes développeur
+  dependencies:
+  - FND-005
+  - FND-007
+  - FND-008
+  deliverables:
+  - make up/down, db-migrate, lint, typecheck, test, test-e2e, openapi, format.
+  - Cibles futures OE réservées mais non simulées.
+  done_when:
+  - README documente un parcours local reproductible.
+  - Les commandes CI utilisent les mêmes scripts que localement.
+  tests:
+  - make lint
+  - make test
+  sfg:
+  - SFG-INFRA-001
+- id: FND-010
+  phase: P0
+  title: CI de base et discipline ADR
+  dependencies:
+  - FND-009
+  deliverables:
+  - Pipeline lint frontend, TS strict, Python lint/typecheck, unit tests, migration test, Docker build.
+  - Template ADR dans docs/adr.
+  - CODEOWNERS facultatif si utile; pas de processus lourd.
+  done_when:
+  - Aucun changement structurant de la liste SFG §33 n’est accepté sans ADR.
+  - CI rouge bloque la fusion.
+  tests:
+  - CI locale/simulateur si disponible
+  sfg:
+  - SFG-INFRA-001
+  - SFG-SEC-001
+- id: MCK-001
+  phase: P1
+  title: Définir les contrats de domaine
+  dependencies:
+  - FND-007
+  deliverables:
+  - Enums jeu, marché, période, sélection, grade, freshness, abstention, statut provider/marché/event.
+  - DTO Opportunity, Event, Market, OddsSnapshot, Prediction, Value, Quality, ModelSummary, BacktestSummary, PaperBet, MappingReview.
+  - Contrats versionnés dans packages/contracts / équivalent généré depuis OpenAPI.
+  done_when:
+  - Mock et réel pourront implémenter exactement ces mêmes DTO.
+  - Aucun DTO ne dépend d’un ORM ou du HTML d’un bookmaker.
+  tests:
+  - Contract tests
+  - OpenAPI compatibility test
+  sfg:
+  - SFG-MOCK-001
+  - SFG-ODDS-001
+- id: MCK-002
+  phase: P1
+  title: Implémenter l’isolation mock/réel
+  dependencies:
+  - FND-003
+  - MCK-001
+  deliverables:
+  - DataMode explicite propagé dans les réponses.
+  - Repositories/factories distincts.
+  - 'Guard: real refuse un provider mock comme source de vérité.'
+  - Base ou schéma mock séparé du réel.
+  done_when:
+  - Aucune requête Oracle/bookmaker ne part en mode mock.
+  - Impossible de lire/écrire des données mock via le contexte real.
+  tests:
+  - Tests isolation croisée
+  - test démarrage real+mock provider => échec
+  sfg:
+  - SFG-MOCK-001
+  - SFG-MOCK-002
+- id: MCK-003
+  phase: P1
+  title: Créer les 12 scénarios mock normatifs
+  dependencies:
+  - MCK-001
+  - MCK-002
+  deliverables:
+  - 'Seed déterministe pour: faible value, outsider value, odds stale, marché suspendu, mapping ambigu, OE incomplet, modèle
+    stale, forte incertitude, sync échouée avec snapshot valide, changement de cote, void, résultat incohérent/quarantaine.'
+  done_when:
+  - Même seed => mêmes IDs, timestamps relatifs contrôlés et mêmes valeurs.
+  - Chaque scénario est adressable en test.
+  tests:
+  - Snapshot tests données mock
+  - Property test déterminisme
+  sfg:
+  - SFG-MOCK-001
+- id: MCK-004
+  phase: P1
+  title: Implémenter repositories/services mock
+  dependencies:
+  - MCK-003
+  deliverables:
+  - MockOpportunityRepository, MockEventRepository, MockModelRepository, MockPaperRepository, MockDataHealthRepository, MockMappingRepository.
+  - MockOddsProvider conforme au contrat futur.
+  done_when:
+  - Aucun code UI ne branche directement sur des fixtures.
+  - Tous les appels passent par les mêmes services que le réel.
+  tests:
+  - Unit/contract tests mocks
+  sfg:
+  - SFG-MOCK-001
+  - SFG-ODDS-001
+- id: MCK-005
+  phase: P1
+  title: Exposer toutes les lectures API en mock
+  dependencies:
+  - MCK-004
+  deliverables:
+  - GET opportunities/detail/explanation.
+  - GET events/detail/markets/odds-history.
+  - GET models/backtests.
+  - GET paper-bets.
+  - GET admin data sources/runs/quality/jobs.
+  - GET mappings pending.
+  done_when:
+  - Pagination/filtres typés.
+  - Chaque réponse métier contient dataMode, freshness/asOf et version lorsque pertinente.
+  tests:
+  - API tests filtres/pagination/404/empty/error
+  sfg:
+  - SFG-MOCK-001
+  - SFG-UX-001
+- id: MCK-006
+  phase: P1
+  title: Exposer mutations mock contrôlées
+  dependencies:
+  - MCK-005
+  deliverables:
+  - Actions mock sync, train, promote, retire, paper bet, settle, mapping approve/reject/alias.
+  - Idempotency key sur mutations sensibles.
+  - Audit mock cohérent.
+  done_when:
+  - Double soumission même idempotency key ne duplique pas l’effet.
+  - Les actions retournent des états réalistes sans appeler l’extérieur.
+  tests:
+  - API idempotency tests
+  sfg:
+  - SFG-OPS-001
+  - SFG-MOCK-001
+- id: MCK-007
+  phase: P1
+  title: Gate P1 — démo mock complète
+  dependencies:
+  - MCK-006
+  - UI-011
+  deliverables:
+  - Script de seed et scénario demo.
+  - E2E couvrant parcours critiques.
+  - README “démarrer en mock”.
+  done_when:
+  - Une machine neuve peut lancer la démo via Docker Compose sans Internet métier.
+  - Zéro erreur console/hydratation sur parcours clé.
+  tests:
+  - docker compose --profile mock up -d --build
+  - make test-e2e
+  sfg:
+  - SFG-MOCK-001
+  - SFG-MOCK-002
+  - SFG-UX-002
+- id: UI-001
+  phase: P1
+  title: Initialiser le frontend et le design system
+  dependencies:
+  - FND-002
+  - MCK-001
+  deliverables:
+  - Next.js/React/TypeScript strict.
+  - Tailwind, primitives accessibles, tokens spacing/radius/typography/elevation.
+  - Client TypeScript généré depuis OpenAPI.
+  - TanStack Query.
+  - Motion légère uniquement pour micro-interactions.
+  done_when:
+  - Pas de duplication manuelle des DTO backend.
+  - Composants de base navigables au clavier.
+  tests:
+  - pnpm typecheck
+  - component smoke tests
+  sfg:
+  - SFG-UX-003
+- id: UI-002
+  phase: P1
+  title: Thème et shell sans flash
+  dependencies:
+  - UI-001
+  deliverables:
+  - Thème système avec stratégie anti-FOUC.
+  - 'Navigation: Opportunités, Événements, Paper trading, Modèles & backtests, Données, Administration, Paramètres.'
+  - Badge MOCK/REAL persistant.
+  done_when:
+  - Aucun flash clair/sombre.
+  - Aucun warning d’hydratation.
+  - Navigation responsive.
+  tests:
+  - Playwright console/hydration test
+  - visual screenshot light/dark
+  sfg:
+  - SFG-UX-001
+  - SFG-UX-002
+- id: UI-003
+  phase: P1
+  title: Bibliothèque d’états distants
+  dependencies:
+  - UI-001
+  deliverables:
+  - Composants loading/skeleton, empty, recoverable error, blocking error, stale, permission denied, mock, offline/reconnecting.
+  - Skeletons aux dimensions réservées.
+  done_when:
+  - Aucun spinner infini.
+  - Le contenu précédent reste visible pendant refetch lorsque sûr.
+  tests:
+  - Component state matrix test
+  sfg:
+  - SFG-UX-002
+- id: UI-004
+  phase: P1
+  title: Dashboard Opportunités
+  dependencies:
+  - MCK-005
+  - UI-002
+  - UI-003
+  deliverables:
+  - Résumé santé, compteur opportunités, dernière MAJ, filtres, table/cartes, tri EV prudente, changement de cote, grade,
+    temps avant début.
+  - Colonnes normatives de la SFG.
+  - État no opportunity explicite.
+  done_when:
+  - Filtres et tri sont stables et partageables par URL si pertinent.
+  - Pas de couleur seule pour signifier positif/négatif.
+  tests:
+  - Playwright filtres/tri/empty/stale
+  sfg:
+  - SFG-UX-001
+  - SFG-UX-003
+- id: UI-005
+  phase: P1
+  title: Fiche événement
+  dependencies:
+  - MCK-005
+  - UI-002
+  - UI-003
+  deliverables:
+  - Participants/format, courbe odds, marchés supportés/non supportés, probabilités/intervalles, facteurs, données manquantes,
+    roster attendu/confiance, model version, snapshot OE, timeline signal, bouton paper bet uniquement.
+  done_when:
+  - Aucun CTA de mise réelle.
+  - Graphiques ont un résumé textuel accessible.
+  tests:
+  - Playwright event detail
+  - a11y checks
+  sfg:
+  - SFG-UX-001
+  - SFG-UX-003
+- id: UI-006
+  phase: P1
+  title: Fiche signal et explicabilité UI
+  dependencies:
+  - MCK-005
+  - UI-002
+  - UI-003
+  deliverables:
+  - Sections prix marché, prix modèle, facteurs structurés, risques/incertitude, qualité/fraîcheur, historique, règlement
+    paper.
+  - Raisons d’abstention visibles.
+  done_when:
+  - Aucun langage “garanti/lock/sûr”.
+  - Contributions modèles ne sont pas présentées comme causalité.
+  tests:
+  - Content assertions
+  - accessibility test
+  sfg:
+  - SFG-UX-001
+- id: UI-007
+  phase: P1
+  title: Modèles et backtests UI
+  dependencies:
+  - MCK-005
+  - UI-002
+  - UI-003
+  deliverables:
+  - Champion/challengers, métriques, calibration, performance temporelle/segment, baselines, capacité marchés, promotions.
+  - Faible échantillon signalé.
+  done_when:
+  - Le modèle/version affiché correspond au DTO.
+  - Pas de graphique sans alternative textuelle.
+  tests:
+  - Playwright models/backtests
+  sfg:
+  - SFG-UX-001
+- id: UI-008
+  phase: P1
+  title: Santé data et administration UI
+  dependencies:
+  - MCK-005
+  - MCK-006
+  - UI-002
+  - UI-003
+  deliverables:
+  - Catalogue, dernière tentative/succès, fraîcheur année, hash actif, lignes/plage dates, schéma, anomalies, quarantaine,
+    jobs, sync contrôlée.
+  done_when:
+  - Les actions affichent progress/resultat sans polling agressif.
+  - Erreurs récupérables et bloquantes différenciées.
+  tests:
+  - Playwright admin data states
+  sfg:
+  - SFG-UX-001
+  - SFG-OPS-001
+- id: UI-009
+  phase: P1
+  title: File de mapping UI
+  dependencies:
+  - MCK-005
+  - MCK-006
+  - UI-002
+  - UI-003
+  deliverables:
+  - Événement brut, candidats, score par composante, raisons, aliases, approve/reject/create dated alias, impact preview.
+  done_when:
+  - Une ambiguïté mock reste bloquante jusqu’à action explicite.
+  - Action auditée.
+  tests:
+  - Playwright mapping review
+  sfg:
+  - SFG-MAP-001
+  - SFG-OPS-001
+- id: UI-010
+  phase: P1
+  title: Paper trading UI mock
+  dependencies:
+  - MCK-005
+  - MCK-006
+  - UI-002
+  - UI-003
+  deliverables:
+  - Liste/detail paper bets, P&L mock, statuts pending/won/lost/push/void/pending_review.
+  - Création depuis signal admissible.
+  done_when:
+  - Les pertes sont visibles comme les gains.
+  - Aucune exécution réelle.
+  tests:
+  - Playwright paper bet flow
+  sfg:
+  - SFG-PAPER-002
+- id: UI-011
+  phase: P1
+  title: Micro-interactions, responsive et accessibilité
+  dependencies:
+  - UI-004
+  - UI-005
+  - UI-006
+  - UI-007
+  - UI-008
+  - UI-009
+  - UI-010
+  deliverables:
+  - Transitions 120–220 ms, opacity/transform, hover/focus/pressed, reduced motion.
+  - Desktop/tablette/mobile.
+  - Navigation clavier, contrastes AA, aria-live raisonnable, targets tactiles.
+  done_when:
+  - CLS cible <0,05 sur pages clés en test.
+  - Aucune table ne nécessite zoom navigateur.
+  - Focus visible partout.
+  tests:
+  - Playwright desktop/mobile
+  - axe ou équivalent
+  - visual regression
+  sfg:
+  - SFG-UX-002
+  - SFG-UX-003
+- id: OE-001
+  phase: P2
+  title: 'Modèle raw: catalogue, snapshots, runs et qualité'
+  dependencies:
+  - FND-004
+  deliverables:
+  - Tables raw.source_catalog, raw.snapshots, raw.ingestion_runs, raw.quality_issues, raw.quarantine_items, raw.row_revisions/équivalent.
+  - Contraintes uniqueness et statut.
+  - Liens d’audit/provenance.
+  done_when:
+  - Migration testée.
+  - Aucun snapshot validé ne peut être écrasé.
+  tests:
+  - DB constraint tests
+  sfg:
+  - SFG-DATA-002
+  - SFG-OPS-001
+- id: OE-002
+  phase: P2
+  title: ObjectStore filesystem adressé par hash
+  dependencies:
+  - OE-001
+  deliverables:
+  - Interface ObjectStore.
+  - Backend filesystem /data.
+  - Layout year=YYYY/sha256=... avec source.bin/source.csv/manifest/schema/quality-report.
+  - Écriture temporaire puis promotion atomique.
+  done_when:
+  - Un objet existant avec même hash est réutilisé, jamais muté.
+  - Le stockage est indépendant du chemin temporaire.
+  tests:
+  - Object store unit/integration tests
+  sfg:
+  - SFG-DATA-002
+- id: OE-003
+  phase: P2
+  title: Découverte du catalogue Oracle’s Elixir
+  dependencies:
+  - OE-001
+  deliverables:
+  - Fetcher de la page officielle de téléchargements.
+  - Extraction des liens Google Drive et IDs.
+  - Association annuelle avec règles explicites et testées.
+  - Détection changement ID, doublon, disparition, ambiguïté.
+  - Persistance discovered_at/last_confirmed/payload hash.
+  done_when:
+  - Aucune autre source statistique LoL n’est interrogée.
+  - Une ambiguïté ne remplace jamais silencieusement le catalogue actif.
+  tests:
+  - HTML fixtures de découverte
+  - tests changement/doublon/missing
+  sfg:
+  - SFG-DATA-001
+- id: OE-004
+  phase: P2
+  title: Catalogue de secours versionné
+  dependencies:
+  - OE-003
+  deliverables:
+  - config/oracles_elixir_sources.yml.
+  - Entrée bootstrap 2026 avec ID 1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm marquée validated-bootstrap/mutable.
+  - Fallback seulement si landing page inaccessible.
+  done_when:
+  - Le fallback ne masque jamais une divergence détectée.
+  - L’origine bootstrap est visible dans audit/health.
+  tests:
+  - fallback selection tests
+  sfg:
+  - SFG-DATA-001
+- id: OE-005
+  phase: P2
+  title: Contrat SourceTransport
+  dependencies:
+  - OE-001
+  - FND-006
+  deliverables:
+  - SourceRef, SourceMetadata, DownloadReceipt.
+  - Protocol probe/download.
+  - Timeouts, taille max, redirections et policy retry passés par config.
+  done_when:
+  - Tous les transports satisfont les mêmes contract tests.
+  tests:
+  - transport contract tests
+  sfg:
+  - SFG-DATA-003
+- id: OE-006
+  phase: P2
+  title: GoogleDriveApiTransport
+  dependencies:
+  - OE-005
+  deliverables:
+  - Transport Drive API lorsque credentials autorisés présents.
+  - Téléchargement streaming/chunked.
+  - Classification structurée des erreurs quota/rate/permission/not found.
+  done_when:
+  - Aucun secret loggé.
+  - Une erreur quota n’écrit jamais un snapshot.
+  tests:
+  - mocked Drive API tests
+  - secret redaction test
+  sfg:
+  - SFG-DATA-003
+  - SFG-SEC-001
+- id: OE-007
+  phase: P2
+  title: GoogleDrivePublicHttpTransport
+  dependencies:
+  - OE-005
+  deliverables:
+  - Fallback HTTP public autorisé.
+  - Redirections bornées.
+  - Détection pages HTML quota/consent/login.
+  - Pas de contournement de quota.
+  done_when:
+  - Une réponse HTML même HTTP 200 est refusée.
+  - Aucun mécanisme de bypass.
+  tests:
+  - fixtures quota/consent/html200
+  sfg:
+  - SFG-DATA-003
+- id: OE-008
+  phase: P2
+  title: MirrorTransport et LocalFixtureTransport
+  dependencies:
+  - OE-005
+  - OE-002
+  deliverables:
+  - Mirror du dernier snapshot privé validé; aucune invention de fraîcheur.
+  - Transport fixtures pour CI.
+  - Priorité de transports explicite.
+  done_when:
+  - Le miroir ne peut être déclaré fresh si la source n’a pas été confirmée.
+  - Fixtures n’existent pas en mode real comme source de vérité.
+  tests:
+  - contract tests
+  sfg:
+  - SFG-DATA-007
+  - SFG-MOCK-002
+- id: OE-009
+  phase: P2
+  title: Téléchargeur sûr en streaming
+  dependencies:
+  - OE-005
+  deliverables:
+  - .part dans même volume, streaming, SHA-256 pendant flux, limites taille/durée, fsync, rename atomique.
+  - Détection MIME/magic/compression.
+  - Nettoyage des temporaires après échec.
+  done_when:
+  - Jamais de chargement du fichier entier en RAM.
+  - Aucun .part n’est visible par l’ingestion.
+  tests:
+  - large-stream fixture
+  - interruption cleanup test
+  sfg:
+  - SFG-DATA-002
+  - SFG-DATA-003
+- id: OE-010
+  phase: P2
+  title: Taxonomie d’erreurs et retries
+  dependencies:
+  - OE-006
+  - OE-007
+  - OE-009
+  deliverables:
+  - Exceptions SourceNotFound, PermissionDenied, QuotaExceeded, RateLimited, Timeout, UnexpectedHtmlResponse, UnexpectedContentType,
+    ChecksumMismatch, ArchiveCorrupted, SchemaIncompatible, DataQualityFailed, AtomicPromotionFailed.
+  - Backoff exponentiel+jitter seulement transitoires.
+  done_when:
+  - Chaque erreur conserve type/contexte/tentatives/transport/retryability.
+  - Aucun retry agressif permanent.
+  tests:
+  - error mapping tests
+  - retry policy tests
+  sfg:
+  - SFG-DATA-003
+  - SFG-OPS-001
+- id: OE-011
+  phase: P2
+  title: Manifeste et empreintes de snapshot
+  dependencies:
+  - OE-009
+  deliverables:
+  - manifest.json avec provider, year, file id, timestamps, transport, byteSize, sha256, content type, compression, encoding,
+    delimiter, schema fingerprint, rowCount, dates min/max, quality, code version.
+  - schema.json.
+  - Hash vérifié après stockage.
+  done_when:
+  - Le manifeste suffit à identifier le dataset exact consommé.
+  - Hash incohérent bloque promotion.
+  tests:
+  - manifest roundtrip test
+  - checksum reread test
+  sfg:
+  - SFG-DATA-002
+  - SFG-ML-003
+- id: OE-012
+  phase: P2
+  title: Validation physique
+  dependencies:
+  - OE-009
+  - OE-011
+  deliverables:
+  - Refus corps vide, HTML/JSON d’erreur, type incompatible, archive cassée, header CSV absent, colonnes incohérentes, chute
+    de taille implausible, checksum incorrect.
+  - Détection encodage/délimiteur sans correction silencieuse.
+  done_when:
+  - Chaque rejet produit diagnostic et aucune promotion.
+  tests:
+  - fixtures physical invalid cases
+  sfg:
+  - SFG-DATA-003
+- id: OE-013
+  phase: P2
+  title: Contrat de schéma évolutif
+  dependencies:
+  - OE-012
+  deliverables:
+  - Définition colonnes cœur requises, optionnelles, additives, capacités par marché.
+  - Schema fingerprint et diff.
+  - Conservation des nouvelles colonnes dans raw.
+  - Blocage ciblé des capacités si colonne requise manque.
+  done_when:
+  - Une colonne additive ne casse pas ingestion.
+  - Une colonne retirée ne déclenche pas une hypothèse silencieuse.
+  tests:
+  - fixture additive
+  - fixture missing-core
+  - schema diff tests
+  sfg:
+  - SFG-DATA-008
+  - SFG-MARKET-001
+- id: OE-014
+  phase: P2
+  title: Data Quality métier
+  dependencies:
+  - OE-013
+  deliverables:
+  - Contrôles IDs, dates, participants, clés naturelles, équipes distinctes, side, plages numériques, résultat, remakes/forfeits/incomplets,
+    structure équipe/joueur, diff vs précédent, suppression massive.
+  - Severity blocking/capability-only.
+  - quality-report.json.
+  done_when:
+  - Toutes les règles donnent un code stable.
+  - Pas de suppression massive silencieuse.
+  tests:
+  - DQ fixtures
+  - property ranges tests
+  sfg:
+  - SFG-DATA-008
+- id: OE-015
+  phase: P2
+  title: Quarantaine
+  dependencies:
+  - OE-014
+  - OE-002
+  deliverables:
+  - Nouveau contenu invalide conservé séparément avec cause.
+  - Dernier snapshot validé reste actif.
+  - Promotion manuelle seulement via action explicitement auditée si prévue; aucune auto-promotion.
+  done_when:
+  - Un snapshot quarantined ne peut être lu comme current.
+  - UI/API peut afficher le diagnostic.
+  tests:
+  - quarantine state tests
+  sfg:
+  - SFG-DATA-002
+  - SFG-OPS-001
+- id: OE-016
+  phase: P2
+  title: Promotion atomique du snapshot
+  dependencies:
+  - OE-011
+  - OE-014
+  - OE-015
+  deliverables:
+  - Écriture manifeste/objets puis transaction DB.
+  - Pointeur current mis à jour seulement après succès complet.
+  - Rollback si promotion échoue.
+  done_when:
+  - Crash avant commit laisse l’ancien snapshot current.
+  - Run succeeded seulement après commit.
+  tests:
+  - fault injection promotion tests
+  sfg:
+  - SFG-DATA-002
+- id: OE-017
+  phase: P2
+  title: Staging et chargement raw tabulaire
+  dependencies:
+  - OE-016
+  deliverables:
+  - Staging raw.oe_staging_<run_id> ou équivalent transactionnel.
+  - Lecture Polars/stream adaptée au fichier.
+  - Clé naturelle + row hash.
+  - Statistiques inserted/updated/unchanged/quarantined.
+  done_when:
+  - Relancer le même snapshot ne duplique aucune ligne.
+  - Le staging est nettoyé de façon sûre.
+  tests:
+  - double-load idempotency test
+  sfg:
+  - SFG-DATA-004
+- id: OE-018
+  phase: P2
+  title: Historiser les révisions de lignes
+  dependencies:
+  - OE-017
+  deliverables:
+  - Upsert canonique source avec version/revision.
+  - Avant/après ou hash historique.
+  - Source snapshot et run pour chaque révision.
+  - Aucune suppression issue seulement de l’absence dans un fichier potentiellement tronqué.
+  done_when:
+  - Une correction d’une ligne connue est détectée et historisée.
+  - Une ligne inchangée ne crée pas de fausse révision.
+  tests:
+  - retroactive row change test
+  sfg:
+  - SFG-DATA-005
+- id: OE-019
+  phase: P2
+  title: Diff année courante et invalidation
+  dependencies:
+  - OE-018
+  deliverables:
+  - Déterminer date minimale affectée par les révisions.
+  - Émettre événement/invalidation features à partir de cette date.
+  - Ne jamais réécrire prédictions passées.
+  done_when:
+  - Une correction historique invalide uniquement la plage dépendante.
+  - Aucune prédiction immuable n’est modifiée.
+  tests:
+  - revision invalidation test
+  sfg:
+  - SFG-DATA-005
+  - SFG-PAPER-002
+- id: OE-020
+  phase: P2
+  title: États de fraîcheur et politiques stale
+  dependencies:
+  - OE-016
+  - OE-010
+  deliverables:
+  - fresh/stale/degraded/failed/quarantined.
+  - allow-stale et require-fresh.
+  - asOf et snapshot ID exposés.
+  - SLA configurable.
+  done_when:
+  - require-fresh retourne code non nul si fresh indisponible.
+  - allow-stale réutilise seulement snapshot validé et annonce stale/degraded.
+  tests:
+  - CLI/API stale policy tests
+  sfg:
+  - SFG-DATA-006
+  - SFG-DATA-007
+- id: OE-021
+  phase: P2
+  title: Backfill multi-années reprenable
+  dependencies:
+  - OE-003
+  - OE-020
+  - OE-017
+  - OE-018
+  deliverables:
+  - Orchestrateur from_year/to_year.
+  - État par année/run.
+  - Reprise après interruption.
+  - Advisory lock par provider/année lorsque job system disponible; lock local/DB dès maintenant.
+  done_when:
+  - Interruption puis reprise ne duplique rien.
+  - Deux exécutions convergent vers même état.
+  tests:
+  - resume test
+  - concurrent sync lock test
+  sfg:
+  - SFG-DATA-004
+- id: OE-022
+  phase: P2
+  title: CLI et Make Oracle’s Elixir
+  dependencies:
+  - OE-021
+  deliverables:
+  - oe catalog refresh, backfill, sync --allow-stale/--require-fresh, verify, diff, rebuild-canonical.
+  - Make aliases conformes à la SFG.
+  done_when:
+  - Codes retour documentés.
+  - Sortie machine-readable possible pour CI/ops.
+  tests:
+  - CLI integration tests
+  sfg:
+  - SFG-DATA-004
+  - SFG-DATA-006
+  - SFG-DATA-007
+- id: OE-023
+  phase: P2
+  title: API/admin et UI santé réelles
+  dependencies:
+  - OE-020
+  - OE-022
+  - UI-008
+  deliverables:
+  - Brancher data-sources, ingestion-runs, quality-issues, sync.
+  - Afficher hash, rows, plage dates, schema changes, quarantine, last attempt/success.
+  - Mode real sans changer les composants UI.
+  done_when:
+  - Même DTO qu’en mock.
+  - Erreur source externe ne casse pas lecture dernier snapshot.
+  tests:
+  - API contract diff mock/real
+  - Playwright real-fixture health
+  sfg:
+  - SFG-MOCK-001
+  - SFG-UX-001
+- id: OE-024
+  phase: P2
+  title: Suite de fixtures OE critique
+  dependencies:
+  - OE-012
+  - OE-014
+  - OE-018
+  - OE-020
+  deliverables:
+  - 'Fixtures minimisées: valide, additive, cœur manquant, duplicate, incomplete, remake, retro change, truncated, HTML quota,
+    encoding/delimiter surprise, corrupted archive.'
+  - Origine/licence de test documentée.
+  done_when:
+  - Tous les cas SFG §25.2 sont couverts.
+  - Hashes fixtures ne sont jamais considérés comme hash du fichier courant.
+  tests:
+  - pytest ingestion fixtures
+  sfg:
+  - SFG-DATA-003
+  - SFG-DATA-004
+  - SFG-DATA-005
+  - SFG-DATA-008
+- id: OE-025
+  phase: P2
+  title: Gate P2 — reconstruction data fiable
+  dependencies:
+  - OE-023
+  - OE-024
+  deliverables:
+  - Script de démonstration DB vide -> migrations -> backfill/fixture -> canonical préliminaire.
+  - Rapport idempotence et stale/failure.
+  - Documentation opérateur.
+  done_when:
+  - Les critères d’acceptation OE §9.18 passent.
+  - Aucune page quota ne peut être ingérée.
+  tests:
+  - make test-ingestion
+  - double run
+  - quota run
+  sfg:
+  - SFG-DATA-001
+  - SFG-DATA-002
+  - SFG-DATA-003
+  - SFG-DATA-004
+  - SFG-DATA-005
+  - SFG-DATA-006
+  - SFG-DATA-007
+  - SFG-DATA-008
+- id: CNL-001
+  phase: P3
+  title: Dimensions canoniques LoL
+  dependencies:
+  - OE-018
+  - FND-004
+  deliverables:
+  - Tables game title, competitions, teams, players, patches avec identifiants canoniques/provenance.
+  - Pas d’autre source statistique LoL.
+  done_when:
+  - Chaque entité issue d’OE remonte au raw.
+  - Aucune identité externe non traçable.
+  tests:
+  - canonical dimension tests
+  sfg:
+  - SFG-DATA-001
+- id: CNL-002
+  phase: P3
+  title: core.games et statistiques équipes/joueurs
+  dependencies:
+  - CNL-001
+  deliverables:
+  - core.games, game_team_stats, game_player_stats selon champs réellement disponibles.
+  - Flags complete/remake/forfeit/usable_for_training.
+  - source_snapshot_id + row_revision.
+  done_when:
+  - Deux participants équipes cohérents par game quand complet.
+  - Données absentes restent null+availability, jamais zéro silencieux.
+  tests:
+  - canonical fixture tests
+  sfg:
+  - SFG-DATA-008
+- id: CNL-003
+  phase: P3
+  title: Reconstruction core.series
+  dependencies:
+  - CNL-002
+  deliverables:
+  - Priorité identifiant série fourni par OE.
+  - Fallback équipes/compétition/date/ordre/format uniquement non ambigu.
+  - best_of/allows_draw/score/result/quality/provenance.
+  done_when:
+  - Une série ambiguë reste unresolved.
+  - BO2 peut exprimer draw si le format le permet.
+  tests:
+  - series reconstruction fixtures
+  sfg:
+  - SFG-MARKET-001
+- id: CNL-004
+  phase: P3
+  title: Observations de roster
+  dependencies:
+  - CNL-002
+  deliverables:
+  - core.roster_observations datées dérivées des games.
+  - Rôles/joueurs/équipe/provenance.
+  - Aucune annonce externe.
+  done_when:
+  - Roster attendu futur n’est jamais stocké comme vérité historique.
+  - Une substitution inconnue réduit confiance plus tard.
+  tests:
+  - roster temporal tests
+  sfg:
+  - SFG-TIME-001
+- id: CNL-005
+  phase: P3
+  title: Provenance et historique canonique
+  dependencies:
+  - CNL-001
+  - CNL-002
+  - CNL-003
+  - CNL-004
+  deliverables:
+  - Lien snapshot, ligne(s) source, transformation version, processed_at, correction éventuelle, quality status.
+  - Historisation des révisions.
+  done_when:
+  - À partir d’une ligne core, on retrouve raw snapshot/run.
+  - Une révision n’efface pas l’ancienne trace.
+  tests:
+  - provenance roundtrip tests
+  sfg:
+  - SFG-ML-003
+  - SFG-OPS-001
+- id: CNL-006
+  phase: P3
+  title: Capability registry
+  dependencies:
+  - OE-013
+  - CNL-002
+  - CNL-003
+  deliverables:
+  - 'Registre par snapshot/capacité: labels et features réellement calculables.'
+  - Raisons enabled/disabled.
+  - Seuils de complétude versionnés.
+  - Matrice UI/API.
+  done_when:
+  - Un marché ne peut pas devenir enabled sans label+données+rules+model+mapping+odds+sample gates.
+  - Avant modèle/odds, état reste disabled/pending.
+  tests:
+  - capability state tests
+  sfg:
+  - SFG-MARKET-001
+  - SFG-DATA-008
+- id: CNL-007
+  phase: P3
+  title: Repository real canonique et APIs événements historiques
+  dependencies:
+  - CNL-005
+  - MCK-002
+  deliverables:
+  - Repositories real pour teams/series/games.
+  - DTO identiques au mock lorsque exposés.
+  - Pagination et filtres.
+  done_when:
+  - Switch mock/real ne modifie pas composants UI.
+  - Fraîcheur source propagée.
+  tests:
+  - contract tests mock vs real
+  sfg:
+  - SFG-MOCK-001
+- id: FEAT-001
+  phase: P3
+  title: Registre des définitions de features
+  dependencies:
+  - CNL-005
+  deliverables:
+  - 'FeatureDefinition versionnée: nom, domaine, paramètres, disponibilité, code version.'
+  - Feature set version.
+  - Interdiction de colonnes ad hoc non versionnées.
+  done_when:
+  - Toute prédiction référence une feature version.
+  tests:
+  - feature registry tests
+  sfg:
+  - SFG-ML-003
+- id: FEAT-002
+  phase: P3
+  title: Primitives as-of et cutoff
+  dependencies:
+  - FEAT-001
+  - CNL-002
+  deliverables:
+  - API de lecture exigeant cutoff.
+  - max_input_time calculé/stocké.
+  - Assertion max(source_event_time_used) < cutoff.
+  - Helpers SQL/Polars empêchant agrégats sans cutoff.
+  done_when:
+  - Impossible de construire une feature de production sans cutoff explicite.
+  - Toute violation lève une erreur bloquante.
+  tests:
+  - future-game injection test
+  - cutoff boundary tests
+  sfg:
+  - SFG-TIME-001
+- id: FEAT-003
+  phase: P3
+  title: Rating temporel pré-game
+  dependencies:
+  - FEAT-002
+  deliverables:
+  - Elo/Glicko-like ou équivalent rating baseline auditable.
+  - Valeur avant la game uniquement.
+  - Paramètres versionnés.
+  - Priori ligue/région si nécessaire.
+  done_when:
+  - Le rating d’une game n’utilise pas son résultat.
+  - Recalcul déterministe.
+  tests:
+  - tiny sequence hand-check tests
+  sfg:
+  - SFG-TIME-001
+  - SFG-ML-002
+- id: FEAT-004
+  phase: P3
+  title: Forme récente
+  dependencies:
+  - FEAT-002
+  deliverables:
+  - Fenêtres 5/10/20 games, 30/60/90 jours, EWM, tendance/volatilité, force adversaires, data completeness.
+  - Pas d’imputation silencieuse.
+  done_when:
+  - Toutes les fenêtres coupent strictement avant cutoff.
+  - Nouveau roster petit sample est régularisé plus tard.
+  tests:
+  - window cutoff tests
+  sfg:
+  - SFG-TIME-001
+- id: FEAT-005
+  phase: P3
+  title: Features side
+  dependencies:
+  - FEAT-002
+  deliverables:
+  - Win rate blue/red ajusté, différentiels, early stats si disponibles.
+  - Représentation explicite side inconnue pour marginalisation future.
+  done_when:
+  - Side future inconnue n’est jamais supposée.
+  tests:
+  - unknown-side tests
+  sfg:
+  - SFG-TIME-001
+- id: FEAT-006
+  phase: P3
+  title: Économie, rythme et objectifs conditionnels
+  dependencies:
+  - FEAT-002
+  - CNL-006
+  deliverables:
+  - Gold/XP/CS diff timestamps présents, kills/min, durée, tours/objectifs/min, conversion/comeback sans fuite.
+  - Objectif first/total seulement si capability indique présence.
+  done_when:
+  - Une colonne OE absente désactive la feature au lieu d’inventer.
+  - Availability indicators accompagnent groupes.
+  tests:
+  - missing-capability tests
+  sfg:
+  - SFG-DATA-008
+  - SFG-TIME-001
+- id: FEAT-007
+  phase: P3
+  title: Roster et joueurs
+  dependencies:
+  - FEAT-002
+  - CNL-004
+  deliverables:
+  - Continuité cinq, games communes, changements rôles, force individuelle régularisée, synergies, roster-confidence.
+  - OE antérieur uniquement.
+  done_when:
+  - Une donnée externe roster n’entre jamais.
+  - Confiance faible est explicite.
+  tests:
+  - roster cutoff tests
+  sfg:
+  - SFG-TIME-001
+- id: FEAT-008
+  phase: P3
+  title: Champion pool et méta
+  dependencies:
+  - FEAT-002
+  deliverables:
+  - Diversité/profondeur champions, performances historiques champion/rôle/patch, adaptation patch, compositions observées.
+  - 'Pré-draft uniquement: aucun pick réel futur.'
+  done_when:
+  - Draft de la game cible absent du feature vector pré-draft.
+  - Patch inconnu devient incertitude/absence.
+  tests:
+  - post-draft leakage fixture
+  sfg:
+  - SFG-TIME-001
+- id: FEAT-009
+  phase: P3
+  title: Contexte compétition et calendrier
+  dependencies:
+  - FEAT-002
+  - CNL-003
+  deliverables:
+  - Ligue/région/tournoi/stage, regular/playoffs/international si déductible OE, BO, jours repos, densité calendrier, patch
+    connu, expérience format.
+  - Pas d’actualité externe.
+  done_when:
+  - Chaque valeur contextuelle a provenance ou unknown.
+  tests:
+  - context provenance tests
+  sfg:
+  - SFG-TIME-001
+- id: FEAT-010
+  phase: P3
+  title: Priors, missingness et cold start
+  dependencies:
+  - FEAT-003
+  - FEAT-004
+  - FEAT-005
+  - FEAT-006
+  - FEAT-007
+  - FEAT-008
+  - FEAT-009
+  deliverables:
+  - Priors hiérarchiques ligue/patch, shrinkage petits échantillons, décote ancienneté, indicateurs disponibilité, règles
+    cold start/OOD.
+  - Transformations fit train-only exposées pour ML.
+  done_when:
+  - Jamais null->0 silencieux.
+  - Cold start peut prédire faible confiance mais ne garantit pas signal.
+  tests:
+  - missingness tests
+  - small-sample shrinkage tests
+  sfg:
+  - SFG-TIME-001
+  - SFG-ML-004
+- id: FEAT-011
+  phase: P3
+  title: Feature snapshots immuables
+  dependencies:
+  - FEAT-010
+  - OE-011
+  deliverables:
+  - 'features.feature_snapshots: cutoff, event, teams, versions, valeurs, missingness, games fingerprint/list, OE snapshot,
+    code commit, leakage checks.'
+  - Hash du vector.
+  done_when:
+  - Prediction future pourra référencer exactement un snapshot.
+  - Snapshot n’est jamais muté.
+  tests:
+  - snapshot hash/repro test
+  sfg:
+  - SFG-ML-003
+  - SFG-TIME-001
+- id: FEAT-012
+  phase: P3
+  title: Invalidation et rebuild ciblés
+  dependencies:
+  - OE-019
+  - FEAT-011
+  deliverables:
+  - Queue/marker d’invalidation à partir de min affected date.
+  - features-rebuild --from.
+  - Ne modifie jamais feature snapshots déjà référencés par prédictions; produit nouvelles versions si recalcul.
+  done_when:
+  - Révision OE déclenche la bonne plage.
+  - Prédictions passées restent liées à ancien snapshot.
+  tests:
+  - retro revision rebuild test
+  sfg:
+  - SFG-PAPER-002
+  - SFG-ML-003
+- id: FEAT-013
+  phase: P3
+  title: Suite anti-leakage
+  dependencies:
+  - FEAT-011
+  - FEAT-012
+  deliverables:
+  - Game future injectée, scaler/encoder train-only, agrégats cutoff, max_input_time, révision reçue après prédiction, draft
+    futur.
+  - Property tests temps.
+  done_when:
+  - Toute fuite volontaire fait échouer la suite.
+  - Cette suite est bloquante en CI.
+  tests:
+  - make test-leakage
+  sfg:
+  - SFG-TIME-001
+- id: FEAT-014
+  phase: P3
+  title: Gate P3 — dataset de features reproductible
+  dependencies:
+  - FEAT-013
+  - CNL-007
+  deliverables:
+  - Commande features-rebuild.
+  - Rapport couverture/missingness/cutoff.
+  - Exemple feature snapshot retraçable.
+  done_when:
+  - Depuis prediction candidate/event+cutoff, vector reproductible depuis snapshots versionnés.
+  - Aucune source autre qu’OE pour stats LoL.
+  tests:
+  - rebuild deterministic test
+  sfg:
+  - SFG-TIME-001
+  - SFG-ML-003
+- id: ML-001
+  phase: P4
+  title: Dataset d’entraînement versionné
+  dependencies:
+  - FEAT-014
+  deliverables:
+  - ml.datasets avec market, cutoff/exemple, label, feature version, OE snapshots, quality filter, period, competitions, hash,
+    code commit, exclusions.
+  - Builder game_winner uniquement pour MVP initial.
+  done_when:
+  - Dataset hash stable à inputs identiques.
+  - Labels viennent uniquement d’OE validé.
+  tests:
+  - dataset reproducibility tests
+  sfg:
+  - SFG-ML-003
+  - SFG-DATA-001
+- id: ML-002
+  phase: P4
+  title: Validation walk-forward
+  dependencies:
+  - ML-001
+  deliverables:
+  - Splits chronologiques train->future val, transformations fit train-only, OOF predictions, final untouched test.
+  - Découpes/report internationaux et patchs.
+  - Aucun random split principal.
+  done_when:
+  - Le moteur rejette une config de split principal aléatoire.
+  - Période finale n’est pas utilisée pour tuning seuils.
+  tests:
+  - split chronology tests
+  sfg:
+  - SFG-ML-001
+  - SFG-TIME-001
+- id: ML-003
+  phase: P4
+  title: Baselines prior et forme naïve
+  dependencies:
+  - ML-002
+  deliverables:
+  - Prior constant compétition.
+  - Forme récente naïve.
+  - Rapport log loss/Brier/calibration.
+  done_when:
+  - Les baselines sont enregistrées comme runs comparables.
+  tests:
+  - baseline metric tests
+  sfg:
+  - SFG-ML-002
+- id: ML-004
+  phase: P4
+  title: Baseline rating game winner
+  dependencies:
+  - FEAT-003
+  - ML-002
+  deliverables:
+  - Transformer rating pré-game en probabilité auditable.
+  - Paramètres optimisés uniquement train/validation temporelle.
+  - Artefact versionné.
+  done_when:
+  - Probabilités dans [0,1].
+  - Résultats reproductibles.
+  tests:
+  - probability bounds/property tests
+  sfg:
+  - SFG-ML-002
+- id: ML-005
+  phase: P4
+  title: Benchmark gradient boosting
+  dependencies:
+  - ML-002
+  - ML-003
+  - ML-004
+  deliverables:
+  - Benchmark CatBoost vs LightGBM ou candidat tabulaire prévu par SFG sur mêmes splits/features.
+  - Choix documenté par métriques/robustesse, pas par préférence.
+  - CPU MVP.
+  done_when:
+  - Le modèle complexe n’est promouvable que s’il justifie son gain vs baselines.
+  - Hyperparamètres sauvegardés.
+  tests:
+  - training smoke deterministic seed
+  sfg:
+  - SFG-ML-001
+  - SFG-ML-002
+- id: ML-006
+  phase: P4
+  title: Ensemble candidat
+  dependencies:
+  - ML-004
+  - ML-005
+  deliverables:
+  - Combinaison rating + tabulaire seulement si validation OOS démontre intérêt.
+  - Poids entraînés/choisis sur validation, pas test final.
+  done_when:
+  - L’ensemble peut être désactivé si aucun gain.
+  - Décision documentée dans model run.
+  tests:
+  - ensemble comparison test
+  sfg:
+  - SFG-ML-002
+- id: ML-007
+  phase: P4
+  title: Calibration hors échantillon
+  dependencies:
+  - ML-004
+  - ML-005
+  - ML-006
+  deliverables:
+  - Platt/isotonic comparés sur prédictions temporelles distinctes.
+  - Calibrator artifact versionné séparément.
+  - Reliability, ECE, Brier, log loss, slope/intercept.
+  done_when:
+  - Pas de calibrateur fit sur le test final.
+  - Calibration par segments détecte dérives.
+  tests:
+  - calibration leakage tests
+  sfg:
+  - SFG-ML-001
+  - SFG-ML-003
+- id: ML-008
+  phase: P4
+  title: Estimation d’incertitude
+  dependencies:
+  - ML-007
+  deliverables:
+  - p50, p_low, p_high, confidence, reasons, data coverage, training-domain distance.
+  - Méthode choisie entre ensemble/bootstrap temporel/conformal adapté via benchmark documenté.
+  - Pas de fausse certitude.
+  done_when:
+  - p_low <= p50 <= p_high.
+  - OOD/low coverage réduit confiance ou bloque.
+  tests:
+  - interval property tests
+  - OOD scenario tests
+  sfg:
+  - SFG-ML-001
+  - SFG-ML-004
+- id: ML-009
+  phase: P4
+  title: Rapport d’évaluation et segments
+  dependencies:
+  - ML-007
+  - ML-008
+  deliverables:
+  - Log loss, Brier, ROC-AUC secondaire, ECE, slope/intercept, sharpness, interval coverage, abstention, ligue/patch/stage/format/bucket
+    odds quand odds existent, outsider robustness, drift.
+  - Nombre d’observations partout.
+  done_when:
+  - Aucune promotion sur accuracy seule.
+  - Faible sample signalé.
+  tests:
+  - metric calculation tests
+  sfg:
+  - SFG-ML-001
+  - SFG-ML-002
+- id: ML-010
+  phase: P4
+  title: Model registry et artefacts
+  dependencies:
+  - ML-009
+  - OE-002
+  deliverables:
+  - ml.model_versions avec algo/hyperparams/feature version/dataset hash/cutoffs/metrics/calibrator/artifact hash/code commit/status/auteur/date/motif.
+  - ObjectStore model artifacts.
+  - candidate/champion/retired/blocked.
+  done_when:
+  - Un seul champion par jeu/marché/segment.
+  - Artefact hash vérifié avant chargement.
+  tests:
+  - registry DB constraints
+  - artifact checksum test
+  sfg:
+  - SFG-ML-003
+- id: ML-011
+  phase: P4
+  title: Champion/challenger et rollback
+  dependencies:
+  - ML-010
+  deliverables:
+  - Promotion manuelle auditée.
+  - Comparaison baselines.
+  - Shadow predictions challenger facultatives.
+  - Rollback immédiat.
+  - Pas de promotion auto mono-métrique.
+  done_when:
+  - Anciennes prédictions gardent ancien model_version.
+  - Deux champions concurrents interdits.
+  tests:
+  - promotion/rollback tests
+  sfg:
+  - SFG-ML-002
+  - SFG-OPS-001
+- id: ML-012
+  phase: P4
+  title: MarketPlugin GAME_WINNER
+  dependencies:
+  - ML-011
+  - CNL-006
+  deliverables:
+  - Plugin conforme au protocol required capabilities / labels / features / train / predict / price / settle.
+  - Capability gate lié au modèle champion.
+  done_when:
+  - Le plugin reste disabled sans données/modèle valides.
+  - Probabilités team A+B = 1 tolérance.
+  tests:
+  - plugin contract/property tests
+  sfg:
+  - SFG-MARKET-001
+  - SFG-ML-001
+- id: ML-013
+  phase: P4
+  title: Service de prédiction pré-match
+  dependencies:
+  - ML-012
+  - FEAT-011
+  deliverables:
+  - Construit feature snapshot au cutoff.
+  - Charge champion+calibrator.
+  - Produit prediction append-only avec p50/low/high/version/snapshot/code.
+  - Refuse cutoff >= event start pour pré-match.
+  done_when:
+  - Prediction est immutable.
+  - Requête répétée peut créer un nouvel instant mais ne réécrit pas l’ancien.
+  tests:
+  - prediction reproducibility test
+  sfg:
+  - SFG-ML-003
+  - SFG-TIME-001
+  - SFG-PAPER-002
+- id: ML-014
+  phase: P4
+  title: Pricing de série BO1/BO3/BO5 et BO2 conditionnel
+  dependencies:
+  - ML-013
+  - CNL-003
+  deliverables:
+  - Dériver distribution série depuis proba game et format.
+  - BO2 trois issues si draw permis.
+  - Propager incertitude et marginaliser side inconnue.
+  - Score exact/nb games non activés ici, seulement distribution interne.
+  done_when:
+  - Somme issues =1.
+  - Formats inconnus -> abstention/capability disabled.
+  tests:
+  - analytical/simulation property tests
+  sfg:
+  - SFG-ML-001
+  - SFG-MARKET-001
+- id: ML-015
+  phase: P4
+  title: Explications structurées
+  dependencies:
+  - ML-013
+  deliverables:
+  - Contributions modèle, facteurs +/- et incertitude via templates structurés.
+  - SHAP si modèle supporté, étiqueté contribution non cause.
+  - Aucune narration libre d’absence/fatigue/rumeur.
+  done_when:
+  - Chaque phrase se rattache à un champ structuré.
+  - Missing data affichable.
+  tests:
+  - explanation template tests
+  sfg:
+  - SFG-UX-001
+- id: ML-016
+  phase: P4
+  title: API/UI modèles, train et promotion réels
+  dependencies:
+  - ML-011
+  - ML-015
+  - UI-007
+  - MCK-006
+  deliverables:
+  - GET models/backtests réels.
+  - POST train/promote/retire -> jobs/audit.
+  - Courbes/metrics depuis données réelles.
+  - Version exacte visible dans prediction.
+  done_when:
+  - Même DTO que mock.
+  - Promotion impossible si gate échoue.
+  tests:
+  - API integration
+  - Playwright model promotion fixture
+  sfg:
+  - SFG-ML-002
+  - SFG-ML-003
+  - SFG-UX-001
+- id: ML-017
+  phase: P4
+  title: Gate P4 — cote juste bookmaker-free
+  dependencies:
+  - ML-016
+  deliverables:
+  - Commande model-train MARKET=game_winner.
+  - Rapport walk-forward, calibration et baselines.
+  - Exemple prediction reproduite depuis model/dataset/feature snapshot.
+  done_when:
+  - Game winner champion existe seulement si gates validés.
+  - Aucune cote bookmaker n’entre comme feature du modèle indépendant.
+  tests:
+  - make model-train MARKET=game_winner
+  - reproduce prediction test
+  sfg:
+  - SFG-ML-001
+  - SFG-ML-002
+  - SFG-ML-003
+  - SFG-ML-004
+- id: MAP-001
+  phase: P5
+  title: Schéma et modèle d’aliases datés
+  dependencies:
+  - CNL-001
+  - ODD-001
+  deliverables:
+  - 'core.entity_aliases: entity_type, canonical_id, provider, raw_alias, normalized_alias, valid_from/to, source, confidence,
+    approved_by/at, notes.'
+  - Unique constraints temporelles cohérentes.
+  done_when:
+  - Sponsor/rebranding peut être daté.
+  - Academy/main non fusionnés automatiquement.
+  tests:
+  - alias DB tests
+  sfg:
+  - SFG-MAP-001
+- id: MAP-002
+  phase: P5
+  title: Normalisation sûre des noms
+  dependencies:
+  - MAP-001
+  deliverables:
+  - 'Normalisation typographique uniquement: casse/espaces/ponctuation règles explicites.'
+  - Pas de fuzzy auto-merge à lui seul.
+  - Tests accents/sponsors/academy.
+  done_when:
+  - Deux noms proches restent distincts sans alias approuvé.
+  tests:
+  - normalization property tests
+  sfg:
+  - SFG-MAP-001
+- id: MAP-003
+  phase: P5
+  title: Score de matching événement
+  dependencies:
+  - MAP-002
+  - ODD-007
+  - CNL-003
+  deliverables:
+  - Score équipes 0.60, heure 0.20, compétition 0.15, format 0.05 comme valeurs initiales versionnées.
+  - Inversion A/B reconnue avec remapping selections.
+  - TBD/Winner of non résolus.
+  - Seuils >=.95 auto, .75-.95 review, <.75 reject; proches => review.
+  done_when:
+  - Aucune prédiction si ambigu.
+  - Composantes du score persistées pour audit.
+  tests:
+  - mapping score fixtures
+  sfg:
+  - SFG-MAP-001
+- id: MAP-004
+  phase: P5
+  title: File de revue mapping et actions
+  dependencies:
+  - MAP-003
+  - UI-009
+  deliverables:
+  - Persistence pending reviews/candidates.
+  - Approve/reject/create alias daté.
+  - Audit complet.
+  - Impact preview.
+  done_when:
+  - Action manuelle ne réécrit pas signaux historiques.
+  - Plusieurs candidats proches restent review.
+  tests:
+  - API/E2E review tests
+  sfg:
+  - SFG-MAP-001
+  - SFG-OPS-001
+- id: MAP-005
+  phase: P5
+  title: Mapping canonique des marchés
+  dependencies:
+  - ODD-007
+  - CNL-006
+  deliverables:
+  - Mapping par type, période, line, unité, nombre issues, settlement rules, draw, remake/forfeit/void.
+  - Market rules reference obligatoire pour activation.
+  - Unknown market stocké brut.
+  done_when:
+  - Un libellé seul ne suffit jamais.
+  - Marché inconnu ne déclenche aucune prediction.
+  tests:
+  - market mapping fixtures
+  sfg:
+  - SFG-MARKET-001
+- id: MAP-006
+  phase: P5
+  title: Gate P5 — événement coté résolu
+  dependencies:
+  - ODD-009
+  - MAP-004
+  - MAP-005
+  deliverables:
+  - Parcours mock/manual import -> event -> odds history -> mapping.
+  - UI mapping branchée réel.
+  - Contract test providers.
+  done_when:
+  - Un événement ambigu n’atteint pas pricing.
+  - Les snapshots sont horodatés/immutables.
+  tests:
+  - integration odds->mapping
+  sfg:
+  - SFG-ODDS-001
+  - SFG-ODDS-002
+  - SFG-MAP-001
+  - SFG-PRICE-002
+- id: ODD-001
+  phase: P5
+  title: Schéma odds append-only
+  dependencies:
+  - FND-004
+  - MCK-001
+  deliverables:
+  - odds.providers, events, markets, selections, snapshots, raw payload reference minimal, provider health.
+  - captured_at obligatoire pour signal validé.
+  - Decimal odds positive constraints.
+  done_when:
+  - Aucune UPDATE d’un snapshot de cote.
+  - Index event/market/selection/captured_at.
+  - Cote sans timestamp fiable marquée informational_only.
+  tests:
+  - immutability DB tests
+  sfg:
+  - SFG-PRICE-002
+  - SFG-ODDS-001
+- id: ODD-002
+  phase: P5
+  title: Contrat OddsProvider
+  dependencies:
+  - ODD-001
+  deliverables:
+  - Protocol list_events/get_event_markets/capture_snapshot/health.
+  - ProviderEvent/Market/Selection normalisés.
+  - Aucun domaine ne dépend d’un provider concret.
+  done_when:
+  - Contract test réutilisable par tous providers.
+  tests:
+  - provider contract suite
+  sfg:
+  - SFG-ODDS-001
+- id: ODD-003
+  phase: P5
+  title: MockOddsProvider réel du contrat
+  dependencies:
+  - ODD-002
+  - MCK-003
+  deliverables:
+  - Adapter les scénarios existants au vrai protocol.
+  - Clock injectable pour odds changes/stale.
+  - Aucun réseau.
+  done_when:
+  - Passe exactement la même contract suite que les autres providers.
+  tests:
+  - provider contract suite mock
+  sfg:
+  - SFG-ODDS-001
+  - SFG-MOCK-001
+- id: ODD-004
+  phase: P5
+  title: ManualImportOddsProvider
+  dependencies:
+  - ODD-002
+  deliverables:
+  - 'Import CSV/JSON strict: provider logique, event, start, market, selection, decimal odds, captured_at, provenance ref.'
+  - Validation erreurs par ligne et transaction contrôlée.
+  done_when:
+  - Cote sans captured_at fiable ne peut générer signal validé.
+  - Import idempotent selon clé documentée.
+  tests:
+  - valid/invalid/import duplicate tests
+  sfg:
+  - SFG-ODDS-001
+  - SFG-PRICE-002
+- id: ODD-005
+  phase: P5
+  title: LicensedOddsFeedProvider boundary
+  dependencies:
+  - ODD-002
+  deliverables:
+  - Interface/adaptateur abstrait et config pour futur flux contractuel.
+  - Aucun faux endpoint, aucune clé inventée.
+  - Documentation d’implémentation future.
+  done_when:
+  - Le produit compile/fonctionne sans provider licencié concret.
+  tests:
+  - contract test skeleton
+  sfg:
+  - SFG-ODDS-001
+- id: ODD-006
+  phase: P5
+  title: StakeAuthorizedProvider désactivé
+  dependencies:
+  - ODD-002
+  deliverables:
+  - Squelette explicite DisabledProvider/feature flag.
+  - Message expliquant que l’autorisation écrite et validation juridique sont requises.
+  - Aucun scraper, endpoint privé, CAPTCHA, proxy, cookie bookmaker, geobypass ou automatisation de mise.
+  done_when:
+  - Impossible de l’activer sans flag de conformité et implémentation autorisée future.
+  - Recherche statique CI interdit patterns de contournement documentés si pertinent.
+  tests:
+  - startup disabled test
+  - repository compliance scan
+  sfg:
+  - SFG-ODDS-002
+  - SFG-COMP-002
+- id: ODD-007
+  phase: P5
+  title: Capture et historisation des cotes
+  dependencies:
+  - ODD-003
+  - ODD-004
+  deliverables:
+  - Append-only capture.
+  - Nouvelle observation sur changement cote/status/line/name ou confirmation.
+  - Déduplication physique optionnelle tout en préservant intervalle observé.
+  - Lien provider event/market/selection.
+  done_when:
+  - Historique reconstructible.
+  - Aucune dernière cote n’écrase l’ancienne.
+  tests:
+  - odds history tests
+  sfg:
+  - SFG-PRICE-002
+- id: ODD-008
+  phase: P5
+  title: Fraîcheur et admissibilité de marché
+  dependencies:
+  - ODD-007
+  deliverables:
+  - ODDS_MAX_AGE_SECONDS configurable provider/market/phase.
+  - Block stale, started pre-match, suspended/closed, selection missing, incomplete outcomes pour no-vig, temporal order invalid.
+  - Live betting hors MVP.
+  done_when:
+  - Un snapshot devenu stale ne reste pas signalable.
+  - Status open requis.
+  tests:
+  - stale/start/suspended tests
+  sfg:
+  - SFG-PRICE-003
+- id: ODD-009
+  phase: P5
+  title: Health provider et API odds history
+  dependencies:
+  - ODD-008
+  - MCK-005
+  deliverables:
+  - Provider health, last capture, age, failures.
+  - GET event odds-history réel.
+  - Fraîcheur exposée.
+  done_when:
+  - Erreur provider n’efface pas l’historique existant.
+  tests:
+  - API odds history tests
+  sfg:
+  - SFG-UX-001
+- id: VAL-001
+  phase: P6
+  title: Probabilité implicite et no-vig
+  dependencies:
+  - MAP-005
+  deliverables:
+  - q=1/O.
+  - Normalisation q_i/sum(q) pour issues mutuellement exclusives exhaustives.
+  - Stratégie no-vig versionnée.
+  - Refus si marché incomplet sauf stratégie explicitement compatible.
+  done_when:
+  - Somme no-vig =1 tolérance.
+  - Cotes invalides refusées.
+  tests:
+  - hand-calculated unit tests
+  - property tests
+  sfg:
+  - SFG-PRICE-001
+- id: VAL-002
+  phase: P6
+  title: Cote juste, edge, EV et EV prudente
+  dependencies:
+  - ML-013
+  - VAL-001
+  deliverables:
+  - fair_odds=1/p_model, edge=p_model-p_book_no_vig, EV=p_model*O-1, conservative EV=p_low*O-1.
+  - Gestion limites p=0/1 selon politique numérique explicite.
+  done_when:
+  - Exemple SFG cote 4.00 reproduit.
+  - Formules testées cas limites.
+  tests:
+  - golden numeric tests
+  sfg:
+  - SFG-PRICE-001
+- id: VAL-003
+  phase: P6
+  title: Configuration versionnée des seuils
+  dependencies:
+  - FND-003
+  - VAL-002
+  deliverables:
+  - min_edge/min_ev/min_conservative_ev/max_odds_age/min_mapping confidence, overrides market/competition/bucket.
+  - Version de policy persistée.
+  - Aucun tuning sur période test finale.
+  done_when:
+  - Chaque signal référence policy version.
+  - Changement seuil audité.
+  tests:
+  - policy version tests
+  sfg:
+  - SFG-OPS-001
+  - SFG-PRICE-001
+- id: VAL-004
+  phase: P6
+  title: Garde-fous d’admission
+  dependencies:
+  - ODD-008
+  - MAP-003
+  - ML-011
+  - CNL-006
+  - VAL-003
+  deliverables:
+  - Check edge, EV, conservative EV, mapping confidence, odds age, champion, source quality, market open, prediction cutoff<start,
+    capability enabled.
+  - Ordre de checks déterministe.
+  done_when:
+  - Un seul échec bloquant suffit à empêcher opportunity.
+  - Market stale/suspended/started ne passe jamais.
+  tests:
+  - guard matrix tests
+  sfg:
+  - SFG-PRICE-003
+  - SFG-MARKET-001
+  - SFG-MAP-001
+- id: VAL-005
+  phase: P6
+  title: Abstention de première classe
+  dependencies:
+  - VAL-004
+  - ML-008
+  deliverables:
+  - 'Enum complet SFG: ODDS_STALE, MARKET_SUSPENDED, EVENT_MAPPING_AMBIGUOUS, INSUFFICIENT_HISTORY, ROSTER_UNCERTAIN, SOURCE_STALE,
+    MODEL_STALE, OUT_OF_DISTRIBUTION, CALIBRATION_FAILED, EDGE_TOO_SMALL, CONSERVATIVE_EV_NEGATIVE, MARKET_RULES_UNKNOWN,
+    PATCH_CONTEXT_UNKNOWN, EVENT_ALREADY_STARTED, CAPABILITY_DISABLED.'
+  - Plusieurs raisons possibles ordonnées.
+  done_when:
+  - Aucune absence de value n’est représentée comme erreur système.
+  - UI montre les raisons.
+  tests:
+  - abstention scenario tests
+  sfg:
+  - SFG-ML-004
+  - SFG-UX-001
+- id: VAL-006
+  phase: P6
+  title: Persistence append-only predictions/signals
+  dependencies:
+  - ML-013
+  - VAL-005
+  - ODD-007
+  deliverables:
+  - ml.predictions immutable si pas déjà.
+  - signals.signals append-only avec odds_snapshot_id, prediction_id, policy_version, computed_at, grades VALUE/STRONG_VALUE/WATCH/NO_EDGE/BLOCKED.
+  - Jamais de réécriture après résultat.
+  done_when:
+  - DB empêche update métier ou application n’expose aucune mutation; audit technique si correction administrative exceptionnelle.
+  - Chaque signal reproduit inputs exacts.
+  tests:
+  - immutability tests
+  - reproduction test
+  sfg:
+  - SFG-PRICE-002
+  - SFG-PAPER-002
+- id: VAL-007
+  phase: P6
+  title: Projection Opportunités et APIs réelles
+  dependencies:
+  - VAL-006
+  - MCK-005
+  - UI-004
+  - UI-006
+  deliverables:
+  - GET opportunities/detail/explanation sur signaux réels admissibles.
+  - Filtres SFG.
+  - Tri EV prudente défaut.
+  - Freshness/model/data quality visibles.
+  done_when:
+  - NO_EDGE/BLOCKED ne sont pas comptés comme opportunités mais restent consultables selon écran diagnostic.
+  - DTO identique mock.
+  tests:
+  - API/UI contract tests
+  sfg:
+  - SFG-MOCK-001
+  - SFG-UX-001
+- id: VAL-008
+  phase: P6
+  title: Gestion changement de cote en UI
+  dependencies:
+  - ODD-007
+  - VAL-006
+  - UI-004
+  - UI-005
+  deliverables:
+  - Polling/refetch raisonné ou mécanisme simple; pas d’infra streaming lourde sans besoin.
+  - Nouvelle cote crée nouveau snapshot/signal si recalcul.
+  - La fiche ouverte ne réécrit pas silencieusement l’ancien signal.
+  - Indicateur “cote mise à jour”.
+  done_when:
+  - Zéro flicker/layout rebuild de ligne.
+  - Ancien snapshot reste consultable.
+  tests:
+  - Playwright odds change
+  sfg:
+  - SFG-UX-002
+  - SFG-PRICE-002
+- id: VAL-009
+  phase: P6
+  title: Gate P6 — signal value complet
+  dependencies:
+  - VAL-007
+  - VAL-008
+  deliverables:
+  - 'Parcours: event mappé + prediction + odds -> no-vig -> value -> grade/abstention -> UI.'
+  - Rapport numérique de référence.
+  - Cas outsider cote élevée.
+  done_when:
+  - Aucune promesse de gain.
+  - Exemple calculable manuellement.
+  - Ambigu/stale/suspended bloqués.
+  tests:
+  - integration odds->mapping->prediction->signal
+  - Playwright opportunities
+  sfg:
+  - SFG-PRICE-001
+  - SFG-PRICE-002
+  - SFG-PRICE-003
+  - SFG-ML-004
+  - SFG-MAP-001
+- id: PAP-001
+  phase: P7
+  title: Schéma Paper Ledger
+  dependencies:
+  - VAL-006
+  - FND-004
+  deliverables:
+  - signals.paper_bets, settlements, bankroll/exposure optional config.
+  - Référence signal+odds snapshot+policy/model au moment de décision.
+  - Append-only décisions/settlements.
+  done_when:
+  - Impossible de créer paper bet sur une cote non horodatée.
+  - Signal historique ne change pas.
+  tests:
+  - DB constraints
+  sfg:
+  - SFG-PAPER-001
+  - SFG-PAPER-002
+- id: PAP-002
+  phase: P7
+  title: Création contrôlée de paper bets
+  dependencies:
+  - PAP-001
+  - VAL-005
+  deliverables:
+  - Création manuelle depuis signal.
+  - Auto-paper optionnel uniquement selon policy si voulu par SFG, jamais pari réel.
+  - Idempotency key.
+  - Bankroll fictive.
+  done_when:
+  - WATCH/BLOCKED masquent suggestion de mise.
+  - Aucune API bookmaker d’exécution.
+  tests:
+  - paper create tests
+  sfg:
+  - SFG-PAPER-002
+- id: PAP-003
+  phase: P7
+  title: Settlement GAME_WINNER
+  dependencies:
+  - ML-012
+  - PAP-001
+  - CNL-002
+  deliverables:
+  - settle win/loss, remake/forfeit/void selon règles référencées.
+  - Résultat OE validé requis.
+  - Ambigu => pending_review.
+  done_when:
+  - Aucun settlement inventé si règles inconnues.
+  - Idempotent.
+  tests:
+  - settlement fixtures
+  sfg:
+  - SFG-PAPER-001
+  - SFG-MARKET-001
+- id: PAP-004
+  phase: P7
+  title: Settlement SERIES_WINNER
+  dependencies:
+  - ML-014
+  - PAP-001
+  - CNL-003
+  deliverables:
+  - Win/loss/draw si marché le permet, cancelled/format change/pending review.
+  - Règles du marché provider référencées.
+  done_when:
+  - Score/résultat core ambigu => pending_review.
+  tests:
+  - series settlement tests
+  sfg:
+  - SFG-PAPER-001
+  - SFG-MARKET-001
+- id: PAP-005
+  phase: P7
+  title: Job de règlement depuis OE
+  dependencies:
+  - PAP-003
+  - PAP-004
+  - OE-020
+  deliverables:
+  - Recherche résultats OE validés après event.
+  - Délai configurable avant final settlement.
+  - Retries bornés.
+  - Audit.
+  done_when:
+  - Source stale n’invente pas résultat.
+  - Settlement définitif seulement sur données suffisantes.
+  tests:
+  - result arrival tests
+  sfg:
+  - SFG-PAPER-001
+  - SFG-OPS-001
+- id: PAP-006
+  phase: P7
+  title: Closing line proxy et CLV
+  dependencies:
+  - ODD-007
+  - PAP-001
+  deliverables:
+  - Dernier snapshot pré-start disponible comme approximation closing line.
+  - Marquer explicitement proxy.
+  - CLV avec méthode documentée.
+  - Pas de reconstruction d’odds manquantes.
+  done_when:
+  - Aucune cote actuelle utilisée rétroactivement.
+  - Absence closing snapshot => CLV unavailable.
+  tests:
+  - CLV fixture tests
+  sfg:
+  - SFG-PAPER-001
+- id: PAP-007
+  phase: P7
+  title: Métriques financières honnêtes
+  dependencies:
+  - PAP-005
+  - PAP-006
+  deliverables:
+  - Signals/bets, turnover, P&L, ROI/yield, CLV, hit rate contextualisé, max drawdown, volatility, block-bootstrap CI, segments,
+    exposure/correlation, void rate, EV announced vs realized.
+  - Sample size partout.
+  done_when:
+  - Métriques utilisent uniquement paper bets issus de cotes réellement observées.
+  - Aucun backtest financier fabriqué depuis OE seul.
+  tests:
+  - small ledger hand-check tests
+  sfg:
+  - SFG-PAPER-001
+- id: PAP-008
+  phase: P7
+  title: Anti-biais et immutabilité reporting
+  dependencies:
+  - PAP-007
+  deliverables:
+  - Inclure pertes, opportunités non prises selon policy, slippage, odds changes.
+  - Aucune suppression signal après résultat.
+  - Seuils non optimisés sur test final.
+  done_when:
+  - Historique complet reconstructible.
+  - Audit des corrections manuelles.
+  tests:
+  - immutability/report completeness tests
+  sfg:
+  - SFG-PAPER-002
+- id: PAP-009
+  phase: P7
+  title: UI/API paper trading réels
+  dependencies:
+  - PAP-008
+  - UI-010
+  deliverables:
+  - GET/POST paper-bets, detail, admin settle.
+  - Dashboard métriques/CLV.
+  - pending_review visible.
+  - Suggestion Kelly facultative désactivée par défaut et fondée p_low si activée.
+  done_when:
+  - Aucun bouton mise bookmaker.
+  - Les pertes visibles.
+  - DTO mock/real identique.
+  tests:
+  - Playwright paper real-fixture
+  sfg:
+  - SFG-MOCK-001
+  - SFG-UX-001
+- id: PAP-010
+  phase: P7
+  title: Gate P7 — validation financière live-from-go-live
+  dependencies:
+  - PAP-009
+  deliverables:
+  - Documentation “ce qui est et n’est pas un backtest financier”.
+  - Commande paper-settle.
+  - Rapport exemple avec historique odds observé.
+  done_when:
+  - Impossible d’afficher ROI historique sans odds snapshots réels correspondants.
+  - Décisions immuables.
+  tests:
+  - integration capture->signal->paper->result->settle
+  sfg:
+  - SFG-PAPER-001
+  - SFG-PAPER-002
+- id: OPS-001
+  phase: P8
+  title: Table jobs et worker PostgreSQL
+  dependencies:
+  - FND-008
+  - FND-004
+  deliverables:
+  - 'ops.jobs: type, payload, status, attempts, scheduled/started/finished, heartbeat, error code, cancellation, idempotency
+    key.'
+  - Worker claim transactionnel.
+  done_when:
+  - Un job n’est exécuté que par un worker à la fois.
+  - Crash laisse job récupérable.
+  tests:
+  - concurrency tests
+  sfg:
+  - SFG-OPS-001
+- id: OPS-002
+  phase: P8
+  title: Advisory locks et unicité métier
+  dependencies:
+  - OPS-001
+  - OE-021
+  deliverables:
+  - Locks provider/year pour sync, market/model pour train/promotion si nécessaire, settlement scoped.
+  - Timeout et libération safe.
+  done_when:
+  - Deux sync même année ne s’exécutent pas simultanément.
+  - Lock mort récupérable.
+  tests:
+  - concurrent worker tests
+  sfg:
+  - SFG-OPS-001
+  - SFG-DATA-004
+- id: OPS-003
+  phase: P8
+  title: Retries, reprise et annulation
+  dependencies:
+  - OPS-001
+  deliverables:
+  - Retry policy par type erreur.
+  - Heartbeat/lease.
+  - Cancel controlled.
+  - Dead/failed states et rerun explicite.
+  done_when:
+  - Aucun retry infini.
+  - Erreur permanente finit failed.
+  tests:
+  - retry/cancel/recovery tests
+  sfg:
+  - SFG-OPS-001
+- id: OPS-004
+  phase: P8
+  title: Planification
+  dependencies:
+  - OPS-002
+  - OPS-003
+  deliverables:
+  - Année courante OE toutes les 3h configurable.
+  - Retry 10m/30m/2h+jitter.
+  - Audit années closes mensuel, deep control quotidien après modif.
+  - Paper settlement schedule.
+  - Implémentation simple worker/DB/cron interne approprié; pas Airflow.
+  done_when:
+  - Fréquences configurables.
+  - Un seul job par année.
+  tests:
+  - scheduler unit tests
+  sfg:
+  - SFG-INFRA-001
+  - SFG-OPS-001
+- id: OPS-005
+  phase: P8
+  title: Audit immuable
+  dependencies:
+  - FND-006
+  - OPS-001
+  deliverables:
+  - ops.audit_events append-only.
+  - Sync/quarantine/promotion alias/model threshold/paper/provider/mode/auth/admin.
+  - Actor, action, target, before/after refs non sensibles, trace_id.
+  done_when:
+  - Chaque action admin critique crée un audit.
+  - Audit non modifiable via API.
+  tests:
+  - audit coverage tests
+  sfg:
+  - SFG-OPS-001
+- id: OPS-006
+  phase: P8
+  title: System status et observabilité
+  dependencies:
+  - OE-020
+  - ODD-009
+  - ML-011
+  - OPS-001
+  deliverables:
+  - Status source freshness, model freshness, mapping backlog, jobs, backups.
+  - Logs JSON trace_id/job_id/snapshot/model.
+  - Metrics durée jobs, failures, rows, anomalies, API latency, signals.
+  - Traces ingestion/pricing si instrumentation légère disponible.
+  done_when:
+  - Aucun secret dans logs.
+  - External source degraded n’implique pas read unavailable si snapshot valide.
+  tests:
+  - log redaction tests
+  - status API tests
+  sfg:
+  - SFG-OPS-001
+  - SFG-SEC-001
+- id: OPS-007
+  phase: P8
+  title: Alertes
+  dependencies:
+  - OPS-006
+  deliverables:
+  - Alert rules source stale, model stale, mapping backlog, DQ blocking, backup failure.
+  - Canal local/log au MVP; intégration externe facultative future.
+  - Dedup/cooldown.
+  done_when:
+  - Alerte non spammy et testable.
+  - Pas de dépendance SaaS obligatoire.
+  tests:
+  - alert rule tests
+  sfg:
+  - SFG-OPS-001
+- id: OPS-008
+  phase: P8
+  title: Sauvegardes
+  dependencies:
+  - FND-005
+  - OE-002
+  - ML-010
+  deliverables:
+  - Dump PostgreSQL cohérent, copie objets immuables, rétention configurable, manifest backup, chiffrement si externe.
+  - Commande backup.
+  done_when:
+  - Backup contient DB+raw+models nécessaires.
+  - Échec est visible/alertable.
+  tests:
+  - backup smoke test
+  sfg:
+  - SFG-OPS-002
+- id: OPS-009
+  phase: P8
+  title: Restauration et reconstruction
+  dependencies:
+  - OPS-008
+  - OE-025
+  deliverables:
+  - Commande restore sur environnement test.
+  - Procédure DB + objects.
+  - Procédure rebuild canonical depuis raw.
+  - Validation checksums.
+  done_when:
+  - Un exercice de restauration automatisé/manuel documenté réussit.
+  - Raw permet reconstruction canonique.
+  tests:
+  - restore drill CI/nightly optional
+  sfg:
+  - SFG-OPS-002
+- id: OPS-010
+  phase: P8
+  title: Gate P8 — exploitation fiable
+  dependencies:
+  - OPS-009
+  - SEC-005
+  - OPS-007
+  deliverables:
+  - Runbook startup/update/backup/restore/incidents.
+  - Migration dry-run sur copie avant prod.
+  - Graceful shutdown worker/API.
+  - Status page admin.
+  done_when:
+  - Backup+restore testés.
+  - Jobs/audit visibles.
+  - Aucun secret loggé.
+  tests:
+  - ops smoke suite
+  sfg:
+  - SFG-OPS-001
+  - SFG-OPS-002
+  - SFG-SEC-001
+- id: SEC-001
+  phase: P8
+  title: Garde AUTH_MODE
+  dependencies:
+  - FND-003
+  - FND-007
+  deliverables:
+  - AUTH_MODE=disabled autorisé seulement localhost/réseau privé explicitement configuré.
+  - Refus de démarrage exposé publiquement sans auth.
+  done_when:
+  - Configuration publique+auth disabled échoue.
+  tests:
+  - startup security tests
+  sfg:
+  - SFG-SEC-001
+- id: SEC-002
+  phase: P8
+  title: Compte Owner et sessions
+  dependencies:
+  - SEC-001
+  - FND-004
+  deliverables:
+  - Bootstrap owner CLI.
+  - Session cookie HTTP-only/Secure/SameSite en réseau.
+  - Rotation session.
+  - Password hashing moderne choisi via bibliothèque maintenue.
+  done_when:
+  - Mot de passe jamais stocké/loggé clair.
+  - Session invalidée/rotée selon policy.
+  tests:
+  - auth integration tests
+  sfg:
+  - SFG-SEC-001
+- id: SEC-003
+  phase: P8
+  title: Protection HTTP
+  dependencies:
+  - SEC-002
+  deliverables:
+  - Validation inputs, CSRF mutations, CSP, headers sécurité, rate limit endpoints sensibles, CORS fermé.
+  - Erreurs sans fuite stack/secrets en production.
+  done_when:
+  - Tests CSRF/CORS/rate-limit.
+  - CSP n’empêche pas UI attendue.
+  tests:
+  - security integration tests
+  sfg:
+  - SFG-SEC-001
+- id: SEC-004
+  phase: P8
+  title: Secrets et conteneurs
+  dependencies:
+  - FND-005
+  - OE-006
+  - ODD-005
+  deliverables:
+  - .env non commité, secrets serveur uniquement, aucun token frontend, redaction logs, Docker secrets/manager en prod, non-root,
+    volumes readonly sauf besoin.
+  - Payloads bruts sensibles minimisés/chiffrés si requis.
+  done_when:
+  - Scan repo ne trouve pas credentials.
+  - Frontend bundle ne contient pas secrets serveur.
+  tests:
+  - secret scan
+  - container user/permissions tests
+  sfg:
+  - SFG-SEC-001
+- id: SEC-005
+  phase: P8
+  title: Scans CI sécurité
+  dependencies:
+  - FND-010
+  - SEC-004
+  deliverables:
+  - Dependency scan frontend/Python, image scan, secret scan.
+  - Policy de mise à jour contrôlée.
+  done_when:
+  - Vulnérabilité critique non acceptée bloque release selon policy.
+  - Exceptions documentées.
+  tests:
+  - CI scan jobs
+  sfg:
+  - SFG-SEC-001
+- id: QA-001
+  phase: P9
+  title: Performance API et N+1
+  dependencies:
+  - VAL-007
+  - PAP-009
+  - OPS-006
+  deliverables:
+  - Bench pages/endpoints courants.
+  - p95 cible <300ms hors réseau externe sur machine de référence documentée.
+  - Pagination histories.
+  - Indexes/query plans.
+  - Pas de calcul lourd web.
+  done_when:
+  - Aucune N+1 connue.
+  - Machine/scénario benchmark documentés.
+  tests:
+  - load smoke benchmark
+  - query count tests
+  sfg:
+  - SFG-UX-002
+- id: QA-002
+  phase: P9
+  title: Stabilité visuelle et régression
+  dependencies:
+  - UI-011
+  - VAL-008
+  deliverables:
+  - Visual regression desktop/mobile.
+  - Mesure CLS <0.05 pages clés scénario.
+  - Console error/hydration warning fail.
+  - Theme flash check.
+  - Graphs/skeleton dimensions.
+  done_when:
+  - Zéro erreur console/hydratation sur parcours clés.
+  - Animations annulables et reduced motion.
+  tests:
+  - Playwright visual suite
+  sfg:
+  - SFG-UX-002
+- id: QA-003
+  phase: P9
+  title: Accessibilité complète
+  dependencies:
+  - UI-011
+  deliverables:
+  - Navigation clavier tous parcours critiques.
+  - WCAG AA contrast.
+  - Semantic tables/labels.
+  - aria-live odds.
+  - Text summaries charts.
+  done_when:
+  - Aucune fonctionnalité critique souris-only.
+  - Information jamais couleur-only.
+  tests:
+  - automated a11y + manual keyboard checklist
+  sfg:
+  - SFG-UX-003
+- id: QA-004
+  phase: P9
+  title: Résilience réseau et erreurs
+  dependencies:
+  - MCK-007
+  - OE-023
+  - ODD-009
+  - OPS-006
+  deliverables:
+  - Tests offline/reconnect, timeout provider, DB transient, source stale, last snapshot read.
+  - UI recoverable/blocking distinction.
+  done_when:
+  - Aucun écran blanc/spinner infini.
+  - Dernier état sûr reste visible si autorisé.
+  tests:
+  - Playwright network fault suite
+  sfg:
+  - SFG-UX-002
+  - SFG-OPS-001
+- id: QA-005
+  phase: P9
+  title: CI complète normative
+  dependencies:
+  - OE-024
+  - FEAT-013
+  - ML-017
+  - VAL-009
+  - PAP-010
+  - OPS-010
+  - QA-002
+  - QA-003
+  deliverables:
+  - format/lint frontend, TS strict, Python lint/typecheck, unit/property, migrations, ingestion, model determinism, OpenAPI
+    compatibility, Playwright mock, visual, Docker build, security scans.
+  - Temporalité, settlement, migration, ingestion = hard blockers.
+  done_when:
+  - Pipeline verte sur commit de release.
+  - Un test critique forcé en échec bloque le pipeline.
+  tests:
+  - full CI
+  sfg:
+  - SFG-TIME-001
+  - SFG-SEC-001
+  - SFG-UX-002
+- id: QA-006
+  phase: P9
+  title: Checklist conformité et release gates
+  dependencies:
+  - ODD-006
+  - OPS-005
+  deliverables:
+  - Flags OE-COMMERCIAL=NO-GO, RIOT-PRODUCT=NO-GO, Stake provider disabled par défaut.
+  - Checklist sources externes à revalider avant lancement.
+  - Aucun marketing/“garanti/lock”.
+  done_when:
+  - Build personnel fonctionne avec gates NO-GO.
+  - Release publique/commerciale bloquée tant que gates non levés manuellement avec preuve.
+  tests:
+  - release gate tests/config assertions
+  sfg:
+  - SFG-COMP-001
+  - SFG-COMP-002
+  - SFG-ODDS-002
+- id: QA-007
+  phase: P9
+  title: Recette Definition of Done MVP
+  dependencies:
+  - QA-001
+  - QA-004
+  - QA-005
+  - QA-006
+  deliverables:
+  - Checklist automatisée + manuelle des 22 points SFG §31.
+  - Rapport avec PASS/FAIL, commandes, preuves et versions.
+  - Aucun TODO/PASS simulé.
+  done_when:
+  - Les 22 critères passent ou le MVP reste non terminé.
+  - Rapport archivé par release.
+  tests:
+  - make acceptance
+  sfg:
+  - SFG-DATA-001
+  - SFG-DATA-002
+  - SFG-DATA-003
+  - SFG-DATA-004
+  - SFG-DATA-005
+  - SFG-DATA-006
+  - SFG-DATA-007
+  - SFG-DATA-008
+  - SFG-TIME-001
+  - SFG-ML-001
+  - SFG-ML-002
+  - SFG-ML-003
+  - SFG-ML-004
+  - SFG-PRICE-001
+  - SFG-PRICE-002
+  - SFG-PRICE-003
+  - SFG-ODDS-001
+  - SFG-ODDS-002
+  - SFG-MAP-001
+  - SFG-MARKET-001
+  - SFG-PAPER-001
+  - SFG-PAPER-002
+  - SFG-MOCK-001
+  - SFG-MOCK-002
+  - SFG-UX-001
+  - SFG-UX-002
+  - SFG-UX-003
+  - SFG-OPS-001
+  - SFG-OPS-002
+  - SFG-SEC-001
+  - SFG-COMP-001
+  - SFG-COMP-002
+  - SFG-INFRA-001
+- id: MRK-001
+  phase: P10
+  title: Plugin total kills
+  dependencies:
+  - QA-007
+  - CNL-006
+  deliverables:
+  - Label OE capability-gated.
+  - Distribution de total.
+  - P(over/under line), settlement et calibration par lines.
+  done_when:
+  - Activation seulement après checklist Annexe B.
+  tests:
+  - market plugin + walk-forward + settlement
+  sfg:
+  - SFG-MARKET-001
+- id: MRK-002
+  phase: P10
+  title: Plugin kill handicap
+  dependencies:
+  - QA-007
+  - CNL-006
+  deliverables:
+  - Distribution différence kills.
+  - P(diff > handicap) et settlement.
+  done_when:
+  - Pas de modèle binaire séparé par ligne si distribution cohérente validée.
+  tests:
+  - distribution/settlement tests
+  sfg:
+  - SFG-MARKET-001
+- id: MRK-003
+  phase: P10
+  title: Plugin durée de game
+  dependencies:
+  - QA-007
+  - CNL-006
+  deliverables:
+  - Distribution durée.
+  - Over/under et settlement selon rules.
+  done_when:
+  - Capability et sample gates passés.
+  tests:
+  - market validation
+  sfg:
+  - SFG-MARKET-001
+- id: MRK-004
+  phase: P10
+  title: Premiers objectifs conditionnels
+  dependencies:
+  - QA-007
+  - CNL-006
+  deliverables:
+  - First blood/tower/dragon/herald/baron séparés.
+  - Bernoulli calibré seulement si labels OE complets et définitions provider équivalentes.
+  done_when:
+  - Une définition différente provider vs OE bloque.
+  - Remakes/incomplete filtrés.
+  tests:
+  - label equivalence + calibration + settlement
+  sfg:
+  - SFG-MARKET-001
+- id: MRK-005
+  phase: P10
+  title: Totaux objectifs
+  dependencies:
+  - QA-007
+  - CNL-006
+  deliverables:
+  - Total towers/dragons si capability.
+  - Distribution et settlement.
+  done_when:
+  - Activation checklist complète.
+  tests:
+  - market validation
+  sfg:
+  - SFG-MARKET-001
+- id: MRK-006
+  phase: P10
+  title: Score exact et nombre de games
+  dependencies:
+  - ML-014
+  - QA-007
+  deliverables:
+  - Prix dérivé de distribution série.
+  - Somme issues =1.
+  - Règles BO/void explicites.
+  done_when:
+  - Pas de modèle incohérent indépendant si distribution série suffit.
+  tests:
+  - probability sum + settlement tests
+  sfg:
+  - SFG-MARKET-001
+- id: MRK-007
+  phase: P10
+  title: Gate d’activation par marché
+  dependencies:
+  - MRK-001
+  - MRK-002
+  - MRK-003
+  - MRK-004
+  - MRK-005
+  - MRK-006
+  deliverables:
+  - Implémenter Annexe B comme checklist/versioned approval record.
+  - UI matrix capacités.
+  - Aucun market enabled par simple présence provider.
+  done_when:
+  - Tous les items requis doivent être true/approved.
+  - Décision auditée.
+  tests:
+  - capability activation tests
+  sfg:
+  - SFG-MARKET-001
+  - SFG-OPS-001
+- id: EXT-001
+  phase: P11
+  title: Extraire GameAdapter seulement quand LoL MVP stable
+  dependencies:
+  - QA-007
+  deliverables:
+  - Protocol GameAdapter conforme SFG.
+  - Réutiliser odds/value/UI/auth/jobs/audit/paper; logique LoL reste dans adapter/modules LoL.
+  - Pas de modèle universel rempli de nulls.
+  done_when:
+  - Tests architecture adapter sans changer comportement LoL.
+  tests:
+  - architecture tests
+  sfg:
+  - SFG-EXT-001
+- id: EXT-002
+  phase: P11
+  title: CS2 et Dota 2 — sources distinctes et droits distincts
+  dependencies:
+  - EXT-001
+  - GATE-001
+  deliverables:
+  - Backlog de source statistique/licence par jeu, canonical adapter, features, market plugins, settlement, calibration.
+  - Ne jamais réutiliser Oracle’s Elixir comme source CS2/Dota.
+  done_when:
+  - Aucun nouveau jeu activé sans source/droits/validation propres.
+  tests:
+  - N/A avant décision
+  sfg:
+  - SFG-EXT-001
+- id: GATE-001
+  phase: P11
+  title: Conserver les portes SaaS bloquantes
+  dependencies:
+  - QA-006
+  deliverables:
+  - Registre compliance decisions avec source/date/owner/status.
+  - OE commercial, Riot product, provider odds.
+  - Pas d’automatisation de décision juridique.
+  done_when:
+  - NO-GO empêche profile/public commercial release.
+  tests:
+  - release gate tests
+  sfg:
+  - SFG-COMP-001
+  - SFG-COMP-002
+- id: SAAS-001
+  phase: P11
+  title: Multi-user/RBAC/abonnements — non implémenté avant GO
+  dependencies:
+  - GATE-001
+  deliverables:
+  - 'Backlog documenté seulement: users, Admin/Analyst/Subscriber/ReadOnly, tenancy, billing, quotas, privacy, support.'
+  - Aucun code complexe prématuré dans MVP personnel.
+  done_when:
+  - Ticket reste blocked tant que gates NO-GO.
+  tests:
+  - N/A avant GO
+  sfg:
+  - SFG-COMP-001
+  - SFG-COMP-002
