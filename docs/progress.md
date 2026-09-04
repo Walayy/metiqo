@@ -100,12 +100,12 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 
 ## FND-009 — Makefile et commandes développeur
 
-- **Statut :** `IN_PROGRESS`
+- **Statut :** `DONE`
 - **Dépendances vérifiées :** `FND-005`, `FND-007` et `FND-008` sont `DONE` et présents sur `origin/main`.
 - **Fichiers créés/modifiés :** `Makefile`, `README.md`, `docs/progress.md`.
 - **Migrations :** aucune.
-- **Commandes/tests exécutés :** installation utilisateur de GNU Make `4.4.1` via le paquet `ezwinports.make` ; validations en cours.
-- **Résultat exact :** GNU Make `4.4.1` est exécutable ; validations du ticket en cours.
+- **Commandes/tests exécutés :** installation utilisateur de GNU Make `4.4.1` via le paquet `ezwinports.make` ; `make lint` ; `make test` ; `make typecheck` ; `make openapi-check` ; test négatif `make oe-catalog` ; `make up` ; appels HTTP avant migration ; `make db-migrate` ; appels HTTP après migration ; `make down` ; suppression contrôlée des seuls volumes du smoke test ; `make format` ; `make check` ; simulation de recette `make -n test-e2e` ; `git diff --check`.
+- **Résultat exact :** `make lint` retourne `0` avec Prettier, ESLint, CSpell et Ruff sans erreur ; `make test` réussit 43 tests et ignore correctement 2 tests PostgreSQL conditionnels ; TypeScript strict et mypy contrôlent respectivement le workspace et 39 fichiers Python sans erreur ; le contrat OpenAPI reste identique après régénération. La cible OE réservée retourne explicitement `2`. Le premier essai de `make up` a exposé que Compose traitait la garde mock one-shot sortie en `0` comme un service arrêté ; la cible exécute désormais cette garde séparément et attend uniquement les services durables. Le parcours corrigé retourne `0`, `/ready` passe de `503` à `200` après migration, les sondes API/web répondent `200`, les quatre services durables sont sains et `make down` retourne `0`. `make format` ne modifie aucun fichier supplémentaire et `make check` repasse intégralement en code `0`.
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le ticket expose les commandes prévues sans décision architecturale.
-- **Commit/hash :** à créer après validation.
+- **Commit/hash :** `bc1903b6b708c437ba6b870db9b7e22a07c6f225` (`chore: add developer Make targets`).
