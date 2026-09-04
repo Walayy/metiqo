@@ -1,11 +1,14 @@
-import { PlaceholderPage } from "../components/placeholder-page";
+import { Suspense } from "react";
+import { RemoteLoadingState } from "@metiquo/ui";
+
+import { OpportunitiesDashboard } from "../components/opportunities-dashboard";
 
 export default function HomePage() {
   return (
-    <PlaceholderPage
-      description="Une lecture probabiliste, traçable et prudente des marchés League of Legends."
-      eyebrow="Vue d’ensemble"
-      title="Opportunités"
-    />
+    <Suspense
+      fallback={<RemoteLoadingState label="Chargement du dashboard" minHeight="32rem" rows={8} />}
+    >
+      <OpportunitiesDashboard />
+    </Suspense>
   );
 }
