@@ -32,31 +32,33 @@ class SourceCatalog(IdentityTimestampMixin, Base):
 
     __tablename__ = "source_catalog"
     __table_args__ = (
-        CheckConstraint("year BETWEEN 2014 AND 2200", name="year_range"),
+        CheckConstraint("season_year BETWEEN 2014 AND 2200", name="year_range"),
         CheckConstraint(
             "origin IN ('discovered', 'validated-bootstrap', 'manual')",
             name="origin",
         ),
         CheckConstraint(
-            "status IN ('active', 'superseded', 'ambiguous', 'missing', 'unreachable')",
+            "status IN ('active', 'missing', 'changed', 'blocked', 'superseded', "
+            "'ambiguous', 'unreachable')",
             name="status",
         ),
+        CheckConstraint("source_size IS NULL OR source_size >= 0", name="source_size"),
         CheckConstraint(
-            "payload_sha256 IS NULL OR payload_sha256 ~ '^[0-9a-f]{64}$'",
-            name="payload_sha256",
+            "discovery_payload_hash IS NULL OR discovery_payload_hash ~ '^[0-9a-f]{64}$'",
+            name="discovery_payload_hash",
         ),
         CheckConstraint(
             "last_confirmed_at IS NULL OR last_confirmed_at >= discovered_at",
             name="confirmation_time",
         ),
         UniqueConstraint(
-            "provider", "dataset", "year", "source_file_id", name="uq_source_catalog_source"
+            "provider", "dataset", "season_year", "drive_file_id", name="uq_source_catalog_source"
         ),
         Index(
             "uq_source_catalog_active_year",
             "provider",
             "dataset",
-            "year",
+            "season_year",
             unique=True,
             postgresql_where=text("status = 'active'"),
         ),
@@ -65,14 +67,17 @@ class SourceCatalog(IdentityTimestampMixin, Base):
 
     provider: Mapped[str] = mapped_column(String(64), nullable=False)
     dataset: Mapped[str] = mapped_column(String(128), nullable=False)
-    year: Mapped[int] = mapped_column(Integer, nullable=False)
-    source_file_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    season_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    landing_page: Mapped[str] = mapped_column(Text, nullable=False)
+    drive_file_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_name: Mapped[str] = mapped_column(Text, nullable=False)
+    source_modified_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    source_size: Mapped[int | None] = mapped_column(BigInteger)
     origin: Mapped[str] = mapped_column(String(32), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     discovered_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     last_confirmed_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
-    payload_sha256: Mapped[str | None] = mapped_column(String(64))
+    discovery_payload_hash: Mapped[str | None] = mapped_column(String(64))
     mutable: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=false())
 
 

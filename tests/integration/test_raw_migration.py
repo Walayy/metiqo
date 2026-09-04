@@ -57,11 +57,11 @@ def test_only_one_active_catalog_source_exists_per_year(postgresql_url: str) -> 
     insert_catalog = text(
         """
         INSERT INTO raw.source_catalog (
-          id, provider, dataset, year, source_file_id, source_url,
+          id, provider, dataset, season_year, landing_page, drive_file_id, source_name,
           origin, status, discovered_at
         ) VALUES (
-          :id, :provider, 'league-of-legends', 2026, :source_file_id,
-          :source_url, 'discovered', 'active', :discovered_at
+          :id, :provider, 'league-of-legends', 2026, :landing_page, :source_file_id,
+          :source_name, 'discovered', 'active', :discovered_at
         )
         """
     )
@@ -72,8 +72,9 @@ def test_only_one_active_catalog_source_exists_per_year(postgresql_url: str) -> 
             {
                 "id": uuid4(),
                 "provider": provider,
+                "landing_page": "https://oracleselixir.com/tools/downloads",
                 "source_file_id": "drive-file-a",
-                "source_url": "https://drive.google.com/file/d/drive-file-a/view",
+                "source_name": "2026_LoL_esports_match_data_from_OraclesElixir.gzip",
                 "discovered_at": discovered_at,
             },
         )
@@ -84,8 +85,9 @@ def test_only_one_active_catalog_source_exists_per_year(postgresql_url: str) -> 
             {
                 "id": uuid4(),
                 "provider": provider,
+                "landing_page": "https://oracleselixir.com/tools/downloads",
                 "source_file_id": "drive-file-b",
-                "source_url": "https://drive.google.com/file/d/drive-file-b/view",
+                "source_name": "2026_LoL_esports_match_data_from_OraclesElixir.gzip",
                 "discovered_at": discovered_at,
             },
         )
@@ -108,11 +110,12 @@ def test_validated_snapshot_cannot_be_updated_or_deleted(postgresql_url: str) ->
             text(
                 """
                 INSERT INTO raw.source_catalog (
-                  id, provider, dataset, year, source_file_id, source_url,
-                  origin, status, discovered_at
+                  id, provider, dataset, season_year, landing_page, drive_file_id,
+                  source_name, origin, status, discovered_at
                 ) VALUES (
-                  :id, :provider, 'league-of-legends', 2025, :source_file_id,
-                  'https://drive.google.com/file/d/immutable/view',
+                  :id, :provider, 'league-of-legends', 2025,
+                  'https://oracleselixir.com/tools/downloads', :source_file_id,
+                  '2025_LoL_esports_match_data_from_OraclesElixir.gzip',
                   'discovered', 'active', :instant
                 )
                 """

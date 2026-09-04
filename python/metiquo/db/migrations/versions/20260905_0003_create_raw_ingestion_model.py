@@ -47,28 +47,37 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("provider", sa.String(length=64), nullable=False),
         sa.Column("dataset", sa.String(length=128), nullable=False),
-        sa.Column("year", sa.Integer(), nullable=False),
-        sa.Column("source_file_id", sa.String(length=255), nullable=False),
-        sa.Column("source_url", sa.Text(), nullable=False),
+        sa.Column("season_year", sa.Integer(), nullable=False),
+        sa.Column("landing_page", sa.Text(), nullable=False),
+        sa.Column("drive_file_id", sa.String(length=255), nullable=False),
+        sa.Column("source_name", sa.Text(), nullable=False),
+        sa.Column("source_modified_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("source_size", sa.BigInteger(), nullable=True),
         sa.Column("origin", sa.String(length=32), nullable=False),
         sa.Column("status", sa.String(length=32), nullable=False),
         sa.Column("discovered_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("last_confirmed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("payload_sha256", sa.String(length=64), nullable=True),
+        sa.Column("discovery_payload_hash", sa.String(length=64), nullable=True),
         sa.Column("mutable", sa.Boolean(), server_default=sa.false(), nullable=False),
         *_timestamps(updated=True),
-        sa.CheckConstraint("year BETWEEN 2014 AND 2200", name="ck_source_catalog_year_range"),
+        sa.CheckConstraint(
+            "season_year BETWEEN 2014 AND 2200", name="ck_source_catalog_year_range"
+        ),
         sa.CheckConstraint(
             "origin IN ('discovered', 'validated-bootstrap', 'manual')",
             name="ck_source_catalog_origin",
         ),
         sa.CheckConstraint(
-            "status IN ('active', 'superseded', 'ambiguous', 'missing', 'unreachable')",
+            "status IN ('active', 'missing', 'changed', 'blocked', 'superseded', "
+            "'ambiguous', 'unreachable')",
             name="ck_source_catalog_status",
         ),
         sa.CheckConstraint(
-            f"payload_sha256 IS NULL OR payload_sha256 ~ '{SHA256_PATTERN}'",
-            name="ck_source_catalog_payload_sha256",
+            "source_size IS NULL OR source_size >= 0", name="ck_source_catalog_source_size"
+        ),
+        sa.CheckConstraint(
+            f"discovery_payload_hash IS NULL OR discovery_payload_hash ~ '{SHA256_PATTERN}'",
+            name="ck_source_catalog_discovery_payload_hash",
         ),
         sa.CheckConstraint(
             "last_confirmed_at IS NULL OR last_confirmed_at >= discovered_at",
@@ -78,8 +87,8 @@ def upgrade() -> None:
         sa.UniqueConstraint(
             "provider",
             "dataset",
-            "year",
-            "source_file_id",
+            "season_year",
+            "drive_file_id",
             name="uq_source_catalog_source",
         ),
         schema=RAW_SCHEMA,
@@ -87,7 +96,7 @@ def upgrade() -> None:
     op.create_index(
         "uq_source_catalog_active_year",
         "source_catalog",
-        ["provider", "dataset", "year"],
+        ["provider", "dataset", "season_year"],
         unique=True,
         schema=RAW_SCHEMA,
         postgresql_where=sa.text("status = 'active'"),
