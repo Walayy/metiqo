@@ -1,6 +1,172 @@
 {
   "components": {
     "schemas": {
+      "AbstentionReason": {
+        "description": "Raisons d'abstention définies par la SFG.",
+        "enum": [
+          "ODDS_STALE",
+          "MARKET_SUSPENDED",
+          "EVENT_MAPPING_AMBIGUOUS",
+          "INSUFFICIENT_HISTORY",
+          "ROSTER_UNCERTAIN",
+          "SOURCE_STALE",
+          "MODEL_STALE",
+          "OUT_OF_DISTRIBUTION",
+          "CALIBRATION_FAILED",
+          "EDGE_TOO_SMALL",
+          "CONSERVATIVE_EV_NEGATIVE",
+          "MARKET_RULES_UNKNOWN",
+          "PATCH_CONTEXT_UNKNOWN",
+          "EVENT_ALREADY_STARTED",
+          "CAPABILITY_DISABLED"
+        ],
+        "title": "AbstentionReason",
+        "type": "string"
+      },
+      "BacktestKind": {
+        "description": "Nature statistique ou financière d'un backtest.",
+        "enum": [
+          "statistical",
+          "financial"
+        ],
+        "title": "BacktestKind",
+        "type": "string"
+      },
+      "BacktestSummary": {
+        "additionalProperties": false,
+        "description": "Validation temporelle distinguant statistique et financier.",
+        "properties": {
+          "backtestId": {
+            "format": "uuid",
+            "title": "Backtestid",
+            "type": "string"
+          },
+          "baselineMetrics": {
+            "additionalProperties": {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 255,
+              "minLength": 1
+            },
+            "title": "Baselinemetrics",
+            "type": "object"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "title": "Completedat",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "title": "Endsat",
+            "type": "string"
+          },
+          "finalTestUntouched": {
+            "title": "Finaltestuntouched",
+            "type": "boolean"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/BacktestKind"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 255,
+              "minLength": 1
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "modelVersionId": {
+            "format": "uuid",
+            "title": "Modelversionid",
+            "type": "string"
+          },
+          "observedOddsCount": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Observedoddscount",
+            "type": "integer"
+          },
+          "sampleCount": {
+            "minimum": 0,
+            "title": "Samplecount",
+            "type": "integer"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "title": "Startsat",
+            "type": "string"
+          },
+          "usesOnlyObservedOdds": {
+            "default": false,
+            "title": "Usesonlyobservedodds",
+            "type": "boolean"
+          },
+          "validationScheme": {
+            "const": "walk_forward",
+            "default": "walk_forward",
+            "title": "Validationscheme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "backtestId",
+          "modelVersionId",
+          "kind",
+          "startsAt",
+          "endsAt",
+          "sampleCount",
+          "metrics",
+          "baselineMetrics",
+          "finalTestUntouched",
+          "completedAt"
+        ],
+        "title": "BacktestSummary",
+        "type": "object"
+      },
+      "ContractMetadata": {
+        "additionalProperties": false,
+        "description": "Mode, fraîcheur et version d'une réponse métier.",
+        "properties": {
+          "appVersion": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Appversion",
+            "type": "string"
+          },
+          "asOf": {
+            "format": "date-time",
+            "title": "Asof",
+            "type": "string"
+          },
+          "computedAt": {
+            "format": "date-time",
+            "title": "Computedat",
+            "type": "string"
+          },
+          "dataMode": {
+            "$ref": "#/components/schemas/DataMode"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/FreshnessStatus"
+          }
+        },
+        "required": [
+          "dataMode",
+          "freshness",
+          "asOf",
+          "computedAt",
+          "appVersion"
+        ],
+        "title": "ContractMetadata",
+        "type": "object"
+      },
       "DataMode": {
         "description": "Origine isolée des données applicatives.",
         "enum": [
@@ -40,6 +206,113 @@
         "title": "DependencyStatus",
         "type": "object"
       },
+      "Event": {
+        "additionalProperties": false,
+        "description": "Événement canonique sans dépendance à un fournisseur.",
+        "properties": {
+          "bestOf": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Bestof",
+            "type": "integer"
+          },
+          "competition": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Competition",
+            "type": "string"
+          },
+          "eventId": {
+            "format": "uuid",
+            "title": "Eventid",
+            "type": "string"
+          },
+          "gameTitle": {
+            "$ref": "#/components/schemas/GameTitle"
+          },
+          "observedAt": {
+            "format": "date-time",
+            "title": "Observedat",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "title": "Startsat",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EventStatus"
+          },
+          "teamA": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Teama",
+            "type": "string"
+          },
+          "teamAId": {
+            "format": "uuid",
+            "title": "Teamaid",
+            "type": "string"
+          },
+          "teamB": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Teamb",
+            "type": "string"
+          },
+          "teamBId": {
+            "format": "uuid",
+            "title": "Teambid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventId",
+          "gameTitle",
+          "competition",
+          "teamAId",
+          "teamA",
+          "teamBId",
+          "teamB",
+          "startsAt",
+          "bestOf",
+          "status",
+          "observedAt"
+        ],
+        "title": "Event",
+        "type": "object"
+      },
+      "EventStatus": {
+        "description": "État annoncé d'un événement.",
+        "enum": [
+          "scheduled",
+          "live",
+          "finished",
+          "cancelled"
+        ],
+        "title": "EventStatus",
+        "type": "string"
+      },
+      "FreshnessStatus": {
+        "description": "Fraîcheur normative d'une source ou d'un résultat.",
+        "enum": [
+          "fresh",
+          "stale",
+          "degraded",
+          "failed",
+          "quarantined"
+        ],
+        "title": "FreshnessStatus",
+        "type": "string"
+      },
+      "GameTitle": {
+        "description": "Jeux activés dans le périmètre courant.",
+        "enum": [
+          "lol"
+        ],
+        "title": "GameTitle",
+        "type": "string"
+      },
       "HealthResponse": {
         "additionalProperties": false,
         "description": "Santé du processus, indépendante des services externes.",
@@ -52,6 +325,807 @@
           }
         },
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "MappingCandidate": {
+        "additionalProperties": false,
+        "description": "Événement canonique candidat et raisons de son score.",
+        "properties": {
+          "confidence": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Confidence",
+            "type": "string"
+          },
+          "eventId": {
+            "format": "uuid",
+            "title": "Eventid",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "eventId",
+          "label",
+          "confidence",
+          "reasons"
+        ],
+        "title": "MappingCandidate",
+        "type": "object"
+      },
+      "MappingReview": {
+        "additionalProperties": false,
+        "description": "Ambiguïté de mapping dont toute décision reste auditée.",
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/MappingCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "decisionReason": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decisionreason"
+          },
+          "mappingReviewId": {
+            "format": "uuid",
+            "title": "Mappingreviewid",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "providerEventId": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providereventid",
+            "type": "string"
+          },
+          "rawCompetition": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Rawcompetition",
+            "type": "string"
+          },
+          "rawParticipants": {
+            "items": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 2,
+            "title": "Rawparticipants",
+            "type": "array"
+          },
+          "reviewedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reviewedat"
+          },
+          "reviewer": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reviewer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MappingReviewStatus"
+          }
+        },
+        "required": [
+          "mappingReviewId",
+          "provider",
+          "providerEventId",
+          "rawCompetition",
+          "rawParticipants",
+          "candidates",
+          "status",
+          "createdAt"
+        ],
+        "title": "MappingReview",
+        "type": "object"
+      },
+      "MappingReviewStatus": {
+        "description": "Cycle de décision d'une ambiguïté de mapping.",
+        "enum": [
+          "pending",
+          "approved",
+          "rejected"
+        ],
+        "title": "MappingReviewStatus",
+        "type": "string"
+      },
+      "Market": {
+        "additionalProperties": false,
+        "description": "Marché canonique et sélection normalisée.",
+        "properties": {
+          "eventId": {
+            "format": "uuid",
+            "title": "Eventid",
+            "type": "string"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Line"
+          },
+          "marketId": {
+            "format": "uuid",
+            "title": "Marketid",
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/MarketPeriod"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/SelectionType"
+          },
+          "selectionLabel": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Selectionlabel",
+            "type": "string"
+          },
+          "settlementRulesVersion": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Settlementrulesversion"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MarketStatus"
+          },
+          "type": {
+            "$ref": "#/components/schemas/MarketType"
+          }
+        },
+        "required": [
+          "marketId",
+          "eventId",
+          "type",
+          "period",
+          "selection",
+          "selectionLabel",
+          "status"
+        ],
+        "title": "Market",
+        "type": "object"
+      },
+      "MarketPeriod": {
+        "description": "Période canonique d'un marché LoL.",
+        "enum": [
+          "SERIES",
+          "GAME_1",
+          "GAME_2",
+          "GAME_3",
+          "GAME_4",
+          "GAME_5"
+        ],
+        "title": "MarketPeriod",
+        "type": "string"
+      },
+      "MarketStatus": {
+        "description": "État observé d'un marché fournisseur.",
+        "enum": [
+          "open",
+          "suspended",
+          "settled",
+          "void"
+        ],
+        "title": "MarketStatus",
+        "type": "string"
+      },
+      "MarketType": {
+        "description": "Marchés canoniques actuellement contractuels.",
+        "enum": [
+          "MATCH_WINNER"
+        ],
+        "title": "MarketType",
+        "type": "string"
+      },
+      "ModelStatus": {
+        "description": "Cycle de vie d'une version de modèle.",
+        "enum": [
+          "candidate",
+          "champion",
+          "retired",
+          "blocked"
+        ],
+        "title": "ModelStatus",
+        "type": "string"
+      },
+      "ModelSummary": {
+        "additionalProperties": false,
+        "description": "Version de modèle traçable avec métriques hors échantillon.",
+        "properties": {
+          "algorithm": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "artifactHash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Artifacthash",
+            "type": "string"
+          },
+          "baselineMetrics": {
+            "additionalProperties": {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 255,
+              "minLength": 1
+            },
+            "title": "Baselinemetrics",
+            "type": "object"
+          },
+          "codeCommit": {
+            "pattern": "^[0-9a-f]{7,64}$",
+            "title": "Codecommit",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "datasetHash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Datasethash",
+            "type": "string"
+          },
+          "featureVersion": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Featureversion",
+            "type": "string"
+          },
+          "gameTitle": {
+            "$ref": "#/components/schemas/GameTitle"
+          },
+          "marketType": {
+            "$ref": "#/components/schemas/MarketType"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 255,
+              "minLength": 1
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "modelVersion": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Modelversion",
+            "type": "string"
+          },
+          "modelVersionId": {
+            "format": "uuid",
+            "title": "Modelversionid",
+            "type": "string"
+          },
+          "promotedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Promotedat"
+          },
+          "promotionReason": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Promotionreason"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ModelStatus"
+          },
+          "trainCutoff": {
+            "format": "date-time",
+            "title": "Traincutoff",
+            "type": "string"
+          }
+        },
+        "required": [
+          "modelVersionId",
+          "modelVersion",
+          "gameTitle",
+          "marketType",
+          "algorithm",
+          "featureVersion",
+          "datasetHash",
+          "artifactHash",
+          "codeCommit",
+          "trainCutoff",
+          "status",
+          "metrics",
+          "baselineMetrics",
+          "createdAt"
+        ],
+        "title": "ModelSummary",
+        "type": "object"
+      },
+      "OddsSnapshot": {
+        "additionalProperties": false,
+        "description": "Observation de cote immuable, horodatée et traçable.",
+        "properties": {
+          "ageSeconds": {
+            "minimum": 0,
+            "title": "Ageseconds",
+            "type": "integer"
+          },
+          "capturedAt": {
+            "format": "date-time",
+            "title": "Capturedat",
+            "type": "string"
+          },
+          "decimalOdds": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Decimalodds",
+            "type": "string"
+          },
+          "eventId": {
+            "format": "uuid",
+            "title": "Eventid",
+            "type": "string"
+          },
+          "informationalOnly": {
+            "default": false,
+            "title": "Informationalonly",
+            "type": "boolean"
+          },
+          "marketId": {
+            "format": "uuid",
+            "title": "Marketid",
+            "type": "string"
+          },
+          "marketStatus": {
+            "$ref": "#/components/schemas/MarketStatus"
+          },
+          "noVigProbability": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Novigprobability"
+          },
+          "oddsSnapshotId": {
+            "format": "uuid",
+            "title": "Oddssnapshotid",
+            "type": "string"
+          },
+          "provenanceReference": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Provenancereference",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "providerStatus": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          },
+          "rawImpliedProbability": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rawimpliedprobability",
+            "type": "string"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/SelectionType"
+          }
+        },
+        "required": [
+          "oddsSnapshotId",
+          "eventId",
+          "marketId",
+          "selection",
+          "provider",
+          "providerStatus",
+          "marketStatus",
+          "decimalOdds",
+          "capturedAt",
+          "ageSeconds",
+          "rawImpliedProbability",
+          "noVigProbability",
+          "provenanceReference"
+        ],
+        "title": "OddsSnapshot",
+        "type": "object"
+      },
+      "Opportunity": {
+        "additionalProperties": false,
+        "description": "Signal complet partageable entre implémentations mock et réelle.",
+        "properties": {
+          "book": {
+            "$ref": "#/components/schemas/OddsSnapshot"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          },
+          "explanationReference": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Explanationreference"
+          },
+          "market": {
+            "$ref": "#/components/schemas/Market"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Prediction"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "signalId": {
+            "format": "uuid",
+            "title": "Signalid",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Value"
+          }
+        },
+        "required": [
+          "signalId",
+          "event",
+          "market",
+          "book",
+          "model",
+          "value",
+          "quality",
+          "meta"
+        ],
+        "title": "Opportunity",
+        "type": "object"
+      },
+      "PaperBet": {
+        "additionalProperties": false,
+        "description": "Décision paper liée aux cotes et prédictions observées à l'entrée.",
+        "properties": {
+          "closingOddsSnapshotId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Closingoddssnapshotid"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "entryOdds": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Entryodds",
+            "type": "string"
+          },
+          "oddsSnapshotId": {
+            "format": "uuid",
+            "title": "Oddssnapshotid",
+            "type": "string"
+          },
+          "paperBetId": {
+            "format": "uuid",
+            "title": "Paperbetid",
+            "type": "string"
+          },
+          "placedAt": {
+            "format": "date-time",
+            "title": "Placedat",
+            "type": "string"
+          },
+          "predictionId": {
+            "format": "uuid",
+            "title": "Predictionid",
+            "type": "string"
+          },
+          "profitLoss": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profitloss"
+          },
+          "settledAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Settledat"
+          },
+          "settlementReason": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Settlementreason"
+          },
+          "settlementRulesVersion": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Settlementrulesversion",
+            "type": "string"
+          },
+          "signalId": {
+            "format": "uuid",
+            "title": "Signalid",
+            "type": "string"
+          },
+          "stakeAmount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stakeamount",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaperBetStatus"
+          }
+        },
+        "required": [
+          "paperBetId",
+          "signalId",
+          "predictionId",
+          "oddsSnapshotId",
+          "entryOdds",
+          "stakeAmount",
+          "currency",
+          "placedAt",
+          "status",
+          "settlementRulesVersion"
+        ],
+        "title": "PaperBet",
+        "type": "object"
+      },
+      "PaperBetStatus": {
+        "description": "Cycle de règlement d'un pari fictif.",
+        "enum": [
+          "open",
+          "won",
+          "lost",
+          "push",
+          "void",
+          "pending_review"
+        ],
+        "title": "PaperBetStatus",
+        "type": "string"
+      },
+      "Prediction": {
+        "additionalProperties": false,
+        "description": "Probabilité indépendante des cotes et liée à son cutoff.",
+        "properties": {
+          "confidence": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Confidence",
+            "type": "string"
+          },
+          "confidenceReductionReasons": {
+            "default": [],
+            "items": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Confidencereductionreasons",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "dataCoverage": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Datacoverage",
+            "type": "string"
+          },
+          "eventId": {
+            "format": "uuid",
+            "title": "Eventid",
+            "type": "string"
+          },
+          "featureSnapshotId": {
+            "format": "uuid",
+            "title": "Featuresnapshotid",
+            "type": "string"
+          },
+          "marketId": {
+            "format": "uuid",
+            "title": "Marketid",
+            "type": "string"
+          },
+          "modelVersion": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Modelversion",
+            "type": "string"
+          },
+          "modelVersionId": {
+            "format": "uuid",
+            "title": "Modelversionid",
+            "type": "string"
+          },
+          "outOfDistributionDistance": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Outofdistributiondistance",
+            "type": "string"
+          },
+          "predictionCutoff": {
+            "format": "date-time",
+            "title": "Predictioncutoff",
+            "type": "string"
+          },
+          "predictionId": {
+            "format": "uuid",
+            "title": "Predictionid",
+            "type": "string"
+          },
+          "probability": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Probability",
+            "type": "string"
+          },
+          "probabilityHigh": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Probabilityhigh",
+            "type": "string"
+          },
+          "probabilityLow": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Probabilitylow",
+            "type": "string"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/SelectionType"
+          }
+        },
+        "required": [
+          "predictionId",
+          "eventId",
+          "marketId",
+          "selection",
+          "probability",
+          "probabilityLow",
+          "probabilityHigh",
+          "confidence",
+          "dataCoverage",
+          "outOfDistributionDistance",
+          "predictionCutoff",
+          "modelVersionId",
+          "modelVersion",
+          "featureSnapshotId",
+          "createdAt"
+        ],
+        "title": "Prediction",
         "type": "object"
       },
       "ProblemDetails": {
@@ -114,6 +1188,60 @@
         "title": "ProblemDetails",
         "type": "object"
       },
+      "ProviderStatus": {
+        "description": "Disponibilité d'un fournisseur de cotes.",
+        "enum": [
+          "operational",
+          "degraded",
+          "unavailable",
+          "disabled"
+        ],
+        "title": "ProviderStatus",
+        "type": "string"
+      },
+      "Quality": {
+        "additionalProperties": false,
+        "description": "Qualité, fraîcheur et abstentions associées à une décision.",
+        "properties": {
+          "abstentionReasons": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AbstentionReason"
+            },
+            "title": "Abstentionreasons",
+            "type": "array"
+          },
+          "dataCoverage": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Datacoverage",
+            "type": "string"
+          },
+          "mappingConfidence": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Mappingconfidence",
+            "type": "string"
+          },
+          "modelStatus": {
+            "$ref": "#/components/schemas/ModelStatus"
+          },
+          "publishable": {
+            "title": "Publishable",
+            "type": "boolean"
+          },
+          "sourceFreshness": {
+            "$ref": "#/components/schemas/FreshnessStatus"
+          }
+        },
+        "required": [
+          "mappingConfidence",
+          "sourceFreshness",
+          "dataCoverage",
+          "modelStatus",
+          "publishable"
+        ],
+        "title": "Quality",
+        "type": "object"
+      },
       "ReadyResponse": {
         "additionalProperties": false,
         "description": "Disponibilité globale de l'API.",
@@ -140,6 +1268,18 @@
         ],
         "title": "ReadyResponse",
         "type": "object"
+      },
+      "SelectionType": {
+        "description": "Issue normalisée indépendamment du libellé fournisseur.",
+        "enum": [
+          "TEAM_A",
+          "TEAM_B",
+          "DRAW",
+          "OVER",
+          "UNDER"
+        ],
+        "title": "SelectionType",
+        "type": "string"
       },
       "SystemStatusResponse": {
         "additionalProperties": false,
@@ -182,6 +1322,56 @@
         ],
         "title": "SystemStatusResponse",
         "type": "object"
+      },
+      "Value": {
+        "additionalProperties": false,
+        "description": "Comparaison exacte entre prix du modèle et prix observé.",
+        "properties": {
+          "conservativeExpectedValue": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Conservativeexpectedvalue",
+            "type": "string"
+          },
+          "edge": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Edge",
+            "type": "string"
+          },
+          "expectedValue": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Expectedvalue",
+            "type": "string"
+          },
+          "fairOdds": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Fairodds",
+            "type": "string"
+          },
+          "grade": {
+            "$ref": "#/components/schemas/ValueGrade"
+          }
+        },
+        "required": [
+          "fairOdds",
+          "edge",
+          "expectedValue",
+          "conservativeExpectedValue",
+          "grade"
+        ],
+        "title": "Value",
+        "type": "object"
+      },
+      "ValueGrade": {
+        "description": "Classement non promotionnel d'un écart de prix.",
+        "enum": [
+          "STRONG_VALUE",
+          "VALUE",
+          "WATCH",
+          "NO_EDGE",
+          "BLOCKED"
+        ],
+        "title": "ValueGrade",
+        "type": "string"
       }
     }
   },

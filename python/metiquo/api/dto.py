@@ -3,15 +3,14 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
 from metiquo.config import DataMode
+from metiquo.contracts.base import ContractModel
 
 
-class ApiModel(BaseModel):
+class ApiModel(ContractModel):
     """Base stricte des contrats publics."""
-
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class HealthResponse(ApiModel):

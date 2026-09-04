@@ -30,3 +30,12 @@ def render_openapi() -> str:
 
     app = create_app(settings=_contract_settings(), readiness_probe=ContractReadinessProbe())
     return json.dumps(app.openapi(), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
+def verify_openapi_content(content: str) -> None:
+    """Échouer si un contenu versionné ne correspond pas au code courant."""
+
+    if content != render_openapi():
+        raise RuntimeError(
+            "Le contrat OpenAPI versionné est obsolète ; exécuter `make openapi` puis le relire"
+        )

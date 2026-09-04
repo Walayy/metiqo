@@ -12,6 +12,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from metiquo.contracts.enums import DataMode as DataMode
+
 
 class AppEnvironment(StrEnum):
     """Environnements d'exécution acceptés."""
@@ -19,13 +21,6 @@ class AppEnvironment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
     PRODUCTION = "production"
-
-
-class DataMode(StrEnum):
-    """Origine isolée des données applicatives."""
-
-    MOCK = "mock"
-    REAL = "real"
 
 
 class ObjectStoreBackend(StrEnum):

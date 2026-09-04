@@ -121,3 +121,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun. Le refus GitHub initial en HTTP `403` a été levé par le passage du dépôt en public décidé par le propriétaire.
 - **ADR éventuel :** ajout du template et de la règle de création ; aucune décision structurante n’est modifiée par le ticket.
 - **Commit/hash :** `6b44b323ac9a076bacadb6960806ecf5ebb8d5fa` (`ci: add base validation pipeline`).
+
+## MCK-001 — Définir les contrats de domaine
+
+- **Statut :** `IN_PROGRESS`
+- **Dépendances vérifiées :** `FND-007` est `DONE` ; la phase P0 est intégralement terminée avec `FND-010` protégé par CI sur `main`.
+- **Fichiers créés/modifiés :** `python/metiquo/contracts/`, `python/metiquo/config.py`, `python/metiquo/api/dto.py`, `python/metiquo/api/app.py`, `python/metiquo/api/openapi.py`, `python/metiquo/api/contract_schema.py`, `infra/scripts/export_openapi.py`, `Makefile`, `tests/contracts/test_domain_contracts.py`, `tests/test_openapi.py`, `packages/contracts/openapi/v1.json`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** validations en cours.
+- **Résultat exact :** contrats et tests implémentés ; validations en cours.
+- **Blocker éventuel :** aucun à ce stade.
+- **ADR éventuel :** aucun ; les DTO appliquent les contrats mock/réel et les invariants normatifs sans modifier une décision SFG §33.
+- **Commit/hash :** à créer après validation.
