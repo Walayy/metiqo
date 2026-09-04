@@ -205,3 +205,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le ticket applique directement la stack frontend et les exigences d’accessibilité de la SFG sans modifier une décision structurante.
 - **Commit/hash :** `fa8e7716c923a33ebc19722aa9d4de7ba0b7c788` (`feat: add frontend foundation`).
+
+## UI-002 — Thème et shell sans flash
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `UI-001` est `DONE` et présent sur `origin/main` après fusion protégée de la PR #8.
+- **Fichiers créés/modifiés :** shell applicatif et menu de thème sous `apps/web/src/components/`, layout/providers/styles et routes de navigation sous `apps/web/src/app/`, tokens clair/sombre sous `packages/ui/src/styles.css`, configuration Next.js/Playwright et tests E2E, dépendances frontend, image web et service Compose, workflow CI, `README.md`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** consultation des documentations officielles Next.js, next-themes et Radix UI ; vérification des versions via le registre pnpm ; `pnpm install` ; `pnpm run format` ; `make check` via GNU Make installé ; installation locale de Chromium Playwright ; `make test-e2e` ; inspection visuelle des captures plein écran clair/sombre ; `make docker-build` ; smoke tests HTTP d’images web standalone compilées avec `APP_DATA_MODE=mock` puis `APP_DATA_MODE=real` ; `git diff --check`.
+- **Résultat exact :** le thème suit le système par défaut et applique la préférence persistée avant l’hydratation via `data-theme`, avec fallback CSS initial clair/sombre et transitions neutralisées au changement. Le shell responsive expose les sept destinations normatives, un tiroir mobile accessible, un lien d’évitement clavier, des focus visibles, le menu clair/sombre/système et le badge de mode persistant. Six tests Playwright réussissent : rendu pré-hydratation clair/sombre sans erreur ni warning console, préférence système, navigation desktop/clavier, navigation mobile et changement de thème ; les captures visuelles clair/sombre sont jointes au rapport HTML conservé par la CI. Les quatre tests de composants réussissent ; 90 tests Python réussissent et 3 tests PostgreSQL conditionnels sont ignorés ; Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy et OpenAPI passent. Les cinq images Compose se construisent ; les conteneurs web mock et réel répondent `200` sur `/health` et `/`, avec respectivement les badges `MOCK` et `REAL` dans le rendu serveur.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le ticket applique le thème système, le shell responsive et l’identification explicite du mode imposés par la SFG sans modifier une décision structurante.
+- **Commit/hash :** `221f118688c0dad4acd7e11b7fcab3240458cc85` (`feat: add responsive themed app shell`).
