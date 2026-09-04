@@ -4,15 +4,22 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from metiquo.config import DataMode
 from metiquo.contracts import ContractMetadata
-from metiquo.contracts.base import ContractModel, NonEmptyText
+from metiquo.contracts.base import ContractModel, FiniteDecimal, NonEmptyText, PositiveDecimal
+from metiquo.contracts.enums import GameTitle, MarketType, PaperBetStatus
 
 
 class ApiModel(ContractModel):
     """Base stricte des contrats publics."""
+
+
+class ApiRequestModel(BaseModel):
+    """Frontière JSON qui parse les types avant l'appel des services stricts."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class HealthResponse(ApiModel):
@@ -87,3 +94,36 @@ class OpportunityExplanation(ApiModel):
     reference: NonEmptyText
     publishable: bool
     reasons: tuple[NonEmptyText, ...]
+
+
+class TrainModelRequest(ApiRequestModel):
+    game_title: GameTitle = Field(default=GameTitle.LEAGUE_OF_LEGENDS, alias="gameTitle")
+    market_type: MarketType = Field(default=MarketType.MATCH_WINNER, alias="marketType")
+
+
+class ModelDecisionRequest(ApiRequestModel):
+    reason: NonEmptyText
+
+
+class CreatePaperBetRequest(ApiRequestModel):
+    signal_id: UUID = Field(alias="signalId")
+    stake_amount: PositiveDecimal = Field(alias="stakeAmount")
+    currency: str = Field(default="EUR", pattern=r"^[A-Z]{3}$")
+
+
+class SettlePaperBetRequest(ApiRequestModel):
+    paper_bet_id: UUID = Field(alias="paperBetId")
+    status: PaperBetStatus
+    profit_loss: FiniteDecimal = Field(alias="profitLoss")
+    reason: NonEmptyText
+
+
+class MappingDecisionRequest(ApiRequestModel):
+    reviewer: NonEmptyText
+    reason: NonEmptyText
+
+
+class CreateAliasRequest(ApiRequestModel):
+    provider: NonEmptyText
+    alias: NonEmptyText
+    canonical_id: UUID = Field(alias="canonicalId")

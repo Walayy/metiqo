@@ -181,3 +181,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l’enveloppe, la pagination et les routes appliquent les contrats et la surface HTTP déjà imposés par la SFG.
 - **Commit/hash :** `4a4f4ec1cd4443bc0c44071eab73dbb2d06f9684` (`feat: expose mock read API`).
+
+## MCK-006 — Exposer mutations mock contrôlées
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `MCK-005` est `DONE` et présent sur `origin/main` après fusion protégée de la PR #6.
+- **Fichiers créés/modifiés :** `python/metiquo/api/app.py`, `python/metiquo/api/dto.py`, `python/metiquo/api/mutation_routes.py`, `python/metiquo/contracts/operations.py`, `python/metiquo/contracts/__init__.py`, `python/metiquo/services/mutations.py`, `python/metiquo/services/__init__.py`, `tests/api/test_mock_mutations.py`, `tests/test_openapi.py`, `packages/contracts/openapi/v1.json`, `README.md`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** tests API ciblés des mutations et de l’idempotence ; Ruff format/check ; mypy strict ; Prettier, ESLint, CSpell et TypeScript strict ; suite Pytest complète ; régénération et contrôle OpenAPI ; `docker compose config --quiet` ; `docker compose --profile mock build` ; `git diff --check`.
+- **Résultat exact :** les actions mock couvrent synchronisation, entraînement/promotion/retrait de modèle, création/règlement de paper bet, approbation/rejet de mapping et création d’alias. Toutes exigent `Idempotency-Key` : une répétition identique retourne le résultat initial sans nouvel effet ni nouvel audit, tandis qu’un payload différent avec la même clé retourne un conflit. Les transitions invalides sont bloquées, une opportunité non publiable ne peut pas créer de paper bet et aucune action n’accède au réseau. Le journal d’audit immuable conserve action, ressource, date, mode et empreinte SHA-256 de la clé sans sa valeur brute. Validation finale : 90 tests réussis et 3 tests PostgreSQL conditionnels ignorés ; Ruff, mypy sur 71 fichiers, TypeScript strict, ESLint, Prettier, CSpell et OpenAPI passent ; les cinq images Compose sont construites avec succès.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l’idempotence, l’audit et les transitions appliquent les exigences existantes sans modifier une décision structurante.
+- **Commit/hash :** `1709834977053554f3b6ea14b6f6f6c8fe7e12b8` (`feat: add idempotent mock mutations`).
