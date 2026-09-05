@@ -412,6 +412,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; ce fallback public respecte le flux officiel et refuse explicitement tout bypass de quota.
 - **Commit/hash :** `40ede5414254013a13633b943d691e2559509f7e` (`feat(ingestion): add safe public Drive transport`).
 
+## OE-008 — MirrorTransport et LocalFixtureTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-002` et `OE-005` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/local_transports.py`, `python/metiquo/ingestion/transport.py`, `tests/fixtures/oracles_elixir/sample_2026.csv`, `tests/ingestion/test_local_transports.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 14 tests ciblés locaux/contrat ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `MirrorTransport` ne résout que le dernier `MirrorSnapshot` déjà validé, relit son objet immuable, contrôle taille et SHA-256 avant de remettre une copie, et échoue si l'année diverge. L'instant de validation du miroir et l'instant optionnel de dernière confirmation de la source sont distincts dans `SourceMetadata`; sans confirmation, `source_is_confirmed` reste faux, donc le miroir n'invente aucune fraîcheur. `LocalFixtureTransport` sert la fixture CI versionnée et refuse sa construction en `DataMode.REAL`. Le plan de priorité retourne API Drive puis HTTP public puis miroir en réel, mais la fixture seule en mock et rejette toute fixture ajoutée au plan réel. Les deux implémentations passent les assertions contractuelles communes ; la suite retourne 140 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le miroir est une copie privée validée, jamais une nouvelle source ni une preuve de fraîcheur.
+- **Commit/hash :** `1d5056bae0855d1b13cb883839e86a81705e7cc1` (`feat(ingestion): add mirror and fixture transports`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
