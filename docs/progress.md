@@ -460,6 +460,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; la sérialisation déterministe renforce l'identification reproductible du dataset exigée par la SFG.
 - **Commit/hash :** `0ed9fa0d97d370d7adac16d873d1cb4c7f42f879` (`feat(ingestion): add immutable snapshot manifest`).
 
+## OE-012 — Validation physique
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-009` et `OE-011` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/physical_validation.py`, renforcement de `python/metiquo/ingestion/safe_download.py` et `source_errors.py`, trois fixtures invalides JSON/CSV, `tests/ingestion/test_physical_validation.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** formatage Ruff/Prettier ; Ruff check ; mypy strict global ; 11 tests ciblés de validation physique ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** la validation précoce refuse corps vide, HTML reconnu par MIME ou magic bytes, JSON d'erreur, encodage inconnu, délimiteur absent/ambigu et incohérence MIME/magic, avec un code de règle dans le contexte sûr. `PhysicalValidator` relit taille et SHA-256, compare la taille au précédent selon un ratio configurable avec approbation explicite, ouvre réellement gzip/zip, exige un unique CSV dans un zip, détecte UTF-8/BOM et délimiteur sans correction, valide un en-tête non numérique aux noms uniques puis scanne toutes les lignes pour un nombre de colonnes constant. Chaque rejet testé porte un diagnostic stable ; aucune destination finale n'apparaît lors des rejets précoces et aucun snapshot n'est envoyé au store. CSV, gzip et zip valides retournent header, colonnes et lignes exacts. La suite retourne 179 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les règles matérialisent la section 9.10 de la SFG sans inférence réparatrice.
+- **Commit/hash :** `6019ae8c553721578ee2b295c68eacde924e7ab6` (`feat(ingestion): validate physical source files`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
