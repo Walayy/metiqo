@@ -36,10 +36,18 @@ class ProviderEvent(ContractModel):
     collected_at: UtcDateTime = Field(alias="collectedAt")
     source_reference: VersionText = Field(alias="sourceReference")
 
+    @model_validator(mode="after")
+    def participants_are_distinct(self) -> Self:
+        normalized = {participant.strip().casefold() for participant in self.participants}
+        if len(normalized) != len(self.participants):
+            raise ValueError("Les participants fournisseur doivent être distincts")
+        return self
+
 
 class ProviderSelection(ContractModel):
     """Sélection brute accompagnée de sa normalisation canonique."""
 
+    provider_selection_id: NonEmptyText = Field(alias="providerSelectionId")
     selection: SelectionType
     label: NonEmptyText
     decimal_odds: DecimalOddsValue = Field(alias="decimalOdds")
@@ -58,6 +66,14 @@ class ProviderMarket(ContractModel):
     status: MarketStatus
     captured_at: UtcDateTime = Field(alias="capturedAt")
     settlement_rules_version: VersionText = Field(alias="settlementRulesVersion")
+
+    @model_validator(mode="after")
+    def selections_are_distinct(self) -> Self:
+        identities = {selection.provider_selection_id for selection in self.selections}
+        normalized = {selection.selection for selection in self.selections}
+        if len(identities) != len(self.selections) or len(normalized) != len(self.selections):
+            raise ValueError("Les sélections fournisseur doivent être distinctes")
+        return self
 
 
 class OddsCaptureResult(ContractModel):

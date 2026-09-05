@@ -1,6 +1,5 @@
 """Ports de lecture partagés par les implémentations mock et réelles."""
 
-from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -17,13 +16,8 @@ from metiquo.contracts import (
     Opportunity,
     PaperBet,
 )
-from metiquo.contracts.enums import GameTitle
-from metiquo.contracts.odds_provider import (
-    OddsCaptureResult,
-    ProviderEvent,
-    ProviderHealth,
-    ProviderMarket,
-)
+from metiquo.contracts.odds_provider import ProviderHealth
+from metiquo.providers.contracts import OddsProvider as OddsProvider
 
 
 class OpportunityRepository(Protocol):
@@ -76,20 +70,3 @@ class OperationsRepository(Protocol):
     def list_quality_issues(self) -> tuple[DataQualityIssue, ...]: ...
 
     def list_jobs(self) -> tuple[JobSummary, ...]: ...
-
-
-class OddsProvider(Protocol):
-    provider_code: str
-
-    def list_events(
-        self,
-        starts_from: datetime,
-        starts_to: datetime,
-        game_title: GameTitle,
-    ) -> tuple[ProviderEvent, ...]: ...
-
-    def get_event_markets(self, provider_event_id: str) -> tuple[ProviderMarket, ...]: ...
-
-    def capture_snapshot(self, provider_event_id: str) -> OddsCaptureResult: ...
-
-    def health(self) -> ProviderHealth: ...

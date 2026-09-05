@@ -353,6 +353,9 @@ class MockOddsProvider:
                 line=market.line,
                 selections=(
                     ProviderSelection(
+                        provider_selection_id=(
+                            f"{market.market_id}:{latest.selection.value.casefold()}"
+                        ),
                         selection=latest.selection,
                         label=market.selection_label,
                         decimal_odds=latest.decimal_odds,
