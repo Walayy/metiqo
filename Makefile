@@ -68,6 +68,7 @@ lint:
 	pnpm run spellcheck
 	uv run --frozen ruff format --check $(PYTHON_PATHS)
 	uv run --frozen ruff check $(PYTHON_PATHS)
+	uv run --frozen python infra/scripts/check_provider_compliance.py
 
 typecheck:
 	pnpm run typecheck

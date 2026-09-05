@@ -1,6 +1,7 @@
 """Frontières interchangeables des fournisseurs de données externes."""
 
 from metiquo.providers.contracts import OddsProvider
+from metiquo.providers.disabled import DisabledProvider, ProviderDisabledError
 from metiquo.providers.licensed_feed import (
     LicensedFeedActivationError,
     LicensedOddsFeedConfiguration,
@@ -12,9 +13,15 @@ from metiquo.providers.manual_import import (
     ManualImportOddsProvider,
     ManualImportResult,
 )
+from metiquo.providers.stake_authorized import (
+    STAKE_DISABLED_REASON,
+    StakeAuthorizedProvider,
+)
 
 __all__ = [
     "MANUAL_IMPORT_COLUMNS",
+    "STAKE_DISABLED_REASON",
+    "DisabledProvider",
     "LicensedFeedActivationError",
     "LicensedOddsFeedConfiguration",
     "LicensedOddsFeedProvider",
@@ -22,4 +29,6 @@ __all__ = [
     "ManualImportOddsProvider",
     "ManualImportResult",
     "OddsProvider",
+    "ProviderDisabledError",
+    "StakeAuthorizedProvider",
 ]

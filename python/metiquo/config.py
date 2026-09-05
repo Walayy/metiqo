@@ -84,6 +84,10 @@ class Settings(BaseSettings):
         str,
         StringConstraints(strip_whitespace=True, min_length=1, max_length=128),
     ] = "metiquo-demo-v1"
+    stake_provider_enabled: bool = False
+    stake_written_authorization_confirmed: bool = False
+    stake_lawful_jurisdiction_confirmed: bool = False
+    stake_legal_validation_confirmed: bool = False
 
     signal_min_edge: Decimal = Field(default=Decimal("0.03"), ge=0, le=1)
     signal_min_ev: Decimal = Field(default=Decimal("0.05"), ge=0, le=1)
@@ -140,6 +144,23 @@ class Settings(BaseSettings):
             OddsProvider.MOCK,
         }:
             raise ValueError("APP_DATA_MODE=mock interdit tout provider de cotes réel")
+        if self.stake_provider_enabled:
+            required_gates = {
+                "STAKE_WRITTEN_AUTHORIZATION_CONFIRMED": (
+                    self.stake_written_authorization_confirmed
+                ),
+                "STAKE_LAWFUL_JURISDICTION_CONFIRMED": (self.stake_lawful_jurisdiction_confirmed),
+                "STAKE_LEGAL_VALIDATION_CONFIRMED": self.stake_legal_validation_confirmed,
+            }
+            missing = [name for name, confirmed in required_gates.items() if not confirmed]
+            if missing:
+                raise ValueError(
+                    "STAKE_PROVIDER_ENABLED exige les gates de conformité : " + ", ".join(missing)
+                )
+            raise ValueError(
+                "STAKE_PROVIDER_ENABLED reste interdit : aucune implémentation autorisée "
+                "n'est livrée"
+            )
         return self
 
     @property
