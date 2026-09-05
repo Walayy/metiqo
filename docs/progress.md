@@ -808,3 +808,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la « force individuelle » reste une statistique historique régularisée et auditable, non un rating externe de joueur, tandis que les pairs top/jungle, jungle/mid et bot/support couvrent les synergies de rôles stables sans inventer une composition future.
 - **Commit/hash :** `e36cef7` (`feat(features): derive roster strength as of cutoff`).
+
+## FEAT-008 — Champion pool et méta
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le repository strictement as-of `FEAT-002` fournit désormais les statistiques joueurs et champions historisées ; aucune donnée de draft n'est lue hors de ce lot antérieur.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/champions.py`, exports features, fixture modèle de fuite post-draft et extension du test PostgreSQL roster/joueurs.
+- **Migrations :** aucune ; champion, rôle, résultat et patch sont relus depuis les révisions canoniques existantes.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; treize tests modèle cumulés ; trois tests PostgreSQL roster et temporalité ; vérification du diff.
+- **Résultat exact :** pour chacun des cinq rôles et des deux équipes, le calcul expose nombre de picks historiques, diversité, profondeur effective entropique, part du champion principal, taux de victoire du rôle et moyenne des performances par champion. Il compte aussi les compositions complètes réellement observées et leur répétition. Si le patch cible est connu, ses games, champions, taux de victoire et delta d'adaptation par rapport à l'historique global sont calculés ; un patch inconnu produit `patch_known=false`, zéro échantillon et métriques patch `None`. L'API du calculateur ne reçoit aucun pick cible et rejette explicitement un lot contenant l'identifiant de la game cible, ce que couvre la fixture post-draft avec cinq champions futurs volontairement injectés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les champion pools sont résumés en colonnes fixes pré-draft plutôt qu'en catégories dynamiques dépendant du pick cible, afin de conserver un schéma reproductible et de rendre impossible la fuite du draft réel.
+- **Commit/hash :** `8ad8aaa` (`feat(features): add pre-draft champion meta`).
