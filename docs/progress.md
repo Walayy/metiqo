@@ -640,3 +640,255 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le gate assemble les décisions SFG déjà implémentées et sa base temporaire est volontairement isolée.
 - **Commit/hash :** `79f0053` (`feat(ingestion): prove reliable reconstruction gate`).
+
+## CNL-001 — Dimensions canoniques LoL
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l’historisation raw `OE-018`, les conventions PostgreSQL `FND-004` et le gate P2 `OE-025` sont `DONE` sur `main`.
+- **Fichiers créés/modifiés :** migration `20260906_0009`, modèles `python/metiquo/db/core_models.py`, projection `python/metiquo/canonical/dimensions.py`, enregistrement Alembic des métadonnées et tests PostgreSQL de migration/provenance.
+- **Migrations :** création de `core.game_titles`, `core.competitions`, `core.teams`, `core.players` et `core.patches`, avec UUID canoniques, identité source, nom normalisé et provenance obligatoire vers ligne raw, snapshot et run.
+- **Commandes/tests exécutés :** Ruff format/check ciblé ; mypy strict global sur 144 fichiers ; cycle Alembic upgrade/downgrade/upgrade ; tests PostgreSQL ciblés des migrations et dimensions.
+- **Résultat exact :** `CanonicalDimensionBuilder` ne lit que les lignes Oracle’s Elixir dont le snapshot est `validated` et le run `succeeded`. Il produit des UUID v5 déterministes, normalise les identités Unicode sans les enrichir depuis une source externe, privilégie les identifiants OE `teamid`/`playerid` et n’utilise les noms OE qu’en secours explicite. Deux exécutions donnent les mêmes identifiants et cardinalités. La fixture PostgreSQL matérialise un titre, une compétition, deux équipes, deux joueurs et un patch ; une ligne rattachée à un snapshot mis en quarantaine reste absente. Chaque ligne projetée retrouve sa ligne raw, son snapshot validé, son run réussi, sa révision et `canonical-dimensions-v1`. Les trois tests ciblés passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les dimensions appliquent directement l’interdiction P3 de calculer depuis un téléchargement ad hoc.
+- **Commit/hash :** `60ad1b3` (`feat(canonical): add traceable LoL dimensions`).
+
+## CNL-002 — core.games et statistiques équipes/joueurs
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les dimensions traçables `CNL-001` sont `DONE` et reconstruites automatiquement avant les faits.
+- **Fichiers créés/modifiés :** migration `20260906_0010`, extension des modèles core, projection `python/metiquo/canonical/games.py`, exports canoniques et tests PostgreSQL de fixtures.
+- **Migrations :** création de `core.games`, `core.game_team_stats` et `core.game_player_stats` avec identités déterministes, liens aux dimensions, contraintes de structure, provenance raw obligatoire et documents JSONB d’availability.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle complet Alembic ; tests PostgreSQL des migrations, dimensions et faits exécutés sur PostgreSQL 18.
+- **Résultat exact :** quatre fixtures matérialisent une partie complète, une incomplète, un remake et un forfeit depuis 18 lignes raw validées. Chaque partie expose séparément `complete`, `remake`, `forfeit`, `usable_for_training` et `quality_status`. Toute partie marquée complète possède exactement deux équipes Blue/Red distinctes et un seul résultat gagnant. La partie complète produit dix lignes joueurs par rôle ; les trois autres conservent leurs deux lignes équipes. Les champs source absents, notamment gold et assists, restent `NULL` et leur clé d’availability vaut `false`, sans zéro de remplacement. Un second build conserve tous les UUID et cardinalités ; les quatre tests canoniques/migrations passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les faits ne consomment que les lignes raw validées déjà persistées et les champs OE réellement présents.
+- **Commit/hash :** `d0f135e` (`feat(canonical): project traceable game facts`).
+
+## CNL-003 — Reconstruction des séries
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les games et résultats d’équipe `CNL-002` sont `DONE` et reconstruits avant les séries.
+- **Fichiers créés/modifiés :** migration `20260906_0011`, modèle `core.series`, statut de résolution sur `core.games`, projection `python/metiquo/canonical/series.py` et test PostgreSQL dédié.
+- **Migrations :** création de `core.series` avec format, équipes, score, résultat, qualité, provenance et clé déterministe ; ajout de `series_id` facultatif et `series_resolution_status` fermé sur les games.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic complet ; cinq tests PostgreSQL migrations/canonique sur PostgreSQL 18.
+- **Résultat exact :** l’identifiant `seriesid` OE est prioritaire. En son absence, le fallback n’utilise que compétition, date, paire d’équipes, format et ordre de game ; deux games portant le même ordre dans ce contexte sont marquées `ambiguous` et restent sans `series_id`. Une série BO3 identifiée par OE se clôt à 2–0 avec gagnant traçable. Une série fallback BO2 à 1–1 expose `allows_draw=true`, `result_status=draw`, aucun gagnant et deux scores à 1. Deux reconstructions conservent les mêmes UUID, deux séries résolues, quatre games liées et deux games ambiguës.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le fallback minimal est volontairement refusé dès que l’ordre ne rend pas le regroupement univoque.
+- **Commit/hash :** `1d9c212` (`feat(canonical): reconstruct unambiguous series`).
+
+## CNL-004 — Observations historiques de roster
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les dimensions `CNL-001` et les joueurs réellement observés dans les games `CNL-002` sont `DONE` ; la projection reconstruit ces faits avant les observations.
+- **Fichiers créés/modifiés :** migration `20260906_0012`, modèle `core.roster_observations`, projection `python/metiquo/canonical/rosters.py`, exports canoniques et test PostgreSQL temporel dédié.
+- **Migrations :** création d’une observation unique par game, équipe et rôle, liée au joueur vu, au raw, au snapshot et au run ; statut de continuité fermé et confiance bornée entre zéro et un.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic complet ; six tests PostgreSQL migrations/canonique sur PostgreSQL 18.
+- **Résultat exact :** deux games à cinq joueurs par équipe produisent vingt observations idempotentes. Le top Blue différent dans la seconde game est enregistré comme `substitution_observed` avec une confiance `0.6500`, tandis que les joueurs inchangés restent confirmés à `1.0000`. `RosterProjectionService.as_of` ne lit que les observations strictement antérieures au cutoff, restitue le dernier joueur connu par rôle et n’écrit aucune projection future. Une projection au jour de la substitution conserve donc l’ancien top ; une projection ultérieure expose le nouveau et la baisse de confiance. Aucune annonce externe ou source non validée n’est consultée.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; une substitution inconnue reste une observation prudente plutôt qu’une certitude reconstruite rétrospectivement.
+- **Commit/hash :** `f8280c7` (`feat(canonical): observe rosters as of games`).
+
+## CNL-005 — Provenance et historique canonique
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les dimensions, games, séries et observations de roster `CNL-001` à `CNL-004` sont `DONE` et publient désormais leur histoire après chaque matérialisation.
+- **Fichiers créés/modifiés :** migration `20260906_0013`, modèles `core.canonical_entity_revisions` et `core.canonical_entity_sources`, enregistreur `python/metiquo/canonical/history.py`, intégration aux quatre builders canoniques et test PostgreSQL de roundtrip/correction.
+- **Migrations :** création d’une chaîne de révisions par type et UUID d’entité avec état JSONB, empreinte, version de transformation, `processed_at`, statut qualité, indicateur de correction, snapshot/run représentatifs et copie immuable de chaque ligne raw source. Deux triggers PostgreSQL interdisent UPDATE et DELETE sur les révisions comme sur leurs sources.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict sur le package canonique ; cycle Alembic complet ; sept tests PostgreSQL migrations/canonique sur PostgreSQL 18 ; vérification du diff.
+- **Résultat exact :** tous les builders enregistrent un nouvel état uniquement lorsque le contenu canonique, la provenance ou la version de transformation change. Une game à deux lignes source produit une révision initiale avec ses deux preuves ; une reconstruction identique n’ajoute rien. Après correction d’une ligne raw en révision 2 sur un nouveau snapshot/run validé, la game obtient une révision 2 chaînée et `correction=true`. Le roundtrip retrouve le snapshot `validated` et le run `succeeded`; la première révision conserve `kills=10` et la seconde `kills=99` pour la même ligne raw, même si la vue raw courante a changé. Une tentative d’altération SQL échoue avec la protection append-only.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la copie de la preuve source est volontaire afin que l’historique ne dépende pas de la valeur mutable de `raw.canonical_rows`.
+- **Commit/hash :** `a395a4c` (`feat(canonical): preserve entity revision history`).
+
+## CNL-006 — Capability registry
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** contrat de schéma évolutif `OE-013`, games `CNL-002` et séries `CNL-003` sont `DONE` ; le builder de games évalue automatiquement les snapshots courants après matérialisation.
+- **Fichiers créés/modifiés :** migration `20260906_0014`, modèle `core.capability_evaluations`, service `python/metiquo/canonical/capabilities.py`, DTO et routes API mock/réelles, contrat OpenAPI/client TypeScript généré, matrice dans le dashboard Données, tests PostgreSQL/API/Playwright.
+- **Migrations :** création d’évaluations append-only chaînées par snapshot, capacité et version de seuil, avec état, raisons, colonnes requises/observées, complétude, échantillon, détail des gates, empreinte et date. Un trigger PostgreSQL interdit UPDATE/DELETE.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; OpenAPI export/check et génération client ; TypeScript strict ; ESLint ; 19 tests Python ciblés ; 4 tests Playwright ; parcours visuel via Navigateur sur le build de production.
+- **Résultat exact :** le registre versionne cinq capacités initiales de label, features et marché. Labels/features sont dérivés des colonnes raw persistées et de la couverture des games utilisables ; les issues qualité ciblées ferment leur capacité. `market.match_winner` exige explicitement huit gates `label`, `data`, `rules`, `model`, `calibration`, `mapping`, `odds` et `sample`. Avec données suffisantes mais sans preuve modèle/odds, il reste `pending`; tous les gates vrais l’activent ; chaque gate externe faux le rend `disabled`, tout comme un label, une complétude ou un échantillon insuffisant. Une évaluation identique est idempotente et un changement de preuve crée une nouvelle révision. L’API `/api/v1/admin/capabilities` partage son DTO entre mock et réel et filtre par snapshot en réel. Le Navigateur a confirmé la matrice, les badges, les raisons, seuils et identifiants de snapshot dans l’UI.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la fermeture par défaut applique directement `SFG-MARKET-001` et aucun simple marché fournisseur ne peut activer une capacité.
+- **Commit/hash :** `ed1f7b6` (`feat(canonical): gate capabilities by snapshot`).
+
+## CNL-007 — Repository real canonique et APIs événements historiques
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l’historique canonique immuable `CNL-005` et les DTO/scénarios mock `MCK-002` sont `DONE` ; le mode réel réutilise strictement le contrat public `Event` existant.
+- **Fichiers créés/modifiés :** repository PostgreSQL `python/metiquo/repositories/postgres_canonical.py`, routes réelles `python/metiquo/api/real_historical_routes.py`, branchement conditionnel dans la fabrique FastAPI, exports repository, test de contrat PostgreSQL mock/réel et test Playwright du composant Événements inchangé.
+- **Migrations :** aucune ; l’adaptateur lit exclusivement les tables `core` et la santé du dernier snapshot validé.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; 27 tests Python de migrations, projections canoniques, capabilities, API mock/réelle et OpenAPI ; test Playwright ciblé ; build Next.js de production en mode réel ; parcours visuel via Navigateur de la liste et d’une fiche événement contre PostgreSQL réel.
+- **Résultat exact :** les repositories réels exposent équipes, games et séries avec leurs identifiants, noms, qualité, dates et provenance de snapshot. Les séries résolues deviennent des événements historiques et les games ambiguës restent des événements unitaires, sans double comptage des games déjà liées. L’API `/api/v1/events` applique pagination et filtres compétition, équipe, statut et fenêtre temporelle ; le détail et les collections marchés/cotes conservent les mêmes DTO que le mock, avec des collections vides honnêtes tant que leurs domaines ne sont pas matérialisés. La fraîcheur du snapshot validé alimente `asOf` et `computedAt` reste monotone même si l’horloge applicative précède l’horodatage source. Le Navigateur a confirmé le badge `REAL`, 15 événements canoniques et une fiche historique complète sans modification des composants UI.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les games sans série ne sont exposées séparément que lorsque la reconstruction canonique les a laissées non liées, et aucune donnée marché n’est synthétisée.
+- **Commit/hash :** `fa7f53c` (`feat(canonical): expose real historical events`).
+
+## FEAT-001 — Registre des définitions de features
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l’historique canonique append-only `CNL-005` est `DONE` ; le registre reprend la même exigence d’identité, version et immutabilité pour toutes les futures colonnes de modèle.
+- **Fichiers créés/modifiés :** migration `20260906_0015`, modèles `FeatureDefinition`, `FeatureSet` et `FeatureSetMember`, service `python/metiquo/features/registry.py`, exports features et tests PostgreSQL du registre.
+- **Migrations :** création de `features.feature_definitions`, `features.feature_sets` et `features.feature_set_members` avec versions, domaine, paramètres JSON, politique de disponibilité, capacité éventuellement requise, version de code, empreintes SHA-256 et ordre des membres. Des triggers PostgreSQL interdisent UPDATE et DELETE sur les trois tables.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic upgrade/downgrade/upgrade ; quatre tests de migration et registre sur PostgreSQL réel ; vérification du diff.
+- **Résultat exact :** une définition est identifiée par son nom normalisé et sa version, et son empreinte couvre domaine, paramètres, disponibilité, capacité et version de code. Un feature set versionné référence une liste ordonnée de définitions exactes et possède sa propre empreinte déterministe. Un second enregistrement identique est idempotent ; réutiliser la même version avec un contenu différent échoue. `FeatureRegistry.build_vector` exige un set enregistré, refuse toute colonne ad hoc, toute colonne omise et toute valeur requise absente, tout en conservant explicitement `None` pour les features optionnelles ou dépendantes d’une capacité. Le vecteur produit porte l’UUID et la version du set ainsi que la version de chaque définition.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le registre ne pré-enregistre pas de calcul encore inexistant, les tickets suivants ajouteront leurs définitions au set complet sans prétendre qu’elles sont déjà disponibles.
+- **Commit/hash :** `0a5a5a9` (`feat(features): add immutable definition registry`).
+
+## FEAT-002 — Primitives as-of et cutoff
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le registre fermé `FEAT-001` et les games historisées `CNL-002` sont `DONE` ; la lecture temporelle s’appuie sur les révisions immuables de `CNL-005` plutôt que sur le seul état courant des tables core.
+- **Fichiers créés/modifiés :** primitives `python/metiquo/features/temporal.py`, exports features, dépendance Polars stable, verrou Python et tests PostgreSQL/Polars des cutoffs.
+- **Migrations :** aucune ; `max_input_time` et `max_knowledge_time` sont transportés dans l’audit immuable du lot et seront enregistrés par les feature snapshots de `FEAT-011`.
+- **Commandes/tests exécutés :** ajout et verrouillage de Polars `1.44.1` ; Ruff format/check ; mypy strict ciblé ; quatre tests de migration et temporalité sur PostgreSQL réel ; vérification du diff.
+- **Résultat exact :** `FeatureCutoff` refuse tout datetime sans fuseau et normalise en UTC. Les helpers SQL et Polars exigent ce type et appliquent toujours `source_event_time < cutoff`. `AsOfGameRepository` relit, pour chaque game et statistique équipe, la dernière révision canonique connue au cutoff ; une correction traitée plus tard ne peut donc pas remplacer rétroactivement l’état historique. Le lot retourné calcule et conserve cutoff, maximum des instants métier, maximum des instants de connaissance, UUID de révisions et snapshots sources. Une game volontairement injectée exactement au cutoff est exclue ; une observation à la frontière ou une révision postérieure soumise directement à l’audit lève une erreur bloquante.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; Polars est introduit ici car la SFG l’impose pour les calculs de features et le même garde-fou temporel doit précéder les agrégats SQL comme les plans Polars.
+- **Commit/hash :** `a1fee80` (`feat(features): enforce strict as-of cutoffs`).
+
+## FEAT-003 — Rating temporel pré-game
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les lots as-of audités `FEAT-002` sont `DONE` et constituent l’unique entrée du calculateur ; toute observation à la frontière ou après le cutoff est donc bloquée avant le rejeu.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/rating.py`, exports features et tests unitaires de séquences Elo vérifiables à la main.
+- **Migrations :** aucune ; les paramètres et cinq colonnes produites sont déclarables dans le registre versionné de `FEAT-001`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; trois tests de rating déterministe et de fuite temporelle ; vérification du diff.
+- **Résultat exact :** `EloParameters` versionne rating initial, facteur K, échelle et éventuels priors explicites par compétition. Le calculateur rejoue uniquement les games antérieures du lot, trace pour chacune ratings pré-game, probabilité attendue, résultat passé et delta, puis expose ratings des deux équipes, différence et tailles d’échantillon. Une victoire entre deux équipes à 1500 produit exactement 1516/1484 avec K=32. Deux games partageant le même timestamp sont toutes deux évaluées depuis l’état antérieur commun puis appliquées ensemble, de sorte qu’aucun résultat simultané ne fuit dans l’autre. L’ordre d’entrée ne change pas le résultat et une game cible placée au cutoff déclenche le blocage temporel.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; Elo est la baseline auditable exigée par la SFG, pas encore un modèle promu, et les priors de compétition restent absents tant qu’ils ne sont pas explicitement fournis.
+- **Commit/hash :** `bb9c9fb` (`feat(features): add auditable pregame Elo`).
+
+## FEAT-004 — Forme récente
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les cutoffs et lots historiques `FEAT-002` sont `DONE` ; le calculateur réutilise aussi les transitions pré-game de la baseline `FEAT-003` pour mesurer la force réellement connue des adversaires.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/form.py`, durcissement du filtre des games non utilisables dans le rating, exports features et tests unitaires de fenêtres/missingness.
+- **Migrations :** aucune ; toutes les sorties et tous les paramètres sont exposés comme `FeatureDefinitionSpec` versionnées pour le registre de `FEAT-001`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cinq tests cumulés rating/forme ; vérification du diff.
+- **Résultat exact :** chaque équipe expose simultanément les 5/10/20 dernières games et les fenêtres 30/60/90 jours, avec taux de victoire et complétude propres à chaque fenêtre. Le calcul fournit aussi moyenne exponentiellement pondérée, tendance linéaire, volatilité, rating pré-game moyen des adversaires et nombre de games utilisables. Une fixture dont une des cinq observations récentes est incomplète conserve cinq observations mais seulement quatre résultats, soit une complétude de 0,8 ; le taux de victoire est calculé sur ces quatre résultats et l’absence n’est ni une défaite ni un zéro. Une équipe nouvelle retourne échantillon zéro et métriques `None` explicites, prêtes pour la régularisation de `FEAT-010`.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les petits échantillons ne sont pas encore ramenés vers un prior dans ce ticket, afin que `FEAT-010` applique une politique unique et versionnée au-dessus des statistiques brutes.
+- **Commit/hash :** `f9cac23` (`feat(features): compute explicit recent form`).
+
+## FEAT-005 — Features side
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les relectures historiques strictes `FEAT-002` sont `DONE` ; les statistiques early sont relues depuis les copies immuables des payloads raw liées aux révisions canoniques, sans rouvrir un fichier source.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/side.py`, enrichissement as-of prudent des statistiques source autorisées, exports features, tests unitaires Blue/Red et extension du test PostgreSQL temporel.
+- **Migrations :** aucune ; les statistiques early restent dans la preuve source de `CNL-005` et ne sont exposées que lorsqu’une valeur réelle est présente.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; sept tests du domaine features ; quatre tests de migration/temporalité sur PostgreSQL réel ; vérification du diff.
+- **Résultat exact :** chaque équipe possède des échantillons Blue et Red séparés avec games, victoires, taux ajusté par un prior explicite et versionné, moyenne early disponible et taille de cet échantillon. Le différentiel Blue/Red est exposé sans confondre les sides. La fixture produit 2 victoires en 3 games Blue, soit un taux ajusté 0,571429, et 0 en 2 Red, soit 0,333333 ; deux valeurs `gold_diff_at_15` donnent une moyenne 25 tandis que la side sans donnée reste `None`. Les définitions early sont marquées `capability_gated` par `feature.early_game`. Pour une side cible inconnue, les deux équipes restent `unknown` et les poids Blue/Red valent explicitement 0,5/0,5 ; aucune side n’est supposée. Une side connue devient au contraire un scénario one-hot déterministe.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le prior Blue/Red est une régularisation locale documentée exigée par le ticket, tandis que les priors hiérarchiques généraux restent réservés à `FEAT-010`.
+- **Commit/hash :** `fdc65d2` (`feat(features): model explicit side uncertainty`).
+
+## FEAT-006 — Économie, rythme et objectifs conditionnels
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les cutoffs `FEAT-002` et le capability registry `CNL-006` sont `DONE` ; les valeurs détaillées proviennent exclusivement des révisions canoniques et de leurs payloads source immuables.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/economy.py`, quatre définitions de capability supplémentaires dans le registre canonique, exports features et tests unitaires des groupes activés/désactivés.
+- **Migrations :** aucune ; les évaluations des nouvelles capabilities utilisent la table append-only existante et les sorties sont déclarables dans le registre de features.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; neuf tests du domaine features ; six tests PostgreSQL de migrations, capabilities, temporalité et API réelle ; vérification du diff.
+- **Résultat exact :** `feature.pace`, `feature.economy_timestamps`, `feature.objectives_total` et `feature.objectives_first` possèdent colonnes requises, seuils de complétude et taille minimale versionnés. Le calcul expose des indicateurs de disponibilité de groupe, kills/minute, durée, gold/XP/CS différentiels aux minutes 10/15/20/25 lorsqu’ils existent, tailles d’échantillon, conversion d’un avantage à 15 minutes, comeback historique, tours/dragons/barons par minute et taux de premiers objectifs. Deux games de 30 minutes donnent 0,3 kill/minute et 0,2 tour/minute pour la fixture ; un avantage gagné produit une conversion à 1 et un déficit perdu un comeback à 0. Avec les mêmes colonnes présentes mais les capabilities désactivées, toutes les métriques restent `None`, leurs comptes valent zéro et les quatre indicateurs sont faux.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les timestamps autres que 15 minutes restent optionnels avec compte nul, tandis que l’activation du groupe exige au minimum gold, XP et CS à 15 minutes comme preuve commune.
+- **Commit/hash :** `7a7b3eb` (`feat(features): gate economy and objectives`).
+
+## FEAT-007 — Roster et joueurs
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les lots historiques stricts `FEAT-002` et les observations de roster `CNL-004` sont `DONE` ; le calcul n'accepte que le lot canonique as-of et ne possède aucun adaptateur vers une source roster externe.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/roster.py`, enrichissement du repository temporel avec les révisions joueurs et roster, exports features, tests modèle et extensions des tests PostgreSQL roster/temporalité.
+- **Migrations :** aucune ; les joueurs et observations sont relus depuis les révisions append-only `game_player_stat` et `roster_observation` déjà produites par l'historique canonique.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; onze tests modèle cumulés ; cinq tests PostgreSQL de migrations, roster et temporalité ; vérification du diff.
+- **Résultat exact :** la projection choisit pour chaque rôle la dernière observation OE connue et strictement antérieure au cutoff. Elle expose couverture des cinq rôles, continuité du cinq sur les cinq dernières games complètes, nombre de games communes, joueurs ayant changé récemment de rôle, force individuelle ramenée vers un prior explicite, trois synergies de rôles avec leurs échantillons et une roster-confidence versionnée. La fixture de substitution conserve l'ancien top avant la game du changement et le nouveau top après, avec une confiance d'observation abaissée à 0,65. Une équipe sans observation garde roster vide, métriques de force et synergie à `None`, confiance zéro et indicateur `low_confidence=true`; aucune absence n'est transformée en joueur ou résultat fictif.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la « force individuelle » reste une statistique historique régularisée et auditable, non un rating externe de joueur, tandis que les pairs top/jungle, jungle/mid et bot/support couvrent les synergies de rôles stables sans inventer une composition future.
+- **Commit/hash :** `e36cef7` (`feat(features): derive roster strength as of cutoff`).
+
+## FEAT-008 — Champion pool et méta
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le repository strictement as-of `FEAT-002` fournit désormais les statistiques joueurs et champions historisées ; aucune donnée de draft n'est lue hors de ce lot antérieur.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/champions.py`, exports features, fixture modèle de fuite post-draft et extension du test PostgreSQL roster/joueurs.
+- **Migrations :** aucune ; champion, rôle, résultat et patch sont relus depuis les révisions canoniques existantes.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; treize tests modèle cumulés ; trois tests PostgreSQL roster et temporalité ; vérification du diff.
+- **Résultat exact :** pour chacun des cinq rôles et des deux équipes, le calcul expose nombre de picks historiques, diversité, profondeur effective entropique, part du champion principal, taux de victoire du rôle et moyenne des performances par champion. Il compte aussi les compositions complètes réellement observées et leur répétition. Si le patch cible est connu, ses games, champions, taux de victoire et delta d'adaptation par rapport à l'historique global sont calculés ; un patch inconnu produit `patch_known=false`, zéro échantillon et métriques patch `None`. L'API du calculateur ne reçoit aucun pick cible et rejette explicitement un lot contenant l'identifiant de la game cible, ce que couvre la fixture post-draft avec cinq champions futurs volontairement injectés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les champion pools sont résumés en colonnes fixes pré-draft plutôt qu'en catégories dynamiques dépendant du pick cible, afin de conserver un schéma reproductible et de rendre impossible la fuite du draft réel.
+- **Commit/hash :** `8ad8aaa` (`feat(features): add pre-draft champion meta`).
+
+## FEAT-009 — Contexte compétition et calendrier
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les lots as-of `FEAT-002` et le contexte canonique de séries `CNL-003` sont `DONE` ; les champs cibles n'acceptent que la provenance `canonical_oe` ou l'état `unknown`.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/context.py`, exports features et tests modèle de provenance, calendrier et connaissance tardive.
+- **Migrations :** aucune ; les valeurs cibles transportent l'UUID de leur révision canonique et leur instant de connaissance, tandis que le calendrier est dérivé des games déjà historisées.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; quinze tests modèle cumulés ; vérification du diff.
+- **Résultat exact :** compétition, ligue, région, tournoi, stage, phase regular/playoffs/international, best-of et patch sont soit accompagnés d'une révision OE connue au cutoff, soit absents avec provenance `unknown` et indicateur de connaissance faux. Une provenance `external_news` est refusée et un champ OE appris après le cutoff déclenche le garde-fou temporel. Pour chaque équipe, le calcul expose jours de repos depuis la dernière game, densité des quatorze derniers jours et expérience du format best-of cible. La fixture internationale retrouve deux jours de repos, deux games récentes et une game antérieure dans le même BO pour l'équipe A ; une équipe sans historique conserve repos `None` sans imputation.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la phase n'est déduite que d'indicateurs OE explicites : international prend priorité, sinon playoffs vrai donne `playoffs`, playoffs faux donne `regular`, et toute autre combinaison reste inconnue.
+- **Commit/hash :** `996c7c7` (`feat(features): add proven competition context`).
+
+## FEAT-010 — Priors, missingness et cold start
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les domaines rating, forme, side, économie, roster, champion et contexte de `FEAT-003` à `FEAT-009` produisent tous valeurs et échantillons explicites ; le nouveau service peut donc régulariser ces métriques sans relire une source ni confondre absence et zéro.
+- **Fichiers créés/modifiés :** estimateur et préprocesseur `python/metiquo/features/priors.py`, exports features et tests modèle de shrinkage, ancienneté, cold start, OOD et fit train-only.
+- **Migrations :** aucune ; les artefacts immuables portent versions, cutoff, UUID des observations/lignes utilisées et empreinte déterministe avant leur persistance par les tickets suivants.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; dix-sept tests modèle cumulés ; vérification du diff.
+- **Résultat exact :** l'estimateur ajuste d'abord un prior global, puis des priors de ligue ramenés vers le global et des priors de patch ramenés vers leur ligue. Les observations anciennes sont décotées selon une demi-vie versionnée ; dix games vieilles de 90 jours donnent ainsi un échantillon effectif de cinq. Une petite observation est régularisée vers son prior patch, avec taille effective et confiance explicites. Un groupe inconnu retombe sur le niveau global avec `ood=true` et confiance réduite. Un cold start conserve `raw_value=None`, `available=false`, `cold_start=true` et confiance zéro ; s'il n'existe aucun prior ajusté, la valeur finale reste elle aussi `None`. Le scaler ignore les valeurs absentes, l'encodeur réserve des codes uniquement aux catégories vues avant le cutoff, une catégorie future ou OOD garde code `None`, et l'ajout d'une ligne post-cutoff ne change ni paramètres ni empreinte du préprocesseur.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les priors peuvent fournir une valeur de repli mais jamais une confiance factice, et l'indicateur de disponibilité brute reste indépendant de la valeur régularisée.
+- **Commit/hash :** `5902f4f` (`feat(features): add hierarchical priors and missingness`).
+
+## FEAT-011 — Feature snapshots immuables
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le registre fermé `FEAT-001`, les lots et audits temporels `FEAT-002`, les politiques de missingness `FEAT-010` et les snapshots OE immuables `OE-011` sont `DONE`.
+- **Fichiers créés/modifiés :** migration `20260906_0016`, modèle `FeatureSnapshot`, store `python/metiquo/features/snapshots.py`, exports features et tests PostgreSQL de hash, roundtrip, idempotence et immutabilité.
+- **Migrations :** création de `features.feature_snapshots` avec event, équipes, feature set, cutoff, maxima métier/connaissance, versions, valeurs, missingness, listes de games/révisions/snapshots OE, empreintes games/vecteur/snapshot, commit de code, contrôles de leakage, chaînage de rebuild et génération. Les contraintes temporelles sont aussi imposées en base et un trigger interdit UPDATE/DELETE.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic upgrade/downgrade/upgrade ; cinq tests PostgreSQL de migrations, registre et snapshots ; vérification du diff.
+- **Résultat exact :** le store n'accepte qu'un `RegisteredFeatureVector`, un lot dont le cutoff correspond exactement, un snapshot OE cible validé, au moins une game cible déclarée comme exclue, un commit Git hexadécimal et tous les contrôles de fuite au vert. Les `Decimal` sont sérialisés sans perte, les `None` produisent une carte de missingness distincte, et l'empreinte du vecteur couvre set, versions, valeurs et absences. L'empreinte du snapshot ajoute candidate, audit temporel, lignage OE, fingerprint ordonné des games, commit et contrôles. Deux créations identiques retournent le même UUID et le même enregistrement ; une tentative d'UPDATE échoue avec la protection append-only. La prédiction future peut donc référencer un UUID qui restitue exactement le vecteur et toutes ses preuves.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; `target_oe_snapshot_id` assure une référence relationnelle au snapshot de la candidate, tandis que la liste JSON des snapshots historiques conserve honnêtement les cas où la fenêtre de features traverse plusieurs snapshots source.
+- **Commit/hash :** `ab7d86b` (`feat(features): persist immutable feature snapshots`).
+
+## FEAT-012 — Rebuild ciblé après invalidation
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les invalidations rétroactives `OE-018`, les snapshots append-only `FEAT-011` et le pipeline complet `FEAT-014` sont `DONE` ; le planificateur ne travaille que sur le feature set et le dataset explicitement demandés.
+- **Fichiers créés/modifiés :** planificateur `python/metiquo/features/rebuild.py`, enrichissement du modèle, de la migration `20260906_0016` et du store de snapshots, intégration dans `python/metiquo/features/dataset.py`, exports features et tests PostgreSQL de reconstruction ciblée.
+- **Migrations :** ajout des identifiants de games cibles et des invalidations déjà consommées aux snapshots ; les remplacements restent de nouvelles lignes liées par `supersedes_snapshot_id` avec une génération strictement croissante.
+- **Commandes/tests exécutés :** Ruff et mypy strict ; test anti-fuite ; gate complet avec PostgreSQL réel ; cycle d'intégration explicite.
+- **Résultat exact :** le plan retient la dernière génération de chaque snapshot dont le cutoff rencontre `affected_from`, limite les candidats au provider, dataset et feature set demandés, puis transmet au recalcul l'ensemble exact des invalidations non consommées. Une invalidation datée du `2026-08-10` laisse intact le snapshot du `2026-08-05`, crée une génération 2 pour celui du `2026-08-10` et conserve la génération 1 consultable sans mutation. Le passage suivant ne produit aucun remplacement, car l'identifiant d'invalidation est déjà enregistré. Le gate global retourne 270 tests Python, 16 tests UI et 4 tests web réussis ; les 34 tests PostgreSQL passent aussi séparément.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; conserver toutes les générations et leurs causes applique directement l'exigence de reproductibilité, sans réécriture destructive.
+- **Commit/hash :** `ec20989` (`feat(features): rebuild invalidated snapshots append-only`) et `ff6b136` (`feat(features): build reproducible feature datasets`).
+
+## FEAT-013 — Tests anti-leakage
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les primitives temporelles `FEAT-002`, les calculateurs historiques et les transformations train-only `FEAT-010` sont `DONE` ; le gate appelle désormais ces preuves avant la suite générale.
+- **Fichiers créés/modifiés :** suite `tests/leakage/test_anti_leakage_guards.py`, cible `test-leakage` et dépendance explicite du gate `check` dans le `Makefile`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** `make test-leakage`, puis `make check` avec PostgreSQL réel.
+- **Résultat exact :** une propriété parcourt les décalages de zéro à une microseconde ou davantage et vérifie que toute observation à la frontière ou après le cutoff est rejetée. Une seconde preuve injecte à la fois une game future et une révision apprise tardivement, et confirme que l'échec survient avant tout agrégat. Le sous-gate exécute neuf tests couvrant aussi rating, champion pré-draft, priors et préprocesseurs train-only ; les neuf passent et conditionnent dorénavant le gate global.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le test dédié rend une régression temporelle bloquante en CI au lieu de dépendre seulement de tests fonctionnels dispersés.
+- **Commit/hash :** `b87998a` (`test(features): block temporal leakage in CI`).
+
+## FEAT-014 — Pipeline reproductible complet et rapport de couverture
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le registre `FEAT-001`, tous les calculateurs `FEAT-003` à `FEAT-010`, les snapshots `FEAT-011`, le rebuild `FEAT-012` et le gate anti-leakage `FEAT-013` sont `DONE`.
+- **Fichiers créés/modifiés :** orchestrateur `python/metiquo/features/dataset.py`, commande `oe features-rebuild`, cible `make features-rebuild`, exports, tests de CLI/Make et gate PostgreSQL `tests/integration/test_feature_dataset.py` ; isolation de la base d'intégration et restriction des candidates au provider/dataset configuré.
+- **Migrations :** aucune nouvelle migration au-delà du snapshot enrichi de `FEAT-011`/`FEAT-012`.
+- **Commandes/tests exécutés :** formatters, ESLint, Ruff, cspell, TypeScript strict, mypy strict sur 192 fichiers, neuf tests anti-fuite, 20 tests composants, 270 tests Python avec PostgreSQL réel, contrôle OpenAPI/client et 34 tests d'intégration PostgreSQL séparés.
+- **Résultat exact :** la commande construit le feature set fermé `lol.match_winner.pregame@p3-reproducible-v1`, énumère seulement les games du provider/dataset dont le snapshot est validé et le contexte canonique connu au cutoff, puis calcule rating, forme, side, économie capability-gated, roster, champion pool, contexte et priors depuis l'histoire strictement antérieure. Sur la fixture, elle produit deux snapshots avec couverture 1, cutoffs du `2026-08-05` au `2026-08-10`, empreintes et lignage complets ; la game cible est absente des sources. Un second passage conserve exactement les mêmes UUID et missingness. Une invalidation ne reconstruit ensuite que la candidate affectée et le passage suivant redevient idempotent. Le rapport JSON expose couverture, créations, rebuilds, plage de cutoff, missingness, UUID et exemple traçable.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le pipeline reste limité à l'historique canonique déjà persisté et n'effectue ni téléchargement ad hoc ni enrichissement externe.
+- **Commit/hash :** `ff6b136` (`feat(features): build reproducible feature datasets`) et `da8456d` (`fix(features): isolate rebuild inputs and integration state`).

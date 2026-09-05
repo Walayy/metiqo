@@ -5,10 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from importlib.metadata import version
 from typing import Annotated, Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Header, Query
 
-from metiquo.api.dto import ItemResponse, PageInfo, PageResponse
+from metiquo.api.dto import CapabilityEvaluationDto, ItemResponse, PageInfo, PageResponse
+from metiquo.canonical.capabilities import CapabilityRegistry, CapabilityState
 from metiquo.contracts import (
     ContractMetadata,
     DataQualityIssue,
@@ -68,6 +70,7 @@ def build_real_admin_router(
     repository: PostgresAdminRepository,
     mutation_service: RealAdminMutationService,
     clock: Clock,
+    capability_registry: CapabilityRegistry,
 ) -> APIRouter:
     """Exposer exactement les DTO d'administration partagés avec le mode mock."""
 
@@ -116,6 +119,21 @@ def build_real_admin_router(
         )
         return _page(values, offset, limit, repository, clock)
 
+    @router.get(
+        "/capabilities",
+        response_model=PageResponse[CapabilityEvaluationDto],
+    )
+    def list_capabilities(
+        offset: Offset = 0,
+        limit: Limit = 20,
+        snapshot_id: Annotated[UUID | None, Query(alias="snapshotId")] = None,
+    ) -> PageResponse[CapabilityEvaluationDto]:
+        values = tuple(
+            _capability_dto(item)
+            for item in capability_registry.list_latest(snapshot_id=snapshot_id)
+        )
+        return _page(values, offset, limit, repository, clock)
+
     @router.post(
         "/oracles-elixir/sync",
         response_model=ItemResponse[IngestionRunSummary],
@@ -130,3 +148,23 @@ def build_real_admin_router(
         )
 
     return router
+
+
+def _capability_dto(state: CapabilityState) -> CapabilityEvaluationDto:
+    return CapabilityEvaluationDto(
+        snapshot_id=state.snapshot_id,
+        capability=state.capability,
+        kind=state.capability_kind,
+        status=state.status,
+        reason_codes=state.reason_codes,
+        threshold_version=state.threshold_version,
+        evaluation_revision=state.evaluation_revision,
+        required_columns=state.required_columns,
+        observed_columns=state.observed_columns,
+        minimum_completeness=state.minimum_completeness,
+        observed_completeness=state.observed_completeness,
+        minimum_sample_size=state.minimum_sample_size,
+        observed_sample_size=state.observed_sample_size,
+        gates=dict(state.gates),
+        evaluated_at=state.evaluated_at,
+    )

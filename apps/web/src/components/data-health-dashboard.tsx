@@ -2,11 +2,13 @@
 
 import type {
   AuditEntry,
+  CapabilityEvaluationDto,
   DataQualityIssue,
   IngestionRunSummary,
   ItemResponseIngestionRunSummary,
   JobSummary,
   PageResponseAuditEntry,
+  PageResponseCapabilityEvaluationDto,
   PageResponseDataQualityIssue,
   PageResponseIngestionRunSummary,
   PageResponseJobSummary,
@@ -95,13 +97,18 @@ function Panel({
 }
 
 function statusTone(status: string) {
-  if (status === "succeeded" || status === "fresh") {
+  if (status === "succeeded" || status === "fresh" || status === "enabled") {
     return "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200";
   }
-  if (status === "failed" || status === "blocking" || status === "quarantined") {
+  if (
+    status === "failed" ||
+    status === "blocking" ||
+    status === "quarantined" ||
+    status === "disabled"
+  ) {
     return "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200";
   }
-  if (status === "degraded" || status === "stale" || status === "warning") {
+  if (status === "degraded" || status === "stale" || status === "warning" || status === "pending") {
     return "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200";
   }
   return "border-border-strong bg-surface-muted text-ink-secondary";
@@ -289,6 +296,76 @@ function QualityList({ issues }: Readonly<{ issues: readonly DataQualityIssue[] 
   );
 }
 
+function CapabilityMatrix({ values }: Readonly<{ values: readonly CapabilityEvaluationDto[] }>) {
+  return (
+    <div
+      aria-label="Matrice des capacités"
+      className="max-w-full overflow-x-auto rounded-lg border border-border-subtle"
+      role="region"
+      tabIndex={0}
+    >
+      <table className="w-full min-w-[62rem] border-collapse text-left text-xs">
+        <thead className="bg-surface-muted text-ink-secondary">
+          <tr>
+            {["Capacité", "État", "Gates", "Complétude", "Échantillon", "Seuils", "Raisons"].map(
+              (label) => (
+                <th className="px-3 py-3 font-semibold" key={label} scope="col">
+                  {label}
+                </th>
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border-subtle">
+          {values.map((value) => (
+            <tr key={`${value.snapshotId}:${value.capability}:${value.thresholdVersion}`}>
+              <td className="px-3 py-3">
+                <p className="font-semibold">{value.capability}</p>
+                <p className="mt-1 text-ink-secondary">
+                  {value.kind} · révision {value.evaluationRevision}
+                </p>
+              </td>
+              <td className="px-3 py-3">
+                <StatusBadge status={value.status} />
+              </td>
+              <td className="max-w-72 px-3 py-3">
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(value.gates).map(([gate, state]) => (
+                    <Badge
+                      className={statusTone(
+                        state === true ? "enabled" : state === false ? "disabled" : "pending",
+                      )}
+                      key={gate}
+                    >
+                      {gate}: {state === true ? "ok" : state === false ? "non" : "attente"}
+                    </Badge>
+                  ))}
+                </div>
+              </td>
+              <td className="whitespace-nowrap px-3 py-3 tabular-nums">
+                {(Number(value.observedCompleteness) * 100).toFixed(1)} % /{" "}
+                {(Number(value.minimumCompleteness) * 100).toFixed(1)} %
+              </td>
+              <td className="whitespace-nowrap px-3 py-3 tabular-nums">
+                {value.observedSampleSize} / {value.minimumSampleSize}
+              </td>
+              <td className="px-3 py-3">
+                <p>{value.thresholdVersion}</p>
+                <p className="mt-1 max-w-56 break-all text-ink-secondary">
+                  snapshot {value.snapshotId}
+                </p>
+              </td>
+              <td className="max-w-72 px-3 py-3 text-ink-secondary">
+                {value.reasonCodes.length > 0 ? value.reasonCodes.join(" · ") : "Aucun blocage"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function PageHeader({ description, eyebrow, title }: Readonly<Record<string, string>>) {
   return (
     <header className="grid gap-3">
@@ -314,6 +391,11 @@ export function DataHealthDashboard() {
     queryFn: ({ signal }) =>
       readResource<PageResponseDataQualityIssue>("/quality-issues?offset=0&limit=100", signal),
     queryKey: ["admin", "quality-issues"],
+  });
+  const capabilities = useQuery({
+    queryFn: ({ signal }) =>
+      readResource<PageResponseCapabilityEvaluationDto>("/capabilities?offset=0&limit=100", signal),
+    queryKey: ["admin", "capabilities"],
   });
   const quarantined = issues.data?.data.filter((issue) => issue.status === "quarantined") ?? [];
 
@@ -369,6 +451,20 @@ export function DataHealthDashboard() {
           <IngestionHistory runs={runs.data.data} />
         ) : (
           <RemoteEmptyState description="Aucune synchronisation n’a encore été enregistrée." />
+        )}
+      </Panel>
+
+      <Panel icon={<ListChecks className="size-5" />} title="Capacités par snapshot">
+        {capabilities.isError ? (
+          <RemoteRecoverableErrorState
+            description="Les capacités restent fermées tant que leur dernière évaluation n’est pas disponible."
+            onRetry={() => void capabilities.refetch()}
+            title="Registre indisponible"
+          />
+        ) : capabilities.data?.data.length ? (
+          <CapabilityMatrix values={capabilities.data.data} />
+        ) : (
+          <RemoteEmptyState description="Aucun snapshot n’a encore été évalué ; tous les marchés restent fermés." />
         )}
       </Panel>
 

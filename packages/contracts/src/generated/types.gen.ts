@@ -138,6 +138,76 @@ export type BacktestSummary = {
 };
 
 /**
+ * CapabilityEvaluationDto
+ *
+ * Matrice publique d'une capacité évaluée sur un snapshot précis.
+ */
+export type CapabilityEvaluationDto = {
+    /**
+     * Capability
+     */
+    capability: string;
+    /**
+     * Evaluatedat
+     */
+    evaluatedAt: string;
+    /**
+     * Evaluationrevision
+     */
+    evaluationRevision: number;
+    /**
+     * Gates
+     */
+    gates: {
+        [key: string]: boolean | null;
+    };
+    /**
+     * Kind
+     */
+    kind: 'label' | 'feature' | 'market';
+    /**
+     * Minimumcompleteness
+     */
+    minimumCompleteness: string;
+    /**
+     * Minimumsamplesize
+     */
+    minimumSampleSize: number;
+    /**
+     * Observedcolumns
+     */
+    observedColumns: Array<string>;
+    /**
+     * Observedcompleteness
+     */
+    observedCompleteness: string;
+    /**
+     * Observedsamplesize
+     */
+    observedSampleSize: number;
+    /**
+     * Reasoncodes
+     */
+    reasonCodes: Array<string>;
+    /**
+     * Requiredcolumns
+     */
+    requiredColumns: Array<string>;
+    /**
+     * Snapshotid
+     */
+    snapshotId: string;
+    /**
+     * Status
+     */
+    status: 'enabled' | 'disabled' | 'pending';
+    /**
+     * Thresholdversion
+     */
+    thresholdVersion: string;
+};
+
+/**
  * ContractMetadata
  *
  * Mode, fraîcheur et version d'une réponse métier.
@@ -912,6 +982,18 @@ export type PageResponseBacktestSummary = {
 };
 
 /**
+ * PageResponse[CapabilityEvaluationDto]
+ */
+export type PageResponseCapabilityEvaluationDto = {
+    /**
+     * Data
+     */
+    data: Array<CapabilityEvaluationDto>;
+    meta: ContractMetadata;
+    page: PageInfo;
+};
+
+/**
  * PageResponse[DataQualityIssue]
  */
 export type PageResponseDataQualityIssue = {
@@ -1573,6 +1655,40 @@ export type AuditLogApiV1AdminAuditLogGetResponses = {
 };
 
 export type AuditLogApiV1AdminAuditLogGetResponse = AuditLogApiV1AdminAuditLogGetResponses[keyof AuditLogApiV1AdminAuditLogGetResponses];
+
+export type ListCapabilitiesApiV1AdminCapabilitiesGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/admin/capabilities';
+};
+
+export type ListCapabilitiesApiV1AdminCapabilitiesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListCapabilitiesApiV1AdminCapabilitiesGetError = ListCapabilitiesApiV1AdminCapabilitiesGetErrors[keyof ListCapabilitiesApiV1AdminCapabilitiesGetErrors];
+
+export type ListCapabilitiesApiV1AdminCapabilitiesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PageResponseCapabilityEvaluationDto;
+};
+
+export type ListCapabilitiesApiV1AdminCapabilitiesGetResponse = ListCapabilitiesApiV1AdminCapabilitiesGetResponses[keyof ListCapabilitiesApiV1AdminCapabilitiesGetResponses];
 
 export type ListDataSourcesApiV1AdminDataSourcesGetData = {
     body?: never;

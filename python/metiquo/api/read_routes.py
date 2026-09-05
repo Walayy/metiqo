@@ -5,11 +5,17 @@ from datetime import datetime
 from decimal import Decimal
 from importlib.metadata import version
 from typing import Annotated, Literal
-from uuid import UUID
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import APIRouter, Query
 
-from metiquo.api.dto import ItemResponse, OpportunityExplanation, PageInfo, PageResponse
+from metiquo.api.dto import (
+    CapabilityEvaluationDto,
+    ItemResponse,
+    OpportunityExplanation,
+    PageInfo,
+    PageResponse,
+)
 from metiquo.contracts import (
     BacktestSummary,
     ContractMetadata,
@@ -287,6 +293,63 @@ def build_read_router(service: ReadService, clock: Clock) -> APIRouter:
     ) -> PageResponse[JobSummary]:
         items = tuple(job for job in service.list_jobs() if status is None or job.status == status)
         return _page(items, offset, limit, clock)
+
+    @router.get(
+        "/admin/capabilities",
+        response_model=PageResponse[CapabilityEvaluationDto],
+    )
+    def list_capabilities(
+        offset: Offset = 0,
+        limit: Limit = 20,
+    ) -> PageResponse[CapabilityEvaluationDto]:
+        now = clock.now().value
+        snapshot_id = uuid5(NAMESPACE_URL, "metiquo:mock:capability-snapshot")
+        values = (
+            CapabilityEvaluationDto(
+                snapshot_id=snapshot_id,
+                capability="label.match_winner",
+                kind="label",
+                status="enabled",
+                reason_codes=(),
+                threshold_version="lol-capability-thresholds-v1",
+                evaluation_revision=1,
+                required_columns=("datacompleteness", "result"),
+                observed_columns=("datacompleteness", "result"),
+                minimum_completeness=Decimal("0.9500"),
+                observed_completeness=Decimal("1.0000"),
+                minimum_sample_size=1,
+                observed_sample_size=12,
+                gates={"data": True, "sample": True},
+                evaluated_at=now,
+            ),
+            CapabilityEvaluationDto(
+                snapshot_id=snapshot_id,
+                capability="market.match_winner",
+                kind="market",
+                status="pending",
+                reason_codes=("GATE_MODEL_PENDING", "GATE_ODDS_PENDING"),
+                threshold_version="lol-capability-thresholds-v1",
+                evaluation_revision=1,
+                required_columns=("datacompleteness", "result"),
+                observed_columns=("datacompleteness", "result"),
+                minimum_completeness=Decimal("0.9500"),
+                observed_completeness=Decimal("1.0000"),
+                minimum_sample_size=1,
+                observed_sample_size=12,
+                gates={
+                    "label": True,
+                    "data": True,
+                    "rules": True,
+                    "model": None,
+                    "calibration": None,
+                    "mapping": True,
+                    "odds": None,
+                    "sample": True,
+                },
+                evaluated_at=now,
+            ),
+        )
+        return _page(values, offset, limit, clock)
 
     @router.get("/admin/mappings/pending", response_model=PageResponse[MappingReview])
     def list_pending_mappings(offset: Offset = 0, limit: Limit = 20) -> PageResponse[MappingReview]:

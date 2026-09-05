@@ -125,6 +125,7 @@ def test_models_backtests_paper_and_admin_reads_are_available() -> None:
         "/api/v1/admin/ingestion-runs": 2,
         "/api/v1/admin/quality-issues": 8,
         "/api/v1/admin/jobs": 3,
+        "/api/v1/admin/capabilities": 2,
         "/api/v1/admin/mappings/pending": 1,
     }
     for path, total in expected_totals.items():

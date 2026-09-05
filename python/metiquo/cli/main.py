@@ -7,6 +7,7 @@ import gzip
 import hashlib
 import io
 import json
+import subprocess
 import sys
 import tempfile
 import zipfile
@@ -23,6 +24,7 @@ from sqlalchemy import Engine, Table, create_engine, func, insert, select
 from metiquo.config import ConfigurationError, Settings, load_settings
 from metiquo.contracts.enums import DataMode
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
+from metiquo.features.dataset import FeatureDatasetBuilder
 from metiquo.foundation.time import SystemClock
 from metiquo.ingestion.backfill import BackfillOrchestrator, YearSyncResult
 from metiquo.ingestion.catalog import (
@@ -98,6 +100,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     rebuild.add_argument("--from", dest="from_date", type=date.fromisoformat, required=True)
     _machine_output(rebuild)
+
+    features_rebuild = commands.add_parser(
+        "features-rebuild",
+        help="recalculer les feature snapshots à partir d'une date",
+    )
+    features_rebuild.add_argument(
+        "--from",
+        dest="from_date",
+        type=date.fromisoformat,
+        required=True,
+    )
+    features_rebuild.add_argument("--code-commit")
+    _machine_output(features_rebuild)
     return parser
 
 
@@ -165,6 +180,15 @@ def _dispatch(
         return _diff(engine, arguments.left, arguments.right), ExitCode.SUCCESS
     if arguments.command == "rebuild-canonical":
         return _rebuild(engine, settings, arguments.from_date), ExitCode.SUCCESS
+    if arguments.command == "features-rebuild":
+        return (
+            _features_rebuild(
+                engine,
+                from_date=arguments.from_date,
+                code_commit=arguments.code_commit,
+            ),
+            ExitCode.SUCCESS,
+        )
     raise CliError(
         "commande non reconnue",
         code="INVALID_COMMAND",
@@ -473,6 +497,45 @@ def _rebuild(engine: Engine, settings: Settings, from_date: date) -> dict[str, o
         "snapshotsReplayed": rebuilt,
         "canonicalRowsFromDate": row_count,
     }
+
+
+def _features_rebuild(
+    engine: Engine,
+    *,
+    from_date: date,
+    code_commit: str | None,
+) -> dict[str, object]:
+    resolved_commit = code_commit or _current_git_commit()
+    report = FeatureDatasetBuilder(
+        engine=engine,
+        code_commit=resolved_commit,
+        provider=_PROVIDER,
+        dataset=_DATASET,
+    ).rebuild_from(from_date)
+    return {
+        "ok": True,
+        "command": "features-rebuild",
+        "codeCommit": resolved_commit,
+        **report.to_dict(),
+    }
+
+
+def _current_git_commit() -> str:
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    commit = result.stdout.strip().casefold()
+    if result.returncode != 0 or not commit:
+        raise CliError(
+            "code commit introuvable ; utiliser --code-commit",
+            code="CODE_COMMIT_REQUIRED",
+            exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+        )
+    return commit
 
 
 def _freshness_policy(arguments: argparse.Namespace, settings: Settings) -> FreshnessPolicy:

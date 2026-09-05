@@ -80,6 +80,41 @@ test("renders real fixture provenance without replacing the mock UI", async ({ p
       contentType: "application/json",
     });
   });
+  await page.route("**/api/backend/api/v1/admin/capabilities**", async (route) => {
+    await route.fulfill({
+      body: JSON.stringify(
+        pageResponse([
+          {
+            capability: "market.match_winner",
+            evaluatedAt: "2026-09-05T12:00:00Z",
+            evaluationRevision: 1,
+            gates: {
+              calibration: null,
+              data: true,
+              label: true,
+              mapping: null,
+              model: null,
+              odds: null,
+              rules: true,
+              sample: true,
+            },
+            kind: "market",
+            minimumCompleteness: "0.9500",
+            minimumSampleSize: 100,
+            observedColumns: ["datacompleteness", "result"],
+            observedCompleteness: "0.9900",
+            observedSampleSize: 1234,
+            reasonCodes: ["GATE_MODEL_PENDING", "GATE_ODDS_PENDING"],
+            requiredColumns: ["datacompleteness", "result"],
+            snapshotId: "11111111-1111-4111-8111-111111111111",
+            status: "pending",
+            thresholdVersion: "lol-capability-thresholds-v1",
+          },
+        ]),
+      ),
+      contentType: "application/json",
+    });
+  });
 
   await page.goto("/data");
 
@@ -92,5 +127,9 @@ test("renders real fixture provenance without replacing the mock UI", async ({ p
   await expect(snapshot).toContainText("c".repeat(64));
   await expect(snapshot).toContainText("stable");
   await expect(snapshot).toContainText("2026");
+  const capabilities = page.getByRole("region", { name: "Capacités par snapshot" });
+  await expect(capabilities).toContainText("market.match_winner");
+  await expect(capabilities).toContainText("pending");
+  await expect(capabilities).toContainText("1234 / 100");
   await expect(page.getByRole("region", { name: "Quarantaine" })).toContainText("UNEXPECTED_HTML");
 });
