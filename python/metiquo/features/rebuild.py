@@ -75,6 +75,7 @@ class FeatureRebuildPlanner:
         from_date: date,
         provider: str,
         dataset: str,
+        feature_set_id: UUID | None = None,
     ) -> FeatureRebuildPlan:
         invalidations = self._invalidations(
             from_date=from_date,
@@ -89,6 +90,7 @@ class FeatureRebuildPlanner:
             from_date=effective_from,
             provider=provider,
             dataset=dataset,
+            feature_set_id=feature_set_id,
         )
         candidates: list[FeatureRebuildCandidate] = []
         for snapshot in latest:
@@ -178,28 +180,32 @@ class FeatureRebuildPlanner:
         from_date: date,
         provider: str,
         dataset: str,
+        feature_set_id: UUID | None,
     ) -> tuple[StoredFeatureSnapshot, ...]:
         features = cast(Table, FeatureSnapshot.__table__)
         snapshots = cast(Table, OeSnapshot.__table__)
         catalog = cast(Table, SourceCatalog.__table__)
         from_instant = datetime.combine(from_date, time.min, tzinfo=UTC)
+        statement = (
+            select(features.c.id)
+            .join(snapshots, snapshots.c.id == features.c.target_oe_snapshot_id)
+            .join(catalog, catalog.c.id == snapshots.c.source_catalog_id)
+            .where(
+                features.c.cutoff_at >= from_instant,
+                catalog.c.provider == provider,
+                catalog.c.dataset == dataset,
+            )
+        )
+        if feature_set_id is not None:
+            statement = statement.where(features.c.feature_set_id == feature_set_id)
+        statement = statement.order_by(
+            features.c.cutoff_at,
+            features.c.event_id,
+            features.c.generation.desc(),
+            features.c.created_at.desc(),
+        )
         with self._engine.connect() as connection:
-            rows = connection.execute(
-                select(features.c.id)
-                .join(snapshots, snapshots.c.id == features.c.target_oe_snapshot_id)
-                .join(catalog, catalog.c.id == snapshots.c.source_catalog_id)
-                .where(
-                    features.c.cutoff_at >= from_instant,
-                    catalog.c.provider == provider,
-                    catalog.c.dataset == dataset,
-                )
-                .order_by(
-                    features.c.cutoff_at,
-                    features.c.event_id,
-                    features.c.generation.desc(),
-                    features.c.created_at.desc(),
-                )
-            ).scalars()
+            rows = connection.execute(statement).scalars()
             ids = tuple(cast(UUID, value) for value in rows)
         store = FeatureSnapshotStore(engine=self._engine)
         latest: dict[tuple[object, ...], StoredFeatureSnapshot] = {}

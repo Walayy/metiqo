@@ -17,6 +17,15 @@ from metiquo.features.context import (
     TeamScheduleContext,
     competition_context_feature_definitions,
 )
+from metiquo.features.dataset import (
+    FULL_FEATURE_CODE_VERSION,
+    FULL_FEATURE_SET_NAME,
+    FULL_FEATURE_SET_VERSION,
+    FeatureCoverageReport,
+    FeatureDatasetBuilder,
+    TargetGameCandidate,
+    TargetGameRepository,
+)
 from metiquo.features.economy import (
     EconomyFeatureCalculator,
     EconomyFeatureResult,
@@ -111,6 +120,9 @@ from metiquo.features.temporal import (
 )
 
 __all__ = [
+    "FULL_FEATURE_CODE_VERSION",
+    "FULL_FEATURE_SET_NAME",
+    "FULL_FEATURE_SET_VERSION",
     "AsOfGameBatch",
     "AsOfGameRepository",
     "AsOfInputAudit",
@@ -128,7 +140,9 @@ __all__ = [
     "EloParameters",
     "EloRatingCalculator",
     "ExpectedRosterMember",
+    "FeatureCoverageReport",
     "FeatureCutoff",
+    "FeatureDatasetBuilder",
     "FeatureDefinitionSpec",
     "FeatureRebuildCandidate",
     "FeatureRebuildPlan",
@@ -171,6 +185,8 @@ __all__ = [
     "SideSample",
     "StoredFeatureSnapshot",
     "TargetCompetitionContext",
+    "TargetGameCandidate",
+    "TargetGameRepository",
     "TargetSide",
     "TargetSideScenario",
     "TeamChampionMeta",
