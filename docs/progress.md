@@ -844,3 +844,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les priors peuvent fournir une valeur de repli mais jamais une confiance factice, et l'indicateur de disponibilité brute reste indépendant de la valeur régularisée.
 - **Commit/hash :** `5902f4f` (`feat(features): add hierarchical priors and missingness`).
+
+## FEAT-011 — Feature snapshots immuables
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le registre fermé `FEAT-001`, les lots et audits temporels `FEAT-002`, les politiques de missingness `FEAT-010` et les snapshots OE immuables `OE-011` sont `DONE`.
+- **Fichiers créés/modifiés :** migration `20260906_0016`, modèle `FeatureSnapshot`, store `python/metiquo/features/snapshots.py`, exports features et tests PostgreSQL de hash, roundtrip, idempotence et immutabilité.
+- **Migrations :** création de `features.feature_snapshots` avec event, équipes, feature set, cutoff, maxima métier/connaissance, versions, valeurs, missingness, listes de games/révisions/snapshots OE, empreintes games/vecteur/snapshot, commit de code, contrôles de leakage, chaînage de rebuild et génération. Les contraintes temporelles sont aussi imposées en base et un trigger interdit UPDATE/DELETE.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic upgrade/downgrade/upgrade ; cinq tests PostgreSQL de migrations, registre et snapshots ; vérification du diff.
+- **Résultat exact :** le store n'accepte qu'un `RegisteredFeatureVector`, un lot dont le cutoff correspond exactement, un snapshot OE cible validé, au moins une game cible déclarée comme exclue, un commit Git hexadécimal et tous les contrôles de fuite au vert. Les `Decimal` sont sérialisés sans perte, les `None` produisent une carte de missingness distincte, et l'empreinte du vecteur couvre set, versions, valeurs et absences. L'empreinte du snapshot ajoute candidate, audit temporel, lignage OE, fingerprint ordonné des games, commit et contrôles. Deux créations identiques retournent le même UUID et le même enregistrement ; une tentative d'UPDATE échoue avec la protection append-only. La prédiction future peut donc référencer un UUID qui restitue exactement le vecteur et toutes ses preuves.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; `target_oe_snapshot_id` assure une référence relationnelle au snapshot de la candidate, tandis que la liste JSON des snapshots historiques conserve honnêtement les cas où la fenêtre de features traverse plusieurs snapshots source.
+- **Commit/hash :** `ab7d86b` (`feat(features): persist immutable feature snapshots`).
