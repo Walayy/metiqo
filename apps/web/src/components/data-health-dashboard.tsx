@@ -134,6 +134,14 @@ function Stat({
   );
 }
 
+function formatAge(seconds: number | null | undefined) {
+  if (seconds === null || seconds === undefined) return "Inconnu";
+  if (seconds < 60) return `${String(seconds)} s`;
+  if (seconds < 3_600) return `${String(Math.floor(seconds / 60))} min`;
+  if (seconds < 86_400) return `${String(Math.floor(seconds / 3_600))} h`;
+  return `${String(Math.floor(seconds / 86_400))} j`;
+}
+
 function SourceCatalogue({ source }: Readonly<{ source: ProviderHealth }>) {
   return (
     <div className="grid gap-4">
@@ -155,16 +163,31 @@ function SourceCatalogue({ source }: Readonly<{ source: ProviderHealth }>) {
           <p>{source.detail}</p>
         </div>
       ) : null}
-      <dl className="grid gap-3 sm:grid-cols-2">
+      <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Stat
           icon={<CheckCircle2 className="size-4" />}
           label="Dernier succès"
           value={source.lastSuccessAt ? formatDateTime(source.lastSuccessAt) : "Aucun"}
         />
         <Stat
+          icon={<FileClock className="size-4" />}
+          label="Dernière capture"
+          value={source.lastCaptureAt ? formatDateTime(source.lastCaptureAt) : "Aucune"}
+        />
+        <Stat
+          icon={<Activity className="size-4" />}
+          label="Âge de la capture"
+          value={formatAge(source.ageSeconds)}
+        />
+        <Stat
+          icon={<CircleAlert className="size-4" />}
+          label="Échecs observés"
+          value={(source.failureCount ?? 0).toString()}
+        />
+        <Stat
           icon={<Activity className="size-4" />}
           label="Fraîcheur source"
-          value={source.status}
+          value={source.freshness ?? source.status}
         />
       </dl>
     </div>

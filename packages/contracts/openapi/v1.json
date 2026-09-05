@@ -2493,6 +2493,18 @@
         "additionalProperties": false,
         "description": "Santé observable d'un fournisseur sans révéler sa configuration.",
         "properties": {
+          "ageSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ageseconds"
+          },
           "checkedAt": {
             "format": "date-time",
             "title": "Checkedat",
@@ -2510,6 +2522,34 @@
               }
             ],
             "title": "Detail"
+          },
+          "failureCount": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Failurecount",
+            "type": "integer"
+          },
+          "freshness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FreshnessStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastCaptureAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastcaptureat"
           },
           "lastSuccessAt": {
             "anyOf": [

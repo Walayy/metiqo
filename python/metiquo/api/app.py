@@ -155,7 +155,10 @@ def create_app(
             )
         )
         resolved_repository = real_admin_repository or PostgresAdminRepository(
-            real_engine, resolved_clock
+            real_engine,
+            resolved_clock,
+            resolved_settings.odds_max_age_seconds,
+            resolved_settings.odds_provider_max_age_seconds,
         )
         resolved_model_repository = PostgresModelRepository(real_engine)
         resolved_real_mutations = real_mutation_service or RealAdminMutationService(
@@ -168,7 +171,7 @@ def create_app(
         app.state.real_admin_engine = real_engine
         app.include_router(
             build_real_historical_router(
-                PostgresCanonicalRepository(real_engine),
+                PostgresCanonicalRepository(real_engine, resolved_clock),
                 resolved_repository,
                 resolved_clock,
             )

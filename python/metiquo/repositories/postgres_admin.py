@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Literal, cast
 from uuid import UUID
 
-from sqlalchemy import Connection, Engine, Table, func, select
+from sqlalchemy import Connection, Engine, Table, case, func, select
 
 from metiquo.contracts import DataQualityIssue, IngestionRunSummary, JobSummary, ProviderHealth
-from metiquo.contracts.enums import DataMode, ProviderStatus
+from metiquo.contracts.enums import DataMode, FreshnessStatus, ProviderStatus
+from metiquo.db.odds_models import OddsProviderHealth, OddsProviderRecord, OddsSnapshotRecord
 from metiquo.db.raw_models import (
     BackfillJob,
     IngestionRun,
@@ -31,8 +33,15 @@ class PostgresAdminRepository:
 
     engine: Engine
     clock: Clock = field(default_factory=SystemClock)
+    odds_max_age_seconds: int = 90
+    odds_provider_max_age_seconds: Mapping[str, int] = field(default_factory=dict)
 
     def list_data_sources(self) -> tuple[ProviderHealth, ...]:
+        """Réunir la source historique et chaque fournisseur de cotes observé."""
+
+        return (self._oracle_data_source(), *self._odds_data_sources())
+
+    def _oracle_data_source(self) -> ProviderHealth:
         catalogs = cast(Table, SourceCatalog.__table__)
         snapshots = cast(Table, Snapshot.__table__)
         runs = cast(Table, IngestionRun.__table__)
@@ -55,6 +64,15 @@ class PostgresAdminRepository:
             ).scalar_one()
             last_failure = connection.execute(
                 select(func.max(runs.c.finished_at))
+                .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
+                .where(
+                    catalogs.c.provider == _PROVIDER,
+                    catalogs.c.dataset == _DATASET,
+                    runs.c.status == "failed",
+                )
+            ).scalar_one()
+            failure_count = connection.execute(
+                select(func.count(runs.c.id))
                 .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
                 .where(
                     catalogs.c.provider == _PROVIDER,
@@ -90,15 +108,115 @@ class PostgresAdminRepository:
         else:
             status = ProviderStatus.OPERATIONAL
             detail = f"{len(catalog_rows)} source(s) annuelle(s) suivie(s)"
-        return (
-            ProviderHealth(
-                provider_code=_PROVIDER,
-                status=status,
-                checked_at=checked_at,
-                last_success_at=last_success,
-                detail=detail,
-            ),
+        age_seconds = _age_seconds(checked_at, last_success)
+        return ProviderHealth(
+            provider_code=_PROVIDER,
+            status=status,
+            checked_at=checked_at,
+            last_success_at=last_success,
+            last_capture_at=last_success,
+            age_seconds=age_seconds,
+            failure_count=int(failure_count),
+            freshness=_status_freshness(status, last_success is not None),
+            detail=detail,
         )
+
+    def _odds_data_sources(self) -> tuple[ProviderHealth, ...]:
+        providers = cast(Table, OddsProviderRecord.__table__)
+        health = cast(Table, OddsProviderHealth.__table__)
+        snapshots = cast(Table, OddsSnapshotRecord.__table__)
+        now = self.clock.now().value
+        values: list[ProviderHealth] = []
+        with self.engine.connect() as connection:
+            provider_rows = connection.execute(
+                select(providers).order_by(providers.c.code)
+            ).mappings()
+            for provider in provider_rows:
+                provider_id = cast(UUID, provider["id"])
+                latest_health = (
+                    connection.execute(
+                        select(health)
+                        .where(health.c.provider_id == provider_id)
+                        .order_by(
+                            health.c.checked_at.desc(),
+                            case(
+                                (
+                                    health.c.status.in_(("degraded", "unavailable")),
+                                    1,
+                                ),
+                                else_=0,
+                            ).desc(),
+                            health.c.id.desc(),
+                        )
+                        .limit(1)
+                    )
+                    .mappings()
+                    .one_or_none()
+                )
+                last_capture = cast(
+                    datetime | None,
+                    connection.execute(
+                        select(func.max(snapshots.c.captured_at)).where(
+                            snapshots.c.provider_id == provider_id
+                        )
+                    ).scalar_one(),
+                )
+                failures = int(
+                    connection.execute(
+                        select(func.count(health.c.id)).where(
+                            health.c.provider_id == provider_id,
+                            health.c.status.in_(("degraded", "unavailable")),
+                        )
+                    ).scalar_one()
+                )
+                checked_at = max(
+                    value
+                    for value in (
+                        now,
+                        last_capture,
+                        latest_health["checked_at"] if latest_health is not None else None,
+                    )
+                    if isinstance(value, datetime)
+                )
+                if not bool(provider["enabled"]):
+                    status = ProviderStatus.DISABLED
+                elif latest_health is not None:
+                    status = ProviderStatus(str(latest_health["status"]))
+                elif last_capture is not None:
+                    status = ProviderStatus.OPERATIONAL
+                else:
+                    status = ProviderStatus.UNAVAILABLE
+                last_success = (
+                    cast(datetime | None, latest_health["last_success_at"])
+                    if latest_health is not None
+                    else last_capture
+                )
+                age_seconds = _age_seconds(checked_at, last_capture)
+                max_age = self.odds_provider_max_age_seconds.get(
+                    str(provider["code"]), self.odds_max_age_seconds
+                )
+                freshness = _odds_freshness(status, age_seconds, max_age)
+                detail = (
+                    str(latest_health["detail"])
+                    if latest_health is not None and latest_health["detail"]
+                    else None
+                )
+                if freshness is FreshnessStatus.STALE:
+                    detail = f"Dernière capture hors SLA ({max_age} s)"
+                values.append(
+                    ProviderHealth(
+                        provider_code=str(provider["code"]),
+                        status=status,
+                        checked_at=checked_at,
+                        last_success_at=last_success,
+                        last_capture_at=last_capture,
+                        age_seconds=age_seconds,
+                        failure_count=failures,
+                        freshness=freshness,
+                        detail=detail,
+                    )
+                )
+        return tuple(values)
 
     def get_data_source(self, provider_code: str) -> ProviderHealth | None:
         return next(
@@ -304,6 +422,36 @@ def _schema_change_map(
 
 def _not_older(candidate: datetime | None, baseline: datetime | None) -> bool:
     return candidate is not None and (baseline is None or candidate >= baseline)
+
+
+def _age_seconds(checked_at: datetime, captured_at: datetime | None) -> int | None:
+    if captured_at is None:
+        return None
+    return max(0, int((checked_at - captured_at).total_seconds()))
+
+
+def _status_freshness(status: ProviderStatus, has_capture: bool) -> FreshnessStatus:
+    if status is ProviderStatus.OPERATIONAL:
+        return FreshnessStatus.FRESH
+    if status is ProviderStatus.DEGRADED and has_capture:
+        return FreshnessStatus.DEGRADED
+    return FreshnessStatus.FAILED
+
+
+def _odds_freshness(
+    status: ProviderStatus,
+    age_seconds: int | None,
+    max_age_seconds: int,
+) -> FreshnessStatus:
+    if age_seconds is None:
+        return FreshnessStatus.FAILED
+    if status in {ProviderStatus.DEGRADED, ProviderStatus.UNAVAILABLE}:
+        return FreshnessStatus.DEGRADED
+    if status is ProviderStatus.DISABLED:
+        return FreshnessStatus.FAILED
+    if age_seconds > max_age_seconds:
+        return FreshnessStatus.STALE
+    return FreshnessStatus.FRESH
 
 
 def _manifest_datetime(value: object) -> datetime | None:

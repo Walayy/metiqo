@@ -9,14 +9,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal, cast
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import Connection, Engine, Table, select
 from sqlalchemy.dialects.postgresql import insert
 
 from metiquo.contracts import OddsSnapshot
+from metiquo.contracts.enums import ProviderStatus
 from metiquo.contracts.odds_provider import ProviderEvent, ProviderMarket, ProviderSelection
 from metiquo.db.odds_models import (
+    OddsProviderHealth,
     OddsProviderRecord,
     OddsSnapshotRecord,
     ProviderOddsEvent,
@@ -96,18 +98,22 @@ class OddsCaptureService:
         """Capturer un événement et ajouter uniquement de nouvelles observations."""
 
         recorded_at = self._clock.now().value
-        markets = provider.get_event_markets(event.provider_event_id)
-        capture = provider.capture_snapshot(event.provider_event_id)
-        observations = _normalize_observations(
-            provider,
-            event,
-            markets,
-            capture.provider_event_id,
-            capture.captured_at,
-            capture.snapshots,
-            source,
-            recorded_at,
-        )
+        try:
+            markets = provider.get_event_markets(event.provider_event_id)
+            capture = provider.capture_snapshot(event.provider_event_id)
+            observations = _normalize_observations(
+                provider,
+                event,
+                markets,
+                capture.provider_event_id,
+                capture.captured_at,
+                capture.snapshots,
+                source,
+                recorded_at,
+            )
+        except Exception as error:
+            self._record_failure(provider, source, recorded_at, error)
+            raise
         event_snapshot_id = observations[0].snapshot.event_id
         with self.engine.begin() as connection:
             provider_id = _upsert_provider(connection, provider.provider_code, source, recorded_at)
@@ -127,6 +133,14 @@ class OddsCaptureService:
                 source,
                 recorded_at,
             )
+            _insert_health(
+                connection,
+                provider_id,
+                ProviderStatus.OPERATIONAL,
+                recorded_at,
+                capture.captured_at,
+                None,
+            )
         return OddsCaptureReport(
             provider_id=provider_id,
             event_id=event_id,
@@ -136,6 +150,61 @@ class OddsCaptureService:
             duplicate_snapshots=len(observations) - len(inserted_ids),
             inserted_snapshot_ids=inserted_ids,
         )
+
+    def _record_failure(
+        self,
+        provider: OddsProvider,
+        source: OddsCaptureSource,
+        checked_at: datetime,
+        error: Exception,
+    ) -> None:
+        """Historiser l'échec séparément sans toucher aux snapshots déjà publiés."""
+
+        with self.engine.begin() as connection:
+            provider_id = _upsert_provider(connection, provider.provider_code, source, checked_at)
+            snapshots = cast(Table, OddsSnapshotRecord.__table__)
+            last_success_at = connection.execute(
+                select(snapshots.c.captured_at)
+                .where(
+                    snapshots.c.provider_id == provider_id,
+                    snapshots.c.captured_at.is_not(None),
+                )
+                .order_by(snapshots.c.captured_at.desc())
+                .limit(1)
+            ).scalar_one_or_none()
+            _insert_health(
+                connection,
+                provider_id,
+                (
+                    ProviderStatus.DEGRADED
+                    if last_success_at is not None
+                    else ProviderStatus.UNAVAILABLE
+                ),
+                checked_at,
+                cast(datetime | None, last_success_at),
+                f"Capture échouée ({type(error).__name__}) ; historique valide conservé",
+            )
+
+
+def _insert_health(
+    connection: Connection,
+    provider_id: UUID,
+    status: ProviderStatus,
+    checked_at: datetime,
+    last_success_at: datetime | None,
+    detail: str | None,
+) -> None:
+    health = cast(Table, OddsProviderHealth.__table__)
+    connection.execute(
+        health.insert().values(
+            id=uuid4(),
+            provider_id=provider_id,
+            status=status,
+            checked_at=checked_at,
+            last_success_at=last_success_at,
+            detail=detail,
+        )
+    )
 
 
 def _normalize_observations(

@@ -88,7 +88,12 @@ def build_real_historical_router(
         limit: Limit = 20,
     ) -> PageResponse[OddsSnapshot]:
         _require_event(repository, event_id)
-        return _page(repository.odds_history(event_id), offset, limit, admin_repository, clock)
+        values = repository.odds_history(event_id)
+        return PageResponse(
+            data=values[offset : offset + limit],
+            page=PageInfo(offset=offset, limit=limit, total=len(values)),
+            meta=_odds_meta(values, admin_repository, clock),
+        )
 
     @router.get("/opportunities", response_model=PageResponse[Opportunity])
     def list_opportunities(
@@ -142,6 +147,39 @@ def _meta(repository: PostgresAdminRepository, clock: Clock) -> ContractMetadata
     return ContractMetadata(
         data_mode=DataMode.REAL,
         freshness=_freshness(repository),
+        as_of=as_of,
+        computed_at=max(now, as_of),
+        app_version=version("metiquo"),
+    )
+
+
+def _odds_meta(
+    values: Sequence[OddsSnapshot],
+    repository: PostgresAdminRepository,
+    clock: Clock,
+) -> ContractMetadata:
+    if not values:
+        return _meta(repository, clock)
+    now = clock.now().value
+    as_of = max(snapshot.captured_at for snapshot in values)
+    health_by_provider = {health.provider_code: health for health in repository.list_data_sources()}
+    freshness_values = tuple(
+        health.freshness
+        for snapshot in values
+        if (health := health_by_provider.get(snapshot.provider)) is not None
+        if health.freshness is not None
+    )
+    if FreshnessStatus.DEGRADED in freshness_values or FreshnessStatus.FAILED in freshness_values:
+        freshness = FreshnessStatus.DEGRADED
+    elif FreshnessStatus.STALE in freshness_values:
+        freshness = FreshnessStatus.STALE
+    elif any(snapshot.provider_status is not ProviderStatus.OPERATIONAL for snapshot in values):
+        freshness = FreshnessStatus.DEGRADED
+    else:
+        freshness = FreshnessStatus.FRESH
+    return ContractMetadata(
+        data_mode=DataMode.REAL,
+        freshness=freshness,
         as_of=as_of,
         computed_at=max(now, as_of),
         app_version=version("metiquo"),

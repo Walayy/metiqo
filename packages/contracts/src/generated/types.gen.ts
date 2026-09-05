@@ -1345,6 +1345,10 @@ export type ProviderEvent = {
  */
 export type ProviderHealth = {
     /**
+     * Ageseconds
+     */
+    ageSeconds?: number | null;
+    /**
      * Checkedat
      */
     checkedAt: string;
@@ -1352,6 +1356,15 @@ export type ProviderHealth = {
      * Detail
      */
     detail?: string | null;
+    /**
+     * Failurecount
+     */
+    failureCount?: number;
+    freshness?: FreshnessStatus | null;
+    /**
+     * Lastcaptureat
+     */
+    lastCaptureAt?: string | null;
     /**
      * Lastsuccessat
      */
