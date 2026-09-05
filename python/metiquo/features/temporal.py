@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
+from decimal import Decimal
 from types import MappingProxyType
 from typing import Any, cast
 from uuid import UUID
@@ -106,6 +107,42 @@ class HistoricalTeamGame:
 
 
 @dataclass(frozen=True, slots=True)
+class HistoricalPlayerGame:
+    player_stat_id: UUID
+    player_id: UUID
+    team_id: UUID | None
+    side: str
+    position: str
+    champion: str | None
+    result: bool | None
+    kills: int | None
+    deaths: int | None
+    assists: int | None
+    creep_score: int | None
+    gold: int | None
+    availability: Mapping[str, bool]
+    source_revision_id: UUID
+    source_snapshot_id: UUID
+    source_run_id: UUID
+    source_processed_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class HistoricalRosterObservation:
+    observation_id: UUID
+    team_id: UUID
+    player_id: UUID
+    role: str
+    observed_at: datetime
+    continuity_status: str
+    confidence: Decimal
+    source_revision_id: UUID
+    source_snapshot_id: UUID
+    source_run_id: UUID
+    source_processed_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class HistoricalGame:
     game_id: UUID
     source_game_id: str
@@ -123,6 +160,8 @@ class HistoricalGame:
     source_snapshot_id: UUID
     source_run_id: UUID
     source_processed_at: datetime
+    player_stats: tuple[HistoricalPlayerGame, ...] = ()
+    roster_observations: tuple[HistoricalRosterObservation, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,6 +252,16 @@ class AsOfGameRepository:
                 .mappings()
                 .all()
             )
+            player_rows = (
+                connection.execute(latest_entity_revisions_as_of("game_player_stat", cutoff))
+                .mappings()
+                .all()
+            )
+            roster_rows = (
+                connection.execute(latest_entity_revisions_as_of("roster_observation", cutoff))
+                .mappings()
+                .all()
+            )
             sources = cast(Table, CanonicalEntitySource.__table__)
             stat_revision_ids = tuple(cast(UUID, row["id"]) for row in stat_rows)
             source_rows = (
@@ -231,6 +280,8 @@ class AsOfGameRepository:
             for row in source_rows
         }
         stats_by_game = _team_stats(stat_rows, source_payloads)
+        players_by_game = _player_stats(player_rows)
+        rosters_by_game = _roster_observations(roster_rows)
         games: list[HistoricalGame] = []
         for row in game_rows:
             payload = _payload(row)
@@ -242,7 +293,17 @@ class AsOfGameRepository:
                 continue
             if usable_only and not bool(payload["usable_for_training"]):
                 continue
-            games.append(_historical_game(row, payload, event_time, stats))
+            game_id = _uuid(payload, "id")
+            games.append(
+                _historical_game(
+                    row,
+                    payload,
+                    event_time,
+                    stats,
+                    players_by_game.get(game_id, ()),
+                    rosters_by_game.get(game_id, ()),
+                )
+            )
         games.sort(key=lambda item: (item.event_time, item.game_id))
         audit = cutoff.audit(
             (game.event_time for game in games),
@@ -252,6 +313,8 @@ class AsOfGameRepository:
                 for timestamp in (
                     game.source_processed_at,
                     *(stat.source_processed_at for stat in game.team_stats),
+                    *(player.source_processed_at for player in game.player_stats),
+                    *(roster.source_processed_at for roster in game.roster_observations),
                 )
             ),
         )
@@ -263,6 +326,8 @@ class AsOfGameRepository:
                     for revision_id in (
                         game.source_revision_id,
                         *(stat.source_revision_id for stat in game.team_stats),
+                        *(player.source_revision_id for player in game.player_stats),
+                        *(roster.source_revision_id for roster in game.roster_observations),
                     )
                 },
                 key=str,
@@ -276,6 +341,8 @@ class AsOfGameRepository:
                     for snapshot_id in (
                         game.source_snapshot_id,
                         *(stat.source_snapshot_id for stat in game.team_stats),
+                        *(player.source_snapshot_id for player in game.player_stats),
+                        *(roster.source_snapshot_id for roster in game.roster_observations),
                     )
                 },
                 key=str,
@@ -314,6 +381,67 @@ def _team_stats(
     return result
 
 
+def _player_stats(rows: Iterable[RowMapping]) -> dict[UUID, tuple[HistoricalPlayerGame, ...]]:
+    grouped: dict[UUID, list[HistoricalPlayerGame]] = {}
+    for row in rows:
+        payload = _payload(row)
+        game_id = _uuid(payload, "game_id")
+        availability = cast(Mapping[str, bool], payload.get("availability", {}))
+        grouped.setdefault(game_id, []).append(
+            HistoricalPlayerGame(
+                player_stat_id=_uuid(payload, "id"),
+                player_id=_uuid(payload, "player_id"),
+                team_id=_optional_uuid(payload.get("team_id")),
+                side=str(payload["side"]),
+                position=str(payload["position"]),
+                champion=_optional_str(payload.get("champion")),
+                result=cast(bool | None, payload.get("result")),
+                kills=_optional_int(payload.get("kills")),
+                deaths=_optional_int(payload.get("deaths")),
+                assists=_optional_int(payload.get("assists")),
+                creep_score=_optional_int(payload.get("creep_score")),
+                gold=_optional_int(payload.get("gold")),
+                availability=MappingProxyType(dict(availability)),
+                source_revision_id=cast(UUID, row["id"]),
+                source_snapshot_id=cast(UUID, row["source_snapshot_id"]),
+                source_run_id=cast(UUID, row["source_run_id"]),
+                source_processed_at=_datetime(row["processed_at"]),
+            )
+        )
+    return {
+        game_id: tuple(sorted(values, key=lambda item: (item.side, item.position, item.player_id)))
+        for game_id, values in grouped.items()
+    }
+
+
+def _roster_observations(
+    rows: Iterable[RowMapping],
+) -> dict[UUID, tuple[HistoricalRosterObservation, ...]]:
+    grouped: dict[UUID, list[HistoricalRosterObservation]] = {}
+    for row in rows:
+        payload = _payload(row)
+        game_id = _uuid(payload, "game_id")
+        grouped.setdefault(game_id, []).append(
+            HistoricalRosterObservation(
+                observation_id=_uuid(payload, "id"),
+                team_id=_uuid(payload, "team_id"),
+                player_id=_uuid(payload, "player_id"),
+                role=str(payload["role"]),
+                observed_at=_datetime(payload["observed_at"]),
+                continuity_status=str(payload["continuity_status"]),
+                confidence=Decimal(str(payload["observation_confidence"])),
+                source_revision_id=cast(UUID, row["id"]),
+                source_snapshot_id=cast(UUID, row["source_snapshot_id"]),
+                source_run_id=cast(UUID, row["source_run_id"]),
+                source_processed_at=_datetime(row["processed_at"]),
+            )
+        )
+    return {
+        game_id: tuple(sorted(values, key=lambda item: (item.team_id, item.role)))
+        for game_id, values in grouped.items()
+    }
+
+
 def _historical_team_game(
     row: RowMapping,
     payload: Mapping[str, object],
@@ -347,6 +475,8 @@ def _historical_game(
     payload: Mapping[str, object],
     event_time: datetime,
     stats: tuple[HistoricalTeamGame, ...],
+    player_stats: tuple[HistoricalPlayerGame, ...],
+    roster_observations: tuple[HistoricalRosterObservation, ...],
 ) -> HistoricalGame:
     return HistoricalGame(
         game_id=_uuid(payload, "id"),
@@ -365,6 +495,8 @@ def _historical_game(
         source_snapshot_id=cast(UUID, row["source_snapshot_id"]),
         source_run_id=cast(UUID, row["source_run_id"]),
         source_processed_at=_datetime(row["processed_at"]),
+        player_stats=player_stats,
+        roster_observations=roster_observations,
     )
 
 
@@ -403,6 +535,12 @@ def _optional_uuid(value: object) -> UUID | None:
 
 def _optional_int(value: object) -> int | None:
     return None if value is None else int(str(value))
+
+
+def _optional_str(value: object) -> str | None:
+    if value is None or not str(value).strip():
+        return None
+    return str(value)
 
 
 _SOURCE_INTEGER_STATS = {

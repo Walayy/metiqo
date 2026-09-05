@@ -12,7 +12,7 @@ from alembic import command
 from sqlalchemy import Table, create_engine, select, update
 
 from metiquo.canonical.series import CanonicalSeriesBuilder
-from metiquo.db.core_models import Game
+from metiquo.db.core_models import Game, Team
 from metiquo.db.raw_models import CanonicalRow
 from metiquo.features import (
     AsOfGameRepository,
@@ -72,7 +72,11 @@ def test_as_of_repository_excludes_game_at_cutoff_and_records_max_input_time(
 
     repository = AsOfGameRepository(engine)
     cutoff = FeatureCutoff(_CUTOFF_AT)
-    batch = repository.list_before(cutoff=cutoff)
+    with engine.connect() as connection:
+        seeded_team_id = connection.execute(
+            select(Team.id).where(Team.source_team_id == identities["blue_team"])
+        ).scalar_one()
+    batch = repository.list_before(cutoff=cutoff, team_ids=frozenset({seeded_team_id}))
 
     assert len(batch.games) == 5
     assert injected_game not in {game.source_game_id for game in batch.games}
@@ -84,6 +88,7 @@ def test_as_of_repository_excludes_game_at_cutoff_and_records_max_input_time(
     assert len(batch.source_revision_ids) == 15
     assert len(batch.source_snapshot_ids) == 1
     assert all(len(game.team_stats) == 2 for game in batch.games)
+    assert all(not game.player_stats for game in batch.games)
     early = next(game for game in batch.games if game.source_game_id == early_game)
     assert {stat.side: stat.stats["gold_diff_at_15"] for stat in early.team_stats} == {
         "Blue": 120,

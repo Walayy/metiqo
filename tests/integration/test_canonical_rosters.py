@@ -19,9 +19,12 @@ from sqlalchemy.orm import Session
 from metiquo.canonical.rosters import CanonicalRosterBuilder, RosterProjectionService
 from metiquo.db.core_models import Game, RosterObservation, Team
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
+from metiquo.features import AsOfGameRepository, FeatureCutoff, RosterFeatureCalculator
+from metiquo.foundation.time import FixedClock, UtcInstant
 
 _ROOT = Path(__file__).resolve().parents[2]
 _NOW = datetime(2026, 9, 6, 10, 0, tzinfo=UTC)
+_KNOWLEDGE_AT = datetime(2026, 8, 1, 10, 0, tzinfo=UTC)
 _POSITIONS = ("top", "jng", "mid", "bot", "sup")
 
 
@@ -44,7 +47,10 @@ def test_roster_projection_is_as_of_and_unknown_substitution_lowers_confidence(
     engine = create_engine(postgresql_url, connect_args={"options": "-c timezone=UTC"})
     dataset = f"cnl_004_{uuid4().hex}"
     identities = _seed_rosters(engine, dataset)
-    builder = CanonicalRosterBuilder(engine=engine)
+    builder = CanonicalRosterBuilder(
+        engine=engine,
+        clock=FixedClock(UtcInstant(_KNOWLEDGE_AT)),
+    )
 
     first = builder.build(provider="oracles_elixir", dataset=dataset)
     observation_ids = _observation_ids(engine, identities["games"])
@@ -107,6 +113,37 @@ def test_roster_projection_is_as_of_and_unknown_substitution_lowers_confidence(
             for member in after_change.values()
         )
         assert before_projection == after_projection
+
+        before_batch = AsOfGameRepository(engine).list_before(
+            cutoff=FeatureCutoff(datetime(2026, 8, 10, tzinfo=UTC)),
+            team_ids=frozenset({blue_team.id}),
+        )
+        after_batch = AsOfGameRepository(engine).list_before(
+            cutoff=FeatureCutoff(datetime(2026, 8, 15, tzinfo=UTC)),
+            team_ids=frozenset({blue_team.id}),
+        )
+        before_features = RosterFeatureCalculator().calculate(
+            before_batch,
+            team_a_id=blue_team.id,
+            team_b_id=before_batch.games[0].team_stats[1].team_id,
+        )
+        after_features = RosterFeatureCalculator().calculate(
+            after_batch,
+            team_a_id=blue_team.id,
+            team_b_id=after_batch.games[0].team_stats[1].team_id,
+        )
+
+        assert len(before_batch.games) == 1
+        assert len(after_batch.games) == 2
+        assert all(len(game.player_stats) == 10 for game in after_batch.games)
+        assert all(len(game.roster_observations) == 10 for game in after_batch.games)
+        assert before_features.team_a.expected_roster["top"].player_id == top_history[0].player_id
+        assert after_features.team_a.expected_roster["top"].player_id == top_history[1].player_id
+        assert before_features.team_a.games_together == 1
+        assert after_features.team_a.games_together == 1
+        assert (
+            after_features.team_a.expected_roster["top"].observed_at < after_batch.audit.cutoff_at
+        )
     engine.dispose()
 
 
