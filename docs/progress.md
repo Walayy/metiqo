@@ -688,3 +688,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; une substitution inconnue reste une observation prudente plutôt qu’une certitude reconstruite rétrospectivement.
 - **Commit/hash :** `f8280c7` (`feat(canonical): observe rosters as of games`).
+
+## CNL-005 — Provenance et historique canonique
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les dimensions, games, séries et observations de roster `CNL-001` à `CNL-004` sont `DONE` et publient désormais leur histoire après chaque matérialisation.
+- **Fichiers créés/modifiés :** migration `20260906_0013`, modèles `core.canonical_entity_revisions` et `core.canonical_entity_sources`, enregistreur `python/metiquo/canonical/history.py`, intégration aux quatre builders canoniques et test PostgreSQL de roundtrip/correction.
+- **Migrations :** création d’une chaîne de révisions par type et UUID d’entité avec état JSONB, empreinte, version de transformation, `processed_at`, statut qualité, indicateur de correction, snapshot/run représentatifs et copie immuable de chaque ligne raw source. Deux triggers PostgreSQL interdisent UPDATE et DELETE sur les révisions comme sur leurs sources.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict sur le package canonique ; cycle Alembic complet ; sept tests PostgreSQL migrations/canonique sur PostgreSQL 18 ; vérification du diff.
+- **Résultat exact :** tous les builders enregistrent un nouvel état uniquement lorsque le contenu canonique, la provenance ou la version de transformation change. Une game à deux lignes source produit une révision initiale avec ses deux preuves ; une reconstruction identique n’ajoute rien. Après correction d’une ligne raw en révision 2 sur un nouveau snapshot/run validé, la game obtient une révision 2 chaînée et `correction=true`. Le roundtrip retrouve le snapshot `validated` et le run `succeeded`; la première révision conserve `kills=10` et la seconde `kills=99` pour la même ligne raw, même si la vue raw courante a changé. Une tentative d’altération SQL échoue avec la protection append-only.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la copie de la preuve source est volontaire afin que l’historique ne dépende pas de la valeur mutable de `raw.canonical_rows`.
+- **Commit/hash :** `a395a4c` (`feat(canonical): preserve entity revision history`).
