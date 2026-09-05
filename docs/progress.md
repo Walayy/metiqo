@@ -712,3 +712,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la fermeture par défaut applique directement `SFG-MARKET-001` et aucun simple marché fournisseur ne peut activer une capacité.
 - **Commit/hash :** `ed1f7b6` (`feat(canonical): gate capabilities by snapshot`).
+
+## CNL-007 — Repository real canonique et APIs événements historiques
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l’historique canonique immuable `CNL-005` et les DTO/scénarios mock `MCK-002` sont `DONE` ; le mode réel réutilise strictement le contrat public `Event` existant.
+- **Fichiers créés/modifiés :** repository PostgreSQL `python/metiquo/repositories/postgres_canonical.py`, routes réelles `python/metiquo/api/real_historical_routes.py`, branchement conditionnel dans la fabrique FastAPI, exports repository, test de contrat PostgreSQL mock/réel et test Playwright du composant Événements inchangé.
+- **Migrations :** aucune ; l’adaptateur lit exclusivement les tables `core` et la santé du dernier snapshot validé.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; 27 tests Python de migrations, projections canoniques, capabilities, API mock/réelle et OpenAPI ; test Playwright ciblé ; build Next.js de production en mode réel ; parcours visuel via Navigateur de la liste et d’une fiche événement contre PostgreSQL réel.
+- **Résultat exact :** les repositories réels exposent équipes, games et séries avec leurs identifiants, noms, qualité, dates et provenance de snapshot. Les séries résolues deviennent des événements historiques et les games ambiguës restent des événements unitaires, sans double comptage des games déjà liées. L’API `/api/v1/events` applique pagination et filtres compétition, équipe, statut et fenêtre temporelle ; le détail et les collections marchés/cotes conservent les mêmes DTO que le mock, avec des collections vides honnêtes tant que leurs domaines ne sont pas matérialisés. La fraîcheur du snapshot validé alimente `asOf` et `computedAt` reste monotone même si l’horloge applicative précède l’horodatage source. Le Navigateur a confirmé le badge `REAL`, 15 événements canoniques et une fiche historique complète sans modification des composants UI.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les games sans série ne sont exposées séparément que lorsque la reconstruction canonique les a laissées non liées, et aucune donnée marché n’est synthétisée.
+- **Commit/hash :** `fa7f53c` (`feat(canonical): expose real historical events`).
