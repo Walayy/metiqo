@@ -1168,3 +1168,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; cette étape valide et expose atomiquement un document sans anticiper le stockage PostgreSQL transactionnel et append-only prévu explicitement par `ODD-007`.
 - **Commit/hash :** `ccf9d9f` (`feat(odds): add atomic manual import provider`).
+
+## ODD-005 — LicensedOddsFeedProvider boundary
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le port structurel et sa suite commune `ODD-002` sont `DONE` ; la nouvelle base abstraite reprend exactement ses quatre opérations et ses DTO normalisés sans dépendance vers un transport ou un fournisseur.
+- **Fichiers créés/modifiés :** frontière `python/metiquo/providers/licensed_feed.py`, exports publics, guide d'intégration future `docs/licensed-odds-feed.md` et squelette de contrat `tests/providers/test_licensed_feed_boundary.py`.
+- **Migrations :** aucune ; le type `licensed_feed` est déjà réservé dans le schéma odds, mais aucun fournisseur concret n'est créé ou activé.
+- **Commandes/tests exécutés :** Ruff, mypy strict et 11 tests de frontière ciblés, Prettier et CSpell sur le guide, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** `LicensedOddsFeedProvider` est une classe abstraite qui exige `list_events`, `get_event_markets`, `capture_snapshot` et `health` et satisfait structurellement `OddsProvider` dès qu'un adaptateur complète ces méthodes. Sa configuration commune ne contient que le code logique, une référence d'accord et la confirmation explicite des droits ; elle normalise les valeurs, refuse les identités ambiguës et bloque toute activation sans confirmation contractuelle. Le module de production ne contient ni URL, ni valeur d'authentification, ni client réseau, et le choix `ODDS_PROVIDER` n'est pas étendu avant l'existence d'un adaptateur autorisé et testé. Le produit reste donc compilable et fonctionnel sans implémentation licenciée concrète. Le gate retourne 350 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, contrats et mypy strict sur 262 fichiers sont verts.
+- **Blocker éventuel :** aucun pour la frontière ; tout adaptateur concret reste conditionné par un contrat validé, une documentation officielle et des tests d'intégration enregistrés.
+- **ADR éventuel :** aucun ; le transport et les secrets seront propres au futur adaptateur afin de ne pas figer aujourd'hui une API inexistante.
+- **Commit/hash :** `5f250d8` (`feat(odds): define licensed feed boundary`).
