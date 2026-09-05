@@ -16,6 +16,8 @@ from metiquo.db.schemas import ALL_SCHEMAS
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW_TABLES = {
+    "backfill_jobs",
+    "backfill_years",
     "canonical_rows",
     "ingestion_runs",
     "quality_issues",

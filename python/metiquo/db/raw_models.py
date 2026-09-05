@@ -90,6 +90,77 @@ class SourceCatalog(IdentityTimestampMixin, Base):
     current_snapshot_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True))
 
 
+class BackfillJob(IdentityTimestampMixin, Base):
+    """Requête multi-années dédupliquée par son empreinte."""
+
+    __tablename__ = "backfill_jobs"
+    __table_args__ = (
+        CheckConstraint(
+            "from_year BETWEEN 2014 AND 2200 AND to_year BETWEEN from_year AND 2200",
+            name="year_range",
+        ),
+        CheckConstraint(
+            "request_key_hash ~ '^[0-9a-f]{64}$'",
+            name="request_key_hash",
+        ),
+        CheckConstraint("status IN ('running', 'succeeded', 'failed')", name="status"),
+        CheckConstraint(
+            "(status = 'running' AND finished_at IS NULL) OR "
+            "(status IN ('succeeded', 'failed') AND finished_at IS NOT NULL)",
+            name="finished_state",
+        ),
+        UniqueConstraint("request_key_hash", name="uq_backfill_jobs_request_key_hash"),
+        {"schema": RAW_SCHEMA},
+    )
+
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    dataset: Mapped[str] = mapped_column(String(128), nullable=False)
+    from_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    to_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    request_key_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+
+
+class BackfillYear(IdentityTimestampMixin, Base):
+    """Checkpoint reprenable d'une année d'un backfill."""
+
+    __tablename__ = "backfill_years"
+    __table_args__ = (
+        CheckConstraint("year BETWEEN 2014 AND 2200", name="year"),
+        CheckConstraint("attempts >= 0", name="attempts"),
+        CheckConstraint(
+            "status IN ('pending', 'running', 'succeeded', 'failed')",
+            name="status",
+        ),
+        CheckConstraint(
+            "(status = 'pending' AND started_at IS NULL AND finished_at IS NULL) OR "
+            "(status = 'running' AND started_at IS NOT NULL AND finished_at IS NULL) OR "
+            "(status IN ('succeeded', 'failed') AND started_at IS NOT NULL "
+            "AND finished_at IS NOT NULL)",
+            name="timestamps",
+        ),
+        UniqueConstraint("job_id", "year", name="uq_backfill_years_job_year"),
+        {"schema": RAW_SCHEMA},
+    )
+
+    job_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.backfill_jobs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False)
+    last_run_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.ingestion_runs.id", ondelete="RESTRICT"),
+    )
+    error_code: Mapped[str | None] = mapped_column(String(128))
+    started_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    finished_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+
+
 class Snapshot(Base):
     """Objet source adressé par contenu et immuable après validation."""
 
