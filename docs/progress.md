@@ -1144,3 +1144,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'ancien import `metiquo.repositories.contracts.OddsProvider` reste un export temporaire compatible, tandis que la source de vérité appartient désormais au package `providers`.
 - **Commit/hash :** `20df453` (`feat(odds): formalize provider contract`).
+
+## ODD-003 — MockOddsProvider réel du contrat
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le port et sa suite réutilisable `ODD-002` ainsi que les douze scénarios déterministes `MCK-003` sont `DONE` ; le mock consomme directement ce catalogue normatif.
+- **Fichiers créés/modifiés :** projection temporelle de `MockOddsProvider` et injection facultative de `Clock` dans le bundle repository, plus preuve dédiée `tests/providers/test_mock_odds_provider.py`.
+- **Migrations :** aucune ; les observations restent les DTO immuables du catalogue et aucune donnée n'est écrite.
+- **Commandes/tests exécutés :** Ruff, mypy strict, 12 tests provider/repository ciblés, application de la suite exacte `assert_odds_provider_contract`, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** l'adaptateur n'expose que les événements déjà observés et possédant au moins un snapshot dont `captured_at` ne dépasse pas l'horloge injectée. Marché et capture utilisent la dernière observation disponible, tandis que chaque capture conserve tout l'historique connu dans l'ordre et recalcule `age_seconds` sans muter le catalogue. Une horloge placée juste avant le second prix retourne `4.20` et un seul UUID ; placée juste après, elle retourne `3.60` et les deux UUID originaux. Avancer l'horloge de cinq minutes fait passer le scénario stale de 600 à 900 secondes, tout en laissant sa fixture inchangée. Le contrôle de santé est daté au même instant, conserve le dernier succès observable et devient indisponible si aucune observation n'existe encore. La suite commune valide événements, marchés, sélections, captures, santé et erreurs sur le mock réel. Un scan du module refuse les clients HTTP, sockets, navigateurs et outils d'automatisation ; aucun accès réseau n'est exécuté. Le gate retourne 337 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, contrats et mypy strict sur 258 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; sans horloge explicite, le provider reste fixé à `catalog.reference_time` pour préserver le comportement déterministe existant.
+- **Commit/hash :** `6a56a46` (`feat(odds): make mock provider time-aware`).
