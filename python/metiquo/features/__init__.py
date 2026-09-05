@@ -82,6 +82,11 @@ from metiquo.features.side import (
     TeamSideStrength,
     side_feature_definitions,
 )
+from metiquo.features.snapshots import (
+    FeatureSnapshotSpec,
+    FeatureSnapshotStore,
+    StoredFeatureSnapshot,
+)
 from metiquo.features.temporal import (
     AsOfGameBatch,
     AsOfGameRepository,
@@ -120,6 +125,8 @@ __all__ = [
     "FeatureRegistry",
     "FeatureRegistryConflictError",
     "FeatureSetSpec",
+    "FeatureSnapshotSpec",
+    "FeatureSnapshotStore",
     "FormWindow",
     "HierarchicalPriorEstimator",
     "HierarchicalPriorModel",
@@ -148,6 +155,7 @@ __all__ = [
     "SideFeatureResult",
     "SideParameters",
     "SideSample",
+    "StoredFeatureSnapshot",
     "TargetCompetitionContext",
     "TargetSide",
     "TargetSideScenario",

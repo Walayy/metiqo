@@ -102,6 +102,83 @@ class FeatureSetMember(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
+class FeatureSnapshot(Base):
+    """Vecteur et lignage immuables pour une candidate de prédiction."""
+
+    __tablename__ = "feature_snapshots"
+    __table_args__ = (
+        CheckConstraint("team_a_id <> team_b_id", name="distinct_teams"),
+        CheckConstraint(
+            "max_input_time IS NULL OR max_input_time < cutoff_at", name="input_cutoff"
+        ),
+        CheckConstraint(
+            "max_knowledge_time IS NULL OR max_knowledge_time <= cutoff_at",
+            name="knowledge_cutoff",
+        ),
+        CheckConstraint("jsonb_typeof(definition_versions) = 'object'", name="definitions_object"),
+        CheckConstraint("jsonb_typeof(values) = 'object'", name="values_object"),
+        CheckConstraint("jsonb_typeof(missingness) = 'object'", name="missingness_object"),
+        CheckConstraint("jsonb_typeof(source_game_ids) = 'array'", name="games_array"),
+        CheckConstraint("jsonb_typeof(source_revision_ids) = 'array'", name="revisions_array"),
+        CheckConstraint("jsonb_typeof(source_snapshot_ids) = 'array'", name="snapshots_array"),
+        CheckConstraint("jsonb_typeof(leakage_checks) = 'object'", name="leakage_object"),
+        CheckConstraint("source_games_fingerprint ~ '^[0-9a-f]{64}$'", name="games_fingerprint"),
+        CheckConstraint("vector_hash ~ '^[0-9a-f]{64}$'", name="vector_hash"),
+        CheckConstraint("snapshot_hash ~ '^[0-9a-f]{64}$'", name="snapshot_hash"),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        CheckConstraint("generation >= 1", name="generation"),
+        UniqueConstraint("snapshot_hash", name="uq_feature_snapshots_hash"),
+        Index("ix_features_feature_snapshots_event_cutoff", "event_id", "cutoff_at"),
+        Index("ix_features_feature_snapshots_teams_cutoff", "team_a_id", "team_b_id", "cutoff_at"),
+        {"schema": FEATURES_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    feature_set_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("features.feature_sets.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    event_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    team_a_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    team_b_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    target_oe_snapshot_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.snapshots.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    max_input_time: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    max_knowledge_time: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    definition_versions: Mapped[dict[str, str]] = mapped_column(JSONB, nullable=False)
+    values: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    missingness: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
+    source_game_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    source_revision_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    source_snapshot_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    source_games_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    leakage_checks: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
+    vector_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    snapshot_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    supersedes_snapshot_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("features.feature_snapshots.id", ondelete="RESTRICT"),
+    )
+    generation: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(
+        UtcDateTime(), nullable=False, server_default=func.now()
+    )
+
+
 class FeatureInvalidation(Base):
     """Plage de features à reconstruire après des révisions source."""
 

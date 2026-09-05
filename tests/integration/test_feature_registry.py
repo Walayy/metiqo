@@ -134,17 +134,30 @@ def test_feature_registry_is_versioned_idempotent_and_rejects_ad_hoc_columns(
 
     with engine.connect() as connection:
         assert (
-            connection.execute(text("SELECT count(*) FROM features.feature_sets")).scalar_one() == 1
+            connection.execute(
+                text("SELECT count(*) FROM features.feature_sets WHERE id = :set_id"),
+                {"set_id": first.feature_set_id},
+            ).scalar_one()
+            == 1
         )
         assert (
             connection.execute(
-                text("SELECT count(*) FROM features.feature_definitions")
+                text(
+                    "SELECT count(*) FROM features.feature_definitions d "
+                    "JOIN features.feature_set_members m ON m.feature_definition_id = d.id "
+                    "WHERE m.feature_set_id = :set_id"
+                ),
+                {"set_id": first.feature_set_id},
             ).scalar_one()
             == 3
         )
         assert (
             connection.execute(
-                text("SELECT count(*) FROM features.feature_set_members")
+                text(
+                    "SELECT count(*) FROM features.feature_set_members "
+                    "WHERE feature_set_id = :set_id"
+                ),
+                {"set_id": first.feature_set_id},
             ).scalar_one()
             == 3
         )
