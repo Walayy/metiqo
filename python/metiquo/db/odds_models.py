@@ -451,3 +451,104 @@ class MappingAuditRecord(Base):
     impact: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     idempotency_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+
+
+class MarketRulesRecord(Base):
+    """Référence de règlement immuable autorisant un mapping de marché."""
+
+    __tablename__ = "market_rules"
+    __table_args__ = (
+        CheckConstraint("length(trim(reference)) > 0", name="reference"),
+        CheckConstraint("market_type = 'MATCH_WINNER'", name="market_type"),
+        CheckConstraint(
+            "period IN ('SERIES', 'GAME_1', 'GAME_2', 'GAME_3', 'GAME_4', 'GAME_5')",
+            name="period",
+        ),
+        CheckConstraint("length(trim(unit)) > 0", name="unit"),
+        CheckConstraint("jsonb_typeof(selection_types) = 'array'", name="selections_array"),
+        CheckConstraint("jsonb_array_length(selection_types) >= 2", name="selections_count"),
+        CheckConstraint(
+            "remake_policy IN ('settle', 'void', 'review')",
+            name="remake_policy",
+        ),
+        CheckConstraint(
+            "forfeit_policy IN ('settle', 'void', 'review')",
+            name="forfeit_policy",
+        ),
+        CheckConstraint(
+            "cancelled_policy IN ('settle', 'void', 'review')",
+            name="cancelled_policy",
+        ),
+        CheckConstraint("fingerprint ~ '^[0-9a-f]{64}$'", name="fingerprint"),
+        UniqueConstraint("reference", name="uq_odds_market_rules_reference"),
+        {"schema": ODDS_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    reference: Mapped[str] = mapped_column(String(128), nullable=False)
+    market_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    period: Mapped[str] = mapped_column(String(16), nullable=False)
+    line_required: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    unit: Mapped[str] = mapped_column(String(32), nullable=False)
+    selection_types: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    remake_policy: Mapped[str] = mapped_column(String(16), nullable=False)
+    forfeit_policy: Mapped[str] = mapped_column(String(16), nullable=False)
+    cancelled_policy: Mapped[str] = mapped_column(String(16), nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+
+
+class MarketMappingAttempt(Base):
+    """Décision append-only conservant le descripteur provider complet."""
+
+    __tablename__ = "market_mapping_attempts"
+    __table_args__ = (
+        CheckConstraint("length(trim(provider_market_id)) > 0", name="provider_market_id"),
+        CheckConstraint("length(trim(raw_label)) > 0", name="raw_label"),
+        CheckConstraint("jsonb_typeof(raw_descriptor) = 'object'", name="raw_descriptor_object"),
+        CheckConstraint("result_status IN ('mapped', 'unknown')", name="result_status"),
+        CheckConstraint(
+            "(result_status = 'mapped' AND canonical_market_type IS NOT NULL "
+            "AND canonical_period IS NOT NULL AND rules_reference IS NOT NULL) OR "
+            "(result_status = 'unknown' AND canonical_market_type IS NULL "
+            "AND canonical_period IS NULL AND rules_reference IS NULL)",
+            name="mapping_state",
+        ),
+        CheckConstraint("length(trim(reason_code)) > 0", name="reason_code"),
+        Index(
+            "ix_odds_market_mapping_attempts_event_market_time",
+            "provider_event_id",
+            "provider_market_id",
+            "evaluated_at",
+        ),
+        {"schema": ODDS_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    provider_event_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "odds.events.id",
+            name="fk_market_mapping_attempts_provider_event",
+            ondelete="RESTRICT",
+        ),
+        nullable=False,
+    )
+    provider_market_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    raw_label: Mapped[str] = mapped_column(String(255), nullable=False)
+    raw_descriptor: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    result_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    canonical_market_type: Mapped[str | None] = mapped_column(String(64))
+    canonical_period: Mapped[str | None] = mapped_column(String(16))
+    canonical_line: Mapped[Decimal | None] = mapped_column(Numeric(20, 8))
+    rules_reference: Mapped[str | None] = mapped_column(
+        String(128),
+        ForeignKey(
+            "odds.market_rules.reference",
+            name="fk_market_mapping_attempts_rules_reference",
+            ondelete="RESTRICT",
+        ),
+    )
+    reason_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
