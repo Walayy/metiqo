@@ -17,7 +17,7 @@ import {
   RemoteRecoverableErrorState,
   RemoteStaleState,
 } from "@metiquo/ui";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   Activity,
   ArrowLeft,
@@ -42,7 +42,11 @@ import {
   freshnessLabels,
   gradeLabels,
   isAdmissible,
+  latestMatchingOddsSnapshot,
+  newerOddsSnapshot,
 } from "./opportunity-presenters";
+
+const ODDS_REFRESH_INTERVAL_MS = 30_000;
 
 async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(`/api/backend${path}`, {
@@ -127,7 +131,15 @@ function PriceSections({ opportunity }: Readonly<{ opportunity: Opportunity }>) 
   );
 }
 
-function SnapshotHistory({ snapshots }: Readonly<{ snapshots: readonly OddsSnapshot[] }>) {
+function SnapshotHistory({
+  latestSnapshotId,
+  signalSnapshotId,
+  snapshots,
+}: Readonly<{
+  latestSnapshotId: string | undefined;
+  signalSnapshotId: string;
+  snapshots: readonly OddsSnapshot[];
+}>) {
   const ordered = [...snapshots].sort((left, right) =>
     left.capturedAt.localeCompare(right.capturedAt),
   );
@@ -144,18 +156,36 @@ function SnapshotHistory({ snapshots }: Readonly<{ snapshots: readonly OddsSnaps
         <table className="w-full min-w-[42rem] border-collapse text-left text-xs">
           <thead className="bg-surface-muted text-ink-secondary">
             <tr>
-              {["Capturé à", "Cote", "Probabilité sans marge", "Statut marché", "Fournisseur"].map(
-                (label) => (
-                  <th className="px-3 py-3 font-semibold" key={label} scope="col">
-                    {label}
-                  </th>
-                ),
-              )}
+              {[
+                "Repère",
+                "Capturé à",
+                "Cote",
+                "Probabilité sans marge",
+                "Statut marché",
+                "Fournisseur",
+              ].map((label) => (
+                <th className="px-3 py-3 font-semibold" key={label} scope="col">
+                  {label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle">
             {ordered.map((snapshot) => (
               <tr key={snapshot.oddsSnapshotId}>
+                <td className="whitespace-nowrap px-3 py-3">
+                  {snapshot.oddsSnapshotId === signalSnapshotId ? (
+                    <Badge className="border-accent bg-accent-soft text-ink-primary">
+                      Snapshot du signal
+                    </Badge>
+                  ) : snapshot.oddsSnapshotId === latestSnapshotId ? (
+                    <Badge className="border-border-strong bg-surface-muted text-ink-primary">
+                      Dernière cote
+                    </Badge>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td className="whitespace-nowrap px-3 py-3">
                   {formatDateTime(snapshot.capturedAt)}
                 </td>
@@ -182,6 +212,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
     queryFn: ({ signal }) =>
       fetchResource<ItemResponseOpportunity>(`/api/v1/opportunities/${encodedSignalId}`, signal),
     queryKey: ["opportunity", signalId],
+    staleTime: Infinity,
   });
   const explanationQuery = useQuery({
     queryFn: ({ signal }) =>
@@ -190,10 +221,12 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
         signal,
       ),
     queryKey: ["opportunity-explanation", signalId],
+    staleTime: Infinity,
   });
   const eventId = opportunityQuery.data?.data.event.eventId;
   const historyQuery = useQuery({
     enabled: eventId !== undefined,
+    placeholderData: keepPreviousData,
     queryFn: ({ signal }) => {
       if (eventId === undefined) throw new Error("Événement du signal absent");
       return fetchResource<PageResponseOddsSnapshot>(
@@ -202,6 +235,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
       );
     },
     queryKey: ["signal-odds-history", eventId],
+    refetchInterval: ODDS_REFRESH_INTERVAL_MS,
   });
 
   const isPending =
@@ -213,6 +247,10 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
   const referenceTime = opportunityQuery.data?.meta.computedAt ?? new Date(0).toISOString();
   const explanation = explanationQuery.data?.data;
   const snapshots = historyQuery.data?.data ?? [];
+  const latestSnapshot = opportunity
+    ? latestMatchingOddsSnapshot(opportunity, snapshots)
+    : undefined;
+  const updatedSnapshot = opportunity ? newerOddsSnapshot(opportunity, snapshots) : undefined;
 
   return (
     <div className="grid min-w-0 gap-7">
@@ -287,6 +325,22 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                 description="Le signal reste consultable pour audit, mais aucune décision paper ne doit être prise sur ce snapshot."
                 title="Signal ancien — décision bloquée"
               />
+            ) : null}
+
+            {updatedSnapshot ? (
+              <section
+                aria-label="Cote mise à jour"
+                className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                role="status"
+              >
+                <p className="font-semibold">Cote mise à jour</p>
+                <p className="mt-1 text-sm leading-6">
+                  Ce signal reste lié à la cote {formatDecimal(opportunity.book.decimalOdds)}{" "}
+                  capturée le {formatDateTime(opportunity.book.capturedAt)}. La dernière cote
+                  observée est {formatDecimal(updatedSnapshot.decimalOdds)}. Toute nouvelle décision
+                  est portée par un nouveau signal ; cette fiche historique n’est jamais réécrite.
+                </p>
+              </section>
             ) : null}
 
             <SectionCard icon={<Scale className="size-4.5" />} title="Prix marché et prix modèle">
@@ -401,7 +455,15 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
               icon={<Database className="size-4.5" />}
               title="Historique des prix observés"
             >
-              <SnapshotHistory snapshots={snapshots} />
+              <SnapshotHistory
+                latestSnapshotId={latestSnapshot?.oddsSnapshotId}
+                signalSnapshotId={opportunity.book.oddsSnapshotId}
+                snapshots={snapshots}
+              />
+              <p className="text-xs leading-5 text-ink-secondary">
+                Actualisation automatique toutes les 30 secondes. Le snapshot du signal reste
+                consultable pendant le rafraîchissement.
+              </p>
             </SectionCard>
 
             <SectionCard

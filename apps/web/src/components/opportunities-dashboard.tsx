@@ -49,11 +49,15 @@ import {
   freshnessLabels,
   gradeLabels,
   isAdmissible,
+  latestMatchingOddsSnapshot,
+  newerOddsSnapshot,
   sortOpportunities,
   type OpportunitySort,
 } from "./opportunity-presenters";
 
 const API_PROXY_BASE_URL = "/api/backend";
+const ODDS_REFRESH_INTERVAL_MS = 30_000;
+const SOURCE_REFRESH_INTERVAL_MS = 60_000;
 
 type Eligibility = "admissible" | "all";
 type DisplayMode = "table" | "cards";
@@ -248,27 +252,31 @@ function SignedMetric({ value }: Readonly<{ value: string }>) {
   );
 }
 
-function oddsMovement(history: readonly OddsSnapshot[] | undefined) {
+function oddsMovement(opportunity: Opportunity, history: readonly OddsSnapshot[] | undefined) {
   if (!history) {
     return { label: "Vérification…", tone: "text-ink-secondary" };
   }
-  const first = history.at(0);
-  const latest = history.at(-1);
-  if (!first || !latest) {
+  const latest = latestMatchingOddsSnapshot(opportunity, history);
+  if (!latest) {
     return { label: "Indisponible", tone: "text-ink-secondary" };
   }
-  const difference = Number(latest.decimalOdds) - Number(first.decimalOdds);
+  if (!newerOddsSnapshot(opportunity, history)) {
+    return { label: "→ Snapshot du signal", tone: "text-ink-secondary" };
+  }
+
+  const difference = Number(latest.decimalOdds) - Number(opportunity.book.decimalOdds);
+  const prefix = `Cote mise à jour · ${formatDecimal(latest.decimalOdds)} · `;
   if (Math.abs(difference) < 0.005) {
-    return { label: "→ Stable", tone: "text-ink-secondary" };
+    return { label: `${prefix}→ Stable`, tone: "text-ink-secondary" };
   }
   if (difference > 0) {
     return {
-      label: `↑ Hausse ${formatDecimal(Math.abs(difference))}`,
+      label: `${prefix}↑ Hausse ${formatDecimal(Math.abs(difference))}`,
       tone: "text-emerald-700 dark:text-emerald-300",
     };
   }
   return {
-    label: `↓ Baisse ${formatDecimal(Math.abs(difference))}`,
+    label: `${prefix}↓ Baisse ${formatDecimal(Math.abs(difference))}`,
     tone: "text-red-700 dark:text-red-300",
   };
 }
@@ -283,12 +291,13 @@ function OddsCell({
   history,
   opportunity,
 }: Pick<OpportunityViewProperties, "history" | "opportunity">) {
-  const latestOdds = history?.at(-1)?.decimalOdds ?? opportunity.book.decimalOdds;
-  const movement = oddsMovement(history);
+  const movement = oddsMovement(opportunity, history);
 
   return (
     <div className="grid gap-1">
-      <span className="font-semibold tabular-nums">{formatDecimal(latestOdds)}</span>
+      <span className="font-semibold tabular-nums">
+        {formatDecimal(opportunity.book.decimalOdds)}
+      </span>
       <span className={`text-[0.7rem] font-medium ${movement.tone}`}>{movement.label}</span>
     </div>
   );
@@ -353,6 +362,7 @@ function OpportunityTable({
           {opportunities.map((opportunity, index) => (
             <tr
               className="align-top transition-colors hover:bg-surface-muted/70"
+              data-signal-id={opportunity.signalId}
               key={opportunity.signalId}
             >
               <td className="whitespace-nowrap px-3 py-4">
@@ -450,6 +460,7 @@ function OpportunityCards({
       {opportunities.map((opportunity, index) => (
         <Card
           aria-label={`${opportunity.event.teamA} contre ${opportunity.event.teamB}`}
+          data-signal-id={opportunity.signalId}
           key={opportunity.signalId}
         >
           <CardContent className="grid gap-5 p-5 sm:p-6">
@@ -555,6 +566,7 @@ export function OpportunitiesDashboard() {
     placeholderData: keepPreviousData,
     queryFn: ({ signal }) => fetchContract<PageResponseOpportunity>(opportunityPath(query), signal),
     queryKey: ["opportunities", query],
+    refetchInterval: ODDS_REFRESH_INTERVAL_MS,
   });
   const providersQuery = useQuery({
     queryFn: ({ signal }) =>
@@ -563,6 +575,7 @@ export function OpportunitiesDashboard() {
         signal,
       ),
     queryKey: ["data-sources"],
+    refetchInterval: SOURCE_REFRESH_INTERVAL_MS,
   });
 
   const response = opportunitiesQuery.data;
@@ -580,12 +593,14 @@ export function OpportunitiesDashboard() {
 
   const historyQueries = useQueries({
     queries: visibleOpportunities.map((opportunity) => ({
+      placeholderData: keepPreviousData,
       queryFn: ({ signal }: { signal: AbortSignal }) =>
         fetchContract<PageResponseOddsSnapshot>(
           `/api/v1/events/${encodeURIComponent(opportunity.event.eventId)}/odds-history?offset=0&limit=100`,
           signal,
         ),
       queryKey: ["odds-history", opportunity.event.eventId],
+      refetchInterval: ODDS_REFRESH_INTERVAL_MS,
     })),
   });
   const histories = historyQueries.map((historyQuery) => historyQuery.data?.data);

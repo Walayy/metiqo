@@ -1,4 +1,4 @@
-import type { AbstentionReason, Opportunity } from "@metiquo/contracts/types";
+import type { AbstentionReason, OddsSnapshot, Opportunity } from "@metiquo/contracts/types";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -6,6 +6,8 @@ import {
   formatAbstentionReasons,
   formatTimeUntil,
   isAdmissible,
+  matchingOddsSnapshots,
+  newerOddsSnapshot,
   sortOpportunities,
 } from "./opportunity-presenters";
 
@@ -170,5 +172,35 @@ describe("opportunity presenters", () => {
     expect(labels[0]).toBe("Cote trop ancienne");
     expect(labels.at(-1)).toBe("Capacité désactivée");
     expect(labels.join(" · ")).not.toContain("ODDS_STALE");
+  });
+
+  it("detects a newer matching quote without replacing the signal snapshot", () => {
+    const signal = opportunity({
+      conservativeExpectedValue: "0.08",
+      signalId: "signal",
+      startsAt: "2026-09-04T16:00:00Z",
+    });
+    const snapshots: OddsSnapshot[] = [
+      signal.book,
+      {
+        ...signal.book,
+        capturedAt: "2026-09-04T12:01:00Z",
+        decimalOdds: "1.80",
+        oddsSnapshotId: "odds-new",
+      },
+      {
+        ...signal.book,
+        capturedAt: "2026-09-04T12:02:00Z",
+        marketId: "other-market",
+        oddsSnapshotId: "irrelevant",
+      },
+    ];
+
+    expect(matchingOddsSnapshots(signal, snapshots).map((item) => item.oddsSnapshotId)).toEqual([
+      "odds",
+      "odds-new",
+    ]);
+    expect(newerOddsSnapshot(signal, snapshots)?.decimalOdds).toBe("1.80");
+    expect(signal.book.decimalOdds).toBe("2.00");
   });
 });

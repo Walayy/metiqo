@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+import type { PageResponseOpportunity } from "../../packages/contracts/src/generated/types.gen.js";
+
+const REFRESHED_SIGNAL_ID = "99999999-9999-4999-8999-999999999999";
+
 test("shows admissible opportunities sorted by conservative EV", async ({ page }) => {
   await page.goto("/");
 
@@ -15,7 +19,80 @@ test("shows admissible opportunities sorted by conservative EV", async ({ page }
   await expect(rows.nth(1)).toContainText("Aurore 02");
   await expect(rows.nth(1)).toContainText("+8,0 %");
   await expect(rows.nth(2)).toContainText("Aurore 10");
+  await expect(rows.nth(2)).toContainText("4,20");
+  await expect(rows.nth(2)).toContainText("Cote mise à jour");
+  await expect(rows.nth(2)).toContainText("3,60");
   await expect(rows.nth(2)).toContainText("Baisse 0,60");
+});
+
+test("keeps the existing signal row mounted while polling for fresh odds", async ({ page }) => {
+  let requestCount = 0;
+  let announceRefresh: (() => void) | undefined;
+  let releaseRefresh: (() => void) | undefined;
+  const refreshStarted = new Promise<void>((resolve) => {
+    announceRefresh = resolve;
+  });
+  const refreshReleased = new Promise<void>((resolve) => {
+    releaseRefresh = resolve;
+  });
+
+  await page.clock.install({ time: new Date("2026-09-05T12:00:00Z") });
+  await page.route("**/api/backend/api/v1/opportunities?**", async (route) => {
+    requestCount += 1;
+    const response = await route.fetch();
+    if (requestCount > 1) {
+      announceRefresh?.();
+      await refreshReleased;
+      const payload = (await response.json()) as PageResponseOpportunity;
+      const sourceSignal = payload.data.find(
+        (opportunity) => opportunity.event.teamA === "Aurore 10",
+      );
+      if (!sourceSignal) throw new Error("Signal mock de changement de cote absent");
+      const refreshedSignal = {
+        ...sourceSignal,
+        book: {
+          ...sourceSignal.book,
+          capturedAt: "2026-09-04T12:05:00Z",
+          decimalOdds: "3.60",
+          oddsSnapshotId: "88888888-8888-4888-8888-888888888888",
+        },
+        meta: {
+          ...sourceSignal.meta,
+          asOf: "2026-09-04T12:05:00Z",
+          computedAt: "2026-09-04T12:05:01Z",
+        },
+        signalId: REFRESHED_SIGNAL_ID,
+      };
+      await route.fulfill({
+        response,
+        json: {
+          ...payload,
+          data: [refreshedSignal, ...payload.data],
+          page: { ...payload.page, total: payload.page.total + 1 },
+        },
+      });
+      return;
+    }
+    await route.fulfill({ response });
+  });
+
+  await page.goto("/");
+  const signalRow = page.getByRole("row").filter({ hasText: "Aurore 02" });
+  await expect(signalRow).toBeVisible();
+  const rowBeforeRefresh = await signalRow.elementHandle();
+
+  await page.clock.fastForward(30_001);
+  await refreshStarted;
+  await expect(signalRow).toBeVisible();
+  const rowDuringRefresh = await signalRow.elementHandle();
+  expect(
+    await rowBeforeRefresh.evaluate((node, currentNode) => node === currentNode, rowDuringRefresh),
+  ).toBe(true);
+
+  releaseRefresh?.();
+  await expect(page.locator(`tr[data-signal-id="${REFRESHED_SIGNAL_ID}"]`)).toBeVisible();
+  await expect(signalRow).toBeVisible();
+  await expect(page.locator('[data-refetching="true"]')).toHaveCount(0);
 });
 
 test("keeps filters and display choices shareable in the URL", async ({ page }) => {

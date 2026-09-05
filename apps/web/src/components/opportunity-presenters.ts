@@ -1,6 +1,7 @@
 import type {
   AbstentionReason,
   FreshnessStatus,
+  OddsSnapshot,
   Opportunity,
   ValueGrade,
 } from "@metiquo/contracts/types";
@@ -137,6 +138,41 @@ export function sortOpportunities(opportunities: readonly Opportunity[], sort: O
 
     return difference === 0 ? left.signalId.localeCompare(right.signalId) : difference;
   });
+}
+
+export function matchingOddsSnapshots(
+  opportunity: Opportunity,
+  snapshots: readonly OddsSnapshot[] | undefined,
+) {
+  return [...(snapshots ?? [])]
+    .filter(
+      (snapshot) =>
+        snapshot.marketId === opportunity.book.marketId &&
+        snapshot.selection === opportunity.book.selection,
+    )
+    .sort((left, right) => {
+      const byTime = left.capturedAt.localeCompare(right.capturedAt);
+      return byTime === 0 ? left.oddsSnapshotId.localeCompare(right.oddsSnapshotId) : byTime;
+    });
+}
+
+export function latestMatchingOddsSnapshot(
+  opportunity: Opportunity,
+  snapshots: readonly OddsSnapshot[] | undefined,
+) {
+  return matchingOddsSnapshots(opportunity, snapshots).at(-1);
+}
+
+export function newerOddsSnapshot(
+  opportunity: Opportunity,
+  snapshots: readonly OddsSnapshot[] | undefined,
+) {
+  const latest = latestMatchingOddsSnapshot(opportunity, snapshots);
+  return latest &&
+    latest.oddsSnapshotId !== opportunity.book.oddsSnapshotId &&
+    latest.capturedAt > opportunity.book.capturedAt
+    ? latest
+    : undefined;
 }
 
 export function describeOpportunity(opportunity: Opportunity) {
