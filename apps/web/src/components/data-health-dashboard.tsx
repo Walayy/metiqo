@@ -169,9 +169,9 @@ function SnapshotOverview({ runs }: Readonly<{ runs: readonly IngestionRunSummar
   const lastAttempt = orderedRuns[0];
   const lastSuccess = orderedRuns.find((run) => run.status === "succeeded");
   const activeSnapshot = orderedRuns.find((run) => run.lastValidSnapshotId)?.lastValidSnapshotId;
-  const years = [...new Set(runs.map((run) => new Date(run.startedAt).getUTCFullYear()))].sort(
-    (left, right) => right - left,
-  );
+  const years = [
+    ...new Set(runs.map((run) => run.seasonYear ?? new Date(run.startedAt).getUTCFullYear())),
+  ].sort((left, right) => right - left);
 
   return (
     <div className="grid gap-4">
@@ -204,15 +204,21 @@ function SnapshotOverview({ runs }: Readonly<{ runs: readonly IngestionRunSummar
         <Stat
           icon={<ArchiveRestore className="size-4" />}
           label="Hash actif"
-          value="Non exposé par le DTO mock"
+          value={lastSuccess?.snapshotSha256 ?? "Non exposé dans ce mode"}
         />
       </dl>
       <div className="grid gap-2 rounded-lg border border-border-subtle p-4 text-sm leading-6">
         <p>
-          <strong>Plage de dates métier :</strong> non exposée par le contrat mock actuel.
+          <strong>Plage de dates métier :</strong>{" "}
+          {lastSuccess?.minEventDate && lastSuccess.maxEventDate
+            ? `${formatDateTime(lastSuccess.minEventDate)} → ${formatDateTime(lastSuccess.maxEventDate)}`
+            : "non exposée dans ce mode"}
         </p>
         <p>
-          <strong>Schéma :</strong> aucun changement de schéma déclaré par le DTO mock.
+          <strong>Schéma :</strong>{" "}
+          {lastSuccess?.schemaFingerprint
+            ? `${lastSuccess.schemaFingerprint} · ${lastSuccess.schemaChanged ? "changement détecté" : "stable"}`
+            : "aucun changement déclaré dans ce mode"}
         </p>
       </div>
     </div>
@@ -314,7 +320,7 @@ export function DataHealthDashboard() {
   return (
     <div className="grid gap-6 sm:gap-8">
       <PageHeader
-        description="Catalogue de provenance, snapshots validés, fraîcheur et anomalies. Les champs absents du contrat mock sont signalés au lieu d’être déduits."
+        description="Catalogue de provenance, snapshots validés, fraîcheur et anomalies. Les champs absents du mode courant sont signalés au lieu d’être déduits."
         eyebrow="Provenance & qualité"
         title="Santé des données"
       />
@@ -444,9 +450,16 @@ export function AdminOperationsDashboard() {
   const sync = useMutation({
     mutationFn: startSync,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "data-sources"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "ingestion-runs"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "quality-issues"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "jobs"] }),
+      ]);
     },
   });
+  const dataMode = jobs.data?.meta.dataMode ?? "mock";
 
   return (
     <div className="grid gap-6 sm:gap-8">
@@ -472,7 +485,7 @@ export function AdminOperationsDashboard() {
             ) : (
               <Play aria-hidden="true" className="size-4" />
             )}
-            {sync.isPending ? "Synchronisation en cours…" : "Lancer la synchronisation mock"}
+            {sync.isPending ? "Synchronisation en cours…" : `Lancer la synchronisation ${dataMode}`}
           </Button>
           <p className="text-xs leading-5 text-ink-secondary">
             Une clé d’idempotence unique est générée pour cette action.
@@ -542,8 +555,9 @@ export function AdminOperationsDashboard() {
         role="note"
       >
         <CircleAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-        Les synchronisations mock n’accèdent pas au réseau Oracle’s Elixir et restent isolées du
-        mode réel.
+        {dataMode === "mock"
+          ? "Les synchronisations mock n’accèdent pas au réseau Oracle’s Elixir et restent isolées du mode réel."
+          : "La synchronisation réelle conserve le dernier snapshot validé lorsqu’une source externe échoue."}
       </div>
     </div>
   );

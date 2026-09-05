@@ -17,11 +17,20 @@ from sqlalchemy import Engine, Table, func, insert, select, update
 
 from metiquo.config import Settings
 from metiquo.contracts.enums import DataMode
-from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
+from metiquo.db.raw_models import (
+    CanonicalRow,
+    IngestionRun,
+    Snapshot,
+    SourceCatalog,
+)
+from metiquo.db.raw_models import (
+    QualityIssue as PersistedQualityIssue,
+)
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.data_quality import (
     DataQualityValidator,
     PreviousQualitySummary,
+    QualityReport,
 )
 from metiquo.ingestion.freshness import (
     FreshnessPolicy,
@@ -135,6 +144,7 @@ class OracleElixirYearSync:
         self._runs = cast(Table, IngestionRun.__table__)
         self._snapshots = cast(Table, Snapshot.__table__)
         self._canonical = cast(Table, CanonicalRow.__table__)
+        self._quality_issues = cast(Table, PersistedQualityIssue.__table__)
 
     def sync_year(
         self,
@@ -143,6 +153,7 @@ class OracleElixirYearSync:
         policy: FreshnessPolicy,
         fixture_path: Path | None = None,
         run_kind: str = "sync",
+        request_key_hash: str | None = None,
     ) -> YearSyncReport:
         catalog = self._catalog_record(year)
         if catalog is None:
@@ -160,8 +171,9 @@ class OracleElixirYearSync:
             source_name=str(catalog["source_name"]),
             mutable=bool(catalog["mutable"]),
         )
-        run_id = self._start_run(catalog_id, run_kind)
+        run_id = self._start_run(catalog_id, run_kind, request_key_hash)
         transport_name: str | None = None
+        load_run_id: UUID | None = None
         try:
             with tempfile.TemporaryDirectory(
                 prefix=f"metiquo-oe-{year}-",
@@ -174,6 +186,7 @@ class OracleElixirYearSync:
                     fixture_path=fixture_path,
                 )
                 transport_name = metadata.transport
+                self._set_transport(run_id, transport_name)
                 physical = PhysicalValidator().validate(
                     download,
                     previous_validated_size=self._previous_size(catalog_id),
@@ -194,6 +207,7 @@ class OracleElixirYearSync:
                         year=year,
                     ),
                 )
+                self._persist_quality_issues(run_id, quality)
                 DataQualityValidator.require_pass(
                     quality,
                     transport=metadata.transport,
@@ -249,6 +263,8 @@ class OracleElixirYearSync:
         except Exception as error:
             error_code = _error_code(error)
             self._fail_run(run_id, error_code)
+            if load_run_id is not None:
+                self._fail_run(load_run_id, error_code)
             decision = self._freshness(catalog_id, policy)
             if decision.usable:
                 return YearSyncReport(
@@ -360,7 +376,12 @@ class OracleElixirYearSync:
             )
         return dict(row) if row is not None else None
 
-    def _start_run(self, catalog_id: UUID, run_kind: str) -> UUID:
+    def _start_run(
+        self,
+        catalog_id: UUID,
+        run_kind: str,
+        request_key_hash: str | None,
+    ) -> UUID:
         if run_kind not in {"sync", "backfill"}:
             raise ValueError("run_kind annuel invalide")
         run_id = uuid4()
@@ -373,6 +394,7 @@ class OracleElixirYearSync:
                     run_kind=run_kind,
                     status="running",
                     attempt=1,
+                    request_key_hash=request_key_hash,
                     correlation_id=f"oe-{run_kind}-{run_id}",
                     started_at=now,
                     created_at=now,
@@ -414,6 +436,14 @@ class OracleElixirYearSync:
                 )
             )
 
+    def _set_transport(self, run_id: UUID, transport: str) -> None:
+        with self._engine.begin() as connection:
+            connection.execute(
+                update(self._runs)
+                .where(self._runs.c.id == run_id, self._runs.c.status == "running")
+                .values(transport=transport)
+            )
+
     def _previous_size(self, catalog_id: UUID) -> int | None:
         with self._engine.connect() as connection:
             value = connection.execute(
@@ -425,6 +455,31 @@ class OracleElixirYearSync:
                 .where(self._catalog.c.id == catalog_id)
             ).scalar_one_or_none()
         return int(value) if value is not None else None
+
+    def _persist_quality_issues(self, run_id: UUID, report: QualityReport) -> None:
+        if not report.issues:
+            return
+        now = self._clock.now().value
+        with self._engine.begin() as connection:
+            connection.execute(
+                insert(self._quality_issues),
+                [
+                    {
+                        "id": uuid4(),
+                        "run_id": run_id,
+                        "snapshot_id": None,
+                        "code": issue.code.value,
+                        "severity": issue.severity,
+                        "capability": issue.capability,
+                        "row_number": issue.row_number,
+                        "natural_key": issue.natural_key,
+                        "message": issue.message,
+                        "context": dict(issue.context),
+                        "created_at": now,
+                    }
+                    for issue in report.issues
+                ],
+            )
 
     def _previous_quality(
         self,

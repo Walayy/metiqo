@@ -6,6 +6,7 @@ from typing import Final
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from metiquo.api.contract_schema import install_domain_contract_schemas
@@ -25,12 +26,15 @@ from metiquo.api.messages import (
 from metiquo.api.mutation_routes import build_mutation_router
 from metiquo.api.read_routes import build_read_router
 from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, ReadinessProbe
+from metiquo.api.real_admin_routes import build_real_admin_router
 from metiquo.config import Settings, load_settings
 from metiquo.contracts.enums import DataMode
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
+from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.services import MockMutationService, ReadService, build_mock_read_service
+from metiquo.services.real_admin import RealAdminMutationService
 
 ERROR_STATUSES: Final[dict[ErrorCode, int]] = {
     ErrorCode.INVALID_INPUT: 400,
@@ -117,6 +121,8 @@ def create_app(
     clock: Clock | None = None,
     read_service: ReadService | None = None,
     mutation_service: MockMutationService | None = None,
+    real_admin_repository: PostgresAdminRepository | None = None,
+    real_mutation_service: RealAdminMutationService | None = None,
 ) -> FastAPI:
     """Construire l'API après validation de la configuration."""
 
@@ -133,6 +139,32 @@ def create_app(
         app.include_router(build_read_router(resolved_service, resolved_clock))
         resolved_mutation_service = mutation_service or MockMutationService(catalog, resolved_clock)
         app.include_router(build_mutation_router(resolved_mutation_service, resolved_clock))
+    else:
+        real_engine = (
+            real_admin_repository.engine
+            if real_admin_repository is not None
+            else create_engine(
+                resolved_settings.database_url.get_secret_value(),
+                connect_args={"options": "-c timezone=UTC"},
+                pool_pre_ping=True,
+            )
+        )
+        resolved_repository = real_admin_repository or PostgresAdminRepository(
+            real_engine, resolved_clock
+        )
+        resolved_real_mutations = real_mutation_service or RealAdminMutationService(
+            real_engine,
+            resolved_settings,
+            resolved_repository,
+        )
+        app.state.real_admin_engine = real_engine
+        app.include_router(
+            build_real_admin_router(
+                resolved_repository,
+                resolved_real_mutations,
+                resolved_clock,
+            )
+        )
 
     @app.exception_handler(BusinessError)
     async def business_error_handler(request: Request, error: BusinessError) -> JSONResponse:
