@@ -916,3 +916,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la validation principale aléatoire et l'emploi du test final pour choisir des seuils sont explicitement impossibles.
 - **Commit/hash :** `32a740f` (`feat(ml): enforce walk-forward validation`).
+
+## ML-003 — Baselines prior et forme naïve
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le plan walk-forward et ses prédictions OOF exactes de `ML-002` sont `DONE` ; les deux baselines utilisent les mêmes folds chronologiques et n'accèdent jamais à la fenêtre de test finale.
+- **Fichiers créés/modifiés :** migration `20260906_0018`, modèles `BaselineRun` et `BaselinePrediction`, évaluateur et registre `python/metiquo/models/baselines.py`, exports ML, tests numériques et test PostgreSQL de roundtrip/immutabilité.
+- **Migrations :** création de `ml.baseline_runs` et `ml.baseline_predictions`. Chaque run référence le dataset versionné, le marché, la baseline et sa version, le fingerprint walk-forward, le split `oof_validation`, les paramètres, le rapport de métriques, le commit de code et les empreintes des prédictions et du run. Chaque probabilité OOF conserve exemple, fold, cutoff, label et position. Des contraintes ferment les types de baseline et le split, et des triggers interdisent UPDATE/DELETE sur les évaluations publiées.
+- **Commandes/tests exécutés :** Ruff, mypy strict, tests ciblés modèle/PostgreSQL, cycle Alembic upgrade/downgrade/upgrade, puis gate global avec PostgreSQL réel.
+- **Résultat exact :** le prior de compétition est réajusté sur le train exact de chaque fold avec lissage bêta `0,5/0,5` et repli sur le prior global train-only pour une compétition absente. La forme naïve combine `form.team_a.ewm_win_rate` et le complément de `form.team_b.ewm_win_rate`, utilise la composante disponible si une seule existe et retombe sur le prior du fold si les deux manquent. Sur la preuve manuelle, les probabilités OOF du prior sont `0,5 / 0,5 / 0,625 / 0,25` et celles de la forme `0,7 / 0,5 / 0,9 / 0,8`. Le rapport commun calcule log loss, Brier, reliability bins et ECE ; un exemple `0,8/0,2` correctement prédit donne `0,223144`, `0,040000` et `0,200000`. Les comparaisons refusent datasets, plans, exemples ou baselines dupliqués. Les probabilités sont normalisées à la précision persistée avant métriques et hash ; tout contenu incohérent est bloqué avant insertion. Le gate retourne 276 tests Python et 20 tests composants réussis, dont 36 tests d'intégration PostgreSQL.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la forme est volontairement naïve et sans apprentissage, tandis que les données manquantes héritent d'un prior explicitement appris sur le passé du fold plutôt que d'une imputation silencieuse. Les cotes bookmaker restent totalement absentes.
+- **Commit/hash :** `ea1c013` (`feat(ml): record comparable baseline runs`).

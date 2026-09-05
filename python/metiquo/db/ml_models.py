@@ -1,9 +1,19 @@
 """Modèles de persistance des datasets et artefacts ML."""
 
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -134,3 +144,83 @@ class TrainingDatasetExample(Base):
         ForeignKey("raw.snapshots.id", ondelete="RESTRICT"),
         nullable=False,
     )
+
+
+class BaselineRun(Base):
+    """Évaluation OOF immuable d'une baseline comparable."""
+
+    __tablename__ = "baseline_runs"
+    __table_args__ = (
+        CheckConstraint("market = 'game_winner'", name="supported_market"),
+        CheckConstraint(
+            "baseline_name IN ('competition_prior', 'recent_form')",
+            name="supported_baseline",
+        ),
+        CheckConstraint("length(trim(baseline_version)) > 0", name="baseline_version"),
+        CheckConstraint("evaluation_split = 'oof_validation'", name="evaluation_split"),
+        CheckConstraint(
+            "walk_forward_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="walk_forward_fingerprint",
+        ),
+        CheckConstraint("jsonb_typeof(parameters) = 'object'", name="parameters_object"),
+        CheckConstraint("jsonb_typeof(metrics) = 'object'", name="metrics_object"),
+        CheckConstraint("prediction_count >= 1", name="prediction_count"),
+        CheckConstraint(
+            "predictions_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="predictions_fingerprint",
+        ),
+        CheckConstraint("run_fingerprint ~ '^[0-9a-f]{64}$'", name="run_fingerprint"),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        UniqueConstraint("run_fingerprint", name="uq_ml_baseline_runs_fingerprint"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    dataset_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.datasets.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    market: Mapped[str] = mapped_column(String(64), nullable=False)
+    baseline_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    baseline_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    evaluation_split: Mapped[str] = mapped_column(String(32), nullable=False)
+    walk_forward_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    parameters: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    metrics: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    prediction_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    predictions_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    run_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        UtcDateTime(), nullable=False, server_default=func.now()
+    )
+
+
+class BaselinePrediction(Base):
+    """Probabilité OOF exacte publiée avec un run de baseline."""
+
+    __tablename__ = "baseline_predictions"
+    __table_args__ = (
+        CheckConstraint("position >= 0", name="position"),
+        CheckConstraint("fold_index >= 0", name="fold_index"),
+        CheckConstraint("probability >= 0 AND probability <= 1", name="probability"),
+        UniqueConstraint("run_id", "example_id", name="uq_baseline_predictions_example"),
+        {"schema": ML_SCHEMA},
+    )
+
+    run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.baseline_runs.id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    position: Mapped[int] = mapped_column(Integer, primary_key=True)
+    example_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    fold_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    label: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)

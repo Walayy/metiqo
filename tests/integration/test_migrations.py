@@ -85,6 +85,8 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
             "invalidations",
         }
         assert set(inspect(connection).get_table_names(schema="ml")) == {
+            "baseline_predictions",
+            "baseline_runs",
             "dataset_examples",
             "datasets",
         }
