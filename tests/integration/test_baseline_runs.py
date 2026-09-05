@@ -23,6 +23,10 @@ from metiquo.models import (
     RatingArtifactRepository,
     RatingBaselineTrainer,
     RatingSearchParameters,
+    TabularBenchmarkParameters,
+    TabularBenchmarkRepository,
+    TabularBenchmarkRunner,
+    TabularFeatureSpec,
     TrainingExampleRepository,
     WalkForwardConfig,
     WalkForwardSplitter,
@@ -103,6 +107,26 @@ def test_baseline_runs_roundtrip_are_comparable_and_append_only(postgresql_url: 
     assert stored_artifact == rating_result.artifact
     assert stored_rating_run.artifact_id == stored_artifact.artifact_id
     assert artifact_repository.record(rating_result.artifact) == stored_artifact
+    benchmark = TabularBenchmarkRunner(
+        code_commit="abcdef1",
+        features=TabularFeatureSpec(
+            numeric_fields=("rating.difference",),
+            categorical_fields=(),
+        ),
+        parameters=TabularBenchmarkParameters(seed=42, calibration_bins=5),
+        clock=FixedClock(UtcInstant(_CREATED_AT)),
+    ).benchmark(
+        plan,
+        dataset_id=dataset.dataset_id,
+        baseline_runs=(*stored, stored_rating_run),
+    )
+    benchmark_repository = TabularBenchmarkRepository(engine=engine)
+    stored_benchmark = benchmark_repository.record(benchmark)
+
+    assert stored_benchmark == benchmark
+    assert benchmark_repository.record(benchmark) == stored_benchmark
+    assert len(stored_benchmark.candidates) == 2
+    assert all(len(candidate.predictions) == 1 for candidate in benchmark.candidates.values())
     with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
         connection.execute(
             text("UPDATE ml.baseline_runs SET code_commit = '1234567' WHERE id = :id"),
@@ -117,5 +141,10 @@ def test_baseline_runs_roundtrip_are_comparable_and_append_only(postgresql_url: 
         connection.execute(
             text("UPDATE ml.baseline_predictions SET probability = 0.5 WHERE run_id = :id"),
             {"id": stored[0].run_id},
+        )
+    with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
+        connection.execute(
+            text("UPDATE ml.tabular_benchmark_runs SET seed = 7 WHERE id = :id"),
+            {"id": stored_benchmark.run_id},
         )
     engine.dispose()

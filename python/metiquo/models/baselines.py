@@ -488,7 +488,7 @@ class BaselineRunRepository:
             evaluation_split=cast(str, row["evaluation_split"]),
             walk_forward_fingerprint=cast(str, row["walk_forward_fingerprint"]),
             parameters=MappingProxyType(dict(cast(Mapping[str, object], row["parameters"]))),
-            metrics=_metrics_from_document(cast(Mapping[str, object], row["metrics"])),
+            metrics=binary_metric_report_from_document(cast(Mapping[str, object], row["metrics"])),
             predictions_fingerprint=cast(str, row["predictions_fingerprint"]),
             run_fingerprint=cast(str, row["run_fingerprint"]),
             code_commit=cast(str, row["code_commit"]),
@@ -744,7 +744,10 @@ def _run_document(
     return document
 
 
-def _metrics_from_document(document: Mapping[str, object]) -> BinaryMetricReport:
+def binary_metric_report_from_document(
+    document: Mapping[str, object],
+) -> BinaryMetricReport:
+    """Restaurer le rapport canonique persisté en JSON."""
     calibration = cast(Mapping[str, object], document["calibration"])
     reliability = cast(Sequence[Mapping[str, object]], calibration["reliability"])
     return BinaryMetricReport(
