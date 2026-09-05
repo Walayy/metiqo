@@ -1,5 +1,13 @@
 """Fabrication de features versionnées et strictement temporelles."""
 
+from metiquo.features.rating import (
+    EloParameters,
+    EloRatingCalculator,
+    RatingFeatureResult,
+    RatingTransition,
+    TeamRating,
+    rating_feature_definitions,
+)
 from metiquo.features.registry import (
     FeatureDefinitionSpec,
     FeatureRegistry,
@@ -28,6 +36,8 @@ __all__ = [
     "AsOfGameRepository",
     "AsOfInputAudit",
     "CutoffViolationError",
+    "EloParameters",
+    "EloRatingCalculator",
     "FeatureCutoff",
     "FeatureDefinitionSpec",
     "FeatureRegistry",
@@ -35,11 +45,15 @@ __all__ = [
     "FeatureSetSpec",
     "HistoricalGame",
     "HistoricalTeamGame",
+    "RatingFeatureResult",
+    "RatingTransition",
     "RegisteredFeatureDefinition",
     "RegisteredFeatureSet",
     "RegisteredFeatureVector",
+    "TeamRating",
     "UnregisteredFeatureError",
     "latest_entity_revisions_as_of",
     "polars_strictly_before",
+    "rating_feature_definitions",
     "strictly_before_cutoff",
 ]
