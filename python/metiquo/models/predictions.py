@@ -19,7 +19,7 @@ from metiquo.db.core_models import Game
 from metiquo.db.ml_models import PrematchPrediction as PrematchPredictionRow
 from metiquo.features import FULL_FEATURE_SET_VERSION, StoredFeatureSnapshot
 from metiquo.foundation.time import Clock, SystemClock, normalize_utc_datetime
-from metiquo.markets import (
+from metiquo.markets.game_winner import (
     GameWinnerMarketPlugin,
     GameWinnerProbability,
     PluginDisabledError,

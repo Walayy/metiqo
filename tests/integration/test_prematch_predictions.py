@@ -27,17 +27,19 @@ from metiquo.models import (
     GameWinnerDatasetBuilder,
     GameWinnerDatasetRequest,
     ModelArtifactStore,
-    ModelInference,
     ModelRegistration,
     ModelRegistry,
     ModelVersion,
+    StoredTrainingDataset,
+    UncertaintyArtifact,
+    UncertaintyArtifactBuilder,
+)
+from metiquo.models.predictions import (
+    ModelInference,
     PrematchPredictionRequest,
     PrematchPredictionService,
     ProbabilityModel,
     RegistryChampionRuntimeLoader,
-    StoredTrainingDataset,
-    UncertaintyArtifact,
-    UncertaintyArtifactBuilder,
 )
 from tests.integration.test_canonical_rosters import _seed_rosters
 from tests.integration.test_migrations import alembic_config
