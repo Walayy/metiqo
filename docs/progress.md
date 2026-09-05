@@ -676,3 +676,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le fallback minimal est volontairement refusé dès que l’ordre ne rend pas le regroupement univoque.
 - **Commit/hash :** `1d9c212` (`feat(canonical): reconstruct unambiguous series`).
+
+## CNL-004 — Observations historiques de roster
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les dimensions `CNL-001` et les joueurs réellement observés dans les games `CNL-002` sont `DONE` ; la projection reconstruit ces faits avant les observations.
+- **Fichiers créés/modifiés :** migration `20260906_0012`, modèle `core.roster_observations`, projection `python/metiquo/canonical/rosters.py`, exports canoniques et test PostgreSQL temporel dédié.
+- **Migrations :** création d’une observation unique par game, équipe et rôle, liée au joueur vu, au raw, au snapshot et au run ; statut de continuité fermé et confiance bornée entre zéro et un.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic complet ; six tests PostgreSQL migrations/canonique sur PostgreSQL 18.
+- **Résultat exact :** deux games à cinq joueurs par équipe produisent vingt observations idempotentes. Le top Blue différent dans la seconde game est enregistré comme `substitution_observed` avec une confiance `0.6500`, tandis que les joueurs inchangés restent confirmés à `1.0000`. `RosterProjectionService.as_of` ne lit que les observations strictement antérieures au cutoff, restitue le dernier joueur connu par rôle et n’écrit aucune projection future. Une projection au jour de la substitution conserve donc l’ancien top ; une projection ultérieure expose le nouveau et la baisse de confiance. Aucune annonce externe ou source non validée n’est consultée.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; une substitution inconnue reste une observation prudente plutôt qu’une certitude reconstruite rétrospectivement.
+- **Commit/hash :** `f8280c7` (`feat(canonical): observe rosters as of games`).
