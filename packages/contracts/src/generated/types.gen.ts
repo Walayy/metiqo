@@ -1416,6 +1416,10 @@ export type ProviderSelection = {
      * Label
      */
     label: string;
+    /**
+     * Providerselectionid
+     */
+    providerSelectionId: string;
     selection: SelectionType;
 };
 

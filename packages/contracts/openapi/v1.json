@@ -2629,11 +2629,18 @@
             "title": "Label",
             "type": "string"
           },
+          "providerSelectionId": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providerselectionid",
+            "type": "string"
+          },
           "selection": {
             "$ref": "#/components/schemas/SelectionType"
           }
         },
         "required": [
+          "providerSelectionId",
           "selection",
           "label",
           "decimalOdds"
