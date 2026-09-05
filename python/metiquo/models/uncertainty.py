@@ -102,11 +102,26 @@ class UncertaintyArtifact:
     ) -> UncertaintyEstimate:
         """Calibrer le centre puis appliquer une prudence monotone et explicable."""
 
+        return self.estimate_calibrated(
+            self.calibrator.calibrate(raw_probability),
+            data_coverage=data_coverage,
+            training_domain_distance=training_domain_distance,
+        )
+
+    def estimate_calibrated(
+        self,
+        probability: Decimal,
+        *,
+        data_coverage: Decimal,
+        training_domain_distance: Decimal,
+    ) -> UncertaintyEstimate:
+        """Évaluer une preuve déjà calibrée sans appliquer le calibrateur deux fois."""
+
         if not data_coverage.is_finite() or not 0 <= data_coverage <= 1:
             raise ValueError("data_coverage doit être dans [0,1]")
         if not training_domain_distance.is_finite() or training_domain_distance < 0:
             raise ValueError("training_domain_distance doit être positif")
-        p50 = self.calibrator.calibrate(raw_probability)
+        p50 = _probability(probability)
         reasons: list[str] = []
         if data_coverage < self.search.minimum_data_coverage:
             reasons.append("LOW_DATA_COVERAGE")
