@@ -1204,3 +1204,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'empreinte inclut l'identifiant immuable de snapshot et la provenance, tandis que le conflit global protège aussi contre le rejeu d'un historique fournisseur déjà vu.
 - **Commit/hash :** `909fbd7` (`feat(odds): persist append-only capture history`).
+
+## ODD-008 — Fraîcheur et admissibilité de marché
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l'historique append-only `ODD-007` est `DONE` ; le gate consomme ses snapshots immuables et recalcule leur âge au moment exact de chaque décision.
+- **Fichiers créés/modifiés :** politique et gate `python/metiquo/markets/admissibility.py`, exports marchés, nouvelles abstentions normatives, configuration globale et surcharges provider/marché/phase, contrat OpenAPI/TypeScript régénéré, guide et dix tests de marché dédiés.
+- **Migrations :** aucune ; la décision est calculée à partir des timestamps et états déjà enregistrés dans `odds.snapshots`.
+- **Commandes/tests exécutés :** Ruff, mypy strict, 30 tests ciblés de marché/configuration/contrats, génération OpenAPI, puis deux passages du gate global `make check` avec PostgreSQL réel ; le premier a produit le diff TypeScript attendu, le second depuis ce contrat enregistré est entièrement vert.
+- **Résultat exact :** `ODDS_MAX_AGE_SECONDS` reste le SLA global et des dictionnaires JSON permettent des surcharges par provider, type de marché et phase, avec priorité provider→marché→phase→global et durées strictement positives. À la borne exacte de 90 secondes, le marché est admissible ; à 91 secondes, `ODDS_STALE` le bloque. Le gate exige le statut `open`, un événement pré-match non commencé, une capture antérieure au calcul, un même périmètre événement/marché, la sélection demandée et toutes les issues nécessaires au no-vig. Le marché partiel n'est accepté que si une stratégie marque explicitement sa compatibilité. Les captures informatives sont bloquées et la phase live retourne toujours `LIVE_BETTING_OUT_OF_SCOPE`. Les nouvelles raisons d'abstention sont reflétées dans le contrat client généré. Le gate retourne 370 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, scan conformité, contrats et mypy strict sur 273 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les surcharges les plus proches du fournisseur priment de façon déterministe, et le live ne peut pas être activé par une simple valeur de SLA.
+- **Commit/hash :** `1ded8bb` (`feat(odds): gate market admissibility`).
