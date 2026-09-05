@@ -856,3 +856,39 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; `target_oe_snapshot_id` assure une référence relationnelle au snapshot de la candidate, tandis que la liste JSON des snapshots historiques conserve honnêtement les cas où la fenêtre de features traverse plusieurs snapshots source.
 - **Commit/hash :** `ab7d86b` (`feat(features): persist immutable feature snapshots`).
+
+## FEAT-012 — Rebuild ciblé après invalidation
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les invalidations rétroactives `OE-018`, les snapshots append-only `FEAT-011` et le pipeline complet `FEAT-014` sont `DONE` ; le planificateur ne travaille que sur le feature set et le dataset explicitement demandés.
+- **Fichiers créés/modifiés :** planificateur `python/metiquo/features/rebuild.py`, enrichissement du modèle, de la migration `20260906_0016` et du store de snapshots, intégration dans `python/metiquo/features/dataset.py`, exports features et tests PostgreSQL de reconstruction ciblée.
+- **Migrations :** ajout des identifiants de games cibles et des invalidations déjà consommées aux snapshots ; les remplacements restent de nouvelles lignes liées par `supersedes_snapshot_id` avec une génération strictement croissante.
+- **Commandes/tests exécutés :** Ruff et mypy strict ; test anti-fuite ; gate complet avec PostgreSQL réel ; cycle d'intégration explicite.
+- **Résultat exact :** le plan retient la dernière génération de chaque snapshot dont le cutoff rencontre `affected_from`, limite les candidats au provider, dataset et feature set demandés, puis transmet au recalcul l'ensemble exact des invalidations non consommées. Une invalidation datée du `2026-08-10` laisse intact le snapshot du `2026-08-05`, crée une génération 2 pour celui du `2026-08-10` et conserve la génération 1 consultable sans mutation. Le passage suivant ne produit aucun remplacement, car l'identifiant d'invalidation est déjà enregistré. Le gate global retourne 270 tests Python, 16 tests UI et 4 tests web réussis ; les 34 tests PostgreSQL passent aussi séparément.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; conserver toutes les générations et leurs causes applique directement l'exigence de reproductibilité, sans réécriture destructive.
+- **Commit/hash :** `ec20989` (`feat(features): rebuild invalidated snapshots append-only`) et `ff6b136` (`feat(features): build reproducible feature datasets`).
+
+## FEAT-013 — Tests anti-leakage
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les primitives temporelles `FEAT-002`, les calculateurs historiques et les transformations train-only `FEAT-010` sont `DONE` ; le gate appelle désormais ces preuves avant la suite générale.
+- **Fichiers créés/modifiés :** suite `tests/leakage/test_anti_leakage_guards.py`, cible `test-leakage` et dépendance explicite du gate `check` dans le `Makefile`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** `make test-leakage`, puis `make check` avec PostgreSQL réel.
+- **Résultat exact :** une propriété parcourt les décalages de zéro à une microseconde ou davantage et vérifie que toute observation à la frontière ou après le cutoff est rejetée. Une seconde preuve injecte à la fois une game future et une révision apprise tardivement, et confirme que l'échec survient avant tout agrégat. Le sous-gate exécute neuf tests couvrant aussi rating, champion pré-draft, priors et préprocesseurs train-only ; les neuf passent et conditionnent dorénavant le gate global.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le test dédié rend une régression temporelle bloquante en CI au lieu de dépendre seulement de tests fonctionnels dispersés.
+- **Commit/hash :** `b87998a` (`test(features): block temporal leakage in CI`).
+
+## FEAT-014 — Pipeline reproductible complet et rapport de couverture
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le registre `FEAT-001`, tous les calculateurs `FEAT-003` à `FEAT-010`, les snapshots `FEAT-011`, le rebuild `FEAT-012` et le gate anti-leakage `FEAT-013` sont `DONE`.
+- **Fichiers créés/modifiés :** orchestrateur `python/metiquo/features/dataset.py`, commande `oe features-rebuild`, cible `make features-rebuild`, exports, tests de CLI/Make et gate PostgreSQL `tests/integration/test_feature_dataset.py` ; isolation de la base d'intégration et restriction des candidates au provider/dataset configuré.
+- **Migrations :** aucune nouvelle migration au-delà du snapshot enrichi de `FEAT-011`/`FEAT-012`.
+- **Commandes/tests exécutés :** formatters, ESLint, Ruff, cspell, TypeScript strict, mypy strict sur 192 fichiers, neuf tests anti-fuite, 20 tests composants, 270 tests Python avec PostgreSQL réel, contrôle OpenAPI/client et 34 tests d'intégration PostgreSQL séparés.
+- **Résultat exact :** la commande construit le feature set fermé `lol.match_winner.pregame@p3-reproducible-v1`, énumère seulement les games du provider/dataset dont le snapshot est validé et le contexte canonique connu au cutoff, puis calcule rating, forme, side, économie capability-gated, roster, champion pool, contexte et priors depuis l'histoire strictement antérieure. Sur la fixture, elle produit deux snapshots avec couverture 1, cutoffs du `2026-08-05` au `2026-08-10`, empreintes et lignage complets ; la game cible est absente des sources. Un second passage conserve exactement les mêmes UUID et missingness. Une invalidation ne reconstruit ensuite que la candidate affectée et le passage suivant redevient idempotent. Le rapport JSON expose couverture, créations, rebuilds, plage de cutoff, missingness, UUID et exemple traçable.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le pipeline reste limité à l'historique canonique déjà persisté et n'effectue ni téléchargement ad hoc ni enrichissement externe.
+- **Commit/hash :** `ff6b136` (`feat(features): build reproducible feature datasets`) et `da8456d` (`fix(features): isolate rebuild inputs and integration state`).
