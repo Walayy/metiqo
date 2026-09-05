@@ -747,3 +747,101 @@ class ShadowPrediction(Base):
     p_high: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
     context_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     prediction_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class PrematchPrediction(Base):
+    """Inférence pré-match immuable rattachée à toutes ses preuves."""
+
+    __tablename__ = "prematch_predictions"
+    __table_args__ = (
+        CheckConstraint("market = 'game_winner'", name="supported_market"),
+        CheckConstraint("cutoff_at <= predicted_at", name="prediction_after_cutoff"),
+        CheckConstraint("team_a_id <> team_b_id", name="distinct_teams"),
+        CheckConstraint("team_a_probability >= 0 AND team_a_probability <= 1", name="team_a"),
+        CheckConstraint("team_b_probability >= 0 AND team_b_probability <= 1", name="team_b"),
+        CheckConstraint(
+            "team_a_probability + team_b_probability = 1",
+            name="probability_sum",
+        ),
+        CheckConstraint("team_a_low + team_b_high = 1", name="lower_complement"),
+        CheckConstraint("team_a_high + team_b_low = 1", name="upper_complement"),
+        CheckConstraint(
+            "team_a_low >= 0 AND team_a_low <= team_a_probability",
+            name="team_a_lower",
+        ),
+        CheckConstraint(
+            "team_a_high >= team_a_probability AND team_a_high <= 1",
+            name="team_a_upper",
+        ),
+        CheckConstraint(
+            "team_b_low >= 0 AND team_b_low <= team_b_probability",
+            name="team_b_lower",
+        ),
+        CheckConstraint(
+            "team_b_high >= team_b_probability AND team_b_high <= 1",
+            name="team_b_upper",
+        ),
+        CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence"),
+        CheckConstraint("jsonb_typeof(reason_codes) = 'array'", name="reasons_array"),
+        CheckConstraint(
+            "(enabled AND jsonb_array_length(reason_codes) = 0) OR "
+            "(NOT enabled AND jsonb_array_length(reason_codes) >= 1)",
+            name="enabled_reasons",
+        ),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        CheckConstraint("inference_fingerprint ~ '^[0-9a-f]{64}$'", name="inference_hash"),
+        CheckConstraint("prediction_fingerprint ~ '^[0-9a-f]{64}$'", name="prediction_hash"),
+        UniqueConstraint("prediction_fingerprint", name="uq_ml_prematch_predictions_fingerprint"),
+        Index("ix_ml_prematch_predictions_event_predicted", "event_id", "predicted_at"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    market: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    team_a_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    team_b_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    feature_snapshot_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("features.feature_snapshots.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    model_version_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.model_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    calibrator_artifact_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.calibrator_artifacts.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    uncertainty_artifact_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), nullable=False
+    )
+    cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    predicted_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    team_a_probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    team_a_low: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    team_a_high: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    team_b_probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    team_b_low: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    team_b_high: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    confidence: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    reason_codes: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    inference_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    prediction_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
