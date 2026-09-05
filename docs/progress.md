@@ -832,3 +832,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la phase n'est déduite que d'indicateurs OE explicites : international prend priorité, sinon playoffs vrai donne `playoffs`, playoffs faux donne `regular`, et toute autre combinaison reste inconnue.
 - **Commit/hash :** `996c7c7` (`feat(features): add proven competition context`).
+
+## FEAT-010 — Priors, missingness et cold start
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les domaines rating, forme, side, économie, roster, champion et contexte de `FEAT-003` à `FEAT-009` produisent tous valeurs et échantillons explicites ; le nouveau service peut donc régulariser ces métriques sans relire une source ni confondre absence et zéro.
+- **Fichiers créés/modifiés :** estimateur et préprocesseur `python/metiquo/features/priors.py`, exports features et tests modèle de shrinkage, ancienneté, cold start, OOD et fit train-only.
+- **Migrations :** aucune ; les artefacts immuables portent versions, cutoff, UUID des observations/lignes utilisées et empreinte déterministe avant leur persistance par les tickets suivants.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; dix-sept tests modèle cumulés ; vérification du diff.
+- **Résultat exact :** l'estimateur ajuste d'abord un prior global, puis des priors de ligue ramenés vers le global et des priors de patch ramenés vers leur ligue. Les observations anciennes sont décotées selon une demi-vie versionnée ; dix games vieilles de 90 jours donnent ainsi un échantillon effectif de cinq. Une petite observation est shrinkée vers son prior patch, avec taille effective et confiance explicites. Un groupe inconnu retombe sur le niveau global avec `ood=true` et confiance réduite. Un cold start conserve `raw_value=None`, `available=false`, `cold_start=true` et confiance zéro ; s'il n'existe aucun prior ajusté, la valeur finale reste elle aussi `None`. Le scaler ignore les valeurs absentes, l'encodeur réserve des codes uniquement aux catégories vues avant le cutoff, une catégorie future ou OOD garde code `None`, et l'ajout d'une ligne post-cutoff ne change ni paramètres ni empreinte du préprocesseur.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les priors peuvent fournir une valeur de repli mais jamais une confiance factice, et l'indicateur de disponibilité brute reste indépendant de la valeur shrinkée.
+- **Commit/hash :** `5902f4f` (`feat(features): add hierarchical priors and missingness`).
