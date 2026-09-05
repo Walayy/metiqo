@@ -6,7 +6,7 @@ INGESTION_INTEGRATION_TESTS := tests/integration/test_backfill.py tests/integrat
 OE_JSON_FLAG = $(if $(filter 1 true yes,$(JSON)),--json,)
 OE_FIXTURE_FLAG = $(if $(strip $(FIXTURE)),--fixture $(FIXTURE),)
 
-.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-migrations test-ingestion test-e2e openapi openapi-check check $(OE_TARGETS)
+.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-leakage test-migrations test-ingestion test-e2e openapi openapi-check check $(OE_TARGETS)
 
 help:
 	@echo "Metiquo - commandes développeur"
@@ -20,6 +20,7 @@ help:
 	@echo "  make lint           Vérifie format, lint et orthographe"
 	@echo "  make typecheck      Vérifie les types TypeScript et Python"
 	@echo "  make test           Exécute les tests frontend et Python"
+	@echo "  make test-leakage   Exécute la suite anti-fuite bloquante"
 	@echo "  make test-migrations Exécute les tests sur PostgreSQL réel"
 	@echo "  make test-ingestion Valide le gate Oracle's Elixir sur PostgreSQL réel"
 	@echo "  make test-e2e       Exécute les tests Playwright"
@@ -74,6 +75,9 @@ test:
 	pnpm run test:components
 	uv run --frozen pytest
 
+test-leakage:
+	uv run --frozen pytest tests/leakage tests/model/test_rating_features.py tests/model/test_champion_meta_features.py tests/model/test_prior_missingness_features.py -vv
+
 test-migrations:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour les tests de migration))
 	uv run --frozen pytest tests/integration -vv
@@ -93,7 +97,7 @@ openapi-check:
 	uv run --frozen python infra/scripts/export_openapi.py --check
 	pnpm run contracts:check
 
-check: lint typecheck test openapi-check
+check: lint typecheck test-leakage test openapi-check
 
 oe-catalog:
 	uv run --frozen oe catalog refresh $(OE_JSON_FLAG)
