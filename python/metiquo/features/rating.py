@@ -236,7 +236,7 @@ def _group_by_time(
 
 
 def _participants(game: HistoricalGame) -> tuple[UUID, UUID, Decimal] | None:
-    if len(game.team_stats) != 2:
+    if not game.usable_for_training or len(game.team_stats) != 2:
         return None
     first, second = game.team_stats
     if first.result is None or second.result is None or first.result == second.result:
