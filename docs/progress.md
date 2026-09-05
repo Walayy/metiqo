@@ -940,3 +940,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; seule l'échelle de conversion est réglée à ce stade, sur validation OOF exclusivement. Le test final reste réservé à l'évaluation finale et aucune cote bookmaker n'entre dans la probabilité.
 - **Commit/hash :** `327003f` (`feat(ml): version pregame rating baseline`).
+
+## ML-005 — Benchmark gradient boosting
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les folds walk-forward et transformations train-only `ML-002`, les runs de prior/forme `ML-003` et la baseline rating versionnée `ML-004` sont `DONE` ; les trois baselines partagent exactement dataset, fingerprint temporel et exemples OOF.
+- **Fichiers créés/modifiés :** dépendance CPU de la bibliothèque Python verrouillée, moteur et repository `python/metiquo/models/benchmark.py`, migration `20260906_0020`, modèles ORM, exports ML, tests déterministes et extension du roundtrip PostgreSQL append-only.
+- **Migrations :** création de `ml.tabular_benchmark_runs` et `ml.tabular_benchmark_predictions`. Le run conserve feature spec fermé, seed, paramètres, métriques globales/par fold, décision de sélection, trois UUID de baseline, gains du gate de promotion, fingerprints et commit. Chaque candidat conserve toutes ses probabilités OOF avec fold, cutoff, label et position ; les deux tables interdisent UPDATE/DELETE.
+- **Commandes/tests exécutés :** Ruff, mypy strict sur 209 fichiers, smoke déterministe, roundtrip PostgreSQL et cycle Alembic ciblés, puis gate global complet.
+- **Résultat exact :** `GradientBoostingClassifier` et `HistGradientBoostingClassifier` sont entraînés en CPU avec le même seed, les mêmes features et les mêmes transformations ajustées uniquement sur le train de chaque fold. Le test final n'est jamais converti en ligne d'entraînement ni lu pour la sélection : remplacer son signal par une valeur extrême laisse le run strictement identique. Le choix est lexicographique sur log loss, ECE, pire log loss de fold puis nom stable ; les paramètres et toutes les probabilités sont conservées. Un modèle complexe n'est promouvable que si ses gains de log loss, calibration et robustesse temporelle sont strictement positifs face au prior, à la forme récente et au rating. Le smoke de non-régression prouve aussi le refus des champs de cote/bookmaker et le maintien d'une décision non promouvable quand un gate échoue. Le gate retourne 280 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, types et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les deux boosters de la bibliothèque Python constituent les candidats tabulaires CPU prévus par la SFG. Cette étape ne promeut aucun modèle par préférence et réserve toujours le test final.
+- **Commit/hash :** `69d40e8` (`feat(ml): benchmark tabular candidates`).
