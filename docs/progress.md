@@ -724,3 +724,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les games sans série ne sont exposées séparément que lorsque la reconstruction canonique les a laissées non liées, et aucune donnée marché n’est synthétisée.
 - **Commit/hash :** `fa7f53c` (`feat(canonical): expose real historical events`).
+
+## FEAT-001 — Registre des définitions de features
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l’historique canonique append-only `CNL-005` est `DONE` ; le registre reprend la même exigence d’identité, version et immutabilité pour toutes les futures colonnes de modèle.
+- **Fichiers créés/modifiés :** migration `20260906_0015`, modèles `FeatureDefinition`, `FeatureSet` et `FeatureSetMember`, service `python/metiquo/features/registry.py`, exports features et tests PostgreSQL du registre.
+- **Migrations :** création de `features.feature_definitions`, `features.feature_sets` et `features.feature_set_members` avec versions, domaine, paramètres JSON, politique de disponibilité, capacité éventuellement requise, version de code, empreintes SHA-256 et ordre des membres. Des triggers PostgreSQL interdisent UPDATE et DELETE sur les trois tables.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic upgrade/downgrade/upgrade ; quatre tests de migration et registre sur PostgreSQL réel ; vérification du diff.
+- **Résultat exact :** une définition est identifiée par son nom normalisé et sa version, et son empreinte couvre domaine, paramètres, disponibilité, capacité et version de code. Un feature set versionné référence une liste ordonnée de définitions exactes et possède sa propre empreinte déterministe. Un second enregistrement identique est idempotent ; réutiliser la même version avec un contenu différent échoue. `FeatureRegistry.build_vector` exige un set enregistré, refuse toute colonne ad hoc, toute colonne omise et toute valeur requise absente, tout en conservant explicitement `None` pour les features optionnelles ou dépendantes d’une capacité. Le vecteur produit porte l’UUID et la version du set ainsi que la version de chaque définition.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le registre ne pré-enregistre pas de calcul encore inexistant, les tickets suivants ajouteront leurs définitions au set complet sans prétendre qu’elles sont déjà disponibles.
+- **Commit/hash :** `0a5a5a9` (`feat(features): add immutable definition registry`).
