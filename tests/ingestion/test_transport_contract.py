@@ -110,6 +110,7 @@ def test_policy_is_derived_from_validated_settings() -> None:
     assert policy == TransportPolicy(
         connect_timeout_seconds=2.5,
         read_timeout_seconds=9,
+        download_timeout_seconds=900,
         max_download_bytes=1234,
         max_redirects=2,
         retry=RetryPolicy(3, 0.5, 8),

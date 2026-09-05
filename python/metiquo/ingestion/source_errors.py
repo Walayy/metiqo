@@ -14,6 +14,9 @@ class SourceErrorCode(StrEnum):
     TOO_LARGE = "SOURCE_TOO_LARGE"
     INVALID_RESPONSE = "SOURCE_INVALID_RESPONSE"
     UNEXPECTED_HTML = "UNEXPECTED_HTML_RESPONSE"
+    UNEXPECTED_CONTENT_TYPE = "UNEXPECTED_CONTENT_TYPE"
+    CHECKSUM_MISMATCH = "CHECKSUM_MISMATCH"
+    ATOMIC_PROMOTION_FAILED = "ATOMIC_PROMOTION_FAILED"
     UNAVAILABLE = "SOURCE_UNAVAILABLE"
 
 
@@ -79,6 +82,18 @@ class SourceInvalidResponse(SourceTransportError):
 
 class UnexpectedHtmlResponse(SourceTransportError):
     code = SourceErrorCode.UNEXPECTED_HTML
+
+
+class UnexpectedContentType(SourceTransportError):
+    code = SourceErrorCode.UNEXPECTED_CONTENT_TYPE
+
+
+class ChecksumMismatch(SourceTransportError):
+    code = SourceErrorCode.CHECKSUM_MISMATCH
+
+
+class AtomicPromotionFailed(SourceTransportError):
+    code = SourceErrorCode.ATOMIC_PROMOTION_FAILED
 
 
 class SourceUnavailable(SourceTransportError):

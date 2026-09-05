@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     oe_source_catalog_path: Path = Path("/app/config/oracles_elixir_sources.yml")
     oe_connect_timeout_seconds: float = Field(default=10.0, gt=0)
     oe_read_timeout_seconds: float = Field(default=60.0, gt=0)
+    oe_download_timeout_seconds: float = Field(default=900.0, gt=0)
     oe_max_download_bytes: int = Field(default=4 * 1024 * 1024 * 1024, gt=0)
     oe_max_redirects: int = Field(default=3, ge=0, le=10)
     oe_retry_max_attempts: int = Field(default=4, ge=1, le=10)

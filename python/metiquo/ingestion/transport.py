@@ -32,12 +32,17 @@ class RetryPolicy:
 class TransportPolicy:
     connect_timeout_seconds: float
     read_timeout_seconds: float
+    download_timeout_seconds: float
     max_download_bytes: int
     max_redirects: int
     retry: RetryPolicy
 
     def __post_init__(self) -> None:
-        if self.connect_timeout_seconds <= 0 or self.read_timeout_seconds <= 0:
+        if (
+            self.connect_timeout_seconds <= 0
+            or self.read_timeout_seconds <= 0
+            or self.download_timeout_seconds <= 0
+        ):
             raise ValueError("les timeouts transport doivent être positifs")
         if self.max_download_bytes <= 0:
             raise ValueError("max_download_bytes doit être positif")
@@ -49,6 +54,7 @@ class TransportPolicy:
         return cls(
             connect_timeout_seconds=settings.oe_connect_timeout_seconds,
             read_timeout_seconds=settings.oe_read_timeout_seconds,
+            download_timeout_seconds=settings.oe_download_timeout_seconds,
             max_download_bytes=settings.oe_max_download_bytes,
             max_redirects=settings.oe_max_redirects,
             retry=RetryPolicy(
