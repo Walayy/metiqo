@@ -1,8 +1,9 @@
-import type { Opportunity } from "@metiquo/contracts/types";
+import type { AbstentionReason, Opportunity } from "@metiquo/contracts/types";
 import { describe, expect, it } from "vitest";
 
 import {
   formatSignedPercent,
+  formatAbstentionReasons,
   formatTimeUntil,
   isAdmissible,
   sortOpportunities,
@@ -142,5 +143,32 @@ describe("opportunity presenters", () => {
     expect(formatSignedPercent("0.08")).toContain("+8,0");
     expect(formatSignedPercent("-0.02")).toContain("−2,0");
     expect(formatTimeUntil("2026-09-04T14:30:00Z", "2026-09-04T12:00:00Z")).toBe("Dans 2 h 30 min");
+  });
+
+  it("shows every normative abstention as an ordered human-readable reason", () => {
+    const reasons: AbstentionReason[] = [
+      "ODDS_STALE",
+      "MARKET_SUSPENDED",
+      "EVENT_MAPPING_AMBIGUOUS",
+      "INSUFFICIENT_HISTORY",
+      "ROSTER_UNCERTAIN",
+      "SOURCE_STALE",
+      "MODEL_STALE",
+      "OUT_OF_DISTRIBUTION",
+      "CALIBRATION_FAILED",
+      "EDGE_TOO_SMALL",
+      "CONSERVATIVE_EV_NEGATIVE",
+      "MARKET_RULES_UNKNOWN",
+      "PATCH_CONTEXT_UNKNOWN",
+      "EVENT_ALREADY_STARTED",
+      "CAPABILITY_DISABLED",
+    ];
+
+    const labels = formatAbstentionReasons(reasons);
+
+    expect(labels).toHaveLength(reasons.length);
+    expect(labels[0]).toBe("Cote trop ancienne");
+    expect(labels.at(-1)).toBe("Capacité désactivée");
+    expect(labels.join(" · ")).not.toContain("ODDS_STALE");
   });
 });

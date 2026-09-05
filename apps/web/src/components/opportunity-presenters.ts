@@ -1,4 +1,9 @@
-import type { FreshnessStatus, Opportunity, ValueGrade } from "@metiquo/contracts/types";
+import type {
+  AbstentionReason,
+  FreshnessStatus,
+  Opportunity,
+  ValueGrade,
+} from "@metiquo/contracts/types";
 
 export type OpportunitySort = "conservative-ev-desc" | "start-asc";
 
@@ -18,20 +23,38 @@ export const freshnessLabels = {
   stale: "Ancienne",
 } satisfies Record<FreshnessStatus, string>;
 
-const abstentionLabels: Readonly<Record<string, string>> = {
+export const abstentionLabels = {
+  CALIBRATION_FAILED: "Calibration non validée",
+  CAPABILITY_DISABLED: "Capacité désactivée",
+  CONSERVATIVE_EV_NEGATIVE: "EV prudente négative",
+  CONSERVATIVE_EV_TOO_SMALL: "EV prudente insuffisante",
   EDGE_TOO_SMALL: "Edge insuffisant",
+  EVENT_ALREADY_STARTED: "Match déjà commencé",
   EVENT_MAPPING_AMBIGUOUS: "Mapping de l’événement ambigu",
-  INCOMPLETE_OUTCOMES: "Issues du marché incomplètes",
+  EXPECTED_VALUE_TOO_SMALL: "EV insuffisante",
   INSUFFICIENT_HISTORY: "Historique insuffisant",
-  MARKET_CLOSED: "Marché fermé",
-  MARKET_STARTED: "Match déjà commencé",
+  LIVE_BETTING_OUT_OF_SCOPE: "Marché live hors périmètre",
+  MARKET_OUTCOMES_INCOMPLETE: "Issues du marché incomplètes",
+  MARKET_RULES_UNKNOWN: "Règles du marché inconnues",
   MARKET_SUSPENDED: "Marché suspendu",
   MODEL_STALE: "Modèle ancien",
+  ODDS_INFORMATIONAL_ONLY: "Cote informative uniquement",
   ODDS_STALE: "Cote trop ancienne",
+  ODDS_TEMPORAL_ORDER_INVALID: "Chronologie de la cote invalide",
   OUT_OF_DISTRIBUTION: "Incertitude hors distribution",
+  PATCH_CONTEXT_UNKNOWN: "Contexte de patch inconnu",
+  ROSTER_UNCERTAIN: "Roster incertain",
   SELECTION_MISSING: "Sélection absente",
   SOURCE_STALE: "Source de données ancienne",
-};
+} satisfies Readonly<Record<AbstentionReason, string>>;
+
+export function formatAbstentionReason(reason: AbstentionReason) {
+  return abstentionLabels[reason];
+}
+
+export function formatAbstentionReasons(reasons: readonly AbstentionReason[]) {
+  return reasons.map(formatAbstentionReason);
+}
 
 const decimalFormatter = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 2,
@@ -126,5 +149,5 @@ export function describeOpportunity(opportunity: Opportunity) {
     return "Signal non publiable selon la politique de décision active.";
   }
 
-  return reasons.map((reason) => abstentionLabels[reason] ?? reason).join(" · ");
+  return formatAbstentionReasons(reasons).join(" · ");
 }

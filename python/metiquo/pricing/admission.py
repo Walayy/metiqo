@@ -11,6 +11,7 @@ from metiquo.contracts.enums import (
     FreshnessStatus,
     MarketStatus,
     ModelStatus,
+    order_abstention_reasons,
 )
 from metiquo.foundation.finance import Probability
 from metiquo.foundation.time import normalize_utc_datetime
@@ -113,6 +114,11 @@ class ValueAdmissionDecision:
             raise ValueError("une admission ne peut pas contenir de raison d'abstention")
         if tuple(check.code for check in self.checks) != tuple(AdmissionCheckCode):
             raise ValueError("les contrôles d'admission doivent respecter l'ordre normatif")
+        expected_reasons = order_abstention_reasons(
+            tuple(check.failure_reason for check in self.checks if check.failure_reason is not None)
+        )
+        if self.reasons != expected_reasons:
+            raise ValueError("les raisons doivent refléter les contrôles dans l'ordre public")
 
 
 class ValueAdmissionGate:
@@ -191,10 +197,8 @@ class ValueAdmissionGate:
                 ),
             ),
         )
-        reasons = tuple(
-            dict.fromkeys(
-                check.failure_reason for check in checks if check.failure_reason is not None
-            )
+        reasons = order_abstention_reasons(
+            tuple(check.failure_reason for check in checks if check.failure_reason is not None)
         )
         return ValueAdmissionDecision(
             admitted=not reasons,
