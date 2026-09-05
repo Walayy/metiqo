@@ -14,10 +14,18 @@ from metiquo.pricing.no_vig import (
     ProportionalNoVigStrategy,
     implied_probability,
 )
+from metiquo.pricing.value import (
+    VALUE_PRICING_POLICY_VERSION,
+    ValuePrice,
+    ValuePricingEngine,
+    ValuePricingError,
+    ValuePricingInput,
+)
 
 __all__ = [
     "NO_VIG_SUM_TOLERANCE",
     "PROPORTIONAL_NO_VIG_VERSION",
+    "VALUE_PRICING_POLICY_VERSION",
     "IncompleteMarketError",
     "MarketQuote",
     "NoVigCalculationError",
@@ -27,5 +35,9 @@ __all__ = [
     "NoVigQuote",
     "NoVigStrategy",
     "ProportionalNoVigStrategy",
+    "ValuePrice",
+    "ValuePricingEngine",
+    "ValuePricingError",
+    "ValuePricingInput",
     "implied_probability",
 ]
