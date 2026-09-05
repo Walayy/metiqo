@@ -19,7 +19,12 @@ from sqlalchemy.orm import Session
 from metiquo.canonical.rosters import CanonicalRosterBuilder, RosterProjectionService
 from metiquo.db.core_models import Game, RosterObservation, Team
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
-from metiquo.features import AsOfGameRepository, FeatureCutoff, RosterFeatureCalculator
+from metiquo.features import (
+    AsOfGameRepository,
+    ChampionMetaFeatureCalculator,
+    FeatureCutoff,
+    RosterFeatureCalculator,
+)
 from metiquo.foundation.time import FixedClock, UtcInstant
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -132,6 +137,12 @@ def test_roster_projection_is_as_of_and_unknown_substitution_lowers_confidence(
             team_a_id=blue_team.id,
             team_b_id=after_batch.games[0].team_stats[1].team_id,
         )
+        champion_features = ChampionMetaFeatureCalculator().calculate(
+            after_batch,
+            team_a_id=blue_team.id,
+            team_b_id=after_batch.games[0].team_stats[1].team_id,
+            target_patch_id=after_batch.games[0].patch_id,
+        )
 
         assert len(before_batch.games) == 1
         assert len(after_batch.games) == 2
@@ -144,6 +155,10 @@ def test_roster_projection_is_as_of_and_unknown_substitution_lowers_confidence(
         assert (
             after_features.team_a.expected_roster["top"].observed_at < after_batch.audit.cutoff_at
         )
+        assert champion_features.team_a.roles["top"].picks == 2
+        assert champion_features.team_a.roles["top"].unique_champions == 1
+        assert champion_features.team_a.patch_games == 2
+        assert champion_features.team_a.composition_games == 2
     engine.dispose()
 
 

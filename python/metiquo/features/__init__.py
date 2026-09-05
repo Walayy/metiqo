@@ -1,5 +1,13 @@
 """Fabrication de features versionnées et strictement temporelles."""
 
+from metiquo.features.champions import (
+    ChampionMetaFeatureCalculator,
+    ChampionMetaFeatureResult,
+    ChampionMetaParameters,
+    RoleChampionPool,
+    TeamChampionMeta,
+    champion_meta_feature_definitions,
+)
 from metiquo.features.economy import (
     EconomyFeatureCalculator,
     EconomyFeatureResult,
@@ -70,6 +78,9 @@ __all__ = [
     "AsOfGameBatch",
     "AsOfGameRepository",
     "AsOfInputAudit",
+    "ChampionMetaFeatureCalculator",
+    "ChampionMetaFeatureResult",
+    "ChampionMetaParameters",
     "CutoffViolationError",
     "EconomyFeatureCalculator",
     "EconomyFeatureResult",
@@ -95,6 +106,7 @@ __all__ = [
     "RegisteredFeatureDefinition",
     "RegisteredFeatureSet",
     "RegisteredFeatureVector",
+    "RoleChampionPool",
     "RosterFeatureCalculator",
     "RosterFeatureResult",
     "RosterParameters",
@@ -104,12 +116,14 @@ __all__ = [
     "SideSample",
     "TargetSide",
     "TargetSideScenario",
+    "TeamChampionMeta",
     "TeamEconomyMetrics",
     "TeamRating",
     "TeamRecentForm",
     "TeamRosterFeatures",
     "TeamSideStrength",
     "UnregisteredFeatureError",
+    "champion_meta_feature_definitions",
     "economy_feature_definitions",
     "latest_entity_revisions_as_of",
     "polars_strictly_before",
