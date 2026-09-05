@@ -20,6 +20,9 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from metiquo.contracts.enums import DataMode as DataMode
+from metiquo.contracts.enums import MarketType, OddsPhase
+
+type PositiveSeconds = Annotated[int, Field(gt=0)]
 
 
 class AppEnvironment(StrEnum):
@@ -80,6 +83,9 @@ class Settings(BaseSettings):
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
+    odds_provider_max_age_seconds: dict[str, PositiveSeconds] = Field(default_factory=dict)
+    odds_market_max_age_seconds: dict[MarketType, PositiveSeconds] = Field(default_factory=dict)
+    odds_phase_max_age_seconds: dict[OddsPhase, PositiveSeconds] = Field(default_factory=dict)
     mock_seed: Annotated[
         str,
         StringConstraints(strip_whitespace=True, min_length=1, max_length=128),
@@ -126,6 +132,20 @@ class Settings(BaseSettings):
         if value is not None and not value.get_secret_value().strip():
             raise ValueError("OE_GOOGLE_DRIVE_BEARER ne peut pas être vide")
         return value
+
+    @field_validator("odds_provider_max_age_seconds")
+    @classmethod
+    def normalize_odds_provider_age_overrides(
+        cls, value: dict[str, PositiveSeconds]
+    ) -> dict[str, PositiveSeconds]:
+        """Normaliser les codes provider des surcharges de fraîcheur."""
+
+        normalized = {provider.strip(): seconds for provider, seconds in value.items()}
+        if len(normalized) != len(value) or any(not provider for provider in normalized):
+            raise ValueError(
+                "ODDS_PROVIDER_MAX_AGE_SECONDS refuse un code vide ou dupliqué après trim"
+            )
+        return normalized
 
     @model_validator(mode="after")
     def validate_modes(self) -> Self:
