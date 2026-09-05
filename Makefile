@@ -2,10 +2,11 @@
 
 PYTHON_PATHS := python services infra tests
 OE_TARGETS := oe-catalog oe-backfill oe-sync oe-sync-current oe-validate oe-diff oe-rebuild-canonical
+INGESTION_INTEGRATION_TESTS := tests/integration/test_backfill.py tests/integration/test_catalog_repository.py tests/integration/test_ingestion_gate.py tests/integration/test_migrations.py tests/integration/test_oe_cli.py tests/integration/test_quarantine.py tests/integration/test_raw_loader.py tests/integration/test_raw_migration.py tests/integration/test_snapshot_promotion.py
 OE_JSON_FLAG = $(if $(filter 1 true yes,$(JSON)),--json,)
 OE_FIXTURE_FLAG = $(if $(strip $(FIXTURE)),--fixture $(FIXTURE),)
 
-.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-migrations test-e2e openapi openapi-check check $(OE_TARGETS)
+.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-migrations test-ingestion test-e2e openapi openapi-check check $(OE_TARGETS)
 
 help:
 	@echo "Metiquo - commandes développeur"
@@ -20,6 +21,7 @@ help:
 	@echo "  make typecheck      Vérifie les types TypeScript et Python"
 	@echo "  make test           Exécute les tests frontend et Python"
 	@echo "  make test-migrations Exécute les tests sur PostgreSQL réel"
+	@echo "  make test-ingestion Valide le gate Oracle's Elixir sur PostgreSQL réel"
 	@echo "  make test-e2e       Exécute les tests Playwright"
 	@echo "  make openapi        Régénère le contrat OpenAPI"
 	@echo "  make oe-catalog     Rafraîchit le catalogue Oracle's Elixir"
@@ -75,6 +77,10 @@ test:
 test-migrations:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour les tests de migration))
 	uv run --frozen pytest tests/integration -vv
+
+test-ingestion:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate ingestion))
+	uv run --frozen pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
 
 test-e2e:
 	pnpm run test:e2e

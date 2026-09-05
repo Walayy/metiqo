@@ -51,6 +51,7 @@ from metiquo.ingestion.manifest import build_snapshot_manifest, store_snapshot
 from metiquo.ingestion.object_store import FilesystemObjectStore
 from metiquo.ingestion.physical_validation import PhysicalValidationReport, PhysicalValidator
 from metiquo.ingestion.promotion import SnapshotPromotionService
+from metiquo.ingestion.quarantine import QuarantineService
 from metiquo.ingestion.raw_loader import RawLoadStatistics, RawTabularLoader
 from metiquo.ingestion.retry import RetryExecutor
 from metiquo.ingestion.safe_download import SafeDownloader, SafeDownloadResult
@@ -140,6 +141,9 @@ class OracleElixirYearSync:
         self._clock = clock or SystemClock()
         settings.object_store_root.mkdir(parents=True, exist_ok=True)
         self._store = FilesystemObjectStore(settings.object_store_root / "raw" / "oracles_elixir")
+        self._quarantine_store = FilesystemObjectStore(
+            settings.object_store_root / "quarantine" / "oracles_elixir"
+        )
         self._catalog = cast(Table, SourceCatalog.__table__)
         self._runs = cast(Table, IngestionRun.__table__)
         self._snapshots = cast(Table, Snapshot.__table__)
@@ -187,32 +191,42 @@ class OracleElixirYearSync:
                 )
                 transport_name = metadata.transport
                 self._set_transport(run_id, transport_name)
-                physical = PhysicalValidator().validate(
-                    download,
-                    previous_validated_size=self._previous_size(catalog_id),
-                )
-                csv_path = _materialize_csv(download, physical, working)
-                rows = _read_rows(csv_path, physical)
-                assessment = ORACLES_ELIXIR_SCHEMA_V1.assess(physical.header)
-                ORACLES_ELIXIR_SCHEMA_V1.require_ingestable(
-                    assessment,
-                    transport=metadata.transport,
-                    source_id=source.source_id,
-                )
-                quality = DataQualityValidator(clock=self._clock).validate(
-                    rows,
-                    previous=self._previous_quality(
-                        provider=str(catalog["provider"]),
-                        dataset=str(catalog["dataset"]),
-                        year=year,
-                    ),
-                )
-                self._persist_quality_issues(run_id, quality)
-                DataQualityValidator.require_pass(
-                    quality,
-                    transport=metadata.transport,
-                    source_id=source.source_id,
-                )
+                try:
+                    physical = PhysicalValidator().validate(
+                        download,
+                        previous_validated_size=self._previous_size(catalog_id),
+                    )
+                    csv_path = _materialize_csv(download, physical, working)
+                    rows = _read_rows(csv_path, physical)
+                    assessment = ORACLES_ELIXIR_SCHEMA_V1.assess(physical.header)
+                    ORACLES_ELIXIR_SCHEMA_V1.require_ingestable(
+                        assessment,
+                        transport=metadata.transport,
+                        source_id=source.source_id,
+                    )
+                    quality = DataQualityValidator(clock=self._clock).validate(
+                        rows,
+                        previous=self._previous_quality(
+                            provider=str(catalog["provider"]),
+                            dataset=str(catalog["dataset"]),
+                            year=year,
+                        ),
+                    )
+                    self._persist_quality_issues(run_id, quality)
+                    DataQualityValidator.require_pass(
+                        quality,
+                        transport=metadata.transport,
+                        source_id=source.source_id,
+                    )
+                except SourceTransportError as error:
+                    self._capture_quarantine(
+                        catalog_id=catalog_id,
+                        run_id=run_id,
+                        source=source,
+                        download=download,
+                        error=error,
+                    )
+                    raise
                 manifest = build_snapshot_manifest(
                     source=source,
                     metadata=metadata,
@@ -480,6 +494,70 @@ class OracleElixirYearSync:
                     for issue in report.issues
                 ],
             )
+
+    def _capture_quarantine(
+        self,
+        *,
+        catalog_id: UUID,
+        run_id: UUID,
+        source: SourceRef,
+        download: SafeDownloadResult,
+        error: SourceTransportError,
+    ) -> UUID | None:
+        """Conserver un contenu reçu et refusé sans toucher au pointeur courant."""
+
+        with self._engine.begin() as connection:
+            connection.execute(
+                select(self._catalog.c.id).where(self._catalog.c.id == catalog_id).with_for_update()
+            ).scalar_one()
+            existing = (
+                connection.execute(
+                    select(self._snapshots.c.id, self._snapshots.c.status).where(
+                        self._snapshots.c.source_catalog_id == catalog_id,
+                        self._snapshots.c.sha256 == download.sha256,
+                    )
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if existing is not None:
+                if existing["status"] != "quarantined":
+                    return None
+                snapshot_id = cast(UUID, existing["id"])
+            else:
+                diagnostic = error.to_dict()
+                diagnostic.update(
+                    {
+                        "downloadSha256": download.sha256,
+                        "downloadByteSize": download.byte_size,
+                        "contentType": download.profile.content_type,
+                    }
+                )
+                captured = QuarantineService(
+                    connection=connection,
+                    object_store=self._quarantine_store,
+                    clock=self._clock,
+                ).capture(
+                    source_catalog_id=catalog_id,
+                    run_id=run_id,
+                    year=source.year,
+                    source_file_id=source.source_id,
+                    payload_path=download.final_path,
+                    reason_code=_error_code(error),
+                    diagnostic=diagnostic,
+                    source_kind=("csv" if download.profile.compression == "none" else "bin"),
+                    content_type=download.profile.content_type,
+                )
+                snapshot_id = captured.snapshot_id
+            connection.execute(
+                update(self._runs).where(self._runs.c.id == run_id).values(snapshot_id=snapshot_id)
+            )
+            connection.execute(
+                update(self._quality_issues)
+                .where(self._quality_issues.c.run_id == run_id)
+                .values(snapshot_id=snapshot_id)
+            )
+        return snapshot_id
 
     def _previous_quality(
         self,
