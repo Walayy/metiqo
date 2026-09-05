@@ -1312,3 +1312,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; `VAL-004` peut appliquer ces seuils avec les autres garde-fous d'admission.
 - **ADR éventuel :** aucun ; la priorité `global → marché → compétition → bucket` est enregistrée comme règle déterministe initiale, et tout changement de contenu exige une nouvelle version.
 - **Commit/hash :** `63dd714` (`feat(pricing): version signal threshold policies`).
+
+## VAL-004 — Garde-fous d’admission
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la fraîcheur et l’état de marché `ODD-008`, le matching événement `MAP-003`, le champion de production `ML-011`, le registre de capacités `CNL-006` et la politique résolue `VAL-003` sont `DONE` ; le gate compose leurs sorties typées sans nouvelle heuristique.
+- **Fichiers créés/modifiés :** décision ordonnée `python/metiquo/pricing/admission.py`, exports pricing, deux motifs d’abstention précis, contrat OpenAPI/client TypeScript régénéré, guide `docs/value-admission.md`, test de stabilité du contrat et seize scénarios dédiés dans `tests/pricing/test_admission.py`.
+- **Migrations :** aucune ; le gate produit une décision immuable à partir des états, timestamps, métriques et seuils déjà versionnés.
+- **Commandes/tests exécutés :** Ruff, mypy strict, 37 tests pricing ciblés, 25 tests contrats/admission, génération OpenAPI, TypeScript, Prettier et CSpell, puis gate global `make check` isolé avec PostgreSQL réel. Une première tentative chevauchée avec un processus résiduel a confirmé une collision Alembic sur la base partagée ; la relance unique après terminaison est entièrement verte.
+- **Résultat exact :** `ValueAdmissionGate` exécute toujours le même ordre public : capacité, qualité source, champion, mapping événement, règles marché, marché ouvert, événement non commencé, cutoff strictement antérieur au départ, âge des cotes, confiance du mapping, edge, EV puis EV prudente. Il évalue tous les contrôles afin de publier une preuve complète, ordonnée et sans doublon, mais un seul échec rend `admitted=false`. Une source non fraîche, un modèle non champion, un marché suspendu ou réglé, un événement déjà commencé, un cutoff invalide et des cotes trop anciennes ne passent jamais. Les bornes exactes de la politique sont admises ; une EV centrale insuffisante et une EV prudente positive mais sous le seuil ont désormais leurs propres motifs, distincts de l’EV prudente négative. Le gate retourne 432 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 299 fichiers sont verts.
+- **Blocker éventuel :** aucun ; `VAL-005` peut transformer ces décisions refusées en abstentions de première classe jusque dans l’interface.
+- **ADR éventuel :** aucun ; l’ordre constitue une surface publique stable pour l’audit, sans court-circuit qui masquerait les causes secondaires.
+- **Commit/hash :** `58d5b66` (`feat(pricing): enforce ordered admission guards`).
