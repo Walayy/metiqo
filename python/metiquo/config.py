@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     oe_retry_max_attempts: int = Field(default=4, ge=1, le=10)
     oe_retry_base_seconds: float = Field(default=1.0, gt=0)
     oe_retry_max_seconds: float = Field(default=30.0, gt=0)
+    oe_google_drive_bearer: SecretStr | None = None
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
@@ -109,6 +110,15 @@ class Settings(BaseSettings):
             ZoneInfo(value)
         except ZoneInfoNotFoundError as error:
             raise ValueError("DISPLAY_TIMEZONE doit être un fuseau IANA connu") from error
+        return value
+
+    @field_validator("oe_google_drive_bearer")
+    @classmethod
+    def validate_google_drive_bearer(cls, value: SecretStr | None) -> SecretStr | None:
+        """Refuser un credential vide tout en conservant sa valeur masquée."""
+
+        if value is not None and not value.get_secret_value().strip():
+            raise ValueError("OE_GOOGLE_DRIVE_BEARER ne peut pas être vide")
         return value
 
     @model_validator(mode="after")
