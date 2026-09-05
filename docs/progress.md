@@ -820,3 +820,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les champion pools sont résumés en colonnes fixes pré-draft plutôt qu'en catégories dynamiques dépendant du pick cible, afin de conserver un schéma reproductible et de rendre impossible la fuite du draft réel.
 - **Commit/hash :** `8ad8aaa` (`feat(features): add pre-draft champion meta`).
+
+## FEAT-009 — Contexte compétition et calendrier
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les lots as-of `FEAT-002` et le contexte canonique de séries `CNL-003` sont `DONE` ; les champs cibles n'acceptent que la provenance `canonical_oe` ou l'état `unknown`.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/context.py`, exports features et tests modèle de provenance, calendrier et connaissance tardive.
+- **Migrations :** aucune ; les valeurs cibles transportent l'UUID de leur révision canonique et leur instant de connaissance, tandis que le calendrier est dérivé des games déjà historisées.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; quinze tests modèle cumulés ; vérification du diff.
+- **Résultat exact :** compétition, ligue, région, tournoi, stage, phase regular/playoffs/international, best-of et patch sont soit accompagnés d'une révision OE connue au cutoff, soit absents avec provenance `unknown` et indicateur de connaissance faux. Une provenance `external_news` est refusée et un champ OE appris après le cutoff déclenche le garde-fou temporel. Pour chaque équipe, le calcul expose jours de repos depuis la dernière game, densité des quatorze derniers jours et expérience du format best-of cible. La fixture internationale retrouve deux jours de repos, deux games récentes et une game antérieure dans le même BO pour l'équipe A ; une équipe sans historique conserve repos `None` sans imputation.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la phase n'est déduite que d'indicateurs OE explicites : international prend priorité, sinon playoffs vrai donne `playoffs`, playoffs faux donne `regular`, et toute autre combinaison reste inconnue.
+- **Commit/hash :** `996c7c7` (`feat(features): add proven competition context`).
