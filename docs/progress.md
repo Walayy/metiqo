@@ -1048,3 +1048,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le décodage du binaire et la résolution de l'incertitude restent des adapters injectés, mais le loader impose leur passage par le registre vérifié avant toute inférence.
 - **Commit/hash :** `5a43240` (`feat(ml): persist reproducible prematch predictions`).
+
+## ML-014 — Pricing de série BO1/BO3/BO5 et BO2 conditionnel
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la prédiction pré-match `ML-013` et les règles canoniques de série `CNL-003` sont `DONE` ; le moteur accepte directement l'intervalle probabiliste historisé par le service.
+- **Fichiers créés/modifiés :** moteur `python/metiquo/markets/series_pricing.py`, exports marchés, tests analytiques et simulation `tests/markets/test_series_pricing.py` ; les imports du service de prédiction ont aussi été découplés pour supprimer un cycle entre packages.
+- **Migrations :** aucune ; seule la distribution `GAME_WINNER` reste publiable, tandis que les scores terminaux et nombres de games demeurent des détails internes calculés à la volée.
+- **Commandes/tests exécutés :** Ruff, mypy strict, tests de propriétés et simulation ciblés, puis gate global complet avec PostgreSQL réel.
+- **Résultat exact :** BO1 conserve la probabilité de game ; BO3 et BO5 utilisent une énumération exacte jusqu'au nombre de victoires requis ; BO2 joue deux games et expose `TEAM_A`, `TEAM_B` et `DRAW` uniquement lorsque le format autorise le nul. À `p=0,60`, les probabilités équipe A obtenues sont respectivement `0,60000000`, `0,64800000`, `0,68256000` et `0,36000000`, avec `0,48000000` de nul en BO2. Une propriété couvre 101 probabilités pour les quatre formats et exige une somme exactement égale à 1. Les bornes d'incertitude sont propagées sur tous les coins de l'intervalle. Quand la side initiale est inconnue, les scénarios départ blue et départ red sont moyennés à poids égaux ; la preuve retrouve exactement la moyenne des deux distributions connues. Une simulation déterministe de 30 000 séries par format reste à moins d'un point de pourcentage de l'analytique. Format absent, BO non pris en charge ou règle de nul incohérente produisent une abstention sans prix. Le gate retourne 302 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 234 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'hypothèse d'indépendance conditionnelle entre games est explicite dans ce premier moteur et les marchés score exact/nombre de games restent désactivés.
+- **Commit/hash :** `2ef7113` (`feat(markets): derive uncertainty-aware series pricing`).
