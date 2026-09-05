@@ -532,6 +532,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** le module standard `csv` avec insertions par lots est retenu à ce stade : il fournit le flux adapté demandé sans ajouter Polars, tout en conservant le contrat remplaçable derrière le loader.
 - **Commit/hash :** `8935c2a` (`feat(ingestion): load raw rows idempotently`).
 
+## OE-018 — Historiser les révisions de lignes
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-017` fournit la clé naturelle, le hash déterministe, le staging et le merge canonique.
+- **Fichiers créés/modifiés :** migration `20260906_0006`, `python/metiqo/db/raw_models.py`, extension de `python/metiqo/ingestion/raw_loader.py` et du test PostgreSQL de chargement.
+- **Migrations :** ajout de la date métier aux révisions, création d'une baseline pour les lignes déjà canoniques, remplacement de l'unicité du hash par un index autorisant un retour légitime à une ancienne valeur, et trigger append-only interdisant UPDATE/DELETE.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés avec upgrade/downgrade ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** avant chaque upsert, le loader insère une révision pour toute ligne nouvelle ou dont le hash change, avec payload avant/après récupérable, snapshot, run, date métier, numéro séquentiel, opération et lien vers la révision précédente. La transaction sérialise le catalogue, donc révision et canonique avancent ensemble. Le scénario de correction passe de `kills=2` à `kills=99`, crée exactement les révisions 1 et 2 correctement chaînées, laisse dix lignes inchangées sans fausse révision et conserve dans le canonique la douzième ligne absente du fichier partiel. Les tentatives SQL d'UPDATE et DELETE de l'historique échouent. La suite retourne 212 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'historique append-only et la non-suppression suivent directement `SFG-DATA-005`.
+- **Commit/hash :** `91199f3` (`feat(ingestion): historize row revisions`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
