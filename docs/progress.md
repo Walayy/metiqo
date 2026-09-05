@@ -508,6 +508,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; l'acceptation d'une quarantaine est une décision auditée distincte d'une promotion de données.
 - **Commit/hash :** `4a7a38d` (`feat(ingestion): quarantine invalid snapshots`).
 
+## OE-016 — Promotion atomique du snapshot
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-011`, `OE-014` et `OE-015` sont `DONE` ; seuls les objets relus, intègres et non bloqués peuvent atteindre la publication.
+- **Fichiers créés/modifiés :** migration `20260905_0004`, `python/metiqo/db/raw_models.py`, `python/metiqo/ingestion/promotion.py`, extension du lecteur de snapshots et tests PostgreSQL de promotion/quarantaine/migration.
+- **Migrations :** ajout facultatif de `raw.source_catalog.current_snapshot_id` avec clé étrangère composite garantissant que la cible appartient au même catalogue ; upgrade/downgrade testés.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés ; `make check` complet avec base réelle et contrat OpenAPI.
+- **Résultat exact :** `SnapshotPromotionService` relit et recalcule le hash de l'objet immuable avant transaction, refuse un rapport DQ bloquant, verrouille catalogue et run, crée ou réutilise un snapshot validé, déplace le pointeur courant et clôt le run avec ses compteurs dans une transaction unique. Le résultat n'est rendu qu'après sortie réussie du commit. Une observation concurrente juste avant commit voit encore l'ancien pointeur, le run `running` et zéro nouveau snapshot ; une panne injectée à cet instant lève `ATOMIC_PROMOTION_FAILED`, restaure entièrement l'état DB et conserve seulement l'objet immuable sans visibilité courante. En succès, les trois changements deviennent visibles ensemble. La suite retourne 210 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le pointeur explicite évite de confondre ordre temporel et publication atomique.
+- **Commit/hash :** `fdf1889` (`feat(ingestion): promote snapshots atomically`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
