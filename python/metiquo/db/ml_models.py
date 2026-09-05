@@ -277,3 +277,104 @@ class RatingArtifact(Base):
     created_at: Mapped[datetime] = mapped_column(
         UtcDateTime(), nullable=False, server_default=func.now()
     )
+
+
+class TabularBenchmarkRun(Base):
+    """Benchmark CPU publié avec décision de promotion multi-métrique."""
+
+    __tablename__ = "tabular_benchmark_runs"
+    __table_args__ = (
+        CheckConstraint("market = 'game_winner'", name="supported_market"),
+        CheckConstraint("length(trim(benchmark_version)) > 0", name="benchmark_version"),
+        CheckConstraint(
+            "walk_forward_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="walk_forward_fingerprint",
+        ),
+        CheckConstraint("jsonb_typeof(feature_spec) = 'object'", name="feature_spec_object"),
+        CheckConstraint(
+            "jsonb_typeof(candidate_evaluations) = 'object'",
+            name="candidates_object",
+        ),
+        CheckConstraint("candidate_count >= 2", name="candidate_count"),
+        CheckConstraint(
+            "selected_candidate IN ('gradient_boosting', 'hist_gradient_boosting')",
+            name="selected_candidate",
+        ),
+        CheckConstraint("jsonb_typeof(baseline_run_ids) = 'array'", name="baselines_array"),
+        CheckConstraint("jsonb_array_length(baseline_run_ids) = 3", name="baselines_count"),
+        CheckConstraint("jsonb_typeof(promotion_gate) = 'object'", name="gate_object"),
+        CheckConstraint("seed >= 0", name="seed"),
+        CheckConstraint("predictions_per_candidate >= 1", name="prediction_count"),
+        CheckConstraint(
+            "predictions_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="predictions_fingerprint",
+        ),
+        CheckConstraint("run_fingerprint ~ '^[0-9a-f]{64}$'", name="run_fingerprint"),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        UniqueConstraint("run_fingerprint", name="uq_ml_tabular_benchmark_runs_fingerprint"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    dataset_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.datasets.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    market: Mapped[str] = mapped_column(String(64), nullable=False)
+    benchmark_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    walk_forward_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    feature_spec: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    candidate_evaluations: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    candidate_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    selected_candidate: Mapped[str] = mapped_column(String(64), nullable=False)
+    baseline_run_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    promotion_gate: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    promotable: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    predictions_per_candidate: Mapped[int] = mapped_column(Integer, nullable=False)
+    predictions_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    run_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        UtcDateTime(), nullable=False, server_default=func.now()
+    )
+
+
+class TabularBenchmarkPrediction(Base):
+    """Probabilité OOF exacte de chaque candidat du benchmark."""
+
+    __tablename__ = "tabular_benchmark_predictions"
+    __table_args__ = (
+        CheckConstraint(
+            "candidate_name IN ('gradient_boosting', 'hist_gradient_boosting')",
+            name="candidate_name",
+        ),
+        CheckConstraint("position >= 0", name="position"),
+        CheckConstraint("fold_index >= 0", name="fold_index"),
+        CheckConstraint("probability >= 0 AND probability <= 1", name="probability"),
+        UniqueConstraint(
+            "run_id",
+            "candidate_name",
+            "example_id",
+            name="uq_tabular_benchmark_predictions_example",
+        ),
+        {"schema": ML_SCHEMA},
+    )
+
+    run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.tabular_benchmark_runs.id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    candidate_name: Mapped[str] = mapped_column(String(64), primary_key=True)
+    position: Mapped[int] = mapped_column(Integer, primary_key=True)
+    example_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    fold_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    label: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)

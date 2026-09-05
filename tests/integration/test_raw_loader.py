@@ -414,6 +414,8 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
             "dataset_examples",
             "datasets",
             "rating_artifacts",
+            "tabular_benchmark_predictions",
+            "tabular_benchmark_runs",
         }
 
     with (

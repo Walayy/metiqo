@@ -25,6 +25,7 @@ from metiquo.models.baselines import (
     BaselinePrediction,
     BaselineRun,
     BinaryMetricReport,
+    binary_metric_report_from_document,
     build_baseline_run,
     evaluate_binary_probabilities,
 )
@@ -325,7 +326,7 @@ class RatingArtifactRepository:
             selection_metric=cast(str, row["selection_metric"]),
             selection_scope=cast(str, row["selection_scope"]),
             candidate_metrics=MappingProxyType(
-                {key: _metrics_from_document(value) for key, value in documents.items()}
+                {key: binary_metric_report_from_document(value) for key, value in documents.items()}
             ),
             artifact_fingerprint=cast(str, row["artifact_fingerprint"]),
             code_commit=cast(str, row["code_commit"]),
@@ -406,31 +407,6 @@ def _validate_artifact(artifact: RatingArtifact) -> None:
     expected_id = uuid5(NAMESPACE_URL, f"metiquo:rating-artifact:{fingerprint}")
     if artifact.artifact_id != expected_id:
         raise ValueError("l'identifiant de l'artefact ne correspond pas à son fingerprint")
-
-
-def _metrics_from_document(document: Mapping[str, object]) -> BinaryMetricReport:
-    from metiquo.models.baselines import ReliabilityBin
-
-    calibration = cast(Mapping[str, object], document["calibration"])
-    reliability = cast(list[Mapping[str, object]], calibration["reliability"])
-    return BinaryMetricReport(
-        sample_count=int(cast(int, document["sample_count"])),
-        log_loss=Decimal(cast(str, document["log_loss"])),
-        brier_score=Decimal(cast(str, document["brier_score"])),
-        calibration_ece=Decimal(cast(str, calibration["ece"])),
-        calibration_bins=tuple(
-            ReliabilityBin(
-                lower_bound=Decimal(cast(str, item["lower_bound"])),
-                upper_bound=Decimal(cast(str, item["upper_bound"])),
-                count=int(cast(int, item["count"])),
-                mean_probability=Decimal(cast(str, item["mean_probability"])),
-                observed_frequency=Decimal(cast(str, item["observed_frequency"])),
-                absolute_gap=Decimal(cast(str, item["absolute_gap"])),
-            )
-            for item in reliability
-        ),
-        bin_count=int(cast(int, calibration["bin_count"])),
-    )
 
 
 def _scale(value: Decimal) -> Decimal:
