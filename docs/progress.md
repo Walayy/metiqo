@@ -1012,3 +1012,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le binaire reste hors PostgreSQL mais sa référence et son empreinte sont indissociables de la version enregistrée.
 - **Commit/hash :** `3f01839` (`feat(ml): register verifiable model artifacts`).
+
+## ML-011 — Champion/challenger et rollback
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le registre et l'unicité du champion `ML-010` sont `DONE` ; les transitions réutilisent les champs de statut réservés sans modifier les métadonnées immuables de la version.
+- **Fichiers créés/modifiés :** migration `20260907_0024`, modèles ORM d'événements et prédictions shadow, service `python/metiquo/models/lifecycle.py`, exports ML et scénario PostgreSQL de promotion/remplacement/rollback.
+- **Migrations :** création de `ml.model_status_events` et `ml.shadow_predictions`, toutes deux append-only. Chaque transition conserve version, ancien/nouveau statut, version liée, action, acteur, motif, preuve, instant et fingerprint. Chaque prédiction shadow conserve challenger, champion servi à cet instant, événement, cutoff, instant, probabilité/intervalle et fingerprint de contexte. Les clés étrangères et contraintes probabilistes rendent les versions historiques indissociables de la preuve.
+- **Commandes/tests exécutés :** Ruff, mypy strict, scénario lifecycle PostgreSQL et cycle Alembic ciblés, puis gate global complet.
+- **Résultat exact :** une promotion exige une référence d'approbation manuelle, un rapport exact, des gains positifs face aux trois baselines prior/forme/rating et au moins deux métriques dont une probabiliste primaire. Le service verrouille le scope, retire l'ancien champion puis promeut le candidat dans une seule transaction. Le shadow d'un challenger est enregistré sans effet sur le modèle servi ; après promotion puis rollback, il référence encore exactement le challenger et le champion d'origine. Le rollback retire le champion courant et réactive immédiatement la version retirée, avec deux événements consignés. Un candidat peut aussi être bloqué avec motif. Une preuve fondée seulement sur accuracy et ROC-AUC est refusée et les événements ne peuvent être modifiés. Le gate retourne 291 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 226 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les promotions restent exclusivement explicites, manuelles, multi-métriques et réversibles, sans modifier les prédictions historiques.
+- **Commit/hash :** `ed3ce5c` (`feat(ml): audit champion lifecycle and rollback`).

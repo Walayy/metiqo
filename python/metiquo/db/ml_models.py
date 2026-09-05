@@ -659,3 +659,91 @@ class ModelVersion(Base):
     status_changed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     status_reason: Mapped[str] = mapped_column(String(512), nullable=False)
     registration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class ModelStatusEvent(Base):
+    """Transition de statut manuelle et append-only."""
+
+    __tablename__ = "model_status_events"
+    __table_args__ = (
+        CheckConstraint(
+            "action IN ('promote', 'retire_for_promotion', 'rollback', "
+            "'retire_for_rollback', 'block')",
+            name="action",
+        ),
+        CheckConstraint(
+            "from_status IN ('candidate', 'champion', 'retired', 'blocked')",
+            name="from_status",
+        ),
+        CheckConstraint(
+            "to_status IN ('candidate', 'champion', 'retired', 'blocked')",
+            name="to_status",
+        ),
+        CheckConstraint("from_status <> to_status", name="status_changed"),
+        CheckConstraint("length(trim(actor)) > 0", name="actor"),
+        CheckConstraint("length(trim(reason)) > 0", name="reason"),
+        CheckConstraint("jsonb_typeof(evidence) = 'object'", name="evidence_object"),
+        CheckConstraint("transition_fingerprint ~ '^[0-9a-f]{64}$'", name="fingerprint"),
+        UniqueConstraint("transition_fingerprint", name="uq_ml_model_status_events_fingerprint"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    model_version_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.model_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    related_model_version_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.model_versions.id", ondelete="RESTRICT"),
+    )
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
+    from_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    to_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    actor: Mapped[str] = mapped_column(String(128), nullable=False)
+    reason: Mapped[str] = mapped_column(String(512), nullable=False)
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    transition_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class ShadowPrediction(Base):
+    """Prédiction challenger sans effet sur le champion servi."""
+
+    __tablename__ = "shadow_predictions"
+    __table_args__ = (
+        CheckConstraint("model_version_id <> champion_model_version_id", name="distinct_models"),
+        CheckConstraint("predicted_at >= cutoff_at", name="prediction_after_cutoff"),
+        CheckConstraint("probability >= 0 AND probability <= 1", name="probability"),
+        CheckConstraint("p_low >= 0 AND p_low <= probability", name="lower_interval"),
+        CheckConstraint("p_high >= probability AND p_high <= 1", name="upper_interval"),
+        CheckConstraint("context_fingerprint ~ '^[0-9a-f]{64}$'", name="context_fingerprint"),
+        CheckConstraint("prediction_fingerprint ~ '^[0-9a-f]{64}$'", name="fingerprint"),
+        UniqueConstraint("prediction_fingerprint", name="uq_ml_shadow_predictions_fingerprint"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    model_version_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.model_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    champion_model_version_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.model_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    event_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    predicted_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    p_low: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    p_high: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    context_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    prediction_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
