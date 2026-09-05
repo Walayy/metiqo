@@ -640,3 +640,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le gate assemble les décisions SFG déjà implémentées et sa base temporaire est volontairement isolée.
 - **Commit/hash :** `79f0053` (`feat(ingestion): prove reliable reconstruction gate`).
+
+## CNL-001 — Dimensions canoniques LoL
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l’historisation raw `OE-018`, les conventions PostgreSQL `FND-004` et le gate P2 `OE-025` sont `DONE` sur `main`.
+- **Fichiers créés/modifiés :** migration `20260906_0009`, modèles `python/metiquo/db/core_models.py`, projection `python/metiquo/canonical/dimensions.py`, enregistrement Alembic des métadonnées et tests PostgreSQL de migration/provenance.
+- **Migrations :** création de `core.game_titles`, `core.competitions`, `core.teams`, `core.players` et `core.patches`, avec UUID canoniques, identité source, nom normalisé et provenance obligatoire vers ligne raw, snapshot et run.
+- **Commandes/tests exécutés :** Ruff format/check ciblé ; mypy strict global sur 144 fichiers ; cycle Alembic upgrade/downgrade/upgrade ; tests PostgreSQL ciblés des migrations et dimensions.
+- **Résultat exact :** `CanonicalDimensionBuilder` ne lit que les lignes Oracle’s Elixir dont le snapshot est `validated` et le run `succeeded`. Il produit des UUID v5 déterministes, normalise les identités Unicode sans les enrichir depuis une source externe, privilégie les identifiants OE `teamid`/`playerid` et n’utilise les noms OE qu’en secours explicite. Deux exécutions donnent les mêmes identifiants et cardinalités. La fixture PostgreSQL matérialise un titre, une compétition, deux équipes, deux joueurs et un patch ; une ligne rattachée à un snapshot quarantiné reste absente. Chaque ligne projetée retrouve sa ligne raw, son snapshot validé, son run réussi, sa révision et `canonical-dimensions-v1`. Les trois tests ciblés passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les dimensions appliquent directement l’interdiction P3 de calculer depuis un téléchargement ad hoc.
+- **Commit/hash :** `60ad1b3` (`feat(canonical): add traceable LoL dimensions`).
