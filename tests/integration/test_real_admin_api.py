@@ -7,7 +7,7 @@ import hashlib
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from alembic import command
@@ -18,6 +18,7 @@ from sqlalchemy import Table, create_engine, insert, update
 
 from metiquo.api.app import create_app
 from metiquo.api.readiness import ReadinessCheck
+from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.config import Settings
 from metiquo.db.raw_models import (
     IngestionRun,
@@ -73,7 +74,7 @@ def _settings(database_url: str, mode: str) -> Settings:
     )
 
 
-def _seed_real_health(database_url: str, idempotency_key: str) -> None:
+def _seed_real_health(database_url: str, idempotency_key: str) -> UUID:
     engine = create_engine(database_url)
     catalog_id = uuid4()
     validated_id = uuid4()
@@ -224,6 +225,7 @@ def _seed_real_health(database_url: str, idempotency_key: str) -> None:
             )
         )
     engine.dispose()
+    return validated_id
 
 
 @pytest.mark.integration
@@ -232,8 +234,13 @@ def test_real_admin_uses_mock_contracts_and_survives_latest_failure(
 ) -> None:
     command.upgrade(_alembic_config(postgresql_url), "head")
     idempotency_key = "real-admin-idempotency"
-    _seed_real_health(postgresql_url, idempotency_key)
+    validated_id = _seed_real_health(postgresql_url, idempotency_key)
     clock = FixedClock(UtcInstant(NOW))
+    capability_engine = create_engine(postgresql_url)
+    CapabilityRegistry(engine=capability_engine, clock=clock).evaluate_snapshot(
+        snapshot_id=validated_id
+    )
+    capability_engine.dispose()
     real_app = create_app(
         settings=_settings(postgresql_url, "real"),
         readiness_probe=ReadyProbe(),
@@ -248,7 +255,15 @@ def test_real_admin_uses_mock_contracts_and_survives_latest_failure(
     real_sources = _request(real_app, "GET", "/api/v1/admin/data-sources")
     real_runs = _request(real_app, "GET", "/api/v1/admin/ingestion-runs")
     real_issues = _request(real_app, "GET", "/api/v1/admin/quality-issues")
-    assert (real_sources.status_code, real_runs.status_code, real_issues.status_code) == (
+    capability_path = f"/api/v1/admin/capabilities?snapshotId={validated_id}"
+    real_capabilities = _request(real_app, "GET", capability_path)
+    assert (
+        real_sources.status_code,
+        real_runs.status_code,
+        real_issues.status_code,
+        real_capabilities.status_code,
+    ) == (
+        200,
         200,
         200,
         200,
@@ -256,6 +271,7 @@ def test_real_admin_uses_mock_contracts_and_survives_latest_failure(
     source_payload = real_sources.json()
     run_payload = real_runs.json()
     issue_payload = real_issues.json()
+    capability_payload = real_capabilities.json()
     assert source_payload["meta"]["dataMode"] == "real"
     assert source_payload["data"][0]["status"] == "degraded"
     assert source_payload["data"][0]["lastSuccessAt"] == "2026-09-05T10:00:00Z"
@@ -266,11 +282,14 @@ def test_real_admin_uses_mock_contracts_and_survives_latest_failure(
     assert succeeded["schemaFingerprint"] == "c" * 64
     assert succeeded["schemaChanged"] is False
     assert {item["status"] for item in issue_payload["data"]} == {"open", "quarantined"}
+    assert capability_payload["meta"]["dataMode"] == "real"
+    assert {item["status"] for item in capability_payload["data"]} == {"disabled"}
 
     for path, real_payload in (
         ("/api/v1/admin/data-sources", source_payload),
         ("/api/v1/admin/ingestion-runs", run_payload),
         ("/api/v1/admin/quality-issues", issue_payload),
+        (capability_path, capability_payload),
     ):
         mock_payload = _request(mock_app, "GET", path).json()
         assert set(real_payload) == set(mock_payload)

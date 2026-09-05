@@ -13,6 +13,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import Connection, Engine, RowMapping, Select, Table, select
 from sqlalchemy.dialects.postgresql import insert
 
+from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.canonical.dimensions import (
     LOL_DATASET,
     LOL_SLUG,
@@ -117,6 +118,10 @@ class CanonicalGameBuilder:
             provider=provider,
             dataset=dataset,
             entity_types={"game", "game_team_stat", "game_player_stat"},
+        )
+        CapabilityRegistry(engine=self._engine, clock=self._clock).evaluate_current(
+            provider=provider,
+            dataset=dataset,
         )
         return statistics
 

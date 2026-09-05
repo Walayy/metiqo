@@ -80,6 +80,7 @@ def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> 
         "/api/v1/admin/ingestion-runs",
         "/api/v1/admin/quality-issues",
         "/api/v1/admin/jobs",
+        "/api/v1/admin/capabilities",
         "/api/v1/admin/mappings/pending",
         "/api/v1/admin/audit-log",
         "/api/v1/admin/oracles-elixir/sync",

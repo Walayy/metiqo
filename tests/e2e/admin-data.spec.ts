@@ -16,6 +16,11 @@ test("shows source degradation, snapshots, schema gaps and blocking anomalies", 
   await expect(snapshot).toContainText("Hash actif");
   await expect(snapshot).toContainText("Plage de dates métier");
   await expect(snapshot).toContainText("Schéma");
+  const capabilities = page.getByRole("region", { name: "Capacités par snapshot" });
+  await expect(capabilities).toContainText("market.match_winner");
+  await expect(capabilities).toContainText("pending");
+  await expect(capabilities).toContainText("model: attente");
+  await expect(capabilities).toContainText("odds: attente");
   await expect(page.getByRole("region", { name: "Anomalies bloquantes" })).toContainText(
     "EVENT_MAPPING_AMBIGUOUS",
   );

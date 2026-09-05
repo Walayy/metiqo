@@ -27,6 +27,7 @@ from metiquo.api.mutation_routes import build_mutation_router
 from metiquo.api.read_routes import build_read_router
 from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, ReadinessProbe
 from metiquo.api.real_admin_routes import build_real_admin_router
+from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.config import Settings, load_settings
 from metiquo.contracts.enums import DataMode
 from metiquo.foundation.errors import BusinessError, ErrorCode
@@ -163,6 +164,7 @@ def create_app(
                 resolved_repository,
                 resolved_real_mutations,
                 resolved_clock,
+                CapabilityRegistry(engine=real_engine, clock=resolved_clock),
             )
         )
 

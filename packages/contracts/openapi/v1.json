@@ -228,6 +228,137 @@
         "title": "BacktestSummary",
         "type": "object"
       },
+      "CapabilityEvaluationDto": {
+        "additionalProperties": false,
+        "description": "Matrice publique d'une capacité évaluée sur un snapshot précis.",
+        "properties": {
+          "capability": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Capability",
+            "type": "string"
+          },
+          "evaluatedAt": {
+            "format": "date-time",
+            "title": "Evaluatedat",
+            "type": "string"
+          },
+          "evaluationRevision": {
+            "minimum": 1.0,
+            "title": "Evaluationrevision",
+            "type": "integer"
+          },
+          "gates": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Gates",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "label",
+              "feature",
+              "market"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "minimumCompleteness": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Minimumcompleteness",
+            "type": "string"
+          },
+          "minimumSampleSize": {
+            "minimum": 0.0,
+            "title": "Minimumsamplesize",
+            "type": "integer"
+          },
+          "observedColumns": {
+            "items": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Observedcolumns",
+            "type": "array"
+          },
+          "observedCompleteness": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Observedcompleteness",
+            "type": "string"
+          },
+          "observedSampleSize": {
+            "minimum": 0.0,
+            "title": "Observedsamplesize",
+            "type": "integer"
+          },
+          "reasonCodes": {
+            "items": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Reasoncodes",
+            "type": "array"
+          },
+          "requiredColumns": {
+            "items": {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Requiredcolumns",
+            "type": "array"
+          },
+          "snapshotId": {
+            "format": "uuid",
+            "title": "Snapshotid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "enabled",
+              "disabled",
+              "pending"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "thresholdVersion": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Thresholdversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshotId",
+          "capability",
+          "kind",
+          "status",
+          "reasonCodes",
+          "thresholdVersion",
+          "evaluationRevision",
+          "requiredColumns",
+          "observedColumns",
+          "minimumCompleteness",
+          "observedCompleteness",
+          "minimumSampleSize",
+          "observedSampleSize",
+          "gates",
+          "evaluatedAt"
+        ],
+        "title": "CapabilityEvaluationDto",
+        "type": "object"
+      },
       "ContractMetadata": {
         "additionalProperties": false,
         "description": "Mode, fraîcheur et version d'une réponse métier.",
@@ -1677,6 +1808,31 @@
         "title": "PageResponse[BacktestSummary]",
         "type": "object"
       },
+      "PageResponse_CapabilityEvaluationDto_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CapabilityEvaluationDto"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "meta"
+        ],
+        "title": "PageResponse[CapabilityEvaluationDto]",
+        "type": "object"
+      },
       "PageResponse_DataQualityIssue_": {
         "additionalProperties": false,
         "properties": {
@@ -2879,6 +3035,62 @@
         "summary": "Audit Log",
         "tags": [
           "mock-actions"
+        ]
+      }
+    },
+    "/api/v1/admin/capabilities": {
+      "get": {
+        "operationId": "list_capabilities_api_v1_admin_capabilities_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponse_CapabilityEvaluationDto_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Capabilities",
+        "tags": [
+          "reads"
         ]
       }
     },

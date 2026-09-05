@@ -1,5 +1,11 @@
 """Projection du raw validé vers le modèle canonique League of Legends."""
 
+from metiquo.canonical.capabilities import (
+    CapabilityDefinition,
+    CapabilityRegistry,
+    CapabilityState,
+    MarketGateEvidence,
+)
 from metiquo.canonical.dimensions import (
     CanonicalDimensionBuilder,
     CanonicalDimensionStatistics,
@@ -25,6 +31,10 @@ __all__ = [
     "CanonicalRosterStatistics",
     "CanonicalSeriesBuilder",
     "CanonicalSeriesStatistics",
+    "CapabilityDefinition",
+    "CapabilityRegistry",
+    "CapabilityState",
+    "MarketGateEvidence",
     "ProjectedRosterMember",
     "RosterProjectionService",
 ]

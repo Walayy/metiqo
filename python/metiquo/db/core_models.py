@@ -542,3 +542,70 @@ class CanonicalEntitySource(Base):
     source_row_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     source_row_revision: Mapped[int] = mapped_column(Integer, nullable=False)
     source_payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+
+class CapabilityEvaluation(Base):
+    """Évaluation versionnée et append-only d'une capacité pour un snapshot."""
+
+    __tablename__ = "capability_evaluations"
+    __table_args__ = (
+        CheckConstraint("capability_kind IN ('label', 'feature', 'market')", name="kind"),
+        CheckConstraint("status IN ('enabled', 'disabled', 'pending')", name="status"),
+        CheckConstraint("evaluation_revision >= 1", name="evaluation_revision"),
+        CheckConstraint("minimum_completeness BETWEEN 0 AND 1", name="minimum_completeness"),
+        CheckConstraint("observed_completeness BETWEEN 0 AND 1", name="observed_completeness"),
+        CheckConstraint("minimum_sample_size >= 0", name="minimum_sample_size"),
+        CheckConstraint("observed_sample_size >= 0", name="observed_sample_size"),
+        CheckConstraint("evidence_hash ~ '^[0-9a-f]{64}$'", name="evidence_hash"),
+        CheckConstraint("length(trim(capability)) > 0", name="capability"),
+        CheckConstraint("length(trim(threshold_version)) > 0", name="threshold_version"),
+        CheckConstraint(
+            "(evaluation_revision = 1 AND previous_evaluation_id IS NULL) "
+            "OR (evaluation_revision > 1 AND previous_evaluation_id IS NOT NULL)",
+            name="revision_chain",
+        ),
+        UniqueConstraint(
+            "snapshot_id",
+            "capability",
+            "threshold_version",
+            "evaluation_revision",
+            name="uq_capability_evaluations_snapshot_capability_revision",
+        ),
+        Index(
+            "ix_core_capability_evaluations_lookup",
+            "snapshot_id",
+            "capability",
+            "evaluated_at",
+        ),
+        {"schema": CORE_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    snapshot_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.snapshots.id", name="fk_cap_eval_snapshot", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    capability: Mapped[str] = mapped_column(String(128), nullable=False)
+    capability_kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    threshold_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    evaluation_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    previous_evaluation_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "core.capability_evaluations.id",
+            name="fk_cap_eval_previous",
+            ondelete="RESTRICT",
+        ),
+    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    reason_codes: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    required_columns: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    observed_columns: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    minimum_completeness: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    observed_completeness: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    minimum_sample_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    observed_sample_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    gates: Mapped[dict[str, bool | None]] = mapped_column(JSONB, nullable=False)
+    evidence_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)

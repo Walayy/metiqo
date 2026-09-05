@@ -96,6 +96,26 @@ class OpportunityExplanation(ApiModel):
     reasons: tuple[NonEmptyText, ...]
 
 
+class CapabilityEvaluationDto(ApiModel):
+    """Matrice publique d'une capacité évaluée sur un snapshot précis."""
+
+    snapshot_id: UUID = Field(alias="snapshotId")
+    capability: NonEmptyText
+    kind: Literal["label", "feature", "market"]
+    status: Literal["enabled", "disabled", "pending"]
+    reason_codes: tuple[NonEmptyText, ...] = Field(alias="reasonCodes")
+    threshold_version: NonEmptyText = Field(alias="thresholdVersion")
+    evaluation_revision: int = Field(ge=1, alias="evaluationRevision")
+    required_columns: tuple[NonEmptyText, ...] = Field(alias="requiredColumns")
+    observed_columns: tuple[NonEmptyText, ...] = Field(alias="observedColumns")
+    minimum_completeness: FiniteDecimal = Field(alias="minimumCompleteness")
+    observed_completeness: FiniteDecimal = Field(alias="observedCompleteness")
+    minimum_sample_size: int = Field(ge=0, alias="minimumSampleSize")
+    observed_sample_size: int = Field(ge=0, alias="observedSampleSize")
+    gates: dict[str, bool | None]
+    evaluated_at: datetime = Field(alias="evaluatedAt")
+
+
 class TrainModelRequest(ApiRequestModel):
     game_title: GameTitle = Field(default=GameTitle.LEAGUE_OF_LEGENDS, alias="gameTitle")
     market_type: MarketType = Field(default=MarketType.MATCH_WINNER, alias="marketType")
