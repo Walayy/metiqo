@@ -31,6 +31,7 @@ CORE_TABLES = {
     "canonical_entity_sources",
     "capability_evaluations",
     "competitions",
+    "entity_aliases",
     "game_player_stats",
     "game_team_stats",
     "game_titles",
