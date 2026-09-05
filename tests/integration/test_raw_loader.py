@@ -413,6 +413,8 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
             "baseline_runs",
             "dataset_examples",
             "datasets",
+            "ensemble_candidate_predictions",
+            "ensemble_candidate_runs",
             "rating_artifacts",
             "tabular_benchmark_predictions",
             "tabular_benchmark_runs",

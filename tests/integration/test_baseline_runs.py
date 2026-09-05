@@ -18,6 +18,9 @@ from metiquo.foundation.time import FixedClock, UtcInstant
 from metiquo.models import (
     BaselineEvaluator,
     BaselineRunRepository,
+    EnsembleCandidateEvaluator,
+    EnsembleCandidateRepository,
+    EnsembleSearchParameters,
     GameWinnerDatasetBuilder,
     GameWinnerDatasetRequest,
     RatingArtifactRepository,
@@ -127,6 +130,20 @@ def test_baseline_runs_roundtrip_are_comparable_and_append_only(postgresql_url: 
     assert benchmark_repository.record(benchmark) == stored_benchmark
     assert len(stored_benchmark.candidates) == 2
     assert all(len(candidate.predictions) == 1 for candidate in benchmark.candidates.values())
+    ensemble = EnsembleCandidateEvaluator(
+        code_commit="abcdef1",
+        search=EnsembleSearchParameters(
+            rating_weights=(Decimal("0.25"), Decimal("0.5"), Decimal("0.75")),
+            calibration_bins=5,
+        ),
+        clock=FixedClock(UtcInstant(_CREATED_AT)),
+    ).evaluate(stored_benchmark, baseline_runs=(*stored, stored_rating_run))
+    ensemble_repository = EnsembleCandidateRepository(engine=engine)
+    stored_ensemble = ensemble_repository.record(ensemble)
+
+    assert stored_ensemble == ensemble
+    assert ensemble_repository.record(ensemble) == stored_ensemble
+    assert stored_ensemble.enabled is False
     with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
         connection.execute(
             text("UPDATE ml.baseline_runs SET code_commit = '1234567' WHERE id = :id"),
@@ -146,5 +163,10 @@ def test_baseline_runs_roundtrip_are_comparable_and_append_only(postgresql_url: 
         connection.execute(
             text("UPDATE ml.tabular_benchmark_runs SET seed = 7 WHERE id = :id"),
             {"id": stored_benchmark.run_id},
+        )
+    with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
+        connection.execute(
+            text("UPDATE ml.ensemble_candidate_runs SET enabled = true WHERE id = :id"),
+            {"id": stored_ensemble.run_id},
         )
     engine.dispose()

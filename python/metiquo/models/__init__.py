@@ -44,6 +44,16 @@ from metiquo.models.datasets import (
     StoredTrainingDataset,
     StoredTrainingExample,
 )
+from metiquo.models.ensemble import (
+    ENSEMBLE_CANDIDATE_VERSION,
+    EnsembleCandidateEvaluator,
+    EnsembleCandidateRepository,
+    EnsembleCandidateRun,
+    EnsembleDecision,
+    EnsembleReferenceComparison,
+    EnsembleSearchParameters,
+    EnsembleWeightEvaluation,
+)
 from metiquo.models.rating import (
     RATING_ARTIFACT_VERSION,
     RATING_FEATURE,
@@ -75,6 +85,7 @@ from metiquo.models.validation import (
 __all__ = [
     "COMPETITION_PRIOR",
     "COMPETITION_PRIOR_VERSION",
+    "ENSEMBLE_CANDIDATE_VERSION",
     "GAME_WINNER_DATASET_VERSION",
     "GAME_WINNER_LABEL",
     "GAME_WINNER_MARKET",
@@ -97,6 +108,13 @@ __all__ = [
     "CandidateEvaluation",
     "CompetitionPriorParameters",
     "EmptyTrainingDatasetError",
+    "EnsembleCandidateEvaluator",
+    "EnsembleCandidateRepository",
+    "EnsembleCandidateRun",
+    "EnsembleDecision",
+    "EnsembleReferenceComparison",
+    "EnsembleSearchParameters",
+    "EnsembleWeightEvaluation",
     "FoldProbabilities",
     "GameWinnerDatasetBuilder",
     "GameWinnerDatasetRequest",

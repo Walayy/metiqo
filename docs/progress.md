@@ -952,3 +952,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les deux boosters de la bibliothèque Python constituent les candidats tabulaires CPU prévus par la SFG. Cette étape ne promeut aucun modèle par préférence et réserve toujours le test final.
 - **Commit/hash :** `69d40e8` (`feat(ml): benchmark tabular candidates`).
+
+## ML-006 — Ensemble candidat
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la baseline rating `ML-004` et le benchmark tabulaire `ML-005` sont `DONE` ; l'évaluateur exige leurs mêmes dataset, fingerprint walk-forward, trois runs de baseline et exemples OOF ordonnés.
+- **Fichiers créés/modifiés :** moteur et repository `python/metiquo/models/ensemble.py`, migration `20260906_0021`, modèles ORM, exports ML, test de comparaison et extension du roundtrip PostgreSQL.
+- **Migrations :** création de `ml.ensemble_candidate_runs` et `ml.ensemble_candidate_predictions`. Le run référence le benchmark, le rating et les trois baselines, conserve la grille intérieure de poids, toutes les évaluations, le poids choisi, la décision structurée, métriques, pire fold, fingerprints et commit. La probabilité OOF sélectionnée conserve exemple, fold, cutoff, label et position ; les deux tables sont append-only.
+- **Commandes/tests exécutés :** Ruff, mypy strict sur 212 fichiers, tests modèle/PostgreSQL ciblés, migrations aller-retour, puis gate global complet.
+- **Résultat exact :** chaque poids rating strictement compris entre zéro et un est évalué contre le complément tabulaire sur les seules probabilités OOF déjà publiées. Le poids est choisi de façon déterministe par log loss, ECE, pire log loss de fold puis poids. L'activation exige que le tabulaire source soit lui-même promouvable et que le mélange améliore strictement log loss, calibration et robustesse temporelle face au prior, à la forme récente, au rating et au candidat tabulaire. Sinon, le run reste valide mais `enabled=false` avec une raison par référence non battue ; la fixture prouve cette désactivation sûre. Le test final n'entre dans aucune recherche de poids. Le repository reconstruit intégralement la décision depuis les sources persistées avant insertion. Le gate retourne 282 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, types et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'ensemble est volontairement un candidat désactivable, pas une étape obligatoire du modèle final.
+- **Commit/hash :** `dcf495a` (`feat(ml): gate rating tabular ensemble`).
