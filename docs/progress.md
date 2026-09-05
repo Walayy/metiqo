@@ -964,3 +964,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'ensemble est volontairement un candidat désactivable, pas une étape obligatoire du modèle final.
 - **Commit/hash :** `dcf495a` (`feat(ml): gate rating tabular ensemble`).
+
+## ML-007 — Calibration hors échantillon
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** rating `ML-004`, tabulaire `ML-005` et décision d'ensemble `ML-006` sont `DONE` ; la source devient l'ensemble uniquement s'il est activé, sinon le tabulaire sélectionné reste la source explicite.
+- **Fichiers créés/modifiés :** moteur et repository `python/metiquo/models/calibration.py`, migration `20260906_0022`, modèles ORM, exports ML, tests de fuite temporelle et de dérive par segment.
+- **Migrations :** création de `ml.calibrator_artifacts` et `ml.calibrator_oos_predictions`. L'artefact séparé référence sa source, conserve méthode, paramètres de déploiement, configuration de recherche, évaluations candidates, reliability/ECE/Brier/log loss, pente/intercept, rapports par segment, fingerprints et commit. Chaque probabilité de preuve garde exemple, fold de calibration, cutoff, label et position ; les tables sont append-only.
+- **Commandes/tests exécutés :** Ruff, mypy strict sur 215 fichiers, tests calibration/migrations ciblés, puis gate global complet.
+- **Résultat exact :** Platt et isotonic sont ajustés sur le passé des prédictions OOF puis évalués sur des blocs OOF futurs strictement distincts. Les vingt probabilités de preuve de la fixture proviennent de quatre validations situées après dix périodes initiales de fit ; le test final reste absent et sa modification ne change ni méthode, ni paramètres, ni empreinte. La méthode est choisie par log loss, ECE, Brier puis nom stable. L'artefact de déploiement est ensuite ajusté sur toutes les OOF disponibles et expose une application bornée. La pente et l'intercept de calibration sont calculés sur les seules prédictions de preuve. Les rapports patch et compétition portent toujours leur effectif, signalent les petits échantillons et détectent une fixture volontairement inversée comme dérive matérielle. Le gate retourne 284 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, types et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la calibration est volontairement un artefact distinct du modèle et sa preuve réutilise un second découpage temporel, jamais le test final.
+- **Commit/hash :** `e6edef6` (`feat(ml): calibrate temporal OOS predictions`).
