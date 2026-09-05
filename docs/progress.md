@@ -1216,3 +1216,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les surcharges les plus proches du fournisseur priment de façon déterministe, et le live ne peut pas être activé par une simple valeur de SLA.
 - **Commit/hash :** `1ded8bb` (`feat(odds): gate market admissibility`).
+
+## ODD-009 — Health provider et API odds history
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l'historique append-only `ODD-007`, son gate de fraîcheur `ODD-008` et le contrat de lecture mock `MCK-005` sont `DONE` ; l'adaptateur réel réutilise les mêmes `OddsSnapshot`, `ProviderHealth` et métadonnées de réponse.
+- **Fichiers créés/modifiés :** historisation des contrôles dans `OddsCaptureService`, projections PostgreSQL odds dans les repositories canonique/admin, enrichissement du contrat santé et des routes réelles, contrat OpenAPI/TypeScript régénéré, indicateurs dans l'écran Santé data, guide opérateur et preuve API `tests/integration/test_odds_history_api.py`.
+- **Migrations :** aucune ; `odds.provider_health`, les identités fournisseur et `odds.snapshots` append-only livrés par `ODD-001` portent déjà toutes les données nécessaires.
+- **Commandes/tests exécutés :** tests ciblés provider/repositories/API, Ruff, ESLint, Prettier, CSpell, TypeScript et mypy strict, génération OpenAPI, puis gate global `make check` sur PostgreSQL réel depuis les contrats enregistrés.
+- **Résultat exact :** chaque tentative de capture ajoute un contrôle de santé. Un succès enregistre la dernière capture ; un échec sans historique devient `unavailable`, tandis qu'un échec après succès devient `degraded` sans modifier ni supprimer les snapshots existants. L'API admin réunit Oracle's Elixir et tous les providers odds et expose `lastCaptureAt`, `ageSeconds`, `failureCount` et `freshness`, avec le SLA provider puis global. `GET /api/v1/events/{eventId}/odds-history` reconstruit chronologiquement les identités, cotes décimales, probabilités implicites, états, âges et provenances PostgreSQL ; `asOf` est la dernière capture. La preuve réelle publie une cote, confirme `fresh`, force ensuite une panne, retrouve exactement la même cote et confirme `degraded`, 30 secondes d'âge et un échec. Le gate retourne 371 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, scan conformité, contrats et mypy strict sur 274 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; tant que `MAP-003` n'a pas résolu les identités externes, la lecture repose sur l'identifiant événement déjà partagé, sans rapprochement implicite dangereux.
+- **Commit/hash :** `3ffc775` (`feat(odds): expose provider health history`).
