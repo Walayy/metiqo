@@ -1348,3 +1348,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; `VAL-007` peut projeter les grades admissibles en opportunités réelles tout en gardant `NO_EDGE` et `BLOCKED` pour le diagnostic.
 - **ADR éventuel :** aucun ; une correction publie un nouveau signal avec de nouvelles preuves et ne dispose d'aucune voie de réécriture silencieuse.
 - **Commit/hash :** `48f5360` (`feat(pricing): persist immutable signals`).
+
+## VAL-007 — Projection Opportunités et APIs réelles
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la persistance immuable `VAL-006`, le contrat de lecture mock `MCK-005` et les écrans opportunités/détail `UI-004` et `UI-006` sont `DONE` ; le mode réel réutilise le même `Opportunity` sans copie de DTO.
+- **Fichiers créés/modifiés :** projection `PostgresOpportunityRepository`, routes liste/détail/explication réelles, filtrage diagnostic partagé avec le mock, diagnostics de prédiction enregistrés, migration `20260908_0034`, guide `docs/real-opportunities.md`, README et preuves API/PostgreSQL étendues.
+- **Migrations :** `20260908_0034` ajoute `data_coverage` et `out_of_distribution_distance` à `ml.prematch_predictions`. Les anciennes lignes peuvent rester nulles afin de ne pas inventer de diagnostics rétroactifs ; le trigger exige les deux valeurs exactes pour chaque nouvelle prédiction et la projection ignore les preuves historiques incomplètes.
+- **Commandes/tests exécutés :** Ruff, mypy ciblé, 15 tests mock/réel/migrations/signaux, génération OpenAPI et client TypeScript sans diff, puis gate global `make check` sur PostgreSQL réel.
+- **Résultat exact :** les routes réelles `/api/v1/opportunities`, détail et explication recomposent événement canonique, marché et snapshot provider, prédiction et diagnostics ML, métriques immuables, qualité et métadonnées `real`. La liste normale contient seulement `STRONG_VALUE`, `VALUE` et `WATCH`, triés par EV prudente décroissante puis calcul récent ; filtres compétition, équipe, marché, grade, edge, EV, confiance, fraîcheur et dates sont identiques au mock. Une demande explicite `grade=NO_EDGE` ou `grade=BLOCKED` ouvre le diagnostic des signaux calculés sans les compter comme opportunités ; une abstention antérieure au calcul n'est pas déguisée en `Value`. La preuve publie deux snapshots successifs à `1,80` puis `2,00`, confirme le nouvel ordre, les clés DTO mock/réel identiques, le filtre d'EV, le détail lié au bon snapshot, l'explication `ODDS_STALE` et le refus d'un signal non calculé. Le gate retourne 439 tests Python, 21 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 306 fichiers sont verts.
+- **Blocker éventuel :** aucun ; `VAL-008` peut maintenant faire apparaître un nouveau snapshot/signal sans remplacer silencieusement la fiche déjà ouverte.
+- **ADR éventuel :** aucun ; une preuve legacy sans diagnostics est omise explicitement jusqu'à recalcul, choix plus sûr qu'une valeur de couverture ou distance fabriquée.
+- **Commit/hash :** `9c81ab4` (`feat(api): project real opportunities`).
