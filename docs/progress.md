@@ -1192,3 +1192,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun pour la désactivation ; l'activation réelle reste volontairement bloquée par l'absence d'autorisation, de validation juridique et d'implémentation approuvée.
 - **ADR éventuel :** aucun ; les trois conditions de conformité et l'absence d'adaptateur concret sont des portes cumulatives, pas une simple bascule opérationnelle.
 - **Commit/hash :** `7d39f26` (`feat(odds): enforce disabled Stake provider gate`).
+
+## ODD-007 — Capture et historisation des cotes
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les captures déterministes `MockOddsProvider` de `ODD-003` et les documents atomiques `ManualImportOddsProvider` de `ODD-004` sont `DONE` ; le service persiste directement leur contrat commun.
+- **Fichiers créés/modifiés :** identités UUID partagées `python/metiquo/providers/identity.py`, service transactionnel `python/metiquo/services/odds_capture.py`, exports publics, adaptation de l'import manuel, guide opérateur et preuve PostgreSQL `tests/integration/test_odds_capture_history.py`.
+- **Migrations :** aucune ; le schéma append-only, les clés composées, l'empreinte unique et les colonnes d'observation livrés par `ODD-001` couvrent le besoin sans nouvelle structure.
+- **Commandes/tests exécutés :** Ruff, mypy strict, deux passages des trois scénarios PostgreSQL ciblés, tests providers existants, Prettier et CSpell sur le guide, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** `OddsCaptureService` valide entièrement événement, marchés, sélections, fournisseur et ordre temporel avant d'ouvrir une transaction. Il crée ou actualise les identités fournisseur→événement→marché→sélection, puis ajoute les observations avec cote, états, ligne, libellé, instant, fiabilité, référence/hash de payload et provenance. Une empreinte SHA-256 canonique et les conflits PostgreSQL rendent le rejeu exact idempotent. Le scénario mock insère `4,20`, ignore son rejeu puis ajoute `3,60` ; le scénario manuel conserve le SHA-256 exact du document et ses quatre identifiants externes. Une troisième preuve conserve séparément une première cote, sa confirmation identique à l'instant suivant, puis un changement simultané de cote, statut événement/marché, ligne et libellé. Les trois lignes restent chronologiques et aucune valeur antérieure n'est écrasée. La déduplication physique d'un intervalle identique reste volontairement inactive afin de préserver chaque confirmation observée. Le gate retourne 360 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, scan conformité, contrats et mypy strict sur 271 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'empreinte inclut l'identifiant immuable de snapshot et la provenance, tandis que le conflit global protège aussi contre le rejeu d'un historique fournisseur déjà vu.
+- **Commit/hash :** `909fbd7` (`feat(odds): persist append-only capture history`).

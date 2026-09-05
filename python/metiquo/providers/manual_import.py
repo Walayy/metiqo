@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Literal, Self, cast
-from uuid import NAMESPACE_URL, UUID, uuid5
+from uuid import NAMESPACE_URL, uuid5
 
 from pydantic import Field, ValidationError, model_validator
 
@@ -39,6 +39,7 @@ from metiquo.contracts.odds_provider import (
     ProviderSelection,
 )
 from metiquo.foundation.time import Clock, SystemClock
+from metiquo.providers.identity import provider_entity_uuid
 
 type ManualImportFormat = Literal["csv", "json"]
 
@@ -472,8 +473,8 @@ def _snapshot(provider_code: str, item: _ImportedRow, observed_at: datetime) -> 
     )
     return OddsSnapshot(
         odds_snapshot_id=uuid5(NAMESPACE_URL, f"metiquo:manual:snapshot:{identity}"),
-        event_id=_provider_uuid(provider_code, "event", value.provider_event_id),
-        market_id=_provider_uuid(
+        event_id=provider_entity_uuid(provider_code, "event", value.provider_event_id),
+        market_id=provider_entity_uuid(
             provider_code,
             "market",
             f"{value.provider_event_id}:{value.provider_market_id}",
@@ -490,7 +491,3 @@ def _snapshot(provider_code: str, item: _ImportedRow, observed_at: datetime) -> 
         informational_only=not value.timestamp_reliable,
         provenance_reference=value.provenance_reference,
     )
-
-
-def _provider_uuid(provider_code: str, kind: str, identity: str) -> UUID:
-    return uuid5(NAMESPACE_URL, f"metiquo:{provider_code}:{kind}:{identity}")
