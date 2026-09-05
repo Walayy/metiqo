@@ -1084,3 +1084,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; ML-016 définit la frontière de workflow synchrone et observable, tandis que la commande reproductible et son assemblage de bout en bout restent le livrable explicite de `ML-017`.
 - **Commit/hash :** `a14eb55` (`feat(ml): expose real model operations`).
+
+## ML-017 — Gate P4 — cote juste bookmaker-free
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l'API/UI réelle `ML-016` est `DONE` et sa frontière `RealModelTrainingWorkflow` est désormais satisfaite par l'orchestrateur concret ; les datasets, baselines, benchmark, ensemble, calibration, incertitude, rapport, registre et lifecycle livrés par `ML-001` à `ML-011` sont assemblés sans chemin parallèle.
+- **Fichiers créés/modifiés :** workflow et artefact reproductible `python/metiquo/models/training.py`, fonction publique de rejeu du calibrateur, exports ML, commande `oe model-train`, cible `make model-train`, documentation opérateur et preuves unitaires/PostgreSQL.
+- **Migrations :** aucune ; le gate publie dans les tables append-only et l'ObjectStore déjà versionnés jusqu'à la migration `20260907_0026`.
+- **Commandes/tests exécutés :** commande exacte `make model-train MARKET=game_winner CODE_COMMIT=abcdef1 JSON=1`, test de rejeu ciblé, scénario PostgreSQL complet, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** le profil temporel par défaut réserve 20 périodes initiales, entraîne par fenêtres de validation de 10 périodes et garde 10 périodes de test final hors sélection. Le run de preuve couvre 40 observations OOF ; le gradient boosting sélectionné obtient `0,006829` de log loss et `0,006799` d'ECE, avec des gains stricts face à `competition_prior`, `recent_form` et `rating`. Le calibrateur Platt est choisi sur des prédictions OOS séparées. La commande émet les UUID et empreintes du dataset, des trois baselines, du benchmark, du calibrateur, de l'incertitude et de la version modèle. L'artefact JSON adressé par contenu conserve la recette déterministe, les vecteurs de développement, le préprocesseur train-only, le calibrateur et un exemple final dépourvu de label ; le test le recharge, entraîne à nouveau le candidat et retrouve exactement les probabilités brute et calibrée depuis le feature snapshot attendu, tout en refusant un autre UUID de snapshot. Un gate valide crée uniquement un `candidate` en attente d'approbation manuelle ; un modèle sans signal devient `blocked` et laisse le champion intact. Les noms de features bookmaker/cotes restent refusés avant entraînement et sont absents de l'artefact. Le gate retourne 309 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 243 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'artefact sérialise une recette et des vecteurs vérifiables au lieu d'un pickle exécutable, et la commande n'automatise jamais la décision humaine de promotion.
+- **Commit/hash :** `4b18c23` (`feat(ml): complete reproducible training gate`).

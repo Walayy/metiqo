@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 PYTHON_PATHS := python services infra tests
-OE_TARGETS := oe-catalog oe-backfill oe-sync oe-sync-current oe-validate oe-diff oe-rebuild-canonical features-rebuild
+OE_TARGETS := oe-catalog oe-backfill oe-sync oe-sync-current oe-validate oe-diff oe-rebuild-canonical features-rebuild model-train
 INGESTION_INTEGRATION_TESTS := tests/integration/test_backfill.py tests/integration/test_catalog_repository.py tests/integration/test_ingestion_gate.py tests/integration/test_migrations.py tests/integration/test_oe_cli.py tests/integration/test_quarantine.py tests/integration/test_raw_loader.py tests/integration/test_raw_migration.py tests/integration/test_snapshot_promotion.py
 OE_JSON_FLAG = $(if $(filter 1 true yes,$(JSON)),--json,)
 OE_FIXTURE_FLAG = $(if $(strip $(FIXTURE)),--fixture $(FIXTURE),)
@@ -33,6 +33,7 @@ help:
 	@echo "  make oe-diff LEFT=<uuid> RIGHT=<uuid>"
 	@echo "  make oe-rebuild-canonical FROM=2025-01-01"
 	@echo "  make features-rebuild FROM=2025-01-01 [CODE_COMMIT=<hash>]"
+	@echo "  make model-train MARKET=game_winner [DATASET=<uuid>] [CODE_COMMIT=<hash>]"
 
 up:
 	docker compose --profile mock run --rm --no-deps --build mock-mode-check
@@ -133,3 +134,7 @@ oe-rebuild-canonical:
 features-rebuild:
 	$(if $(strip $(FROM)),,$(error FROM est requis, par exemple FROM=2025-01-01))
 	uv run --frozen oe features-rebuild --from $(FROM) $(if $(strip $(CODE_COMMIT)),--code-commit $(CODE_COMMIT),) $(OE_JSON_FLAG)
+
+model-train:
+	$(if $(strip $(MARKET)),,$(error MARKET est requis, par exemple MARKET=game_winner))
+	uv run --frozen oe model-train --market $(MARKET) $(if $(strip $(DATASET)),--dataset $(DATASET),) $(if $(strip $(CODE_COMMIT)),--code-commit $(CODE_COMMIT),) $(OE_JSON_FLAG)

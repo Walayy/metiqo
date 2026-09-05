@@ -18,6 +18,7 @@ def test_makefile_exposes_every_oe_alias() -> None:
         "oe-diff:": "oe diff --left $(LEFT) --right $(RIGHT)",
         "oe-rebuild-canonical:": "oe rebuild-canonical --from $(FROM)",
         "features-rebuild:": "oe features-rebuild --from $(FROM)",
+        "model-train:": "oe model-train --market $(MARKET)",
     }
     for target, command in commands.items():
         assert target in makefile
@@ -39,5 +40,26 @@ def test_features_rebuild_cli_requires_a_date_and_accepts_commit() -> None:
 
     assert arguments.command == "features-rebuild"
     assert arguments.from_date.isoformat() == "2026-01-01"
+    assert arguments.code_commit == "abcdef1"
+    assert arguments.json is True
+
+
+def test_model_train_cli_requires_supported_market_and_accepts_dataset() -> None:
+    arguments = build_parser().parse_args(
+        [
+            "model-train",
+            "--market",
+            "game_winner",
+            "--dataset",
+            "1d7b676d-4da0-4ac2-b46d-92a760f97f3a",
+            "--code-commit",
+            "abcdef1",
+            "--json",
+        ]
+    )
+
+    assert arguments.command == "model-train"
+    assert arguments.market == "game_winner"
+    assert str(arguments.dataset) == "1d7b676d-4da0-4ac2-b46d-92a760f97f3a"
     assert arguments.code_commit == "abcdef1"
     assert arguments.json is True
