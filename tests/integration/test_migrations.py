@@ -89,6 +89,7 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
             "baseline_runs",
             "dataset_examples",
             "datasets",
+            "rating_artifacts",
         }
         assert all(
             inspect(connection).get_table_names(schema=name) == []

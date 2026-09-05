@@ -153,7 +153,7 @@ class BaselineRun(Base):
     __table_args__ = (
         CheckConstraint("market = 'game_winner'", name="supported_market"),
         CheckConstraint(
-            "baseline_name IN ('competition_prior', 'recent_form')",
+            "baseline_name IN ('competition_prior', 'recent_form', 'rating')",
             name="supported_baseline",
         ),
         CheckConstraint("length(trim(baseline_version)) > 0", name="baseline_version"),
@@ -180,6 +180,10 @@ class BaselineRun(Base):
         PostgreSQLUUID(as_uuid=True),
         ForeignKey("ml.datasets.id", ondelete="RESTRICT"),
         nullable=False,
+    )
+    artifact_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.rating_artifacts.id", ondelete="RESTRICT"),
     )
     market: Mapped[str] = mapped_column(String(64), nullable=False)
     baseline_name: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -224,3 +228,52 @@ class BaselinePrediction(Base):
     cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     label: Mapped[bool] = mapped_column(Boolean, nullable=False)
     probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+
+
+class RatingArtifact(Base):
+    """Transformation rating-vers-probabilité sélectionnée uniquement sur OOF."""
+
+    __tablename__ = "rating_artifacts"
+    __table_args__ = (
+        CheckConstraint("market = 'game_winner'", name="supported_market"),
+        CheckConstraint("length(trim(artifact_version)) > 0", name="artifact_version"),
+        CheckConstraint(
+            "walk_forward_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="walk_forward_fingerprint",
+        ),
+        CheckConstraint("rating_feature = 'rating.difference'", name="rating_feature"),
+        CheckConstraint("selected_scale > 0", name="selected_scale"),
+        CheckConstraint("jsonb_typeof(candidate_scales) = 'array'", name="scales_array"),
+        CheckConstraint("jsonb_array_length(candidate_scales) >= 1", name="scales_nonempty"),
+        CheckConstraint("selection_metric = 'log_loss'", name="selection_metric"),
+        CheckConstraint("selection_scope = 'oof_validation'", name="selection_scope"),
+        CheckConstraint(
+            "jsonb_typeof(candidate_metrics) = 'object'",
+            name="candidate_metrics_object",
+        ),
+        CheckConstraint("artifact_fingerprint ~ '^[0-9a-f]{64}$'", name="fingerprint"),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        UniqueConstraint("artifact_fingerprint", name="uq_ml_rating_artifacts_fingerprint"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    dataset_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.datasets.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    market: Mapped[str] = mapped_column(String(64), nullable=False)
+    artifact_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    walk_forward_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    rating_feature: Mapped[str] = mapped_column(String(128), nullable=False)
+    selected_scale: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    candidate_scales: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    selection_metric: Mapped[str] = mapped_column(String(32), nullable=False)
+    selection_scope: Mapped[str] = mapped_column(String(32), nullable=False)
+    candidate_metrics: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    artifact_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        UtcDateTime(), nullable=False, server_default=func.now()
+    )
