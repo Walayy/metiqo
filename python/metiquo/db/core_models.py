@@ -180,6 +180,10 @@ class Game(CanonicalProvenanceMixin, Base):
             "quality_status IN ('complete', 'incomplete', 'remake', 'forfeit')",
             name="quality_status",
         ),
+        CheckConstraint(
+            "series_resolution_status IN ('resolved', 'ambiguous', 'missing_context')",
+            name="series_resolution_status",
+        ),
         CheckConstraint("game_length_seconds IS NULL OR game_length_seconds > 0", name="length"),
         CheckConstraint("best_of IS NULL OR best_of >= 1", name="best_of"),
         CheckConstraint("game_number IS NULL OR game_number >= 1", name="game_number"),
@@ -208,6 +212,10 @@ class Game(CanonicalProvenanceMixin, Base):
         PostgreSQLUUID(as_uuid=True),
         ForeignKey("core.patches.id", ondelete="RESTRICT"),
     )
+    series_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.series.id", ondelete="RESTRICT"),
+    )
     source_game_id: Mapped[str] = mapped_column(String(255), nullable=False)
     event_date: Mapped[date | None] = mapped_column()
     start_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
@@ -219,6 +227,79 @@ class Game(CanonicalProvenanceMixin, Base):
     forfeit: Mapped[bool] = mapped_column(Boolean, nullable=False)
     usable_for_training: Mapped[bool] = mapped_column(Boolean, nullable=False)
     quality_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    series_resolution_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="missing_context"
+    )
+    availability: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
+
+
+class Series(CanonicalProvenanceMixin, Base):
+    __tablename__ = "series"
+    __table_args__ = (
+        CheckConstraint("length(trim(series_key)) > 0", name="series_key"),
+        CheckConstraint("identity_strategy IN ('oe', 'fallback')", name="identity_strategy"),
+        CheckConstraint("team_one_id <> team_two_id", name="distinct_teams"),
+        CheckConstraint("best_of IS NULL OR best_of >= 1", name="best_of"),
+        CheckConstraint(
+            "(best_of IS NULL AND allows_draw IS NULL) OR "
+            "(best_of IS NOT NULL AND allows_draw = (mod(best_of, 2) = 0))",
+            name="draw_format",
+        ),
+        CheckConstraint("score_one IS NULL OR score_one >= 0", name="score_one"),
+        CheckConstraint("score_two IS NULL OR score_two >= 0", name="score_two"),
+        CheckConstraint(
+            "result_status IN ('team_one', 'team_two', 'draw', 'unresolved')",
+            name="result_status",
+        ),
+        CheckConstraint(
+            "(result_status IN ('team_one', 'team_two') AND winner_team_id IS NOT NULL) OR "
+            "(result_status IN ('draw', 'unresolved') AND winner_team_id IS NULL)",
+            name="winner_state",
+        ),
+        CheckConstraint("quality_status IN ('complete', 'incomplete')", name="quality_status"),
+        CheckConstraint("source_row_hash ~ '^[0-9a-f]{64}$'", name="source_row_hash"),
+        CheckConstraint("source_row_revision >= 1", name="source_row_revision"),
+        CheckConstraint("length(trim(transformation_version)) > 0", name="transformation_version"),
+        UniqueConstraint("game_title_id", "series_key", name="uq_series_game_title_series_key"),
+        Index("ix_core_series_scheduled_date", "scheduled_date"),
+        {"schema": CORE_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    game_title_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.game_titles.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    competition_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.competitions.id", ondelete="RESTRICT"),
+    )
+    team_one_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    team_two_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    winner_team_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+    )
+    series_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    source_series_id: Mapped[str | None] = mapped_column(String(255))
+    identity_strategy: Mapped[str] = mapped_column(String(16), nullable=False)
+    scheduled_date: Mapped[date | None] = mapped_column()
+    best_of: Mapped[int | None] = mapped_column(Integer)
+    allows_draw: Mapped[bool | None] = mapped_column(Boolean)
+    score_one: Mapped[int | None] = mapped_column(Integer)
+    score_two: Mapped[int | None] = mapped_column(Integer)
+    result_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    complete: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    quality_status: Mapped[str] = mapped_column(String(16), nullable=False)
     availability: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
 
 

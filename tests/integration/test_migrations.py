@@ -34,6 +34,7 @@ CORE_TABLES = {
     "games",
     "patches",
     "players",
+    "series",
     "teams",
 }
 
