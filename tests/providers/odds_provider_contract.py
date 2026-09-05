@@ -49,6 +49,11 @@ def assert_odds_provider_contract(fixture: OddsProviderContractFixture) -> None:
         assert len({market.provider_market_id for market in markets}) == len(markets)
         assert all(market.provider_event_id == event.provider_event_id for market in markets)
         for market in markets:
+            assert market.unit
+            assert market.settlement_rules_version
+            assert market.remake_policy in {"settle", "void", "review"}
+            assert market.forfeit_policy in {"settle", "void", "review"}
+            assert market.cancelled_policy in {"settle", "void", "review"}
             assert len({selection.provider_selection_id for selection in market.selections}) == len(
                 market.selections
             )

@@ -248,6 +248,7 @@ def _manual_row(provider_code: str) -> dict[str, object]:
         "participant_a": "Manual Alpha",
         "participant_b": "Manual Beta",
         "period": "SERIES",
+        "unit": "winner",
         "provenance_reference": "manual:test:team-a:v1",
         "provider": provider_code,
         "provider_event_id": "manual-event",
@@ -256,6 +257,9 @@ def _manual_row(provider_code: str) -> dict[str, object]:
         "selection": "TEAM_A",
         "selection_label": "Manual Alpha",
         "settlement_rules_version": "match-winner-v1",
+        "remake_policy": "void",
+        "forfeit_policy": "settle",
+        "cancelled_policy": "void",
         "starts_at": (_REFERENCE_TIME + timedelta(days=1)).isoformat(),
         "timestamp_reliable": True,
     }
@@ -328,6 +332,7 @@ class _ChangingProvider:
                 market_type=MarketType.MATCH_WINNER,
                 period=MarketPeriod.SERIES,
                 line=Decimal("1.5") if self.state == 2 else None,
+                unit="winner",
                 selections=(
                     ProviderSelection(
                         provider_selection_id="changing-team-a",
@@ -337,6 +342,9 @@ class _ChangingProvider:
                     ),
                 ),
                 status=MarketStatus.SUSPENDED if self.state == 2 else MarketStatus.OPEN,
+                remake_policy="void",
+                forfeit_policy="settle",
+                cancelled_policy="void",
                 captured_at=self._captured_at(),
                 settlement_rules_version="match-winner-v1",
             ),

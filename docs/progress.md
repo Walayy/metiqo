@@ -1264,3 +1264,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le registre ne pré-enregistre que des signatures explicitement fournies et ne déduit jamais une règle à partir d'un texte commercial.
 - **Commit/hash :** `047b824` (`feat(mapping): resolve markets structurally`).
+
+## MAP-006 — Gate P5 — événement coté résolu
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l'historique et la santé provider `ODD-009`, les décisions événement auditées `MAP-004` et le mapping structurel fermé `MAP-005` sont `DONE` ; le pipeline les réutilise sans voie de contournement vers le pricing.
+- **Fichiers créés/modifiés :** gate et orchestration `python/metiquo/services/odds_mapping.py`, projection structurelle des marchés provider, rapport de capture enrichi, contrats provider/import manuel/mock, OpenAPI et client TypeScript généré, guide opérateur et preuve PostgreSQL `tests/integration/test_resolved_odds_gate.py`.
+- **Migrations :** aucune ; le gate relit les tentatives de mapping et snapshots append-only déjà enregistrés par P5 sans modifier leur schéma ni leur contenu.
+- **Commandes/tests exécutés :** deux scénarios PostgreSQL ciblés puis 44 tests providers, contrats, capture et API ; Ruff, mypy strict, Prettier et CSpell ; génération OpenAPI ; deux passages du gate global `make check`, le premier confirmant les 394 tests avant de signaler le diff client attendu, le second depuis le contrat enregistré entièrement vert.
+- **Résultat exact :** le contrat `ProviderMarket` transporte désormais l'unité et les politiques explicites de remake, forfait et annulation, et l'import manuel exige ces 27 colonnes. `ResolvedOddsPipeline` capture une seule fois l'état provider, résout l'événement, mappe exactement les marchés capturés et remet un contexte pricing uniquement si l'identité canonique, tous les marchés et au moins un snapshot horodaté fiable sont enregistrés. La preuve manuelle insère deux observations, autorise le pricing puis rejoue le document avec zéro insertion et les mêmes identifiants immuables. Une compétition ambiguë reste en revue malgré un marché résolu ; le provider mock atteint le mapping mais son marché à une seule issue reste structurellement inconnu. Les deux chemins lèvent un refus explicite avant pricing. La file UI réelle d'approbation/rejet et son audit restent couvertes par `MAP-004`. Le gate retourne 394 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 286 fichiers sont verts.
+- **Blocker éventuel :** aucun ; P5 est fermé et la phase P6 peut démarrer par `VAL-001`.
+- **ADR éventuel :** aucun ; le contexte de sortie est volontairement minimal et ne calcule pas encore de probabilité ou de prix, responsabilités de P6.
+- **Commit/hash :** `98c96a5` (`feat(mapping): gate resolved odds for pricing`).

@@ -58,6 +58,7 @@ MANUAL_IMPORT_COLUMNS = (
     "market_type",
     "period",
     "line",
+    "unit",
     "provider_selection_id",
     "selection",
     "selection_label",
@@ -66,6 +67,9 @@ MANUAL_IMPORT_COLUMNS = (
     "captured_at",
     "timestamp_reliable",
     "settlement_rules_version",
+    "remake_policy",
+    "forfeit_policy",
+    "cancelled_policy",
     "provenance_reference",
 )
 
@@ -85,6 +89,7 @@ class _ManualOddsRow(ContractModel):
     market_type: MarketType
     period: MarketPeriod
     line: Decimal | None = Field(default=None, allow_inf_nan=False)
+    unit: NonEmptyText
     provider_selection_id: NonEmptyText
     selection: SelectionType
     selection_label: NonEmptyText
@@ -93,6 +98,9 @@ class _ManualOddsRow(ContractModel):
     captured_at: UtcDateTime
     timestamp_reliable: bool
     settlement_rules_version: VersionText
+    remake_policy: Literal["settle", "void", "review"]
+    forfeit_policy: Literal["settle", "void", "review"]
+    cancelled_policy: Literal["settle", "void", "review"]
     provenance_reference: VersionText
 
     @model_validator(mode="after")
@@ -271,6 +279,7 @@ class ManualImportOddsProvider:
                     market_type=value.market_type,
                     period=value.period,
                     line=value.line,
+                    unit=value.unit,
                     selections=tuple(
                         ProviderSelection(
                             provider_selection_id=item.value.provider_selection_id,
@@ -281,6 +290,9 @@ class ManualImportOddsProvider:
                         for item in selected
                     ),
                     status=value.market_status,
+                    remake_policy=value.remake_policy,
+                    forfeit_policy=value.forfeit_policy,
+                    cancelled_policy=value.cancelled_policy,
                     captured_at=value.captured_at,
                     settlement_rules_version=value.settlement_rules_version,
                 )
@@ -427,7 +439,11 @@ def _consistency_issues(
             value.market_type,
             value.period,
             value.line,
+            value.unit,
             value.settlement_rules_version,
+            value.remake_policy,
+            value.forfeit_policy,
+            value.cancelled_policy,
         )
         selection_signature = (value.selection, value.selection_label)
         previous_event = event_signatures.setdefault(event_key, event_signature)

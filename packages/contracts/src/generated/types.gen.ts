@@ -1445,9 +1445,17 @@ export type ProviderHealth = {
  */
 export type ProviderMarket = {
     /**
+     * Cancelledpolicy
+     */
+    cancelledPolicy: 'settle' | 'void' | 'review';
+    /**
      * Capturedat
      */
     capturedAt: string;
+    /**
+     * Forfeitpolicy
+     */
+    forfeitPolicy: 'settle' | 'void' | 'review';
     /**
      * Line
      */
@@ -1467,6 +1475,10 @@ export type ProviderMarket = {
      */
     rawLabel: string;
     /**
+     * Remakepolicy
+     */
+    remakePolicy: 'settle' | 'void' | 'review';
+    /**
      * Selections
      */
     selections: Array<ProviderSelection>;
@@ -1475,6 +1487,10 @@ export type ProviderMarket = {
      */
     settlementRulesVersion: string;
     status: MarketStatus;
+    /**
+     * Unit
+     */
+    unit: string;
 };
 
 /**

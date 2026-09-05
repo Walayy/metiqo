@@ -2738,9 +2738,27 @@
         "additionalProperties": false,
         "description": "Marché fournisseur suffisant pour le mapping et la capture.",
         "properties": {
+          "cancelledPolicy": {
+            "enum": [
+              "settle",
+              "void",
+              "review"
+            ],
+            "title": "Cancelledpolicy",
+            "type": "string"
+          },
           "capturedAt": {
             "format": "date-time",
             "title": "Capturedat",
+            "type": "string"
+          },
+          "forfeitPolicy": {
+            "enum": [
+              "settle",
+              "void",
+              "review"
+            ],
+            "title": "Forfeitpolicy",
             "type": "string"
           },
           "line": {
@@ -2780,6 +2798,15 @@
             "title": "Rawlabel",
             "type": "string"
           },
+          "remakePolicy": {
+            "enum": [
+              "settle",
+              "void",
+              "review"
+            ],
+            "title": "Remakepolicy",
+            "type": "string"
+          },
           "selections": {
             "items": {
               "$ref": "#/components/schemas/ProviderSelection"
@@ -2796,6 +2823,12 @@
           },
           "status": {
             "$ref": "#/components/schemas/MarketStatus"
+          },
+          "unit": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Unit",
+            "type": "string"
           }
         },
         "required": [
@@ -2804,7 +2837,11 @@
           "rawLabel",
           "marketType",
           "period",
+          "unit",
           "selections",
+          "remakePolicy",
+          "forfeitPolicy",
+          "cancelledPolicy",
           "status",
           "capturedAt",
           "settlementRulesVersion"

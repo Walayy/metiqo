@@ -23,6 +23,7 @@ from metiquo.mapping.market_mapping import (
     RawProviderMarket,
     SettlementPolicy,
     UnresolvedMarketMappingError,
+    raw_market_from_provider,
 )
 from metiquo.mapping.normalization import (
     NORMALIZATION_VERSION,
@@ -53,5 +54,6 @@ __all__ = [
     "UnresolvedEventMappingError",
     "UnresolvedMarketMappingError",
     "normalize_entity_name",
+    "raw_market_from_provider",
     "typographically_equal",
 ]

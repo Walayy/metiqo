@@ -1,7 +1,7 @@
 """Contrats indépendants des fournisseurs pour la collecte de cotes."""
 
 from decimal import Decimal
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import Field, model_validator
 
@@ -63,7 +63,11 @@ class ProviderMarket(ContractModel):
     market_type: MarketType = Field(alias="marketType")
     period: MarketPeriod
     line: Decimal | None = Field(default=None, allow_inf_nan=False)
+    unit: NonEmptyText
     selections: tuple[ProviderSelection, ...] = Field(min_length=1)
+    remake_policy: Literal["settle", "void", "review"] = Field(alias="remakePolicy")
+    forfeit_policy: Literal["settle", "void", "review"] = Field(alias="forfeitPolicy")
+    cancelled_policy: Literal["settle", "void", "review"] = Field(alias="cancelledPolicy")
     status: MarketStatus
     captured_at: UtcDateTime = Field(alias="capturedAt")
     settlement_rules_version: VersionText = Field(alias="settlementRulesVersion")
