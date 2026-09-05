@@ -1024,3 +1024,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les promotions restent exclusivement explicites, manuelles, multi-métriques et réversibles, sans modifier les prédictions historiques.
 - **Commit/hash :** `ed3ce5c` (`feat(ml): audit champion lifecycle and rollback`).
+
+## ML-012 — MarketPlugin GAME_WINNER
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le lifecycle champion/challenger `ML-011` et le registre de capacités `CNL-006` sont `DONE` ; le gate joint désormais les preuves de données au champion effectivement servi.
+- **Fichiers créés/modifiés :** contrat et implémentation `python/metiquo/markets/game_winner.py`, exports du package marchés et suite `tests/markets/test_game_winner_plugin.py`.
+- **Migrations :** aucune ; le plugin consomme les états de capacité, versions de modèles, calibrateur et artefacts d'incertitude déjà historisés.
+- **Commandes/tests exécutés :** Ruff, mypy strict ciblé, tests du plugin, puis gate global complet avec PostgreSQL réel.
+- **Résultat exact :** le protocole expose capacités requises, labels, features, entraînement, prédiction, pricing et settlement. L'implémentation fixe le label binaire et le sous-ensemble de features tabulaires, délègue l'entraînement au benchmark walk-forward et refuse un backend absent. Son gate reste fermé lorsqu'une capacité est absente, pending ou disabled, lorsque les états proviennent de snapshots différents, sans champion actif du scope `lol/game_winner`, ou tant que l'artefact modèle n'a pas été vérifié. La prédiction exige en plus les UUID et empreintes exactes du calibrateur et de l'incertitude enregistrés avec le champion. Les probabilités de l'équipe B et leurs bornes sont construites comme les compléments exacts de celles de l'équipe A ; une propriété couvre les 101 valeurs de 0 à 1 et maintient les sommes égales à 1. Une abstention supprime les cotes publiables, les probabilités nulles ne produisent pas de cote infinie et le settlement n'accepte que `TEAM_A`, `TEAM_B` ou un void explicite. Le gate retourne 296 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 229 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le protocole reste volontairement binaire et fermé, tandis que la vérification physique de l'artefact demeure la responsabilité du registre avant activation du gate.
+- **Commit/hash :** `251db68` (`feat(markets): add gated game winner plugin`).
