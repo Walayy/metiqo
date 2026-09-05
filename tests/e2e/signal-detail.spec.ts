@@ -50,6 +50,26 @@ test("shows abstention reasons and blocks paper trading for a stale signal", asy
   await expect(page.getByRole("button", { name: "Paper bet bloqué" })).toBeDisabled();
 });
 
+test("keeps an opened signal on its original snapshot when the odds change", async ({ page }) => {
+  await page.goto("/");
+
+  await page
+    .getByRole("row")
+    .filter({ hasText: "Aurore 10" })
+    .getByRole("link", { name: "Ouvrir le signal" })
+    .click();
+
+  const update = page.getByRole("status", { name: "Cote mise à jour" });
+  await expect(update).toContainText("4,20");
+  await expect(update).toContainText("3,60");
+  await expect(update).toContainText("cette fiche historique n’est jamais réécrite");
+
+  const history = page.getByRole("region", { name: "Historique des prix observés" });
+  await expect(history).toContainText("Snapshot du signal");
+  await expect(history).toContainText("Dernière cote");
+  await expect(history).toContainText("Actualisation automatique toutes les 30 secondes");
+});
+
 test("keeps signal evidence readable on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
   await page.goto("/");
