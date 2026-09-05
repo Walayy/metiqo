@@ -700,3 +700,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la copie de la preuve source est volontaire afin que l’historique ne dépende pas de la valeur mutable de `raw.canonical_rows`.
 - **Commit/hash :** `a395a4c` (`feat(canonical): preserve entity revision history`).
+
+## CNL-006 — Capability registry
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** contrat de schéma évolutif `OE-013`, games `CNL-002` et séries `CNL-003` sont `DONE` ; le builder de games évalue automatiquement les snapshots courants après matérialisation.
+- **Fichiers créés/modifiés :** migration `20260906_0014`, modèle `core.capability_evaluations`, service `python/metiquo/canonical/capabilities.py`, DTO et routes API mock/réelles, contrat OpenAPI/client TypeScript généré, matrice dans le dashboard Données, tests PostgreSQL/API/Playwright.
+- **Migrations :** création d’évaluations append-only chaînées par snapshot, capacité et version de seuil, avec état, raisons, colonnes requises/observées, complétude, échantillon, détail des gates, empreinte et date. Un trigger PostgreSQL interdit UPDATE/DELETE.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; OpenAPI export/check et génération client ; TypeScript strict ; ESLint ; 19 tests Python ciblés ; 4 tests Playwright ; parcours visuel via Navigateur sur le build de production.
+- **Résultat exact :** le registre versionne cinq capacités initiales de label, features et marché. Labels/features sont dérivés des colonnes raw persistées et de la couverture des games utilisables ; les issues qualité ciblées ferment leur capacité. `market.match_winner` exige explicitement huit gates `label`, `data`, `rules`, `model`, `calibration`, `mapping`, `odds` et `sample`. Avec données suffisantes mais sans preuve modèle/odds, il reste `pending`; tous les gates vrais l’activent ; chaque gate externe faux le rend `disabled`, tout comme un label, une complétude ou un échantillon insuffisant. Une évaluation identique est idempotente et un changement de preuve crée une nouvelle révision. L’API `/api/v1/admin/capabilities` partage son DTO entre mock et réel et filtre par snapshot en réel. Le Navigateur a confirmé la matrice, les badges, les raisons, seuils et identifiants de snapshot dans l’UI.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la fermeture par défaut applique directement `SFG-MARKET-001` et aucun simple marché fournisseur ne peut activer une capacité.
+- **Commit/hash :** `ed1f7b6` (`feat(canonical): gate capabilities by snapshot`).
