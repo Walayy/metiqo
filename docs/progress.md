@@ -1180,3 +1180,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun pour la frontière ; tout adaptateur concret reste conditionné par un contrat validé, une documentation officielle et des tests d'intégration enregistrés.
 - **ADR éventuel :** aucun ; le transport et les secrets seront propres au futur adaptateur afin de ne pas figer aujourd'hui une API inexistante.
 - **Commit/hash :** `5f250d8` (`feat(odds): define licensed feed boundary`).
+
+## ODD-006 — StakeAuthorizedProvider désactivé
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le port `OddsProvider` de `ODD-002` est `DONE` ; le squelette désactivé en reprend toute la surface sans produire d'événement, de marché ou de snapshot.
+- **Fichiers créés/modifiés :** `DisabledProvider`, `StakeAuthorizedProvider`, quatre flags de configuration serveur, exemple d'environnement, scan statique `infra/scripts/check_provider_compliance.py`, branchement dans le gate `Makefile`, guide de conformité et preuves de démarrage/dépôt.
+- **Migrations :** aucune ; le type réservé `stake_authorized` ne crée ni n'active aucun fournisseur en base.
+- **Commandes/tests exécutés :** Ruff, mypy strict, 18 tests de configuration/provider ciblés, exécution autonome du scan de conformité, Prettier et CSpell sur le guide, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** `STAKE_PROVIDER_ENABLED` et les confirmations d'autorisation écrite, de juridiction licite et de validation juridique valent `false` par défaut. Une activation dépourvue d'un seul gate échoue au chargement de `Settings`; même les quatre valeurs à `true` restent refusées tant qu'aucune implémentation autorisée n'est livrée. Le squelette satisfait structurellement `OddsProvider`, retourne des listes vides, refuse toute capture et expose exclusivement un état `unavailable` daté avec le motif réglementaire complet. Le scan exécuté par chaque `make check` couvre les sources de production et bloque les signatures d'adresse Stake, solveur CAPTCHA, proxy résidentiel, contournement géographique, cookie bookmaker, navigateur furtif et automatisation de mise ; une fixture synthétique prouve chaque règle tandis que le dépôt courant est propre. Le gate retourne 357 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, contrats et mypy strict sur 268 fichiers sont verts.
+- **Blocker éventuel :** aucun pour la désactivation ; l'activation réelle reste volontairement bloquée par l'absence d'autorisation, de validation juridique et d'implémentation approuvée.
+- **ADR éventuel :** aucun ; les trois conditions de conformité et l'absence d'adaptateur concret sont des portes cumulatives, pas une simple bascule opérationnelle.
+- **Commit/hash :** `7d39f26` (`feat(odds): enforce disabled Stake provider gate`).
