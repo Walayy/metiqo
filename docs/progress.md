@@ -1120,3 +1120,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'exclusion porte sur l'alias normalisé exact et n'introduit aucun rapprochement flou. La normalisation typographique sûre reste le livrable séparé de `MAP-002`.
 - **Commit/hash :** `8e06ce7` (`feat(mapping): add dated canonical aliases`).
+
+## MAP-002 — Normalisation sûre des noms
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le schéma d'aliases datés `MAP-001` est `DONE` ; la normalisation fournit désormais la forme exacte que ses résolveurs suivants pourront interroger sans modifier les identifiants canoniques déjà publiés.
+- **Fichiers créés/modifiés :** package `python/metiquo/mapping`, règle fermée et versionnée `normalization.py`, exports publics et propriétés `tests/mapping/test_normalization.py`.
+- **Migrations :** aucune ; `core.entity_aliases` conserve déjà `raw_alias`, `normalized_alias` et la fenêtre temporelle nécessaires.
+- **Commandes/tests exécutés :** Ruff, mypy strict et 18 preuves ciblées, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** `entity-name-typography-v1` applique NFKC, casse Unicode, espaces condensés et remplacement de toute ponctuation Unicode par un séparateur. La règle conserve les lettres accentuées, les symboles et chaque mot métier ; elle refuse un nom vide, composé uniquement de ponctuation ou contenant un caractère de contrôle invisible. Les formes composée et décomposée de `Équipe Élite` sont égales, mais `Equipe Elite` reste distinct. `Team Liquid` reste distinct de `Team Liquid Honda`, `Dplus` de `Dplus KIA`, `Karmine Corp` de `Karmine Corp Blue`, `Gen.G` de `Gen.G Academy`, `Aurora` de `Aurora 05` et `T1` de `T1A`. La comparaison publique est une égalité exacte des formes normalisées, sans distance ni rapprochement flou. Le gate retourne 329 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, contrats et mypy strict sur 252 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les accents absents et les tokens sponsor/academy ne sont volontairement pas effacés, car une absence de correspondance est moins dangereuse qu'une fusion erronée.
+- **Commit/hash :** `836102e` (`feat(mapping): normalize entity names safely`).
