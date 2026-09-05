@@ -67,6 +67,13 @@ class Settings(BaseSettings):
     oe_require_fresh: bool = False
     oe_current_year: int = Field(default=2026, ge=2014, le=9999)
     oe_source_catalog_path: Path = Path("/app/config/oracles_elixir_sources.yml")
+    oe_connect_timeout_seconds: float = Field(default=10.0, gt=0)
+    oe_read_timeout_seconds: float = Field(default=60.0, gt=0)
+    oe_max_download_bytes: int = Field(default=4 * 1024 * 1024 * 1024, gt=0)
+    oe_max_redirects: int = Field(default=3, ge=0, le=10)
+    oe_retry_max_attempts: int = Field(default=4, ge=1, le=10)
+    oe_retry_base_seconds: float = Field(default=1.0, gt=0)
+    oe_retry_max_seconds: float = Field(default=30.0, gt=0)
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
@@ -112,6 +119,8 @@ class Settings(BaseSettings):
             raise ValueError(
                 "OE_ALLOW_STALE et OE_REQUIRE_FRESH ne peuvent pas être vrais ensemble"
             )
+        if self.oe_retry_base_seconds > self.oe_retry_max_seconds:
+            raise ValueError("OE_RETRY_BASE_SECONDS ne peut pas dépasser OE_RETRY_MAX_SECONDS")
         if self.app_data_mode is DataMode.REAL and self.odds_provider is OddsProvider.MOCK:
             raise ValueError("APP_DATA_MODE=real interdit ODDS_PROVIDER=mock")
         if self.app_data_mode is DataMode.MOCK and self.odds_provider not in {
