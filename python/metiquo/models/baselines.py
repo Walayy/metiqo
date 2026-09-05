@@ -19,6 +19,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from metiquo.db.ml_models import BaselinePrediction as BaselinePredictionRow
 from metiquo.db.ml_models import BaselineRun as BaselineRunRow
+from metiquo.db.ml_models import RatingArtifact as RatingArtifactRow
 from metiquo.db.ml_models import TrainingDatasetExample
 from metiquo.foundation.time import Clock, SystemClock, normalize_utc_datetime
 from metiquo.models.datasets import GAME_WINNER_MARKET
@@ -32,6 +33,7 @@ from metiquo.models.validation import (
 
 COMPETITION_PRIOR = "competition_prior"
 RECENT_FORM = "recent_form"
+RATING = "rating"
 OOF_VALIDATION = "oof_validation"
 COMPETITION_PRIOR_VERSION = "competition-prior-v1"
 RECENT_FORM_VERSION = "recent-form-naive-v1"
@@ -160,6 +162,7 @@ class BaselinePrediction:
 class BaselineRun:
     run_id: UUID
     dataset_id: UUID
+    artifact_id: UUID | None
     market: str
     baseline_name: str
     baseline_version: str
@@ -276,51 +279,84 @@ class BaselineEvaluator:
         oof: OutOfFoldPredictions,
         created_at: datetime,
     ) -> BaselineRun:
-        predictions = tuple(
-            BaselinePrediction(
-                example_id=item.example_id,
-                fold_index=item.fold_index,
-                cutoff_at=item.cutoff_at,
-                label=item.label,
-                probability=item.probability,
-            )
-            for item in oof.predictions
-        )
-        final_ids = set(oof.final_test_ids)
-        if final_ids & {item.example_id for item in predictions}:
-            raise ValueError("le test final doit rester absent des runs de baseline")
-        metrics = evaluate_binary_probabilities(predictions, bin_count=self._calibration_bins)
-        predictions_fingerprint = _content_hash([item.document() for item in predictions])
-        run_fingerprint = _content_hash(
-            _run_document(
-                dataset_id=dataset_id,
-                market=GAME_WINNER_MARKET,
-                baseline_name=name,
-                baseline_version=version,
-                evaluation_split=OOF_VALIDATION,
-                walk_forward_fingerprint=plan.fingerprint,
-                parameters=parameters,
-                metrics=metrics,
-                predictions_fingerprint=predictions_fingerprint,
-                code_commit=self._code_commit,
-            )
-        )
-        return BaselineRun(
-            run_id=uuid5(NAMESPACE_URL, f"metiquo:baseline-run:{run_fingerprint}"),
+        return build_baseline_run(
             dataset_id=dataset_id,
-            market=GAME_WINNER_MARKET,
+            artifact_id=None,
+            plan=plan,
             baseline_name=name,
             baseline_version=version,
+            parameters=parameters,
+            oof=oof,
+            code_commit=self._code_commit,
+            calibration_bins=self._calibration_bins,
+            created_at=created_at,
+        )
+
+
+def build_baseline_run(
+    *,
+    dataset_id: UUID,
+    artifact_id: UUID | None,
+    plan: WalkForwardPlan,
+    baseline_name: str,
+    baseline_version: str,
+    parameters: Mapping[str, object],
+    oof: OutOfFoldPredictions,
+    code_commit: str,
+    calibration_bins: int,
+    created_at: datetime,
+) -> BaselineRun:
+    """Construire une publication comparable depuis des prédictions OOF exactes."""
+
+    if _COMMIT.fullmatch(code_commit) is None:
+        raise ValueError("code_commit doit être un hash git hexadécimal")
+    predictions = tuple(
+        BaselinePrediction(
+            example_id=item.example_id,
+            fold_index=item.fold_index,
+            cutoff_at=item.cutoff_at,
+            label=item.label,
+            probability=item.probability,
+        )
+        for item in oof.predictions
+    )
+    final_ids = set(oof.final_test_ids)
+    if final_ids & {item.example_id for item in predictions}:
+        raise ValueError("le test final doit rester absent des runs de baseline")
+    metrics = evaluate_binary_probabilities(predictions, bin_count=calibration_bins)
+    predictions_fingerprint = _content_hash([item.document() for item in predictions])
+    run_fingerprint = _content_hash(
+        _run_document(
+            dataset_id=dataset_id,
+            artifact_id=artifact_id,
+            market=GAME_WINNER_MARKET,
+            baseline_name=baseline_name,
+            baseline_version=baseline_version,
             evaluation_split=OOF_VALIDATION,
             walk_forward_fingerprint=plan.fingerprint,
-            parameters=MappingProxyType(dict(parameters)),
+            parameters=parameters,
             metrics=metrics,
             predictions_fingerprint=predictions_fingerprint,
-            run_fingerprint=run_fingerprint,
-            code_commit=self._code_commit,
-            created_at=created_at,
-            predictions=predictions,
+            code_commit=code_commit,
         )
+    )
+    return BaselineRun(
+        run_id=uuid5(NAMESPACE_URL, f"metiquo:baseline-run:{run_fingerprint}"),
+        dataset_id=dataset_id,
+        artifact_id=artifact_id,
+        market=GAME_WINNER_MARKET,
+        baseline_name=baseline_name,
+        baseline_version=baseline_version,
+        evaluation_split=OOF_VALIDATION,
+        walk_forward_fingerprint=plan.fingerprint,
+        parameters=MappingProxyType(dict(parameters)),
+        metrics=metrics,
+        predictions_fingerprint=predictions_fingerprint,
+        run_fingerprint=run_fingerprint,
+        code_commit=code_commit,
+        created_at=created_at,
+        predictions=predictions,
+    )
 
 
 class BaselineRunRepository:
@@ -333,6 +369,7 @@ class BaselineRunRepository:
         _validate_run(run)
         runs = cast(Table, BaselineRunRow.__table__)
         predictions = cast(Table, BaselinePredictionRow.__table__)
+        artifacts = cast(Table, RatingArtifactRow.__table__)
         dataset_examples = cast(Table, TrainingDatasetExample.__table__)
         with self._engine.begin() as connection:
             allowed_ids = set(
@@ -345,11 +382,35 @@ class BaselineRunRepository:
             predicted_ids = {item.example_id for item in run.predictions}
             if not predicted_ids <= allowed_ids:
                 raise ValueError("un run ne peut référencer que les exemples de son dataset")
+            if run.artifact_id is not None:
+                artifact = (
+                    connection.execute(
+                        select(
+                            artifacts.c.dataset_id,
+                            artifacts.c.walk_forward_fingerprint,
+                            artifacts.c.artifact_fingerprint,
+                        ).where(artifacts.c.id == run.artifact_id)
+                    )
+                    .mappings()
+                    .one_or_none()
+                )
+                if artifact is None:
+                    raise ValueError("l'artefact du run rating est introuvable")
+                if (
+                    artifact["dataset_id"] != run.dataset_id
+                    or artifact["walk_forward_fingerprint"] != run.walk_forward_fingerprint
+                    or artifact["artifact_fingerprint"]
+                    != run.parameters.get("artifact_fingerprint")
+                ):
+                    raise ValueError(
+                        "l'artefact rating ne correspond pas au dataset et au split du run"
+                    )
             inserted = connection.execute(
                 insert(runs)
                 .values(
                     id=run.run_id,
                     dataset_id=run.dataset_id,
+                    artifact_id=run.artifact_id,
                     market=run.market,
                     baseline_name=run.baseline_name,
                     baseline_version=run.baseline_version,
@@ -420,6 +481,7 @@ class BaselineRunRepository:
         return BaselineRun(
             run_id=cast(UUID, row["id"]),
             dataset_id=cast(UUID, row["dataset_id"]),
+            artifact_id=cast(UUID | None, row["artifact_id"]),
             market=cast(str, row["market"]),
             baseline_name=cast(str, row["baseline_name"]),
             baseline_version=cast(str, row["baseline_version"]),
@@ -605,8 +667,10 @@ def _optional_probability(value: object) -> Decimal | None:
 def _validate_run(run: BaselineRun) -> None:
     if run.market != GAME_WINNER_MARKET:
         raise ValueError("seul le marché game_winner est pris en charge")
-    if run.baseline_name not in {COMPETITION_PRIOR, RECENT_FORM}:
+    if run.baseline_name not in {COMPETITION_PRIOR, RATING, RECENT_FORM}:
         raise ValueError("baseline inconnue")
+    if (run.baseline_name == RATING) != (run.artifact_id is not None):
+        raise ValueError("seule la baseline rating exige un artefact lié")
     if run.evaluation_split != OOF_VALIDATION:
         raise ValueError("seules les validations OOF peuvent être publiées")
     if not _FINGERPRINT.fullmatch(run.walk_forward_fingerprint):
@@ -630,6 +694,7 @@ def _validate_run(run: BaselineRun) -> None:
     expected_fingerprint = _content_hash(
         _run_document(
             dataset_id=run.dataset_id,
+            artifact_id=run.artifact_id,
             market=run.market,
             baseline_name=run.baseline_name,
             baseline_version=run.baseline_version,
@@ -651,6 +716,7 @@ def _validate_run(run: BaselineRun) -> None:
 def _run_document(
     *,
     dataset_id: UUID,
+    artifact_id: UUID | None,
     market: str,
     baseline_name: str,
     baseline_version: str,
@@ -661,7 +727,7 @@ def _run_document(
     predictions_fingerprint: str,
     code_commit: str,
 ) -> dict[str, object]:
-    return {
+    document: dict[str, object] = {
         "baseline_name": baseline_name,
         "baseline_version": baseline_version,
         "code_commit": code_commit,
@@ -673,6 +739,9 @@ def _run_document(
         "predictions_fingerprint": predictions_fingerprint,
         "walk_forward_fingerprint": walk_forward_fingerprint,
     }
+    if artifact_id is not None:
+        document["artifact_id"] = str(artifact_id)
+    return document
 
 
 def _metrics_from_document(document: Mapping[str, object]) -> BinaryMetricReport:

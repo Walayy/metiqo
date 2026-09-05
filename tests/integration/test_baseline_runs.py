@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -19,6 +20,9 @@ from metiquo.models import (
     BaselineRunRepository,
     GameWinnerDatasetBuilder,
     GameWinnerDatasetRequest,
+    RatingArtifactRepository,
+    RatingBaselineTrainer,
+    RatingSearchParameters,
     TrainingExampleRepository,
     WalkForwardConfig,
     WalkForwardSplitter,
@@ -83,10 +87,31 @@ def test_baseline_runs_roundtrip_are_comparable_and_append_only(postgresql_url: 
     assert tuple(item.run_id for item in stored) == tuple(item.run_id for item in runs)
     assert tuple(item.predictions for item in stored) == tuple(item.predictions for item in runs)
     assert tuple(repository.record(run) for run in runs) == stored
+    rating_result = RatingBaselineTrainer(
+        code_commit="abcdef1",
+        search=RatingSearchParameters(
+            candidate_scales=(Decimal("200"), Decimal("400"), Decimal("800"))
+        ),
+        clock=FixedClock(UtcInstant(_CREATED_AT)),
+    ).train(plan, dataset_id=dataset.dataset_id)
+    artifact_repository = RatingArtifactRepository(engine=engine)
+    stored_artifact = artifact_repository.record(rating_result.artifact)
+    stored_rating_run = repository.record(rating_result.run)
+
+    comparison = assert_baseline_runs_comparable((*stored, stored_rating_run))
+    assert comparison.sample_count == 1
+    assert stored_artifact == rating_result.artifact
+    assert stored_rating_run.artifact_id == stored_artifact.artifact_id
+    assert artifact_repository.record(rating_result.artifact) == stored_artifact
     with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
         connection.execute(
             text("UPDATE ml.baseline_runs SET code_commit = '1234567' WHERE id = :id"),
             {"id": stored[0].run_id},
+        )
+    with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
+        connection.execute(
+            text("UPDATE ml.rating_artifacts SET selected_scale = 100 WHERE id = :id"),
+            {"id": stored_artifact.artifact_id},
         )
     with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
         connection.execute(
