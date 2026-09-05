@@ -928,3 +928,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la forme est volontairement naïve et sans apprentissage, tandis que les données manquantes héritent d'un prior explicitement appris sur le passé du fold plutôt que d'une imputation silencieuse. Les cotes bookmaker restent totalement absentes.
 - **Commit/hash :** `ea1c013` (`feat(ml): record comparable baseline runs`).
+
+## ML-004 — Baseline rating game winner
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le rating pré-game déterministe `FEAT-003`, les folds temporels et le périmètre OOF `ML-002`, ainsi que le contrat de runs comparables `ML-003` sont `DONE`.
+- **Fichiers créés/modifiés :** migration `20260906_0019`, modèle `RatingArtifact`, entraîneur et store `python/metiquo/models/rating.py`, extension des runs comparables, exports ML, propriétés numériques et roundtrip PostgreSQL.
+- **Migrations :** création de `ml.rating_artifacts` avec dataset, marché, version, fingerprint walk-forward, feature rating exacte, grille, échelle choisie, métrique/scope de sélection, métriques de chaque candidate, commit et empreinte. `ml.baseline_runs` accepte désormais `rating` et référence facultativement l'artefact ; le repository exige l'artefact uniquement pour cette baseline et vérifie qu'il appartient au même dataset, au même plan et au fingerprint déclaré. L'artefact est append-only. Le downgrade retire les seuls runs rating introduits avant de restaurer la contrainte ML-003, ce qui permet un cycle réel même après publication d'un run.
+- **Commandes/tests exécutés :** Ruff, mypy strict, tests modèle et PostgreSQL ciblés, cycle Alembic avec données rating publiées, puis gate global avec PostgreSQL réel.
+- **Résultat exact :** `rating.difference` est transformé par la probabilité Elo `1 / (1 + 10^(-diff/scale))`, saturée proprement aux extrêmes, quantifiée et refusée si l'écart ou l'échelle ne sont pas finis. Les tests couvrent des écarts de `-1 000 000` à `+1 000 000`, la monotonie, la symétrie et les bornes `[0,1]`. Les échelles `200/300/400/600/800` sont évaluées sur les mêmes prédictions OOF ; le meilleur log loss est choisi avec départage par la plus petite échelle, et chaque métrique candidate est conservée. Le test final n'est ni prédit ni consulté : remplacer ses ratings par des extrêmes laisse artefact, fingerprint et run strictement identiques. Le résultat est reproductible, le run rating rejoint les deux baselines précédentes sur le même périmètre, et les features absentes sont refusées sans imputation. Le gate retourne 278 tests Python, 20 tests composants et mypy strict sur 206 fichiers ; les contrats et migrations sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; seule l'échelle de conversion est réglée à ce stade, sur validation OOF exclusivement. Le test final reste réservé à l'évaluation finale et aucune cote bookmaker n'entre dans la probabilité.
+- **Commit/hash :** `327003f` (`feat(ml): version pregame rating baseline`).
