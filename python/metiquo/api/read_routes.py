@@ -127,10 +127,12 @@ def build_read_router(service: ReadService, clock: Clock) -> APIRouter:
         starts_to: Annotated[datetime | None, Query(alias="startsTo")] = None,
     ) -> PageResponse[Opportunity]:
         _validate_period(starts_from, starts_to)
+        include_diagnostics = grade in {ValueGrade.NO_EDGE, ValueGrade.BLOCKED}
         items = tuple(
             item
             for item in service.list_opportunities()
-            if _matches_text(item.event.competition, competition)
+            if (include_diagnostics or item.quality.publishable)
+            and _matches_text(item.event.competition, competition)
             and (
                 team is None
                 or _matches_text(item.event.team_a, team)

@@ -45,7 +45,7 @@ test("renders an explicit no-opportunity state", async ({ page }) => {
 });
 
 test("keeps a stale snapshot visible but clearly blocks the decision", async ({ page }) => {
-  await page.goto("/?eligibility=all&freshness=stale");
+  await page.goto("/?eligibility=all&freshness=stale&grade=BLOCKED");
 
   await expect(
     page.getByRole("heading", { level: 2, name: "Données anciennes — décision bloquée" }),

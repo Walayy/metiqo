@@ -142,6 +142,8 @@ def test_repeated_prematch_prediction_keeps_reproducible_inference_and_history(
     assert first.team_a_probability + first.team_b_probability == Decimal(1)
     assert first.team_a_low + first.team_b_high == Decimal(1)
     assert first.team_a_high + first.team_b_low == Decimal(1)
+    assert first.data_coverage is not None
+    assert first.out_of_distribution_distance == Decimal("0.25000000")
     assert second_service.list_for_event(target_event_id) == (first, second)
 
     with pytest.raises(ValueError, match="cutoff pré-match"):

@@ -31,6 +31,7 @@ from metiquo.repositories.postgres_canonical import (
     CanonicalTeamRecord,
     PostgresCanonicalRepository,
 )
+from metiquo.repositories.postgres_opportunities import PostgresOpportunityRepository
 
 __all__ = [
     "CanonicalGameRecord",
@@ -52,6 +53,7 @@ __all__ = [
     "MockRepositoryBundle",
     "MockRepositoryFactory",
     "PostgresCanonicalRepository",
+    "PostgresOpportunityRepository",
     "RealRepositoryFactory",
     "RepositoryFactory",
     "build_mock_repository_bundle",

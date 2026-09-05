@@ -15,6 +15,7 @@ from alembic import command
 from sqlalchemy import Engine, Table, create_engine, select, text
 from sqlalchemy.exc import DBAPIError
 
+from metiquo.api.app import create_app
 from metiquo.contracts import Event
 from metiquo.contracts.enums import (
     AbstentionReason,
@@ -45,6 +46,7 @@ from metiquo.models.predictions import (
     StoredPrematchPrediction,
 )
 from metiquo.pricing import (
+    AbstentionDecision,
     MarketQuote,
     NoVigMarket,
     NoVigPricingEngine,
@@ -59,8 +61,11 @@ from metiquo.pricing import (
 from metiquo.providers import ManualImportOddsProvider
 from metiquo.repositories import PostgresCanonicalRepository
 from metiquo.services.odds_capture import OddsCaptureService, OddsCaptureSource
+from tests.api.test_mock_reads import build_app as build_mock_app
+from tests.api.test_mock_reads import get as mock_get
 from tests.integration.test_migrations import alembic_config
 from tests.integration.test_model_registry import _calibrator, _database_prerequisites
+from tests.integration.test_postgres_canonical_api import _ReadyProbe, _request, _settings
 from tests.integration.test_prematch_predictions import (
     _FixedDecoder,
     _historical_dataset,
@@ -204,6 +209,119 @@ def test_signals_keep_exact_inputs_reproduce_and_reject_mutation(
     assert blocked.abstention_reasons == (AbstentionReason.ODDS_STALE,)
     assert repository.list_for_prediction(prediction.prediction_id) == (stored, blocked)
 
+    later_capture_at = captured_at + timedelta(minutes=1)
+    later_provider = ManualImportOddsProvider(
+        provider_code,
+        clock=FixedClock(UtcInstant(later_capture_at)),
+    )
+    later_import = later_provider.import_document(
+        json.dumps(
+            [_manual_row(provider_code, event, later_capture_at, odds="2.00")],
+            separators=(",", ":"),
+        ).encode(),
+        document_format="json",
+    )
+    later_event = later_provider.list_events(
+        cutoff,
+        event.starts_at + timedelta(hours=1),
+        GameTitle.LEAGUE_OF_LEGENDS,
+    )[0]
+    later_capture = OddsCaptureService(
+        engine,
+        FixedClock(UtcInstant(later_capture_at + timedelta(minutes=1))),
+    ).capture_event(
+        later_provider,
+        later_event,
+        OddsCaptureSource("manual_import", "Signal price move", later_import.import_key),
+    )
+    later_no_vig = NoVigPricingEngine().calculate(
+        NoVigMarket(
+            quotes=(
+                MarketQuote(SelectionType.TEAM_A, DecimalOdds(Decimal("2.00"))),
+                MarketQuote(SelectionType.TEAM_B, DecimalOdds(Decimal("2.00"))),
+            ),
+            expected_selections=frozenset((SelectionType.TEAM_A, SelectionType.TEAM_B)),
+        )
+    )
+    later_priced = ValuePricingEngine().calculate(
+        ValuePricingInput(
+            later_no_vig.quote(SelectionType.TEAM_A),
+            Probability(prediction.team_a_probability),
+            Probability(prediction.team_a_low),
+        )
+    )
+    later_signal = PostgresSignalRepository(
+        engine,
+        FixedClock(UtcInstant(computed_at + timedelta(minutes=2))),
+    ).append(
+        SignalPublication(
+            odds_snapshot_id=later_capture.inserted_snapshot_ids[0],
+            prediction_id=prediction.prediction_id,
+            event_mapping_attempt_id=mapping.attempt_id,
+            selection=SelectionType.TEAM_A,
+            grade=ValueGrade.STRONG_VALUE,
+            decision=ValueDecision(policy.version, later_priced, None),
+            mapping_confidence=Probability(mapping.candidates[0].total_score),
+            source_freshness=FreshnessStatus.FRESH,
+            odds_age_seconds=660,
+            no_vig_policy_version=later_no_vig.strategy_version,
+        )
+    )
+    diagnostic = PostgresSignalRepository(
+        engine,
+        FixedClock(UtcInstant(computed_at + timedelta(minutes=3))),
+    ).append(
+        SignalPublication(
+            odds_snapshot_id=capture.inserted_snapshot_ids[0],
+            prediction_id=prediction.prediction_id,
+            event_mapping_attempt_id=mapping.attempt_id,
+            selection=SelectionType.TEAM_A,
+            grade=ValueGrade.BLOCKED,
+            decision=ValueDecision(
+                policy.version,
+                priced,
+                AbstentionDecision(policy.version, (AbstentionReason.ODDS_STALE,)),
+            ),
+            mapping_confidence=Probability(mapping.candidates[0].total_score),
+            source_freshness=FreshnessStatus.STALE,
+            odds_age_seconds=780,
+            no_vig_policy_version=no_vig.strategy_version,
+        )
+    )
+
+    api = create_app(
+        settings=_settings(postgresql_url, "real"),
+        readiness_probe=_ReadyProbe(),
+        clock=FixedClock(UtcInstant(computed_at + timedelta(minutes=4))),
+    )
+    listing = _request(api, "/api/v1/opportunities")
+    payload = listing.json()
+    assert listing.status_code == 200
+    assert payload["page"]["total"] == 2
+    assert [item["signalId"] for item in payload["data"]] == [
+        str(later_signal.signal_id),
+        str(stored.signal_id),
+    ]
+    assert payload["meta"]["dataMode"] == "real"
+    mock_item = mock_get(build_mock_app(), "/api/v1/opportunities?limit=1").json()["data"][0]
+    assert set(payload["data"][0]) == set(mock_item)
+    assert set(payload["data"][0]["model"]) == set(mock_item["model"])
+    assert set(payload["data"][0]["quality"]) == set(mock_item["quality"])
+    assert _request(api, "/api/v1/opportunities?minEv=0.15").json()["page"]["total"] == 1
+
+    diagnostics = _request(api, "/api/v1/opportunities?grade=BLOCKED")
+    assert diagnostics.json()["page"]["total"] == 1
+    assert diagnostics.json()["data"][0]["signalId"] == str(diagnostic.signal_id)
+    assert str(blocked.signal_id) not in {item["signalId"] for item in diagnostics.json()["data"]}
+    detail = _request(api, f"/api/v1/opportunities/{stored.signal_id}")
+    explanation = _request(api, f"/api/v1/opportunities/{diagnostic.signal_id}/explanation")
+    assert detail.status_code == 200
+    assert detail.json()["data"]["book"]["oddsSnapshotId"] == str(stored.odds_snapshot_id)
+    assert explanation.status_code == 200
+    assert explanation.json()["data"]["reasons"] == ["ODDS_STALE"]
+    assert _request(api, f"/api/v1/opportunities/{blocked.signal_id}").status_code == 404
+    api.state.real_admin_engine.dispose()
+
     with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
         connection.execute(
             text("UPDATE signals.signals SET grade = 'WATCH' WHERE id = :id"),
@@ -297,12 +415,13 @@ def _manual_row(
     provider_code: str,
     event: Event,
     captured_at: datetime,
+    odds: str = "1.80",
 ) -> dict[str, object]:
     return {
         "best_of": event.best_of,
         "captured_at": captured_at.isoformat(),
         "competition": event.competition,
-        "decimal_odds": "1.80",
+        "decimal_odds": odds,
         "event_status": "scheduled",
         "game_title": "lol",
         "line": None,

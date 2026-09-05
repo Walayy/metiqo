@@ -59,6 +59,13 @@ def assert_mock_metadata(payload: dict[str, object]) -> None:
 def test_opportunities_support_typed_filters_pagination_and_empty_results() -> None:
     app = build_app()
 
+    default_listing = get(app, "/api/v1/opportunities?limit=100").json()
+    assert default_listing["page"]["total"] == len(default_listing["data"])
+    assert all(item["quality"]["publishable"] for item in default_listing["data"])
+    diagnostic = get(app, "/api/v1/opportunities?grade=BLOCKED&limit=100").json()
+    assert diagnostic["page"]["total"] >= 1
+    assert all(not item["quality"]["publishable"] for item in diagnostic["data"])
+
     response = get(
         app,
         "/api/v1/opportunities?grade=STRONG_VALUE&minConfidence=0.80&offset=0&limit=1",

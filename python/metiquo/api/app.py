@@ -39,6 +39,7 @@ from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
 from metiquo.repositories.postgres_mapping import PostgresMappingRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
+from metiquo.repositories.postgres_opportunities import PostgresOpportunityRepository
 from metiquo.services import MockMutationService, ReadService, build_mock_read_service
 from metiquo.services.real_admin import RealAdminMutationService
 from metiquo.services.real_mapping import RealMappingMutationService
@@ -180,6 +181,7 @@ def create_app(
         app.include_router(
             build_real_historical_router(
                 PostgresCanonicalRepository(real_engine, resolved_clock),
+                PostgresOpportunityRepository(real_engine, resolved_clock),
                 resolved_repository,
                 resolved_clock,
             )

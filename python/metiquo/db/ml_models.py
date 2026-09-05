@@ -860,6 +860,14 @@ class PrematchPrediction(Base):
             name="team_b_upper",
         ),
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence"),
+        CheckConstraint(
+            "data_coverage IS NULL OR data_coverage BETWEEN 0 AND 1",
+            name="data_coverage",
+        ),
+        CheckConstraint(
+            "out_of_distribution_distance IS NULL OR out_of_distribution_distance >= 0",
+            name="out_of_distribution_distance",
+        ),
         CheckConstraint("jsonb_typeof(reason_codes) = 'array'", name="reasons_array"),
         CheckConstraint(
             "(enabled AND jsonb_array_length(reason_codes) = 0) OR "
@@ -918,6 +926,8 @@ class PrematchPrediction(Base):
     team_b_low: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
     team_b_high: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
     confidence: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+    data_coverage: Mapped[Decimal | None] = mapped_column(Numeric(9, 8))
+    out_of_distribution_distance: Mapped[Decimal | None] = mapped_column(Numeric(20, 8))
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
     reason_codes: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     code_commit: Mapped[str] = mapped_column(String(64), nullable=False)

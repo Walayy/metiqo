@@ -139,6 +139,8 @@ class StoredPrematchPrediction:
     team_b_low: Decimal
     team_b_high: Decimal
     confidence: Decimal
+    data_coverage: Decimal | None
+    out_of_distribution_distance: Decimal | None
     enabled: bool
     reason_codes: tuple[str, ...]
     code_commit: str
@@ -197,11 +199,12 @@ class PrematchPredictionService:
         if snapshot.event_id != request.event_id or snapshot.cutoff_at != request.cutoff_at:
             raise RuntimeError("le snapshot construit ne correspond pas à la demande")
         inference = runtime.predictor.predict(snapshot.values)
+        data_coverage = _data_coverage(snapshot.missingness)
         prediction = self._plugin.predict(
             runtime.model,
             runtime.uncertainty,
             raw_team_a_probability=inference.raw_team_a_probability,
-            data_coverage=_data_coverage(snapshot.missingness),
+            data_coverage=data_coverage,
             training_domain_distance=inference.training_domain_distance,
         )
         inference_document = {
@@ -248,6 +251,8 @@ class PrematchPredictionService:
             "team_b_low": prediction.team_b.p_low,
             "team_b_high": prediction.team_b.p_high,
             "confidence": prediction.team_a.confidence,
+            "data_coverage": data_coverage,
+            "out_of_distribution_distance": inference.training_domain_distance,
             "enabled": prediction.enabled,
             "reason_codes": list(prediction.reason_codes),
             "code_commit": self._code_commit,
@@ -331,6 +336,11 @@ def _stored(row: RowMapping) -> StoredPrematchPrediction:
         team_b_low=cast(Decimal, row["team_b_low"]),
         team_b_high=cast(Decimal, row["team_b_high"]),
         confidence=cast(Decimal, row["confidence"]),
+        data_coverage=cast(Decimal | None, row["data_coverage"]),
+        out_of_distribution_distance=cast(
+            Decimal | None,
+            row["out_of_distribution_distance"],
+        ),
         enabled=bool(row["enabled"]),
         reason_codes=tuple(cast(list[str], row["reason_codes"])),
         code_commit=str(row["code_commit"]),

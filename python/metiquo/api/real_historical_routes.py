@@ -4,24 +4,28 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import datetime
+from decimal import Decimal
 from importlib.metadata import version
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from metiquo.api.dto import ItemResponse, PageInfo, PageResponse
+from metiquo.api.dto import ItemResponse, OpportunityExplanation, PageInfo, PageResponse
 from metiquo.contracts import ContractMetadata, Event, Market, OddsSnapshot, Opportunity
 from metiquo.contracts.enums import (
     DataMode,
     EventStatus,
     FreshnessStatus,
+    MarketType,
     ProviderStatus,
+    ValueGrade,
 )
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
+from metiquo.repositories.postgres_opportunities import PostgresOpportunityRepository
 
 Offset = Annotated[int, Query(ge=0)]
 Limit = Annotated[int, Query(ge=1, le=100)]
@@ -29,6 +33,7 @@ Limit = Annotated[int, Query(ge=1, le=100)]
 
 def build_real_historical_router(
     repository: PostgresCanonicalRepository,
+    opportunity_repository: PostgresOpportunityRepository,
     admin_repository: PostgresAdminRepository,
     clock: Clock,
 ) -> APIRouter:
@@ -99,10 +104,91 @@ def build_real_historical_router(
     def list_opportunities(
         offset: Offset = 0,
         limit: Limit = 20,
+        competition: str | None = None,
+        team: str | None = None,
+        market: MarketType | None = None,
+        grade: ValueGrade | None = None,
+        min_edge: Annotated[Decimal | None, Query(alias="minEdge", ge=-1, le=1)] = None,
+        min_ev: Annotated[Decimal | None, Query(alias="minEv", ge=-1)] = None,
+        min_confidence: Annotated[
+            Decimal | None,
+            Query(alias="minConfidence", ge=0, le=1),
+        ] = None,
+        freshness: FreshnessStatus | None = None,
+        starts_from: Annotated[datetime | None, Query(alias="startsFrom")] = None,
+        starts_to: Annotated[datetime | None, Query(alias="startsTo")] = None,
     ) -> PageResponse[Opportunity]:
-        return _page((), offset, limit, admin_repository, clock)
+        _validate_period(starts_from, starts_to)
+        include_diagnostics = grade in {ValueGrade.NO_EDGE, ValueGrade.BLOCKED}
+        values = tuple(
+            item
+            for item in opportunity_repository.list(
+                include_diagnostics=include_diagnostics,
+            )
+            if _matches(item.event.competition, competition)
+            and (
+                team is None
+                or _matches(item.event.team_a, team)
+                or _matches(item.event.team_b, team)
+            )
+            and (market is None or item.market.type is market)
+            and (grade is None or item.value.grade is grade)
+            and (min_edge is None or item.value.edge >= min_edge)
+            and (min_ev is None or item.value.expected_value >= min_ev)
+            and (min_confidence is None or item.model.confidence >= min_confidence)
+            and (freshness is None or item.meta.freshness is freshness)
+            and (starts_from is None or item.event.starts_at >= starts_from)
+            and (starts_to is None or item.event.starts_at <= starts_to)
+        )
+        return PageResponse(
+            data=values[offset : offset + limit],
+            page=PageInfo(offset=offset, limit=limit, total=len(values)),
+            meta=_opportunity_meta(values, admin_repository, clock),
+        )
+
+    @router.get("/opportunities/{signal_id}", response_model=ItemResponse[Opportunity])
+    def get_opportunity(signal_id: UUID) -> ItemResponse[Opportunity]:
+        opportunity = _require_opportunity(opportunity_repository, signal_id)
+        return ItemResponse(data=opportunity, meta=opportunity.meta)
+
+    @router.get(
+        "/opportunities/{signal_id}/explanation",
+        response_model=ItemResponse[OpportunityExplanation],
+    )
+    def get_opportunity_explanation(
+        signal_id: UUID,
+    ) -> ItemResponse[OpportunityExplanation]:
+        opportunity = _require_opportunity(opportunity_repository, signal_id)
+        reasons = tuple(reason.value for reason in opportunity.quality.abstention_reasons)
+        if not reasons:
+            reasons = (
+                f"Signal reproductible selon {opportunity.value.policy_version}",
+                f"Prédiction {opportunity.model.prediction_id}",
+                f"Snapshot de cote {opportunity.book.odds_snapshot_id}",
+            )
+        explanation = OpportunityExplanation(
+            signal_id=opportunity.signal_id,
+            reference=opportunity.explanation_reference or "signal-proof-v1:unavailable",
+            publishable=opportunity.quality.publishable,
+            reasons=reasons,
+        )
+        return ItemResponse(data=explanation, meta=opportunity.meta)
 
     return router
+
+
+def _require_opportunity(
+    repository: PostgresOpportunityRepository,
+    signal_id: UUID,
+) -> Opportunity:
+    opportunity = repository.get(signal_id)
+    if opportunity is None:
+        raise BusinessError(
+            ErrorCode.NOT_FOUND,
+            "Opportunité introuvable",
+            context={"id": str(signal_id)},
+        )
+    return opportunity
 
 
 def _require_event(repository: PostgresCanonicalRepository, event_id: UUID) -> Event:
@@ -182,6 +268,32 @@ def _odds_meta(
         freshness=freshness,
         as_of=as_of,
         computed_at=max(now, as_of),
+        app_version=version("metiquo"),
+    )
+
+
+def _opportunity_meta(
+    values: Sequence[Opportunity],
+    repository: PostgresAdminRepository,
+    clock: Clock,
+) -> ContractMetadata:
+    if not values:
+        return _meta(repository, clock)
+    priorities = {
+        FreshnessStatus.FRESH: 0,
+        FreshnessStatus.STALE: 1,
+        FreshnessStatus.DEGRADED: 2,
+        FreshnessStatus.QUARANTINED: 3,
+        FreshnessStatus.FAILED: 4,
+    }
+    return ContractMetadata(
+        data_mode=DataMode.REAL,
+        freshness=max(
+            (item.meta.freshness for item in values),
+            key=priorities.__getitem__,
+        ),
+        as_of=max(item.meta.as_of for item in values),
+        computed_at=max(item.meta.computed_at for item in values),
         app_version=version("metiquo"),
     )
 
