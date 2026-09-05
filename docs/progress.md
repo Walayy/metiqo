@@ -448,6 +448,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; la liste et la sémantique viennent directement de la SFG.
 - **Commit/hash :** `cc00bd06d6c20e9f051031e9c0e72eaa7f2a72db` (`feat(ingestion): add source error taxonomy and retries`).
 
+## OE-011 — Manifeste et empreintes de snapshot
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-009` est `DONE` et fournit un téléchargement physiquement validé.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/manifest.py`, `tests/ingestion/test_manifest.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 5 tests ciblés manifeste/stockage ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `SnapshotManifest` sérialise de façon canonique et relit strictement provider, année, ID Drive, demande/téléchargement/confirmation UTC, transport, taille, SHA-256, type observé, compression, encodage, délimiteur, empreinte du schéma, nombre de lignes, dates métier min/max, statut/détail qualité et version du code. `SchemaDocument` impose positions consécutives et noms uniques ; son empreinte stable change dès qu'un type change. `store_snapshot` rapproche manifeste, reçu et schéma, écrit les trois documents dans l'ObjectStore, rouvre la source stockée et recalcule son SHA-256 avant de rendre le snapshot utilisable. Les tests prouvent le round-trip exact, le layout complet, le rejet avant stockage d'un manifeste incohérent et le blocage d'un store qui ment après promotion. La suite retourne 168 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la sérialisation déterministe renforce l'identification reproductible du dataset exigée par la SFG.
+- **Commit/hash :** `0ed9fa0d97d370d7adac16d873d1cb4c7f42f879` (`feat(ingestion): add immutable snapshot manifest`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
