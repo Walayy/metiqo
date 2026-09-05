@@ -135,6 +135,8 @@ def _prediction() -> StoredPrematchPrediction:
         team_b_low=Decimal("0.32"),
         team_b_high=Decimal("0.48"),
         confidence=Decimal("0.78"),
+        data_coverage=Decimal("0.96"),
+        out_of_distribution_distance=Decimal("0.12"),
         enabled=True,
         reason_codes=(),
         code_commit="abcdef1",
