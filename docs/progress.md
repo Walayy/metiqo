@@ -748,3 +748,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; Polars est introduit ici car la SFG l’impose pour les calculs de features et le même garde-fou temporel doit précéder les agrégats SQL comme les plans Polars.
 - **Commit/hash :** `a1fee80` (`feat(features): enforce strict as-of cutoffs`).
+
+## FEAT-003 — Rating temporel pré-game
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les lots as-of audités `FEAT-002` sont `DONE` et constituent l’unique entrée du calculateur ; toute observation à la frontière ou après le cutoff est donc bloquée avant le rejeu.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/rating.py`, exports features et tests unitaires de séquences Elo vérifiables à la main.
+- **Migrations :** aucune ; les paramètres et cinq colonnes produites sont déclarables dans le registre versionné de `FEAT-001`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; trois tests de rating déterministe et de fuite temporelle ; vérification du diff.
+- **Résultat exact :** `EloParameters` versionne rating initial, facteur K, échelle et éventuels priors explicites par compétition. Le calculateur rejoue uniquement les games antérieures du lot, trace pour chacune ratings pré-game, probabilité attendue, résultat passé et delta, puis expose ratings des deux équipes, différence et tailles d’échantillon. Une victoire entre deux équipes à 1500 produit exactement 1516/1484 avec K=32. Deux games partageant le même timestamp sont toutes deux évaluées depuis l’état antérieur commun puis appliquées ensemble, de sorte qu’aucun résultat simultané ne fuit dans l’autre. L’ordre d’entrée ne change pas le résultat et une game cible placée au cutoff déclenche le blocage temporel.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; Elo est la baseline auditable exigée par la SFG, pas encore un modèle promu, et les priors de compétition restent absents tant qu’ils ne sont pas explicitement fournis.
+- **Commit/hash :** `bb9c9fb` (`feat(features): add auditable pregame Elo`).
