@@ -1240,3 +1240,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les bandes horaires et la marge de proximité appartiennent à la politique versionnée initiale et pourront évoluer sous une nouvelle version sans réécrire l'audit.
 - **Commit/hash :** `0cc7b23` (`feat(mapping): score provider events safely`).
+
+## MAP-004 — File de revue mapping et actions
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le score persistant `MAP-003` et la file opérateur `UI-009` sont `DONE` ; les routes réelles réutilisent les mêmes contrats que le mode mock.
+- **Fichiers créés/modifiés :** états et audit PostgreSQL de revue, repository et service de mutation réels, routes admin, résolution manuelle de l'historique odds, contrats OpenAPI/TypeScript, interface de revue et journal d'audit, guide opérateur et preuves API/E2E.
+- **Migrations :** `20260907_0030` crée `odds.mapping_reviews` et `odds.mapping_audits`. Une revue référence exactement une tentative immuable ; le journal impose action, acteur, motif, empreinte d'idempotence unique et aperçu JSON, puis interdit toute mise à jour ou suppression par trigger.
+- **Commandes/tests exécutés :** tests API et repository mock, preuve PostgreSQL ciblée, génération OpenAPI, Ruff, mypy strict, ESLint, Prettier, CSpell, TypeScript, tests composants, deux scénarios Playwright de revue, puis gate global `make check` sur PostgreSQL réel depuis le contrat enregistré.
+- **Résultat exact :** toute décision `review` crée automatiquement une tâche `pending` avec candidats et quatre composantes de score enregistrés. L'API réelle liste la file, exige un candidat explicite pour approuver, permet le rejet et crée des alias manuels datés vers une entité canonique validée. Chaque mutation peut être rejouée par clé sans doublon et publie acteur, motif et impact dans le journal commun. Une approbation rend les snapshots provider lisibles sous l'événement canonique et applique l'inversion A/B du candidat, sans modifier aucun snapshot ni signal historique. L'écran envoie désormais l'identifiant candidat séparément, cible l'équipe correcte pour l'alias et affiche le nombre d'observations touchées. La preuve réelle approuve une revue, en rejette une autre, rejoue l'approbation, crée l'alias et vérifie trois audits pour deux snapshots inchangés. Le gate retourne 379 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 280 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la tentative et ses scores restent append-only, tandis que seule la ligne d'état de revue est mutable afin de représenter la décision courante sans réécrire sa preuve.
+- **Commit/hash :** `cd58db5` (`feat(mapping): add audited review workflow`).
