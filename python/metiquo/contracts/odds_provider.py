@@ -14,6 +14,7 @@ from metiquo.contracts.base import (
 )
 from metiquo.contracts.enums import (
     EventStatus,
+    FreshnessStatus,
     GameTitle,
     MarketPeriod,
     MarketStatus,
@@ -97,12 +98,20 @@ class ProviderHealth(ContractModel):
     status: ProviderStatus
     checked_at: UtcDateTime = Field(alias="checkedAt")
     last_success_at: UtcDateTime | None = Field(default=None, alias="lastSuccessAt")
+    last_capture_at: UtcDateTime | None = Field(default=None, alias="lastCaptureAt")
+    age_seconds: int | None = Field(default=None, alias="ageSeconds", ge=0)
+    failure_count: int = Field(default=0, alias="failureCount", ge=0)
+    freshness: FreshnessStatus | None = None
     detail: NonEmptyText | None = None
 
     @model_validator(mode="after")
     def last_success_is_not_in_the_future(self) -> Self:
         if self.last_success_at is not None and self.last_success_at > self.checked_at:
             raise ValueError("Le dernier succès ne peut pas suivre le contrôle de santé")
+        if self.last_capture_at is not None and self.last_capture_at > self.checked_at:
+            raise ValueError("La dernière capture ne peut pas suivre le contrôle de santé")
+        if (self.last_capture_at is None) != (self.age_seconds is None):
+            raise ValueError("L'âge et la dernière capture doivent être exposés ensemble")
         return self
 
 

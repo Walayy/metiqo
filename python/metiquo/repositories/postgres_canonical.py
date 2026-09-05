@@ -2,17 +2,24 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
+from decimal import Decimal
 from typing import cast
 from uuid import UUID
 
 from sqlalchemy import Engine, RowMapping, Table, func, select
 
 from metiquo.contracts import Event, Market, OddsSnapshot
-from metiquo.contracts.enums import EventStatus
+from metiquo.contracts.enums import EventStatus, MarketStatus, ProviderStatus, SelectionType
 from metiquo.contracts.enums import GameTitle as ContractGameTitle
 from metiquo.db.core_models import Competition, Game, GameTeamStat, Series, Team
+from metiquo.db.odds_models import (
+    OddsProviderRecord,
+    OddsSnapshotRecord,
+    ProviderOddsSelection,
+)
+from metiquo.foundation.time import Clock, SystemClock
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +73,7 @@ class PostgresCanonicalRepository:
     """Adapter les tables core sans exposer l'ORM dans les contrats publics."""
 
     engine: Engine
+    clock: Clock = field(default_factory=SystemClock)
 
     def list_teams(self) -> tuple[CanonicalTeamRecord, ...]:
         teams = cast(Table, Team.__table__)
@@ -198,10 +206,52 @@ class PostgresCanonicalRepository:
         del event_id
         return ()
 
+    def odds_history(self, event_id: UUID) -> tuple[OddsSnapshot, ...]:
+        snapshots = cast(Table, OddsSnapshotRecord.__table__)
+        providers = cast(Table, OddsProviderRecord.__table__)
+        selections = cast(Table, ProviderOddsSelection.__table__)
+        with self.engine.connect() as connection:
+            rows = (
+                connection.execute(
+                    select(
+                        snapshots,
+                        providers.c.code.label("provider_code"),
+                        selections.c.selection_type,
+                    )
+                    .join(providers, providers.c.id == snapshots.c.provider_id)
+                    .join(selections, selections.c.id == snapshots.c.selection_id)
+                    .where(
+                        snapshots.c.event_id == event_id,
+                        snapshots.c.captured_at.is_not(None),
+                    )
+                    .order_by(snapshots.c.captured_at, snapshots.c.id)
+                )
+                .mappings()
+                .all()
+            )
+        now = self.clock.now().value
+        return tuple(self._odds_snapshot(row, now) for row in rows)
+
     @staticmethod
-    def odds_history(event_id: UUID) -> tuple[OddsSnapshot, ...]:
-        del event_id
-        return ()
+    def _odds_snapshot(row: RowMapping, now: datetime) -> OddsSnapshot:
+        captured_at = cast(datetime, row["captured_at"])
+        decimal_odds = cast(Decimal, row["decimal_odds"])
+        return OddsSnapshot(
+            odds_snapshot_id=cast(UUID, row["id"]),
+            event_id=cast(UUID, row["event_id"]),
+            market_id=cast(UUID, row["market_id"]),
+            selection=SelectionType(str(row["selection_type"])),
+            provider=str(row["provider_code"]),
+            provider_status=ProviderStatus(str(row["provider_status"])),
+            market_status=MarketStatus(str(row["market_status"])),
+            decimal_odds=decimal_odds,
+            captured_at=captured_at,
+            age_seconds=max(0, int((now - captured_at).total_seconds())),
+            raw_implied_probability=Decimal(1) / decimal_odds,
+            no_vig_probability=None,
+            informational_only=bool(row["informational_only"]),
+            provenance_reference=str(row["provenance_reference"]),
+        )
 
     @staticmethod
     def _game_record(

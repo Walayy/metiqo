@@ -42,13 +42,26 @@ IdempotencyKey = Annotated[
 
 
 def _freshness(repository: PostgresAdminRepository) -> FreshnessStatus:
-    status = repository.list_data_sources()[0].status
-    return {
-        ProviderStatus.OPERATIONAL: FreshnessStatus.FRESH,
-        ProviderStatus.DEGRADED: FreshnessStatus.DEGRADED,
-        ProviderStatus.UNAVAILABLE: FreshnessStatus.FAILED,
-        ProviderStatus.DISABLED: FreshnessStatus.FAILED,
-    }[status]
+    values = tuple(
+        source.freshness
+        or {
+            ProviderStatus.OPERATIONAL: FreshnessStatus.FRESH,
+            ProviderStatus.DEGRADED: FreshnessStatus.DEGRADED,
+            ProviderStatus.UNAVAILABLE: FreshnessStatus.FAILED,
+            ProviderStatus.DISABLED: FreshnessStatus.FAILED,
+        }[source.status]
+        for source in repository.list_data_sources()
+    )
+    for state in (
+        FreshnessStatus.FAILED,
+        FreshnessStatus.QUARANTINED,
+        FreshnessStatus.DEGRADED,
+        FreshnessStatus.STALE,
+        FreshnessStatus.FRESH,
+    ):
+        if state in values:
+            return state
+    return FreshnessStatus.FAILED
 
 
 def _meta(repository: PostgresAdminRepository, clock: Clock) -> ContractMetadata:

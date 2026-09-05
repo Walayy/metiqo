@@ -21,6 +21,7 @@ from metiquo.contracts import (
 from metiquo.contracts.enums import (
     BacktestKind,
     DataMode,
+    FreshnessStatus,
     GameTitle,
     MappingReviewStatus,
     ProviderStatus,
@@ -178,12 +179,22 @@ class MockDataHealthRepository:
             for scenario in self.catalog.scenarios
             for snapshot in scenario.odds_history
         )
+        age_seconds = max(
+            0,
+            int((self.catalog.reference_time - last_success_at).total_seconds()),
+        )
         return (
             ProviderHealth(
                 provider_code=MockOddsProvider.provider_code,
                 status=ProviderStatus.DEGRADED if failed else ProviderStatus.OPERATIONAL,
                 checked_at=self.catalog.reference_time,
                 last_success_at=last_success_at,
+                last_capture_at=last_success_at,
+                age_seconds=age_seconds,
+                failure_count=sum(
+                    1 for scenario in self.catalog.scenarios if scenario.source_sync_failed
+                ),
+                freshness=(FreshnessStatus.DEGRADED if failed else FreshnessStatus.FRESH),
                 detail=(
                     "Une synchronisation mock a échoué ; le dernier snapshot valide est conservé"
                     if failed
@@ -411,14 +422,25 @@ class MockOddsProvider:
                 provider_code=self.provider_code,
                 status=ProviderStatus.UNAVAILABLE,
                 checked_at=observed_at,
+                failure_count=sum(
+                    1 for scenario in self.catalog.scenarios if scenario.source_sync_failed
+                ),
+                freshness=FreshnessStatus.FAILED,
                 detail="Aucune observation mock disponible à cet instant",
             )
         failed = any(scenario.source_sync_failed for scenario in self.catalog.scenarios)
+        last_capture_at = max(snapshot.captured_at for snapshot in snapshots)
         return ProviderHealth(
             provider_code=self.provider_code,
             status=ProviderStatus.DEGRADED if failed else ProviderStatus.OPERATIONAL,
             checked_at=observed_at,
-            last_success_at=max(snapshot.captured_at for snapshot in snapshots),
+            last_success_at=last_capture_at,
+            last_capture_at=last_capture_at,
+            age_seconds=max(0, int((observed_at - last_capture_at).total_seconds())),
+            failure_count=sum(
+                1 for scenario in self.catalog.scenarios if scenario.source_sync_failed
+            ),
+            freshness=FreshnessStatus.DEGRADED if failed else FreshnessStatus.FRESH,
             detail=(
                 "Une synchronisation mock a échoué ; le dernier snapshot valide est conservé"
                 if failed
