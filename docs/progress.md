@@ -760,3 +760,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; Elo est la baseline auditable exigée par la SFG, pas encore un modèle promu, et les priors de compétition restent absents tant qu’ils ne sont pas explicitement fournis.
 - **Commit/hash :** `bb9c9fb` (`feat(features): add auditable pregame Elo`).
+
+## FEAT-004 — Forme récente
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les cutoffs et lots historiques `FEAT-002` sont `DONE` ; le calculateur réutilise aussi les transitions pré-game de la baseline `FEAT-003` pour mesurer la force réellement connue des adversaires.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/form.py`, durcissement du filtre des games non utilisables dans le rating, exports features et tests unitaires de fenêtres/missingness.
+- **Migrations :** aucune ; toutes les sorties et tous les paramètres sont exposés comme `FeatureDefinitionSpec` versionnées pour le registre de `FEAT-001`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cinq tests cumulés rating/forme ; vérification du diff.
+- **Résultat exact :** chaque équipe expose simultanément les 5/10/20 dernières games et les fenêtres 30/60/90 jours, avec taux de victoire et complétude propres à chaque fenêtre. Le calcul fournit aussi moyenne exponentiellement pondérée, tendance linéaire, volatilité, rating pré-game moyen des adversaires et nombre de games utilisables. Une fixture dont une des cinq observations récentes est incomplète conserve cinq observations mais seulement quatre résultats, soit une complétude de 0,8 ; le taux de victoire est calculé sur ces quatre résultats et l’absence n’est ni une défaite ni un zéro. Une équipe nouvelle retourne échantillon zéro et métriques `None` explicites, prêtes pour la régularisation de `FEAT-010`.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les petits échantillons ne sont pas encore ramenés vers un prior dans ce ticket, afin que `FEAT-010` applique une politique unique et versionnée au-dessus des statistiques brutes.
+- **Commit/hash :** `f9cac23` (`feat(features): compute explicit recent form`).
