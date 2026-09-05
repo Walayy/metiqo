@@ -496,6 +496,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; les seuils et abstentions suivent directement les règles métier SFG.
 - **Commit/hash :** `16380b7e926309128a9054c4bec32a2e62c48263` (`feat(ingestion): enforce business data quality`).
 
+## OE-015 — Quarantaine durable
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-014` fournit le diagnostic DQ structuré et `OE-002` le stockage immuable adressé par contenu.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/quarantine.py`, `tests/integration/test_quarantine.py`, `docs/progress.md`.
+- **Migrations :** aucune ; les tables `raw.snapshots` et `raw.quarantine_items` créées par `OE-001` sont utilisées sous transaction PostgreSQL réelle.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ; test d'intégration PostgreSQL dédié ; `make check` complet avec PostgreSQL et contrat OpenAPI.
+- **Résultat exact :** `QuarantineService.capture` conserve la source rejetée et ses manifestes dans un ObjectStore dédié, puis crée un snapshot `quarantined` et une entrée `pending` contenant code et diagnostic. `SnapshotReader` filtre structurellement sur `validated`, de sorte que le dernier snapshot validé reste courant avant comme après résolution. Une décision exige acteur, motif et sink d'audit ; elle verrouille la ligne, refuse toute seconde décision et ne promeut jamais automatiquement le snapshot, même lorsqu'elle vaut `accepted`. Le test réel vérifie aussi le contenu physique et les JSON de diagnostic. La suite retourne 208 tests réussis, sans test ignoré avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'acceptation d'une quarantaine est une décision auditée distincte d'une promotion de données.
+- **Commit/hash :** `4a7a38d` (`feat(ingestion): quarantine invalid snapshots`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
