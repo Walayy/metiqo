@@ -375,6 +375,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le fichier `.yml` emploie le sous-ensemble JSON strict de YAML 1.2 afin de rester lisible sans ajouter de parseur runtime.
 - **Commit/hash :** `f6d9694c48685d92446941c5c01c64ce09511716` (`feat(ingestion): add controlled fallback catalog`).
 
+## OE-005 — Contrat SourceTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-001` et `FND-006` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/transport.py`, `python/metiquo/ingestion/__init__.py`, `python/metiquo/config.py`, `.env.example`, `docker-compose.yml`, `tests/ingestion/transport_contract.py`, `tests/ingestion/test_transport_contract.py`, marqueurs de packages de tests, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** formatage ciblé ; Ruff ; mypy strict ; 21 tests configuration/transport ; validation Compose ; `make check` via GNU Make absolu ; suite Python concise ; contrôle OpenAPI et génération TypeScript sans diff ; `git diff --check`.
+- **Résultat exact :** `SourceRef`, `SourceMetadata` et `DownloadReceipt` sont immuables et valident provider Oracle’s Elixir, année, tailles, timestamps UTC et SHA-256. Le protocole runtime `SourceTransport` impose `name`, `policy`, `probe` et `download`. `TransportPolicy.from_settings` injecte les timeouts de connexion/lecture, limite de 4 Gio, maximum de redirections et retry borné ; les sept variables correspondantes sont validées par Pydantic, documentées dans `.env.example` et transmises aux conteneurs. Une implémentation de référence satisfait les assertions contractuelles partagées sur sonde, identité source, destination, octets et empreinte. La suite sans PostgreSQL retourne 119 tests réussis et 8 ignorés ; format, lint, types et contrats générés sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le contrat reste synchrone comme la SFG et sépare la politique de chaque implémentation.
+- **Commit/hash :** `95ca6d9b9318444502375ace24357e033748105c` (`feat(ingestion): define source transport contract`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
