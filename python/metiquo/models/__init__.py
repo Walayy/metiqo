@@ -1,5 +1,23 @@
 """Datasets, entraînement et artefacts de modèles versionnés."""
 
+from metiquo.models.baselines import (
+    COMPETITION_PRIOR,
+    COMPETITION_PRIOR_VERSION,
+    OOF_VALIDATION,
+    RECENT_FORM,
+    RECENT_FORM_VERSION,
+    BaselineComparison,
+    BaselineEvaluator,
+    BaselinePrediction,
+    BaselineRun,
+    BaselineRunRepository,
+    BinaryMetricReport,
+    CompetitionPriorParameters,
+    RecentFormParameters,
+    ReliabilityBin,
+    assert_baseline_runs_comparable,
+    evaluate_binary_probabilities,
+)
 from metiquo.models.datasets import (
     GAME_WINNER_DATASET_VERSION,
     GAME_WINNER_LABEL,
@@ -29,9 +47,21 @@ from metiquo.models.validation import (
 )
 
 __all__ = [
+    "COMPETITION_PRIOR",
+    "COMPETITION_PRIOR_VERSION",
     "GAME_WINNER_DATASET_VERSION",
     "GAME_WINNER_LABEL",
     "GAME_WINNER_MARKET",
+    "OOF_VALIDATION",
+    "RECENT_FORM",
+    "RECENT_FORM_VERSION",
+    "BaselineComparison",
+    "BaselineEvaluator",
+    "BaselinePrediction",
+    "BaselineRun",
+    "BaselineRunRepository",
+    "BinaryMetricReport",
+    "CompetitionPriorParameters",
     "EmptyTrainingDatasetError",
     "FoldProbabilities",
     "GameWinnerDatasetBuilder",
@@ -40,6 +70,8 @@ __all__ = [
     "OutOfFoldPredictions",
     "PreparedFold",
     "PreparedWalkForward",
+    "RecentFormParameters",
+    "ReliabilityBin",
     "SegmentCounts",
     "StoredTrainingDataset",
     "StoredTrainingExample",
@@ -50,6 +82,8 @@ __all__ = [
     "WalkForwardPlan",
     "WalkForwardSegmentReport",
     "WalkForwardSplitter",
+    "assert_baseline_runs_comparable",
     "collect_oof_predictions",
+    "evaluate_binary_probabilities",
     "prepare_walk_forward",
 ]
