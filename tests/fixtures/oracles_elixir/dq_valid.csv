@@ -1,0 +1,13 @@
+gameid,date,participantid,side,position,teamname,league,result,datacompleteness,kills,gamelength,forfeit
+OE-001,2026-01-10,1,Blue,top,T1,LCK,1,complete,2,1800,false
+OE-001,2026-01-10,2,Blue,jng,T1,LCK,1,complete,3,1800,false
+OE-001,2026-01-10,3,Blue,mid,T1,LCK,1,complete,4,1800,false
+OE-001,2026-01-10,4,Blue,bot,T1,LCK,1,complete,5,1800,false
+OE-001,2026-01-10,5,Blue,sup,T1,LCK,1,complete,1,1800,false
+OE-001,2026-01-10,6,Red,top,Gen.G,LCK,0,complete,1,1800,false
+OE-001,2026-01-10,7,Red,jng,Gen.G,LCK,0,complete,2,1800,false
+OE-001,2026-01-10,8,Red,mid,Gen.G,LCK,0,complete,3,1800,false
+OE-001,2026-01-10,9,Red,bot,Gen.G,LCK,0,complete,4,1800,false
+OE-001,2026-01-10,10,Red,sup,Gen.G,LCK,0,complete,1,1800,false
+OE-001,2026-01-10,100,Blue,team,T1,LCK,1,complete,15,1800,false
+OE-001,2026-01-10,200,Red,team,Gen.G,LCK,0,complete,11,1800,false

@@ -1,0 +1,3 @@
+gameid,date,participantid,side,position,teamname,league,result,datacompleteness,kills,gamelength,forfeit
+OE-BAD,2026-01-10,100,Blue,team,Same Team,LCK,1,partial,-1,500,true
+OE-BAD,not-a-date,100,Red,team,Same Team,LCK,1,partial,999,500,false

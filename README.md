@@ -66,7 +66,7 @@ make openapi-check
 make docker-build
 ```
 
-`make test` exécute les tests de composants frontend puis la suite Python. `make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` exécute le parcours mock complet, l’audit axe A/AA, le contrôle CLS, les parcours clavier/tactiles et la régression visuelle desktop/tablette/mobile. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
+`make test` exécute les tests de composants frontend puis la suite Python. `make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` exécute le parcours mock complet, l’audit axe A/AA, le contrôle CLS, les parcours clavier/tactiles et la régression visuelle desktop/tablette/mobile.
 
 La CI appelle ces mêmes cibles locales. Toute modification d’une décision structurante de la SFG §33 exige un ADR accepté dans `docs/adr/`.
 
@@ -83,6 +83,42 @@ Dans la stack locale, `make db-migrate` applique les migrations à la base Postg
 Le mode réel conserve ces sept namespaces. Le mode mock traduit tous ses accès applicatifs vers le schéma physique séparé `mock` et interdit les accès réseau Oracle’s Elixir ou fournisseur de cotes avant appel du transport. Une factory liée à un mode refuse toute donnée portant l’autre mode.
 
 `MOCK_SEED` fixe les identifiants et les valeurs des douze scénarios normatifs. Leur catalogue utilise les contrats métier communs, une horloge injectée et des timestamps relatifs ; il ne lit ni le réseau ni l’heure système implicitement.
+
+## CLI Oracle’s Elixir
+
+Après migration de PostgreSQL, la commande `oe` expose les opérations du pipeline. Le mode `real` utilise uniquement la découverte officielle, l’API Google Drive éventuellement authentifiée, le téléchargement public puis le miroir de snapshots validés. Le mode `mock` interdit ces transports et exige `--fixture` pour chaque synchronisation locale.
+
+```console
+uv run --frozen oe catalog refresh --json
+uv run --frozen oe backfill --from-year 2014 --to-year 2026 --json
+uv run --frozen oe sync --year 2026 --require-fresh --json
+uv run --frozen oe verify --snapshot <uuid> --json
+uv run --frozen oe diff --left <uuid> --right <uuid> --json
+uv run --frozen oe rebuild-canonical --from 2025-01-01 --json
+```
+
+Les alias équivalents sont `make oe-catalog`, `make oe-backfill FROM=2014 TO=2026`, `make oe-sync YEAR=2026`, `make oe-sync-current REQUIRE_FRESH=1`, `make oe-validate SNAPSHOT=<uuid>`, `make oe-diff LEFT=<uuid> RIGHT=<uuid>` et `make oe-rebuild-canonical FROM=2025-01-01`. `JSON=1` active la sortie compacte destinée à la CI.
+
+Les codes retour sont stables : `0` succès, `2` usage ou configuration invalide, `3` snapshot frais requis mais indisponible, `4` échec de source ou de pipeline, `5` intégrité du snapshot invalide et `6` backfill partiel. Les erreurs machine-readable contiennent toujours `ok=false` et un `errorCode` sans secret.
+
+Un contenu téléchargé puis refusé par la validation physique, le contrat de schéma ou la qualité métier est écrit dans l’ObjectStore de quarantaine et lié au run en échec. Il ne déplace jamais `raw.source_catalog.current_snapshot_id`. Une réponse HTML de quota est refusée avant la création d’un snapshot ; avec `--allow-stale`, la commande annonce explicitement `degraded` ou `quarantined` et l’identifiant du dernier snapshot validé réutilisé.
+
+### Gate P2 ingestion
+
+`make test-ingestion` couvre les fixtures critiques, la reprise de backfill, l’atomicité PostgreSQL, le double run, la quarantaine et les politiques de fraîcheur. La variable `TEST_DATABASE_URL` doit désigner une instance PostgreSQL de test dont l’utilisateur peut créer une base temporaire :
+
+```console
+TEST_DATABASE_URL=postgresql+psycopg://metiqo:metiqo@127.0.0.1:55436/metiqo make test-ingestion
+```
+
+Le parcours démontrable séparément crée une base au nom aléatoire préfixé par « Metiquo gate », applique les migrations, rafraîchit le catalogue mock, exécute le backfill et les contrôles du gate, puis supprime uniquement cette base éphémère :
+
+```console
+uv run --frozen python infra/scripts/demo_ingestion_gate.py \
+  --database-url "$TEST_DATABASE_URL" --json
+```
+
+Le rapport JSON contient l’empreinte de l’état canonique idempotent, le refus de la page quota, le snapshot de quarantaine, le snapshot stale réutilisé, le code `require-fresh`, l’invalidation rétroactive et la relecture du manifeste. Les fixtures sont synthétiques ; leur origine et leur couverture SFG §25.2 sont détaillées dans `tests/fixtures/oracles_elixir/README.md`.
 
 ## API de lecture mock
 

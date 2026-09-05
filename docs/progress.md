@@ -326,6 +326,284 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; l’audit automatise les exigences UX existantes sans modifier l’architecture.
 - **Commit/hash :** `7fcf60f240719cc94d686f89842c50a7740dc996` (`test: enforce responsive accessibility gate`).
 
+## OE-001 — Modèle raw : catalogue, snapshots, runs et qualité
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `FND-004` est `DONE` et le gate `MCK-007` autorise le démarrage de P2.
+- **Fichiers créés/modifiés :** `python/metiquo/db/raw_models.py`, migration `20260905_0003`, `python/metiquo/db/migrations/env.py`, `tests/integration/test_migrations.py`, `tests/integration/test_raw_migration.py`, `docs/progress.md`.
+- **Migrations :** `20260905_0003_create_raw_ingestion_model.py` crée `raw.source_catalog`, `raw.snapshots`, `raw.ingestion_runs`, `raw.quality_issues`, `raw.quarantine_items` et `raw.row_revisions`, leurs contraintes de statut/unicité, les liens de provenance et le trigger PostgreSQL d'immutabilité des snapshots validés. Le cycle `upgrade → downgrade base → upgrade` passe sur PostgreSQL 18 jetable.
+- **Commandes/tests exécutés :** Ruff format/check ciblé ; mypy strict ciblé puis global ; tests unitaires des conventions DB ; tests d'intégration migrations et contraintes exécutés deux fois sur `postgresql+psycopg://…@127.0.0.1:55432/metiqo_test` ; `make check` via le chemin absolu de GNU Make ; contrôle OpenAPI et génération TypeScript sans diff ; `git diff --check`.
+- **Résultat exact :** les six tables raw existent avec UUID, timestamps UTC, statuts fermés, hashes SHA-256 contrôlés et clés étrangères `RESTRICT`. Une unicité partielle interdit deux sources actives pour un même provider/dataset/année. Les exécutions, anomalies, quarantaines et révisions gardent leur run et leur snapshot d'origine. Un trigger `BEFORE UPDATE OR DELETE` refuse en base toute mutation d'un snapshot dont le statut est `validated`; les tests prouvent séparément l'échec de l'`UPDATE`, l'échec du `DELETE` et la conservation de la taille initiale. Les 5 tests de migration passent, puis la suite complète retourne 98 tests réussis ; Prettier, ESLint, CSpell, Ruff, TypeScript strict, mypy et OpenAPI sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le modèle matérialise directement les invariants de provenance et d'immutabilité exigés par la SFG.
+- **Commit/hash :** `47f701243ed8af2c518c8dbfcd18b1c4bdb6b6e9` (`feat(raw): add ingestion provenance model`).
+- **Correctif/hash :** `5529754466501b268a07012d9e9b69d521415fb5` (`fix(raw): align source catalog with SFG fields`) aligne le catalogue sur les champs normatifs `season_year`, `landing_page`, `drive_file_id`, `source_name`, métadonnées source et `discovery_payload_hash`, tout en conservant les statuts d'alerte explicites.
+
+## OE-002 — ObjectStore filesystem adressé par hash
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-001` est `DONE` dans le commit `47f7012`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/__init__.py`, `python/metiquo/ingestion/object_store.py`, `tests/ingestion/test_object_store.py`, suppression du marqueur `.gitkeep`, `docs/progress.md`.
+- **Migrations :** aucune ; le backend produit les clés relatives destinées à `raw.snapshots.object_key`.
+- **Commandes/tests exécutés :** Ruff format/check ciblé ; mypy strict ciblé ; 5 tests ObjectStore ; suite Python complète sans infrastructure ; `git diff --check`.
+- **Résultat exact :** le protocole `ObjectStore` et son backend `FilesystemObjectStore` écrivent par défaut sous `/data`. Chaque flux est d'abord consommé dans un répertoire temporaire situé sur le même filesystem, haché en SHA-256 pendant l'écriture et synchronisé, puis le répertoire complet est renommé atomiquement vers `year=YYYY/sha256=<digest>`. Le layout accepte `source.bin` ou `source.csv` et les documents JSON déterministes `manifest.json`, `schema.json` et `quality-report.json`. Une seconde écriture du même contenu réutilise l'objet physique sans changer fichier, métadonnée ni mtime ; une corruption au même emplacement lève une collision. Un flux interrompu ne laisse ni objet partiel ni répertoire temporaire. Les clés retournées sont relatives au store et indépendantes du chemin temporaire. Les 5 tests ciblés passent ; la suite globale sans PostgreSQL retourne 97 tests réussis et 6 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'interface permet un autre backend sans exposer le chemin temporaire, tandis que l'implémentation MVP reste le volume filesystem exigé.
+- **Commit/hash :** `a8f96037eda3d1f2eba80138b86cf1f314a976ce` (`feat(ingestion): add immutable filesystem object store`).
+
+## OE-003 — Découverte du catalogue Oracle’s Elixir
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-001` est `DONE`, y compris son alignement complet sur les champs SFG.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/catalog.py`, trois fixtures HTML sous `tests/fixtures/oracles_elixir/`, `tests/ingestion/test_catalog.py`, `tests/integration/test_catalog_repository.py`, `docs/progress.md`.
+- **Migrations :** aucune nouvelle migration ; la persistance utilise `raw.source_catalog` créé par `20260905_0003`.
+- **Commandes/tests exécutés :** inspection de la page officielle `https://oracleselixir.com/tools/downloads` dans le Navigateur intégré ; Ruff format/check ; mypy strict ; 6 tests unitaires de découverte ; tests de persistance et de contraintes PostgreSQL exécutés puis rejoués sur PostgreSQL 18 jetable ; suite Python complète avec PostgreSQL ; `git diff --check`.
+- **Résultat exact :** le fetcher est borné en durée et taille et ne charge que la page officielle Oracle’s Elixir. L'extracteur HTML ignore tout domaine statistique tiers, accepte les formes Drive `/file/d/...`, `open?id=...` et `/folders/...`, puis associe une année uniquement lorsqu'un libellé possède une année unique. Le mécanisme de rapprochement détecte confirmation, nouvelle année, changement d'ID, doublon, disparition, lien non associable et plusieurs IDs ambigus. Une divergence ou ambiguïté est persistée en ligne séparée sans remplacer ni mettre à jour l'actif. Les confirmations mettent à jour `last_confirmed_at` et le SHA-256 du payload ; le premier `discovered_at` reste inchangé. Le 5 septembre 2026, le Navigateur a confirmé que la page officielle accessible expose seulement le dossier Drive `1gLSw0RLjBbtaNy0dgnGQDAZOHIgCe-HH`, sans lien annuel : la fixture correspondante produit donc `missing` et `unresolved`, et non une fausse confirmation. La suite complète retourne 110 tests réussis.
+- **Blocker éventuel :** aucun ; le changement actuel de présentation est précisément rendu visible et sera traité par le fallback contrôlé de `OE-004` sans masquer la divergence.
+- **ADR éventuel :** aucun ; Oracle’s Elixir reste l'unique source statistique LoL et la page officielle demeure le premier mécanisme obligatoire.
+- **Commit/hash :** `65ef6c8244a587b68dee0872edf730099c2233d1` (`feat(ingestion): discover official source catalog`).
+
+## OE-004 — Catalogue de secours versionné
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-003` est `DONE` et expose distinctement indisponibilité, page invalide et divergence.
+- **Fichiers créés/modifiés :** `config/oracles_elixir_sources.yml`, `python/metiquo/ingestion/fallback_catalog.py`, `python/metiquo/ingestion/catalog.py`, `infra/compose/python.Dockerfile`, `.prettierignore`, `tests/ingestion/test_fallback_catalog.py`, `tests/integration/test_catalog_repository.py`, formatage de deux fixtures HTML, `docs/progress.md`.
+- **Migrations :** aucune nouvelle migration ; l'origine et la mutabilité du bootstrap sont persistées dans `raw.source_catalog`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 12 tests unitaires catalogue/fallback ; 2 tests d'intégration de persistance PostgreSQL ; suite complète avec PostgreSQL ; contrôle Prettier global ; validation Compose ; build neuf des images API et worker avec le fichier de configuration embarqué ; `git diff --check`.
+- **Résultat exact :** le fichier versionné contient uniquement l'entrée 2026 exigée, ID `1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm`, `mutable=true` et `origin=validated-bootstrap`. Son parseur strict contrôle version, schéma, types, IDs et unicité annuelle, puis conserve le SHA-256 du fichier pour audit. Le service sélectionne ce fallback uniquement après `LandingPageUnavailable`; une page officielle accessible mais limitée au dossier Drive, trop volumineuse, invalide ou divergente n'est jamais masquée. L'origine bootstrap, la mutabilité, l'ID et le hash sont prouvés en PostgreSQL. La configuration est copiée dans `/app/config` des images runtime, cohérent avec `OE_SOURCE_CATALOG_PATH`. Les 117 tests de la suite complète passent, ainsi que la construction des deux images Python.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le fichier `.yml` emploie le sous-ensemble JSON strict de YAML 1.2 afin de rester lisible sans ajouter de parseur runtime.
+- **Commit/hash :** `f6d9694c48685d92446941c5c01c64ce09511716` (`feat(ingestion): add controlled fallback catalog`).
+
+## OE-005 — Contrat SourceTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-001` et `FND-006` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/transport.py`, `python/metiquo/ingestion/__init__.py`, `python/metiquo/config.py`, `.env.example`, `docker-compose.yml`, `tests/ingestion/transport_contract.py`, `tests/ingestion/test_transport_contract.py`, marqueurs de packages de tests, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** formatage ciblé ; Ruff ; mypy strict ; 21 tests configuration/transport ; validation Compose ; `make check` via GNU Make absolu ; suite Python concise ; contrôle OpenAPI et génération TypeScript sans diff ; `git diff --check`.
+- **Résultat exact :** `SourceRef`, `SourceMetadata` et `DownloadReceipt` sont immuables et valident provider Oracle’s Elixir, année, tailles, timestamps UTC et SHA-256. Le protocole runtime `SourceTransport` impose `name`, `policy`, `probe` et `download`. `TransportPolicy.from_settings` injecte les timeouts de connexion/lecture, limite de 4 Gio, maximum de redirections et retry borné ; les sept variables correspondantes sont validées par Pydantic, documentées dans `.env.example` et transmises aux conteneurs. Une implémentation de référence satisfait les assertions contractuelles partagées sur sonde, identité source, destination, octets et empreinte. La suite sans PostgreSQL retourne 119 tests réussis et 8 ignorés ; format, lint, types et contrats générés sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le contrat reste synchrone comme la SFG et sépare la politique de chaque implémentation.
+- **Commit/hash :** `95ca6d9b9318444502375ace24357e033748105c` (`feat(ingestion): define source transport contract`).
+
+## OE-006 — GoogleDriveApiTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-005` est `DONE` et fournit les DTO, le protocole et la politique commune.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/google_drive_api.py`, `python/metiquo/ingestion/source_errors.py`, `python/metiquo/config.py`, `tests/ingestion/test_google_drive_api.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 8 tests Drive API ; 19 tests ciblés Drive/configuration ; suite Python complète ; `git diff --check`.
+- **Résultat exact :** `GoogleDriveApiTransport` n'est construit depuis les settings que lorsqu'un bearer autorisé non vide est présent et masqué par `SecretStr`. Il interroge l'endpoint metadata Drive v3, vérifie l'ID et la taille, puis télécharge `alt=media` en blocs de 256 Kio avec SHA-256 incrémental, `fsync`, limite avant et pendant le flux, timeouts injectés et redirections bornées. Les réponses Drive sont classées en not-found, permission, quota, rate-limit, timeout, taille, réponse invalide ou indisponibilité, avec code sûr et possibilité de retry. Les tests prouvent qu'une erreur quota HTTP 403 ne crée aucun fichier, qu'un dépassement en cours de flux supprime le partiel et que le credential n'apparaît ni dans le transport, ni dans l'exception sérialisée. Le transport satisfait les contract tests communs ; la suite retourne 127 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun ; l'activation en environnement réel nécessitera naturellement un bearer fourni hors dépôt.
+- **ADR éventuel :** aucun ; l'API Drive autorisée reste prioritaire conformément à la SFG, sans mécanisme de contournement de quota.
+- **Commit/hash :** `50f2c5a6f4d96592d6f2e8bb22a81c8f944b9027` (`feat(ingestion): add Google Drive API transport`).
+- **Correctif/hash :** `40ede5414254013a13633b943d691e2559509f7e` garantit aussi qu'un échec d'ouverture exclusive ne supprime jamais une destination API préexistante ; le test conserve exactement les octets initiaux.
+
+## OE-007 — GoogleDrivePublicHttpTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-005` est `DONE` ; le transport API `OE-006` reste prioritaire lorsqu'il est configuré.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/google_drive_public.py`, `python/metiquo/ingestion/source_errors.py`, trois fixtures HTML quota/consent/login, `tests/ingestion/test_google_drive_public.py`, renforcement de `tests/ingestion/test_google_drive_api.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** formatage Ruff et Prettier des fixtures ; Ruff check ; mypy strict global ; 17 tests ciblés Drive API/public ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `GoogleDrivePublicHttpTransport` utilise exclusivement l'URL publique standard `drive.google.com/uc?export=download&id=…`, sans paramètre `confirm`, cookie extrait ni boucle de contournement. Connexion, lecture et redirections sont bornées par la politique commune. Le premier bloc et le type MIME sont inspectés avant toute création de fichier : les pages HTML de quota, consentement et connexion sont refusées en HTTP 200 comme en HTTP 403, y compris lorsqu'une page HTML ment avec `application/octet-stream`. Le flux binaire est haché et synchronisé par blocs ; limite de taille et nettoyage du partiel sont conservés. Les transports API et public préservent tous deux une destination préexistante. Le contract test commun passe et la suite retourne 136 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; ce fallback public respecte le flux officiel et refuse explicitement tout bypass de quota.
+- **Commit/hash :** `40ede5414254013a13633b943d691e2559509f7e` (`feat(ingestion): add safe public Drive transport`).
+
+## OE-008 — MirrorTransport et LocalFixtureTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-002` et `OE-005` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/local_transports.py`, `python/metiquo/ingestion/transport.py`, `tests/fixtures/oracles_elixir/sample_2026.csv`, `tests/ingestion/test_local_transports.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 14 tests ciblés locaux/contrat ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `MirrorTransport` ne résout que le dernier `MirrorSnapshot` déjà validé, relit son objet immuable, contrôle taille et SHA-256 avant de remettre une copie, et échoue si l'année diverge. L'instant de validation du miroir et l'instant optionnel de dernière confirmation de la source sont distincts dans `SourceMetadata`; sans confirmation, `source_is_confirmed` reste faux, donc le miroir n'invente aucune fraîcheur. `LocalFixtureTransport` sert la fixture CI versionnée et refuse sa construction en `DataMode.REAL`. Le plan de priorité retourne API Drive puis HTTP public puis miroir en réel, mais la fixture seule en mock et rejette toute fixture ajoutée au plan réel. Les deux implémentations passent les assertions contractuelles communes ; la suite retourne 140 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le miroir est une copie privée validée, jamais une nouvelle source ni une preuve de fraîcheur.
+- **Commit/hash :** `1d5056bae0855d1b13cb883839e86a81705e7cc1` (`feat(ingestion): add mirror and fixture transports`).
+
+## OE-009 — Téléchargeur sûr en streaming
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-005` est `DONE` et tous les transports implémentés satisfont son contrat.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/safe_download.py`, `python/metiquo/ingestion/source_errors.py`, `python/metiquo/ingestion/transport.py`, `python/metiquo/config.py`, `.env.example`, `docker-compose.yml`, `tests/ingestion/test_safe_download.py`, ajustement du test de politique transport, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 8 tests ciblés de téléchargement sûr dont flux de 32 Mio sous `tracemalloc` ; suite Python complète ; contrôle Prettier global ; validation Compose ; `git diff --check`.
+- **Résultat exact :** `SafeDownloader` réserve un répertoire temporaire privé `0700` sur le même volume, impose une destination interne `.part`, appelle le transport en streaming, mesure la durée totale configurable, contrôle identité du reçu, taille physique, SHA-256 recalculé et empreinte attendue optionnelle. Il inspecte seulement 64 Kio pour refuser HTML, incohérences MIME, texte non UTF-8 ou délimiteur ambigu et pour reconnaître CSV, gzip ou zip. Le fichier est passé en `0600` puis renommé atomiquement vers son nom final ; tout échec supprime le répertoire temporaire, tandis qu'une destination existante est préservée. Le test de 32 Mio conserve un pic Python inférieur à 8 Mio, des blocs source de 64 Kio et aucun `.part` résiduel ; interruption, timeout, hash divergent, contenu invalide et conflit de promotion sont couverts. La suite retourne 148 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le composant centralise la promotion locale sans modifier le contrat synchrone des transports.
+- **Commit/hash :** `0f6081f38f44f805cf7dcd52775352b56faaa6b8` (`feat(ingestion): add safe streaming download promotion`).
+
+## OE-010 — Taxonomie d’erreurs et retries
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-006`, `OE-007` et `OE-009` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/source_errors.py`, `python/metiquo/ingestion/retry.py`, `tests/ingestion/test_source_errors_retry.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 15 tests ciblés de taxonomie/retry ; suite Python complète ; contrôle Prettier global ; validation Compose ; `git diff --check`.
+- **Résultat exact :** les douze exceptions normatives existent avec codes stables : not-found, permission, quota, rate-limit, timeout, HTML inattendu, type inattendu, checksum, archive corrompue, schéma incompatible, qualité et promotion atomique. Chaque instance conserve message sûr, transport, ID source, statut HTTP, contexte, timestamp UTC, compteur de tentatives et possibilité de retry dans `to_dict`. `RetryExecutor` applique un backoff exponentiel plafonné avec jitter injecté uniquement à quota, rate-limit, timeout et indisponibilité. Trois échecs avant succès produisent exactement les délais contrôlés `1,0`, `4,0`, `3,75` secondes ; un dernier échec porte `attempts=3`. Une permission permanente artificiellement marquée retryable n'est malgré tout appelée qu'une fois et ne dort jamais. La suite retourne 163 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la liste et la sémantique viennent directement de la SFG.
+- **Commit/hash :** `cc00bd06d6c20e9f051031e9c0e72eaa7f2a72db` (`feat(ingestion): add source error taxonomy and retries`).
+
+## OE-011 — Manifeste et empreintes de snapshot
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-009` est `DONE` et fournit un téléchargement physiquement validé.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/manifest.py`, `tests/ingestion/test_manifest.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 5 tests ciblés manifeste/stockage ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `SnapshotManifest` sérialise de façon canonique et relit strictement provider, année, ID Drive, demande/téléchargement/confirmation UTC, transport, taille, SHA-256, type observé, compression, encodage, délimiteur, empreinte du schéma, nombre de lignes, dates métier min/max, statut/détail qualité et version du code. `SchemaDocument` impose positions consécutives et noms uniques ; son empreinte stable change dès qu'un type change. `store_snapshot` rapproche manifeste, reçu et schéma, écrit les trois documents dans l'ObjectStore, rouvre la source stockée et recalcule son SHA-256 avant de rendre le snapshot utilisable. Les tests prouvent le round-trip exact, le layout complet, le rejet avant stockage d'un manifeste incohérent et le blocage d'un store qui ment après promotion. La suite retourne 168 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la sérialisation déterministe renforce l'identification reproductible du dataset exigée par la SFG.
+- **Commit/hash :** `0ed9fa0d97d370d7adac16d873d1cb4c7f42f879` (`feat(ingestion): add immutable snapshot manifest`).
+
+## OE-012 — Validation physique
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-009` et `OE-011` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/physical_validation.py`, renforcement de `python/metiquo/ingestion/safe_download.py` et `source_errors.py`, trois fixtures invalides JSON/CSV, `tests/ingestion/test_physical_validation.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** formatage Ruff/Prettier ; Ruff check ; mypy strict global ; 11 tests ciblés de validation physique ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** la validation précoce refuse corps vide, HTML reconnu par MIME ou magic bytes, JSON d'erreur, encodage inconnu, délimiteur absent/ambigu et incohérence MIME/magic, avec un code de règle dans le contexte sûr. `PhysicalValidator` relit taille et SHA-256, compare la taille au précédent selon un ratio configurable avec approbation explicite, ouvre réellement gzip/zip, exige un unique CSV dans un zip, détecte UTF-8/BOM et délimiteur sans correction, valide un en-tête non numérique aux noms uniques puis scanne toutes les lignes pour un nombre de colonnes constant. Chaque rejet testé porte un diagnostic stable ; aucune destination finale n'apparaît lors des rejets précoces et aucun snapshot n'est envoyé au store. CSV, gzip et zip valides retournent header, colonnes et lignes exacts. La suite retourne 179 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les règles matérialisent la section 9.10 de la SFG sans inférence réparatrice.
+- **Commit/hash :** `6019ae8c553721578ee2b295c68eacde924e7ab6` (`feat(ingestion): validate physical source files`).
+
+## OE-013 — Contrat de schéma évolutif
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-012` est `DONE` et garantit un CSV physiquement lisible.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/schema_contract.py`, fixtures `schema_additive.csv` et `schema_missing_core.csv`, `tests/ingestion/test_schema_contract.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 5 tests ciblés schéma/capacités ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `EvolvingSchemaContract` distingue sept colonnes cœur, les colonnes optionnelles et les exigences propres à `market.match_winner`, `feature.team_form`, `feature.side_strength` et `feature.early_game`. Chaque header observé produit un `SchemaDocument` qui conserve l'ordre et toutes les colonnes additives dans le raw, une empreinte, les absences et une matrice de capacités. La fixture avec `vendor_metric` peut être ingérée, conserve la valeur `42` et ne change pas les capacités compatibles. L'absence de `gameid` bloque l'ingestion avec le diagnostic `SCHEMA_CORE_MISSING`; l'absence de `datacompleteness` ne bloque pas le raw mais désactive uniquement le marché match-winner sans reconstruire une complétude. Le diff rapporte ajout, retrait, changement de type et ordre, et l'empreinte inclut les additives. La suite retourne 184 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le registre de capacités matérialise l'abstention ciblée exigée par la SFG.
+- **Commit/hash :** `42347a6a4afb490371eb274cbf7ff726d68c4906` (`feat(ingestion): add evolving schema contract`).
+
+## OE-014 — Data Quality métier
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-013` est `DONE` et expose les colonnes/capacités réellement disponibles.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/data_quality.py`, fixtures `dq_valid.csv` et `dq_problematic.csv`, `tests/ingestion/test_data_quality.py`, `docs/progress.md`.
+- **Migrations :** aucune ; `QualityReport.to_dict` fournit le contenu déterministe de `quality-report.json` et les issues prêtes pour `raw.quality_issues`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 15 tests ciblés DQ ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `DataQualityValidator` scanne IDs game/participant, validité et plausibilité des dates, unicité des clés naturelles, cohérence participant-équipe par side, équipes opposées distinctes, sides, plages numériques, gagnant/perdant, structure des deux lignes équipe et des dix lignes joueur. Il signale explicitement games incomplètes, remakes et forfeits. La comparaison au précédent bloque une suppression massive sous le ratio configuré sauf approbation explicite et compte les clés disparues. Les 17 codes `QualityCode` sont stables ; chaque issue porte severity `blocking`, `capability-only` ou `warning`, ligne, clé, capacité et contexte. Une game incomplète désactive seulement `market.match_winner`; une structure joueur partielle seulement `feature.player_form`. La fixture valide passe 12 lignes sans issue, la fixture problématique produit les trois niveaux, et `require_pass` lève un `DataQualityFailed` structuré. La suite retourne 199 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les seuils et abstentions suivent directement les règles métier SFG.
+- **Commit/hash :** `16380b7e926309128a9054c4bec32a2e62c48263` (`feat(ingestion): enforce business data quality`).
+
+## OE-015 — Quarantaine durable
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-014` fournit le diagnostic DQ structuré et `OE-002` le stockage immuable adressé par contenu.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/quarantine.py`, `tests/integration/test_quarantine.py`, `docs/progress.md`.
+- **Migrations :** aucune ; les tables `raw.snapshots` et `raw.quarantine_items` créées par `OE-001` sont utilisées sous transaction PostgreSQL réelle.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ; test d'intégration PostgreSQL dédié ; `make check` complet avec PostgreSQL et contrat OpenAPI.
+- **Résultat exact :** `QuarantineService.capture` conserve la source rejetée et ses manifestes dans un ObjectStore dédié, puis crée un snapshot `quarantined` et une entrée `pending` contenant code et diagnostic. `SnapshotReader` filtre structurellement sur `validated`, de sorte que le dernier snapshot validé reste courant avant comme après résolution. Une décision exige acteur, motif et sink d'audit ; elle verrouille la ligne, refuse toute seconde décision et ne promeut jamais automatiquement le snapshot, même lorsqu'elle vaut `accepted`. Le test réel vérifie aussi le contenu physique et les JSON de diagnostic. La suite retourne 208 tests réussis, sans test ignoré avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'acceptation d'une quarantaine est une décision auditée distincte d'une promotion de données.
+- **Commit/hash :** `4a7a38d` (`feat(ingestion): quarantine invalid snapshots`).
+
+## OE-016 — Promotion atomique du snapshot
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-011`, `OE-014` et `OE-015` sont `DONE` ; seuls les objets relus, intègres et non bloqués peuvent atteindre la publication.
+- **Fichiers créés/modifiés :** migration `20260905_0004`, `python/metiqo/db/raw_models.py`, `python/metiqo/ingestion/promotion.py`, extension du lecteur de snapshots et tests PostgreSQL de promotion/quarantaine/migration.
+- **Migrations :** ajout facultatif de `raw.source_catalog.current_snapshot_id` avec clé étrangère composite garantissant que la cible appartient au même catalogue ; upgrade/downgrade testés.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés ; `make check` complet avec base réelle et contrat OpenAPI.
+- **Résultat exact :** `SnapshotPromotionService` relit et recalcule le hash de l'objet immuable avant transaction, refuse un rapport DQ bloquant, verrouille catalogue et run, crée ou réutilise un snapshot validé, déplace le pointeur courant et clôt le run avec ses compteurs dans une transaction unique. Le résultat n'est rendu qu'après sortie réussie du commit. Une observation concurrente juste avant commit voit encore l'ancien pointeur, le run `running` et zéro nouveau snapshot ; une panne injectée à cet instant lève `ATOMIC_PROMOTION_FAILED`, restaure entièrement l'état DB et conserve seulement l'objet immuable sans visibilité courante. En succès, les trois changements deviennent visibles ensemble. La suite retourne 210 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le pointeur explicite évite de confondre ordre temporel et publication atomique.
+- **Commit/hash :** `fdf1889` (`feat(ingestion): promote snapshots atomically`).
+
+## OE-017 — Staging et chargement raw tabulaire
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-016` garantit que seuls un snapshot validé et son pointeur courant peuvent être chargés.
+- **Fichiers créés/modifiés :** migration `20260905_0005`, `python/metiqo/db/raw_models.py`, `python/metiqo/ingestion/raw_loader.py`, tests PostgreSQL de chargement et de migrations.
+- **Migrations :** création de `raw.canonical_rows` avec clé naturelle unique, hash de ligne, payload JSON complet, date métier, provenance snapshot/run, révision et garde-fous de suppression par clés étrangères restrictives.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés ; `make check` complet avec base réelle et contrat OpenAPI.
+- **Résultat exact :** `RawTabularLoader` lit le CSV en lots configurables, conserve les colonnes additives, calcule une clé naturelle canonique sur `(gameid, participantid)` et un hash déterministe, puis charge une table temporaire propre au run avec `ON COMMIT DROP`. Une stratégie de secours n'est utilisée que si elle est explicitement configurée. Le merge classe inserted, updated, unchanged et quarantined, ignore les clés invalides ou dupliquées, ne supprime jamais une ligne absente et clôt le run dans la même transaction. Le test charge deux fois le même snapshot : `12/0/0/0`, puis `0/0/12/0`, avec exactement 12 lignes canoniques de révision 1 et aucune table de staging résiduelle. La suite retourne 211 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** le module standard `csv` avec insertions par lots est retenu à ce stade : il fournit le flux adapté demandé sans ajouter Polars, tout en conservant le contrat remplaçable derrière le loader.
+- **Commit/hash :** `8935c2a` (`feat(ingestion): load raw rows idempotently`).
+
+## OE-018 — Historiser les révisions de lignes
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-017` fournit la clé naturelle, le hash déterministe, le staging et le merge canonique.
+- **Fichiers créés/modifiés :** migration `20260906_0006`, `python/metiqo/db/raw_models.py`, extension de `python/metiqo/ingestion/raw_loader.py` et du test PostgreSQL de chargement.
+- **Migrations :** ajout de la date métier aux révisions, création d'une baseline pour les lignes déjà canoniques, remplacement de l'unicité du hash par un index autorisant un retour légitime à une ancienne valeur, et trigger append-only interdisant UPDATE/DELETE.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés avec upgrade/downgrade ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** avant chaque upsert, le loader insère une révision pour toute ligne nouvelle ou dont le hash change, avec payload avant/après récupérable, snapshot, run, date métier, numéro séquentiel, opération et lien vers la révision précédente. La transaction sérialise le catalogue, donc révision et canonique avancent ensemble. Le scénario de correction passe de `kills=2` à `kills=99`, crée exactement les révisions 1 et 2 correctement chaînées, laisse dix lignes inchangées sans fausse révision et conserve dans le canonique la douzième ligne absente du fichier partiel. Les tentatives SQL d'UPDATE et DELETE de l'historique échouent. La suite retourne 212 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'historique append-only et la non-suppression suivent directement `SFG-DATA-005`.
+- **Commit/hash :** `91199f3` (`feat(ingestion): historize row revisions`).
+
+## OE-019 — Diff année courante et invalidation
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-018` fournit des révisions append-only datées et rattachées à leur run.
+- **Fichiers créés/modifiés :** migration `20260906_0007`, `python/metiqo/db/feature_models.py`, `python/metiqo/ingestion/invalidation.py`, tests PostgreSQL de migrations et de corrections rétroactives.
+- **Migrations :** création de `features.invalidations` avec plage affectée, provenance, nombre de révisions, unicité par run, index temporel et trigger append-only.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés avec upgrade/downgrade ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** `RevisionInvalidationService` ne considère que les révisions `updated` d'un run terminé, refuse une correction sans date métier et agrège une source unique. Il émet de façon idempotente un marqueur `RAW_ROW_REVISED` dont `affected_from` est la date minimale et `changed_through` la date maximale observée ; la reconstruction reste donc demandée à partir de la première date touchée. Deux corrections aux 8 et 10 janvier donnent un seul événement à partir du 8, tandis qu'un run d'insertions seules n'émet rien. Le service n'importe ni ne modifie aucune persistance de prédiction ; le test confirme que le schéma `ml` reste vide et que PostgreSQL refuse de modifier l'invalidation publiée. La suite retourne 212 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les consommateurs futurs créeront de nouvelles versions de features depuis ce marqueur, sans réécrire snapshots ou prédictions passées.
+- **Commit/hash :** `71c3509` (`feat(features): emit revision invalidations`).
+
+## OE-020 — États de fraîcheur et politiques stale
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-016` fournit le pointeur courant validé et `OE-010` les codes d'échec source structurés.
+- **Fichiers créés/modifiés :** `python/metiqo/ingestion/freshness.py`, configuration serveur, `.env.example`, Compose, tests unitaires de politique et extension du test PostgreSQL de quarantaine.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 11 tests de fraîcheur ; test PostgreSQL de quarantaine ; validation Compose ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** `PostgresFreshnessRepository` ne lit comme utilisable que le snapshot explicitement pointé et `validated`, puis expose les échecs ou quarantaines plus récents. `FreshnessService` classe `fresh`, `stale`, `degraded`, `failed` et `quarantined`, publie `asOf`, `snapshotId`, âge, SLA et code de raison. Le SLA initial de 10 800 secondes est configurable. `allow-stale` peut réutiliser le dernier validé en annonçant son état non frais, mais n'invente jamais un snapshot ; `require-fresh` refuse tout autre état avec `FreshDataRequired.exit_code=3`. Le test réel prouve qu'une quarantaine résolue reste annoncée tout en ne rendant utilisable que l'ancien snapshot validé. La suite retourne 223 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; fraîcheur et politique de consommation sont séparées pour rendre l'état observable même lorsqu'une politique le refuse.
+- **Commit/hash :** `5060ebc` (`feat(ingestion): enforce freshness policies`).
+
+## OE-021 — Backfill multi-années reprenable
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** catalogue `OE-003`, chargement/révisions `OE-017`/`OE-018` et politique de fraîcheur `OE-020` sont disponibles pour le processeur annuel injecté.
+- **Fichiers créés/modifiés :** migration `20260906_0008`, `python/metiqo/db/raw_models.py`, `python/metiqo/ingestion/backfill.py`, tests PostgreSQL de reprise/concurrence et listes de tables de migration.
+- **Migrations :** création de `raw.backfill_jobs` rendu unique par empreinte de requête et `raw.backfill_years` avec statut, tentatives, dernier run, erreur et timestamps par année.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés avec upgrade/downgrade ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** `BackfillOrchestrator` matérialise toute plage inclusive, saute les années réussies et retente les états pending/running/failed. Il détient un verrou advisory PostgreSQL de session dérivé de `(provider, année)` pendant le processeur annuel, puis lie le run produit au checkpoint. Un arrêt simulé après 2024 laisse 2025 `running` ; la reprise appelle 2025 à la tentative 2 puis 2026, sans rejouer 2024, et un troisième appel converge sans travail. Deux exécutions concurrentes partagent le même job ; une seule acquiert le verrou 2026 et appelle le processeur. La suite retourne 225 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les advisory locks PostgreSQL évitent une infrastructure distribuée supplémentaire au MVP.
+- **Commit/hash :** `9ecffd8` (`feat(ingestion): resume multi-year backfills`).
+
+## OE-022 — CLI et Make Oracle’s Elixir
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le backfill reprenable `OE-021` et l'ensemble des composants `OE-003` à `OE-020` sont assemblés par un coordinateur annuel sans nouveau chemin de transport.
+- **Fichiers créés/modifiés :** `python/metiqo/ingestion/sync.py`, package `python/metiqo/cli`, point d'entrée `oe` dans `pyproject.toml`, `Makefile`, tests CLI PostgreSQL et alias Make, `README.md`.
+- **Migrations :** aucune nouvelle migration ; la CLI exige que la base soit déjà à la révision Alembic courante.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; parcours PostgreSQL réel `catalog refresh → sync → verify → diff → second sync → rebuild-canonical → backfill` avec ObjectStore temporaire et fixture locale en mode mock ; simulations des sept alias Make ; `make check` complet sur une base PostgreSQL jetable recréée vide.
+- **Résultat exact :** la commande `oe` expose `catalog refresh`, `backfill`, `sync`, `verify`, `diff` et `rebuild-canonical`. Le mode mock exige explicitement `--fixture` et ne construit aucun transport réseau ; le mode réel conserve l'ordre API Drive optionnelle, téléchargement public puis miroir validé. La sortie `--json` est compacte et les codes `0`, `2`, `3`, `4`, `5` et `6` distinguent succès, usage/configuration, fraîcheur stricte, source/pipeline, intégrité et backfill partiel. Le parcours d'intégration publie 12 lignes au premier run, retrouve le même snapshot et 12 lignes inchangées au second, vérifie le hash, compare les manifestes, rejoue le canonical puis termine le backfill. La suite complète retourne 228 tests réussis avec PostgreSQL disponible ; composants, format, lint, types et OpenAPI sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la CLI compose les frontières déjà imposées par la SFG et ne crée ni source statistique alternative ni accès local non déclaré.
+- **Commit/hash :** `d61d758` (`feat(ingestion): expose Oracle Elixir operator CLI`).
+
+## OE-023 — API/admin et UI santé réelles
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la politique de fraîcheur `OE-020`, la CLI/coordinator `OE-022` et le dashboard de santé `UI-008` sont disponibles.
+- **Fichiers créés/modifiés :** projections PostgreSQL `python/metiqo/repositories/postgres_admin.py`, service de mutation réelle idempotente, routes API réelles, branchement conditionnel dans la fabrique FastAPI, enrichissements optionnels du contrat `IngestionRunSummary`, contrat OpenAPI et client généré, dashboard partagé, tests API PostgreSQL et Playwright real-fixture.
+- **Migrations :** aucune nouvelle migration ; les projections lisent `raw.source_catalog`, `raw.snapshots`, `raw.ingestion_runs`, `raw.quality_issues`, `raw.quarantine_items` et les jobs de backfill existants.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; TypeScript strict ; génération et vérification OpenAPI ; test d'intégration API mock/réel sur PostgreSQL ; `make check` sur base jetable vide ; Playwright ciblé `real-data-health.spec.ts` sur build de production ; inspection Navigateur d'une API réelle et d'un frontend démarré avec `APP_DATA_MODE=real`.
+- **Résultat exact :** les endpoints `data-sources`, `ingestion-runs`, `quality-issues`, `jobs` et `oracles-elixir/sync` sont disponibles en mode réel sans monter les autres domaines prématurément. Mock et réel sérialisent les mêmes clés de DTO ; les champs de provenance optionnels exposent hash, année, lignes, plage métier, empreinte/changement de schéma, transport et code d'erreur. Une tentative en échec plus récente classe la source `degraded` tout en conservant le dernier snapshot validé et toutes les lectures en HTTP `200`. Le sync réel assure l’unicité de sa clé d'idempotence et n'accepte aucune fixture. Le Navigateur a confirmé le badge `REAL`, le hash, les 12 lignes, la couverture, le schéma stable, l'historique, l'anomalie ouverte et la quarantaine sur le même composant que le mock. La suite complète retourne 229 tests réussis ; le test Playwright real-fixture passe sur le build de production.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la différence de mode se situe dans les adaptateurs et les métadonnées, pas dans les composants UI ni les contrats publics.
+- **Commit/hash :** `d91ab04` (`feat(admin): expose real ingestion health`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
@@ -338,3 +616,27 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le script expose et vérifie le catalogue mock existant sans introduire de persistance ou d'accès réseau métier.
 - **Commit/hash :** `6ee0186e6632f9a5cbbc0506a395202d96c9ba51` (`feat: complete the mock demo gate`).
 - **Correctifs CI/hashes :** `55d9d77758e6f47acafa840279a99bc60dfc83af` (`test: stabilize Playwright across platforms`) ajoute les baselines Linux et rend les clés d'idempotence du parcours mapping stables ; `95eb64cdc4a1d504a6394215cbf3fae17e769912` (`fix: bundle Inter for stable rendering`) ajoute la police au bundle ; `fe11ec634c1fc05f2bd7f94550593aa5554e0cea` (`fix: use the bundled variable font`) relie le token du design system à la famille embarquée et régénère les références. Le test mapping passe deux fois de suite contre le même processus mock, les références visuelles passent sous Windows et dans l'image Linux Playwright, puis les 33 tests E2E passent ensemble.
+
+## OE-024 — Suite de fixtures OE critique
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** validations physique `OE-012`, qualité `OE-014`, révisions `OE-018` et fraîcheur `OE-020` sont `DONE` et directement exercées.
+- **Fichiers créés/modifiés :** dix fixtures minimisées, manifeste d’observation historique et documentation d’origine dans `tests/fixtures/oracles_elixir`, plus `tests/ingestion/test_critical_fixtures.py`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ; 7 tests de fixtures ciblés ; suite ingestion et intégration du gate via `make test-ingestion`.
+- **Résultat exact :** les cas SFG §25.2 valide, additive, cœur manquant, duplicate, incomplete, remake, correction rétroactive, tronqué, HTML quota, BOM/délimiteur inattendu et archive corrompue possèdent chacun une issue exécutable distincte. Toutes les lignes sont synthétiques et ne recopient aucune donnée Oracle’s Elixir. Les blobs binaires restent lisibles en Base64. Une observation SHA-256 historique est vérifiée comme preuve, puis un payload courant modifié est téléchargé avec son hash recalculé, sans réutilisation de l’ancien hash comme attente. Le gate ingestion retourne 142 tests réussis sur PostgreSQL réel.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les fixtures sont des données de test synthétiques minimales.
+- **Commit/hash :** `a77dbce` (`test(ingestion): cover critical Oracle Elixir fixtures`).
+
+## OE-025 — Gate P2 — reconstruction data fiable
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l’API/UI de santé réelle `OE-023` et la matrice de fixtures `OE-024` sont `DONE` ; tous les composants `OE-001` à `OE-024` sont inclus dans la cible du gate.
+- **Fichiers créés/modifiés :** intégration de quarantaine dans le coordinateur annuel, `infra/scripts/demo_ingestion_gate.py`, `tests/integration/test_ingestion_gate.py`, cible `make test-ingestion`, guide opérateur `README.md` et présent journal.
+- **Migrations :** le script crée une base PostgreSQL éphémère nommée par le programme, applique les migrations jusqu’à `20260906_0008`, puis supprime uniquement cette base ; aucune migration nouvelle.
+- **Commandes/tests exécutés :** démonstration JSON autonome sur PostgreSQL 18 ; `make test-ingestion` depuis un conteneur neuf ; `make check` global sur une seconde base neuve ; Ruff format/check ; mypy strict ; vérification du diff et du contrat OpenAPI.
+- **Résultat exact :** depuis une base vide, le catalogue bootstrap est chargé puis le backfill fixture réussit. Deux syncs du même fichier conservent 12 lignes, le même snapshot et l’empreinte canonique `8cc193e74ab3b0ca7ff8deb1df226a6b0155767ef41c73ef0ee014e489687ef8`, avec 12 lignes `unchanged` au second run. La page quota produit zéro snapshot et `allow-stale` retourne `degraded` avec le snapshot validé précédent. Un nouveau hash privé de colonne cœur est conservé dans l’ObjectStore de quarantaine avec `SCHEMA_INCOMPATIBLE`, lié au run, sans déplacer le pointeur courant ; une répétition sous `require-fresh` retourne le code `3`. Une colonne additive passe, une correction rétroactive met à jour exactement une ligne et publie une invalidation à partir du `2026-01-10`, puis `oe verify` relit hash et taille du snapshot final. La cible agrégée retourne 142 tests réussis, couvrant aussi reprise de backfill, concurrence et atomicité de promotion. Le contrôle global retourne 237 tests Python, 16 tests UI et 4 tests web réussis ; format, lint, orthographe, types et OpenAPI sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le gate assemble les décisions SFG déjà implémentées et sa base temporaire est volontairement isolée.
+- **Commit/hash :** `79f0053` (`feat(ingestion): prove reliable reconstruction gate`).

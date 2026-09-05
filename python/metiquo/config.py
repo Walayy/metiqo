@@ -66,7 +66,17 @@ class Settings(BaseSettings):
     oe_allow_stale: bool = True
     oe_require_fresh: bool = False
     oe_current_year: int = Field(default=2026, ge=2014, le=9999)
+    oe_freshness_sla_seconds: int = Field(default=10_800, gt=0)
     oe_source_catalog_path: Path = Path("/app/config/oracles_elixir_sources.yml")
+    oe_connect_timeout_seconds: float = Field(default=10.0, gt=0)
+    oe_read_timeout_seconds: float = Field(default=60.0, gt=0)
+    oe_download_timeout_seconds: float = Field(default=900.0, gt=0)
+    oe_max_download_bytes: int = Field(default=4 * 1024 * 1024 * 1024, gt=0)
+    oe_max_redirects: int = Field(default=3, ge=0, le=10)
+    oe_retry_max_attempts: int = Field(default=4, ge=1, le=10)
+    oe_retry_base_seconds: float = Field(default=1.0, gt=0)
+    oe_retry_max_seconds: float = Field(default=30.0, gt=0)
+    oe_google_drive_bearer: SecretStr | None = None
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
@@ -104,6 +114,15 @@ class Settings(BaseSettings):
             raise ValueError("DISPLAY_TIMEZONE doit être un fuseau IANA connu") from error
         return value
 
+    @field_validator("oe_google_drive_bearer")
+    @classmethod
+    def validate_google_drive_bearer(cls, value: SecretStr | None) -> SecretStr | None:
+        """Refuser un credential vide tout en conservant sa valeur masquée."""
+
+        if value is not None and not value.get_secret_value().strip():
+            raise ValueError("OE_GOOGLE_DRIVE_BEARER ne peut pas être vide")
+        return value
+
     @model_validator(mode="after")
     def validate_modes(self) -> Self:
         """Empêcher les configurations ambiguës et le mélange mock/réel."""
@@ -112,6 +131,8 @@ class Settings(BaseSettings):
             raise ValueError(
                 "OE_ALLOW_STALE et OE_REQUIRE_FRESH ne peuvent pas être vrais ensemble"
             )
+        if self.oe_retry_base_seconds > self.oe_retry_max_seconds:
+            raise ValueError("OE_RETRY_BASE_SECONDS ne peut pas dépasser OE_RETRY_MAX_SECONDS")
         if self.app_data_mode is DataMode.REAL and self.odds_provider is OddsProvider.MOCK:
             raise ValueError("APP_DATA_MODE=real interdit ODDS_PROVIDER=mock")
         if self.app_data_mode is DataMode.MOCK and self.odds_provider not in {

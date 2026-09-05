@@ -1,0 +1,7 @@
+{
+  "fixture": "dq_valid.csv",
+  "observedAt": "2026-09-05T00:00:00Z",
+  "observedByteSize": 846,
+  "observedSha256": "c8a43a1f9f9b55272fb584865c7163f9449382d223de7d7f3aec36891356bf3f",
+  "purpose": "historical-test-evidence-only"
+}

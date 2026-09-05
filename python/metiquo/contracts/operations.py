@@ -20,11 +20,34 @@ class IngestionRunSummary(ContractModel):
     row_count: int = Field(alias="rowCount", ge=0)
     data_mode: DataMode = Field(alias="dataMode")
     last_valid_snapshot_id: UUID | None = Field(default=None, alias="lastValidSnapshotId")
+    snapshot_sha256: str | None = Field(
+        default=None,
+        alias="snapshotSha256",
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    season_year: int | None = Field(default=None, alias="seasonYear", ge=2014, le=2200)
+    min_event_date: UtcDateTime | None = Field(default=None, alias="minEventDate")
+    max_event_date: UtcDateTime | None = Field(default=None, alias="maxEventDate")
+    schema_fingerprint: str | None = Field(
+        default=None,
+        alias="schemaFingerprint",
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    schema_changed: bool | None = Field(default=None, alias="schemaChanged")
+    run_kind: str | None = Field(default=None, alias="runKind")
+    transport: str | None = None
+    error_code: str | None = Field(default=None, alias="errorCode")
 
     @model_validator(mode="after")
     def completion_follows_start(self) -> Self:
         if self.completed_at < self.started_at:
             raise ValueError("Une ingestion ne peut pas finir avant son début")
+        if (
+            self.min_event_date is not None
+            and self.max_event_date is not None
+            and self.max_event_date < self.min_event_date
+        ):
+            raise ValueError("La fin de couverture ne peut pas précéder son début")
         return self
 
 

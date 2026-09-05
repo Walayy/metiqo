@@ -356,9 +356,21 @@ export type IngestionRunSummary = {
     completedAt: string;
     dataMode: DataMode;
     /**
+     * Errorcode
+     */
+    errorCode?: string | null;
+    /**
      * Lastvalidsnapshotid
      */
     lastValidSnapshotId?: string | null;
+    /**
+     * Maxeventdate
+     */
+    maxEventDate?: string | null;
+    /**
+     * Mineventdate
+     */
+    minEventDate?: string | null;
     /**
      * Rowcount
      */
@@ -367,6 +379,26 @@ export type IngestionRunSummary = {
      * Runid
      */
     runId: string;
+    /**
+     * Runkind
+     */
+    runKind?: string | null;
+    /**
+     * Schemachanged
+     */
+    schemaChanged?: boolean | null;
+    /**
+     * Schemafingerprint
+     */
+    schemaFingerprint?: string | null;
+    /**
+     * Seasonyear
+     */
+    seasonYear?: number | null;
+    /**
+     * Snapshotsha256
+     */
+    snapshotSha256?: string | null;
     /**
      * Source
      */
@@ -379,6 +411,10 @@ export type IngestionRunSummary = {
      * Status
      */
     status: 'succeeded' | 'failed';
+    /**
+     * Transport
+     */
+    transport?: string | null;
 };
 
 /**

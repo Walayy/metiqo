@@ -18,6 +18,9 @@ dependencies = [
     "uvicorn==0.52.4",
 ]
 
+[project.scripts]
+oe = "metiquo.cli:main"
+
 [dependency-groups]
 dev = [
     "httpx2==2.12.0",

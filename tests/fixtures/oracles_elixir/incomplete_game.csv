@@ -1,0 +1,3 @@
+gameid,date,participantid,side,position,teamname,league,result,datacompleteness,gamelength
+OE-INCOMPLETE,2026-02-02,100,Blue,team,T1,LCK,1,partial,1800
+OE-INCOMPLETE,2026-02-02,200,Red,team,Gen.G,LCK,0,partial,1800
