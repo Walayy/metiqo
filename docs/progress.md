@@ -1156,3 +1156,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; sans horloge explicite, le provider reste fixé à `catalog.reference_time` pour préserver le comportement déterministe existant.
 - **Commit/hash :** `6a56a46` (`feat(odds): make mock provider time-aware`).
+
+## ODD-004 — ManualImportOddsProvider
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le port fournisseur et sa suite commune `ODD-002` sont `DONE` ; l'adaptateur manuel produit exclusivement les mêmes `ProviderEvent`, `ProviderMarket`, `ProviderSelection`, `OddsCaptureResult` et `ProviderHealth`.
+- **Fichiers créés/modifiés :** adapter `python/metiquo/providers/manual_import.py`, exports publics, format opérateur `docs/manual-odds-import.md` et preuves `tests/providers/test_manual_import_provider.py`.
+- **Migrations :** aucune ; la publication PostgreSQL append-only reste la responsabilité du service d'historisation `ODD-007`. Le provider maintient un état atomique en mémoire pour normaliser les documents avant cette frontière.
+- **Commandes/tests exécutés :** Ruff, mypy strict, 10 tests provider/contrat ciblés, Prettier et CSpell sur le format opérateur, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** CSV UTF-8 et liste JSON partagent vingt-trois champs stricts pour fournisseur logique, événement, début, participants, marché, sélection, cote décimale, capture, fiabilité temporelle, règles et provenance. Le CSV exige exactement l'en-tête et son ordre documentés ; JSON refuse clés supplémentaires et lignes non objet. Toutes les lignes sont validées avant publication, avec une erreur structurée par numéro, code, champ et message. Une fixture cumulant cote `0.50`, mauvais fournisseur et capture future retourne les trois erreurs, zéro document et zéro observation visible. La cohérence des identités événement/marché/sélection et l'unicité d'une observation à un instant sont aussi vérifiées contre l'état existant. La clé d'idempotence documentée est `sha256:<digest>` des octets exacts : le second import retourne `duplicate=true` sans ajouter de ligne. Une capture non fiable est forcée à `informational_only=true`. Les UUID provider sont déterministes, les prix et probabilités restent décimaux, et le document CSV valide passe toute la suite `OddsProvider`. Le gate retourne 343 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, contrats et mypy strict sur 260 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; cette étape valide et expose atomiquement un document sans anticiper le stockage PostgreSQL transactionnel et append-only prévu explicitement par `ODD-007`.
+- **Commit/hash :** `ccf9d9f` (`feat(odds): add atomic manual import provider`).
