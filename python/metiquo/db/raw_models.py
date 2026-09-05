@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     String,
@@ -62,6 +63,13 @@ class SourceCatalog(IdentityTimestampMixin, Base):
             unique=True,
             postgresql_where=text("status = 'active'"),
         ),
+        ForeignKeyConstraint(
+            ["current_snapshot_id", "id"],
+            ["raw.snapshots.id", "raw.snapshots.source_catalog_id"],
+            name="fk_source_catalog_current_snapshot_id_snapshots",
+            ondelete="RESTRICT",
+            use_alter=True,
+        ),
         {"schema": RAW_SCHEMA},
     )
 
@@ -79,6 +87,7 @@ class SourceCatalog(IdentityTimestampMixin, Base):
     last_confirmed_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
     discovery_payload_hash: Mapped[str | None] = mapped_column(String(64))
     mutable: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=false())
+    current_snapshot_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True))
 
 
 class Snapshot(Base):
@@ -99,6 +108,7 @@ class Snapshot(Base):
             name="validation_state",
         ),
         UniqueConstraint("source_catalog_id", "sha256", name="uq_snapshots_catalog_hash"),
+        UniqueConstraint("id", "source_catalog_id", name="uq_snapshots_id_source_catalog_id"),
         UniqueConstraint("object_key", name="uq_snapshots_object_key"),
         {"schema": RAW_SCHEMA},
     )

@@ -10,8 +10,9 @@ from typing import Any, Literal, Protocol, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import Connection, Table, insert, select, update
+from sqlalchemy.engine import RowMapping
 
-from metiquo.db.raw_models import QuarantineItem, Snapshot
+from metiquo.db.raw_models import QuarantineItem, Snapshot, SourceCatalog
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.object_store import ObjectStore, SourceKind
 
@@ -62,6 +63,29 @@ class SnapshotReader:
     def __init__(self, connection: Connection) -> None:
         self._connection = connection
         self._table = cast(Table, Snapshot.__table__)
+        self._catalog = cast(Table, SourceCatalog.__table__)
+
+    def current(self, source_catalog_id: UUID) -> SnapshotRecord | None:
+        """Lire uniquement le snapshot explicitement publié et encore validé."""
+
+        row = (
+            self._connection.execute(
+                select(self._table)
+                .join(
+                    self._catalog,
+                    self._catalog.c.current_snapshot_id == self._table.c.id,
+                )
+                .where(
+                    self._catalog.c.id == source_catalog_id,
+                    self._table.c.source_catalog_id == source_catalog_id,
+                    self._table.c.status == "validated",
+                )
+                .limit(1)
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return self._to_record(row) if row is not None else None
 
     def latest_validated(self, source_catalog_id: UUID) -> SnapshotRecord | None:
         row = (
@@ -79,6 +103,10 @@ class SnapshotReader:
         )
         if row is None:
             return None
+        return self._to_record(row)
+
+    @staticmethod
+    def _to_record(row: RowMapping) -> SnapshotRecord:
         return SnapshotRecord(
             id=row["id"],
             source_catalog_id=row["source_catalog_id"],

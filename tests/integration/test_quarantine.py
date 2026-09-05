@@ -87,6 +87,13 @@ def _seed_catalog_run_and_validated_snapshot(
     )
     connection.execute(
         text(
+            "UPDATE raw.source_catalog SET current_snapshot_id = :snapshot_id "
+            "WHERE id = :catalog_id"
+        ),
+        {"snapshot_id": validated_snapshot_id, "catalog_id": catalog_id},
+    )
+    connection.execute(
+        text(
             """
             INSERT INTO raw.ingestion_runs (
               id, source_catalog_id, run_kind, status, attempt, correlation_id, started_at
@@ -142,6 +149,9 @@ def test_quarantine_preserves_current_snapshot_and_requires_audited_resolution(
         assert current is not None
         assert current.id == validated_snapshot_id
         assert current.status == "validated"
+        published = SnapshotReader(connection).current(catalog_id)
+        assert published is not None
+        assert published.id == validated_snapshot_id
 
         snapshot_row = (
             connection.execute(
@@ -218,6 +228,9 @@ def test_quarantine_preserves_current_snapshot_and_requires_audited_resolution(
         current_after_resolution = SnapshotReader(connection).latest_validated(catalog_id)
         assert current_after_resolution is not None
         assert current_after_resolution.id == validated_snapshot_id
+        published_after_resolution = SnapshotReader(connection).current(catalog_id)
+        assert published_after_resolution is not None
+        assert published_after_resolution.id == validated_snapshot_id
 
     object_directory = store_root / "year=2026" / f"sha256={quarantined.sha256}"
     assert (object_directory / "source.csv").read_bytes() == payload.read_bytes()

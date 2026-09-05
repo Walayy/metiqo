@@ -35,6 +35,23 @@ def test_raw_model_has_expected_tables_and_provenance(postgresql_url: str) -> No
     with engine.connect() as connection:
         inspector = inspect(connection)
         assert set(inspector.get_table_names(schema="raw")) == RAW_TABLES
+        catalog_foreign_keys = inspector.get_foreign_keys("source_catalog", schema="raw")
+        assert {
+            (
+                tuple(fk["constrained_columns"]),
+                fk["referred_schema"],
+                fk["referred_table"],
+                tuple(fk["referred_columns"]),
+            )
+            for fk in catalog_foreign_keys
+        } == {
+            (
+                ("current_snapshot_id", "id"),
+                "raw",
+                "snapshots",
+                ("id", "source_catalog_id"),
+            )
+        }
         snapshot_foreign_keys = inspector.get_foreign_keys("snapshots", schema="raw")
         assert {(fk["referred_schema"], fk["referred_table"]) for fk in snapshot_foreign_keys} == {
             ("raw", "source_catalog")
