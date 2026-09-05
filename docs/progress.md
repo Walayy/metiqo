@@ -784,3 +784,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le prior Blue/Red est une régularisation locale documentée exigée par le ticket, tandis que les priors hiérarchiques généraux restent réservés à `FEAT-010`.
 - **Commit/hash :** `fdc65d2` (`feat(features): model explicit side uncertainty`).
+
+## FEAT-006 — Économie, rythme et objectifs conditionnels
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les cutoffs `FEAT-002` et le capability registry `CNL-006` sont `DONE` ; les valeurs détaillées proviennent exclusivement des révisions canoniques et de leurs payloads source immuables.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/economy.py`, quatre définitions de capability supplémentaires dans le registre canonique, exports features et tests unitaires des groupes activés/désactivés.
+- **Migrations :** aucune ; les évaluations des nouvelles capabilities utilisent la table append-only existante et les sorties sont déclarables dans le registre de features.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; neuf tests du domaine features ; six tests PostgreSQL de migrations, capabilities, temporalité et API réelle ; vérification du diff.
+- **Résultat exact :** `feature.pace`, `feature.economy_timestamps`, `feature.objectives_total` et `feature.objectives_first` possèdent colonnes requises, seuils de complétude et taille minimale versionnés. Le calcul expose des indicateurs de disponibilité de groupe, kills/minute, durée, gold/XP/CS différentiels aux minutes 10/15/20/25 lorsqu’ils existent, tailles d’échantillon, conversion d’un avantage à 15 minutes, comeback historique, tours/dragons/barons par minute et taux de premiers objectifs. Deux games de 30 minutes donnent 0,3 kill/minute et 0,2 tour/minute pour la fixture ; un avantage gagné produit une conversion à 1 et un déficit perdu un comeback à 0. Avec les mêmes colonnes présentes mais les capabilities désactivées, toutes les métriques restent `None`, leurs comptes valent zéro et les quatre indicateurs sont faux.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les timestamps autres que 15 minutes restent optionnels avec compte nul, tandis que l’activation du groupe exige au minimum gold, XP et CS à 15 minutes comme preuve commune.
+- **Commit/hash :** `7a7b3eb` (`feat(features): gate economy and objectives`).
