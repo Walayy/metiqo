@@ -1096,3 +1096,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'artefact sérialise une recette et des vecteurs vérifiables au lieu d'un pickle exécutable, et la commande n'automatise jamais la décision humaine de promotion.
 - **Commit/hash :** `4b18c23` (`feat(ml): complete reproducible training gate`).
+
+## ODD-001 — Schéma odds append-only
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les conventions PostgreSQL `FND-004` et les DTO/scénarios mock `MCK-001` sont `DONE` ; le nouveau schéma reprend leurs UUID, vocabulaires fermés, UTC et décimaux sans dépendre d'un fournisseur concret.
+- **Fichiers créés/modifiés :** modèles ORM `python/metiquo/db/odds_models.py`, migration `20260907_0027`, inventaire du head Alembic et test d'intégration PostgreSQL dédié.
+- **Migrations :** création de `odds.providers`, `odds.provider_health`, `odds.events`, `odds.markets`, `odds.selections` et `odds.snapshots`. Les identités composées garantissent qu'un snapshot ne peut mélanger fournisseur, événement, marché ou sélection. Les contrôles de santé et snapshots possèdent des triggers communs interdisant UPDATE et DELETE.
+- **Commandes/tests exécutés :** test PostgreSQL d'immutabilité et contraintes, cycle Alembic complet, démo d'ingestion depuis une base vide, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** chaque snapshot conserve les états fournisseur/événement/marché, le libellé et la ligne observés, une cote `NUMERIC(20,8)` supérieure ou égale à 1, l'instant fournisseur, l'instant d'enregistrement, la fiabilité temporelle, le statut informatif, une référence de payload brut, son SHA-256 facultatif, la provenance et une empreinte d'observation unique. Une observation non informative exige simultanément `captured_at` et `timestamp_reliable=true` ; une cote sans timestamp fiable n'est acceptée qu'avec `informational_only=true`. L'ordre de capture, les statuts, les participants, les règles de settlement et la cohérence des clés sont protégés en base. L'index demandé couvre exactement événement, marché, sélection et `captured_at`. La preuve insère une cote `2,25000000`, refuse `0,99000000`, refuse une observation signalable sans timestamp, accepte son équivalent informatif, puis fait échouer UPDATE et DELETE ainsi que la mutation d'un état de santé. Le gate retourne 310 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 246 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; seules les observations historiques sont append-only à ce stade, tandis que les identités fournisseur restent le socle des adapters et de l'historisation livrés par `ODD-002` à `ODD-007`.
+- **Commit/hash :** `babac85` (`feat(odds): add append-only odds schema`).

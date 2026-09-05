@@ -41,6 +41,14 @@ CORE_TABLES = {
     "series",
     "teams",
 }
+ODDS_TABLES = {
+    "events",
+    "markets",
+    "provider_health",
+    "providers",
+    "selections",
+    "snapshots",
+}
 
 
 def alembic_config(url: str) -> Config:
@@ -103,10 +111,11 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
             "tabular_benchmark_predictions",
             "tabular_benchmark_runs",
         }
+        assert set(inspect(connection).get_table_names(schema="odds")) == ODDS_TABLES
         assert all(
             inspect(connection).get_table_names(schema=name) == []
             for name in ALL_SCHEMAS
-            if name not in {"raw", "core", "features", "ml"}
+            if name not in {"raw", "core", "features", "ml", "odds"}
         )
         assert connection.execute(text("SHOW TIME ZONE")).scalar_one() == "UTC"
     engine.dispose()
