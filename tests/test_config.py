@@ -38,6 +38,7 @@ def test_valid_configuration_is_typed_and_uses_utc_internally() -> None:
     assert settings.app_data_mode is DataMode.MOCK
     assert settings.odds_provider is OddsProvider.MOCK
     assert settings.mock_seed == "metiquo-demo-v1"
+    assert settings.oe_freshness_sla_seconds == 10_800
     assert settings.display_tzinfo.key == "Europe/Paris"
     assert settings.internal_tzinfo is UTC
 

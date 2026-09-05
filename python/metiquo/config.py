@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     oe_allow_stale: bool = True
     oe_require_fresh: bool = False
     oe_current_year: int = Field(default=2026, ge=2014, le=9999)
+    oe_freshness_sla_seconds: int = Field(default=10_800, gt=0)
     oe_source_catalog_path: Path = Path("/app/config/oracles_elixir_sources.yml")
     oe_connect_timeout_seconds: float = Field(default=10.0, gt=0)
     oe_read_timeout_seconds: float = Field(default=60.0, gt=0)

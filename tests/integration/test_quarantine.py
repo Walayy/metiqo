@@ -1,7 +1,7 @@
 """Quarantaine durable et lecture sûre du dernier snapshot validé."""
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -10,7 +10,13 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import Connection, create_engine, text
 
+from metiquo.contracts.enums import FreshnessStatus
 from metiquo.foundation.time import FixedClock, UtcInstant
+from metiquo.ingestion.freshness import (
+    FreshnessPolicy,
+    FreshnessService,
+    PostgresFreshnessRepository,
+)
 from metiquo.ingestion.object_store import FilesystemObjectStore
 from metiquo.ingestion.quarantine import (
     QuarantineAuditEvent,
@@ -119,7 +125,7 @@ def test_quarantine_preserves_current_snapshot_and_requires_audited_resolution(
     command.upgrade(alembic_config(postgresql_url), "head")
     engine = create_engine(postgresql_url)
     payload = tmp_path / "invalid.csv"
-    payload.write_bytes(b"gameid,side\nbroken,unknown\n")
+    payload.write_text(f"gameid,side\n{uuid4().hex},unknown\n")
     store_root = tmp_path / "quarantine-store"
     audit_sink = RecordingAuditSink()
     clock = FixedClock(UtcInstant(INSTANT))
@@ -244,4 +250,12 @@ def test_quarantine_preserves_current_snapshot_and_requires_audited_resolution(
         "blockingCodes": ["SIDE_INVALID"],
         "rowCount": 1,
     }
+    freshness = FreshnessService(
+        repository=PostgresFreshnessRepository(engine),
+        sla=timedelta(hours=3),
+        clock=FixedClock(UtcInstant(INSTANT + timedelta(seconds=1))),
+    ).evaluate(catalog_id, policy=FreshnessPolicy(allow_stale=True))
+    assert freshness.status is FreshnessStatus.QUARANTINED
+    assert freshness.usable is True
+    assert freshness.snapshot_id == validated_snapshot_id
     engine.dispose()
