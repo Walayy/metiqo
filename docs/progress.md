@@ -976,3 +976,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la calibration est volontairement un artefact distinct du modèle et sa preuve réutilise un second découpage temporel, jamais le test final.
 - **Commit/hash :** `e6edef6` (`feat(ml): calibrate temporal OOS predictions`).
+
+## ML-008 — Incertitude calibrée et détection hors domaine
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la calibration temporelle `ML-007` est `DONE` ; l'estimateur consomme son artefact séparé et uniquement ses prédictions de preuve hors échantillon.
+- **Fichiers créés/modifiés :** moteur `python/metiquo/models/uncertainty.py`, exports ML et tests de propriétés numériques, de couverture incomplète et de distance hors domaine.
+- **Migrations :** aucune ; l'artefact d'incertitude est adressé par une empreinte déterministe et sera rattaché au registre de modèles par `ML-010`.
+- **Commandes/tests exécutés :** Ruff, mypy strict sur 217 fichiers, tests modèle ciblés, puis gate global complet.
+- **Résultat exact :** deux variantes conformes sont comparées sur les seules preuves calibrées : rayon absolu global et rayon maximal des folds temporels. La sélection exige la couverture empirique cible puis minimise la largeur, avec départage stable. Chaque estimation garantit `p_low <= p50 <= p_high` et reste dans `[0,1]`. Une couverture de données insuffisante ou une distance hors domaine élargit l'intervalle, abaisse la confiance et ajoute une raison structurée ; au seuil d'abstention, l'intervalle devient `[0,1]` et la confiance zéro. Le gate retourne 286 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, types et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'incertitude reste un artefact distinct, sans nouvel entraînement ni consultation du test final, et les décisions de faible confiance demeurent explicables par des codes stables.
+- **Commit/hash :** `163e3d0` (`feat(ml): estimate calibrated uncertainty`).

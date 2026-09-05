@@ -76,6 +76,16 @@ from metiquo.models.rating import (
     RatingTrainingResult,
     rating_win_probability,
 )
+from metiquo.models.uncertainty import (
+    ABSOLUTE_CONFORMAL,
+    TEMPORAL_FOLD_CONFORMAL,
+    UNCERTAINTY_VERSION,
+    UncertaintyArtifact,
+    UncertaintyArtifactBuilder,
+    UncertaintyCandidateEvaluation,
+    UncertaintyEstimate,
+    UncertaintySearchParameters,
+)
 from metiquo.models.validation import (
     FoldProbabilities,
     OutOfFoldPrediction,
@@ -95,6 +105,7 @@ from metiquo.models.validation import (
 )
 
 __all__ = [
+    "ABSOLUTE_CONFORMAL",
     "CALIBRATOR_VERSION",
     "COMPETITION_PRIOR",
     "COMPETITION_PRIOR_VERSION",
@@ -113,6 +124,8 @@ __all__ = [
     "RECENT_FORM",
     "RECENT_FORM_VERSION",
     "TABULAR_BENCHMARK_VERSION",
+    "TEMPORAL_FOLD_CONFORMAL",
+    "UNCERTAINTY_VERSION",
     "BaselineComparison",
     "BaselineEvaluator",
     "BaselineGateComparison",
@@ -161,6 +174,11 @@ __all__ = [
     "TabularFeatureSpec",
     "TemporalFold",
     "TrainingExampleRepository",
+    "UncertaintyArtifact",
+    "UncertaintyArtifactBuilder",
+    "UncertaintyCandidateEvaluation",
+    "UncertaintyEstimate",
+    "UncertaintySearchParameters",
     "WalkForwardConfig",
     "WalkForwardExample",
     "WalkForwardPlan",
