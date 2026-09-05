@@ -1300,3 +1300,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; `VAL-003` peut désormais versionner les seuils appliqués à ces métriques.
 - **ADR éventuel :** aucun ; l'absence de cote juste à probabilité zéro est une représentation finie et explicite que le futur gate transformera en abstention.
 - **Commit/hash :** `3e2e6ab` (`feat(pricing): compute fair odds and value`).
+
+## VAL-003 — Configuration versionnée des seuils
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les valeurs serveur typées de `FND-003` couvrent les seuils globaux ; les métriques exactes de `VAL-002` sont `DONE` et prêtes à être comparées à une politique résolue.
+- **Fichiers créés/modifiés :** domaine et résolution `python/metiquo/pricing/policy.py`, repository PostgreSQL audité, modèles `python/metiquo/db/pricing_models.py`, migration `20260907_0032`, contrat `Value`, OpenAPI/client TypeScript, scénario mock, guide et preuves unitaires/PostgreSQL.
+- **Migrations :** `20260907_0032` crée `signals.value_policies` et `signals.value_policy_audits`, leurs contraintes, index, références de révision et triggers append-only. Les seuils, surcharges, frontières temporelles et empreintes sont conservés sans mise à jour possible.
+- **Commandes/tests exécutés :** Ruff, mypy strict, 43 tests pricing/contrats/mock, 46 tests ciblés avec migrations PostgreSQL, génération OpenAPI, TypeScript et 20 composants, reconstruction depuis base vide, puis deux passages du gate global `make check`. Le premier a identifié l'attente historique de révision `0031`, corrigée et vérifiée de nouveau par quatre tests ciblés avant le second passage vert.
+- **Résultat exact :** chaque politique enregistre `min_edge`, `min_ev`, `min_conservative_ev`, `max_odds_age_seconds`, `min_mapping_confidence`, la fin du tuning et le début du test final. Toute frontière où le tuning atteint ou dépasse le test final est refusée en Python et en base. La résolution applique global, marché, compétition puis bucket, chaque niveau ne remplaçant que ses champs déclarés et publiant les scopes effectivement utilisés. Une version identique est idempotente, une redéfinition est interdite et toute version après la première doit référencer la précédente. Création et révision ajoutent acteur, motif et document complet à l'audit ; les tests prouvent que `UPDATE` et `DELETE` échouent physiquement. Tous les signaux `Opportunity` transportent désormais `value.policyVersion`, y compris le catalogue mock et le contrat généré. Le gate retourne 416 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 297 fichiers sont verts.
+- **Blocker éventuel :** aucun ; `VAL-004` peut appliquer ces seuils avec les autres garde-fous d'admission.
+- **ADR éventuel :** aucun ; la priorité `global → marché → compétition → bucket` est enregistrée comme règle déterministe initiale, et tout changement de contenu exige une nouvelle version.
+- **Commit/hash :** `63dd714` (`feat(pricing): version signal threshold policies`).

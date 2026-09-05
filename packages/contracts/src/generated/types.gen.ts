@@ -1677,6 +1677,10 @@ export type Value = {
      */
     fairOdds: string;
     grade: ValueGrade;
+    /**
+     * Policyversion
+     */
+    policyVersion: string;
 };
 
 /**

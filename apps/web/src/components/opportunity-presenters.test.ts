@@ -90,6 +90,7 @@ function opportunity(overrides: {
       expectedValue: "0.20",
       fairOdds: "1.67",
       grade: "VALUE",
+      policyVersion: "test-value-policy-v1",
     },
   };
 }

@@ -3138,9 +3138,16 @@
           },
           "grade": {
             "$ref": "#/components/schemas/ValueGrade"
+          },
+          "policyVersion": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Policyversion",
+            "type": "string"
           }
         },
         "required": [
+          "policyVersion",
           "fairOdds",
           "edge",
           "expectedValue",
