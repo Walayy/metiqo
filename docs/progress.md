@@ -772,3 +772,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les petits échantillons ne sont pas encore ramenés vers un prior dans ce ticket, afin que `FEAT-010` applique une politique unique et versionnée au-dessus des statistiques brutes.
 - **Commit/hash :** `f9cac23` (`feat(features): compute explicit recent form`).
+
+## FEAT-005 — Features side
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les relectures historiques strictes `FEAT-002` sont `DONE` ; les statistiques early sont relues depuis les copies immuables des payloads raw liées aux révisions canoniques, sans rouvrir un fichier source.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/side.py`, enrichissement as-of prudent des statistiques source autorisées, exports features, tests unitaires Blue/Red et extension du test PostgreSQL temporel.
+- **Migrations :** aucune ; les statistiques early restent dans la preuve source de `CNL-005` et ne sont exposées que lorsqu’une valeur réelle est présente.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; sept tests du domaine features ; quatre tests de migration/temporalité sur PostgreSQL réel ; vérification du diff.
+- **Résultat exact :** chaque équipe possède des échantillons Blue et Red séparés avec games, victoires, taux ajusté par un prior explicite et versionné, moyenne early disponible et taille de cet échantillon. Le différentiel Blue/Red est exposé sans confondre les sides. La fixture produit 2 victoires en 3 games Blue, soit un taux ajusté 0,571429, et 0 en 2 Red, soit 0,333333 ; deux valeurs `gold_diff_at_15` donnent une moyenne 25 tandis que la side sans donnée reste `None`. Les définitions early sont marquées `capability_gated` par `feature.early_game`. Pour une side cible inconnue, les deux équipes restent `unknown` et les poids Blue/Red valent explicitement 0,5/0,5 ; aucune side n’est supposée. Une side connue devient au contraire un scénario one-hot déterministe.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le prior Blue/Red est une régularisation locale documentée exigée par le ticket, tandis que les priors hiérarchiques généraux restent réservés à `FEAT-010`.
+- **Commit/hash :** `fdc65d2` (`feat(features): model explicit side uncertainty`).
