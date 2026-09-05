@@ -408,7 +408,10 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
             ).scalar_one()
             == 1
         )
-        assert inspect(connection).get_table_names(schema="ml") == []
+        assert set(inspect(connection).get_table_names(schema="ml")) == {
+            "dataset_examples",
+            "datasets",
+        }
 
     with (
         pytest.raises(DBAPIError, match=r"row revision .* is append-only"),
