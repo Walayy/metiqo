@@ -16,6 +16,8 @@ from metiquo.contracts.enums import GameTitle as ContractGameTitle
 from metiquo.db.core_models import Competition, Game, GameTeamStat, Series, Team
 from metiquo.db.odds_models import (
     EventMappingAttempt,
+    EventMappingCandidateScore,
+    MappingReviewRecord,
     OddsProviderRecord,
     OddsSnapshotRecord,
     ProviderOddsSelection,
@@ -212,6 +214,22 @@ class PostgresCanonicalRepository:
         providers = cast(Table, OddsProviderRecord.__table__)
         selections = cast(Table, ProviderOddsSelection.__table__)
         attempts = cast(Table, EventMappingAttempt.__table__)
+        reviews = cast(Table, MappingReviewRecord.__table__)
+        candidate_scores = cast(Table, EventMappingCandidateScore.__table__)
+        approved_inversion = (
+            select(candidate_scores.c.selections_inverted)
+            .join(reviews, reviews.c.attempt_id == candidate_scores.c.attempt_id)
+            .join(attempts, attempts.c.id == reviews.c.attempt_id)
+            .where(
+                attempts.c.provider_event_id == snapshots.c.event_id,
+                reviews.c.selected_event_id == event_id,
+                reviews.c.status == "approved",
+                candidate_scores.c.canonical_event_id == event_id,
+            )
+            .order_by(reviews.c.reviewed_at.desc(), reviews.c.id.desc())
+            .limit(1)
+            .scalar_subquery()
+        )
         mapped_inversion = (
             select(attempts.c.selections_inverted)
             .where(
@@ -230,7 +248,9 @@ class PostgresCanonicalRepository:
                         snapshots,
                         providers.c.code.label("provider_code"),
                         selections.c.selection_type,
-                        func.coalesce(mapped_inversion, False).label("selections_inverted"),
+                        func.coalesce(mapped_inversion, approved_inversion, False).label(
+                            "selections_inverted"
+                        ),
                     )
                     .join(providers, providers.c.id == snapshots.c.provider_id)
                     .join(selections, selections.c.id == snapshots.c.selection_id)
@@ -242,6 +262,15 @@ class PostgresCanonicalRepository:
                                     attempts.c.provider_event_id == snapshots.c.event_id,
                                     attempts.c.selected_event_id == event_id,
                                     attempts.c.result_status == "auto_matched",
+                                )
+                            ),
+                            exists(
+                                select(reviews.c.id)
+                                .join(attempts, attempts.c.id == reviews.c.attempt_id)
+                                .where(
+                                    attempts.c.provider_event_id == snapshots.c.event_id,
+                                    reviews.c.selected_event_id == event_id,
+                                    reviews.c.status == "approved",
                                 )
                             ),
                         ),

@@ -139,6 +139,7 @@ def build_mutation_router(service: MockMutationService, clock: Clock) -> APIRout
                 status,
                 request.reviewer,
                 request.reason,
+                request.candidate_event_id,
             ),
             meta=_meta(clock),
         )
@@ -186,6 +187,9 @@ def build_mutation_router(service: MockMutationService, clock: Clock) -> APIRout
                 request.provider,
                 request.alias,
                 request.canonical_id,
+                request.entity_type,
+                request.reviewer,
+                request.reason,
             ),
             meta=_meta(clock),
         )

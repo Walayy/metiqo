@@ -47,6 +47,8 @@ ODDS_TABLES = {
     "event_mapping_candidate_scores",
     "events",
     "markets",
+    "mapping_audits",
+    "mapping_reviews",
     "provider_health",
     "providers",
     "selections",

@@ -75,7 +75,7 @@ class JobSummary(ContractModel):
 
 
 class AuditEntry(ContractModel):
-    """Trace immutable d'une mutation applicative mock."""
+    """Trace immutable d'une mutation applicative."""
 
     audit_id: UUID = Field(alias="auditId")
     action: NonEmptyText
@@ -83,6 +83,9 @@ class AuditEntry(ContractModel):
     idempotency_fingerprint: str = Field(alias="idempotencyFingerprint", pattern=r"^[0-9a-f]{64}$")
     occurred_at: UtcDateTime = Field(alias="occurredAt")
     data_mode: DataMode = Field(alias="dataMode")
+    actor: NonEmptyText | None = None
+    reason: NonEmptyText | None = None
+    impact: dict[str, object] | None = None
 
 
 class AliasRecord(ContractModel):

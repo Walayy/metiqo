@@ -20,6 +20,7 @@ from metiquo.db.mapping_models import EntityAlias
 from metiquo.db.odds_models import (
     EventMappingAttempt,
     EventMappingCandidateScore,
+    MappingReviewRecord,
     OddsProviderRecord,
     ProviderOddsEvent,
 )
@@ -400,4 +401,18 @@ def _persist_decision(
                 }
                 for rank, candidate in enumerate(decision.candidates, start=1)
             ],
+        )
+    if decision.status is EventMappingStatus.REVIEW:
+        reviews = cast(Table, MappingReviewRecord.__table__)
+        connection.execute(
+            insert(reviews).values(
+                id=uuid4(),
+                attempt_id=attempt_id,
+                status="pending",
+                selected_event_id=None,
+                created_at=evaluated_at,
+                reviewed_at=None,
+                reviewer=None,
+                decision_reason=None,
+            )
         )
