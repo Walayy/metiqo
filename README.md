@@ -101,6 +101,25 @@ Les alias équivalents sont `make oe-catalog`, `make oe-backfill FROM=2014 TO=20
 
 Les codes retour sont stables : `0` succès, `2` usage ou configuration invalide, `3` snapshot frais requis mais indisponible, `4` échec de source ou de pipeline, `5` intégrité du snapshot invalide et `6` backfill partiel. Les erreurs machine-readable contiennent toujours `ok=false` et un `errorCode` sans secret.
 
+Un contenu téléchargé puis refusé par la validation physique, le contrat de schéma ou la qualité métier est écrit dans l’ObjectStore de quarantaine et lié au run en échec. Il ne déplace jamais `raw.source_catalog.current_snapshot_id`. Une réponse HTML de quota est refusée avant la création d’un snapshot ; avec `--allow-stale`, la commande annonce explicitement `degraded` ou `quarantined` et l’identifiant du dernier snapshot validé réutilisé.
+
+### Gate P2 ingestion
+
+`make test-ingestion` couvre les fixtures critiques, la reprise de backfill, l’atomicité PostgreSQL, le double run, la quarantaine et les politiques de fraîcheur. La variable `TEST_DATABASE_URL` doit désigner une instance PostgreSQL de test dont l’utilisateur peut créer une base temporaire :
+
+```console
+TEST_DATABASE_URL=postgresql+psycopg://metiqo:metiqo@127.0.0.1:55436/metiqo make test-ingestion
+```
+
+Le parcours démontrable séparément crée une base au nom aléatoire préfixé par « Metiquo gate », applique les migrations, rafraîchit le catalogue mock, exécute le backfill et les contrôles du gate, puis supprime uniquement cette base éphémère :
+
+```console
+uv run --frozen python infra/scripts/demo_ingestion_gate.py \
+  --database-url "$TEST_DATABASE_URL" --json
+```
+
+Le rapport JSON contient l’empreinte de l’état canonique idempotent, le refus de la page quota, le snapshot de quarantaine, le snapshot stale réutilisé, le code `require-fresh`, l’invalidation rétroactive et la relecture du manifeste. Les fixtures sont synthétiques ; leur origine et leur couverture SFG §25.2 sont détaillées dans `tests/fixtures/oracles_elixir/README.md`.
+
 ## API de lecture mock
 
 En mode mock, l’API expose les collections et détails versionnés sous `/api/v1` : opportunités avec explication, événements avec marchés et historique de cotes, modèles, backtests, paper bets, sources de données, ingestions, problèmes de qualité, jobs et mappings en attente. Les collections utilisent `offset` et `limit` et acceptent des filtres typés propres à leur domaine. Chaque réponse contient `dataMode`, `freshness`, `asOf` et `appVersion` dans `meta`.
