@@ -22,6 +22,7 @@ from metiquo.db.core_models import (
 )
 from metiquo.db.feature_models import FeatureSnapshot
 from metiquo.db.raw_models import Snapshot as OeSnapshot
+from metiquo.db.raw_models import SourceCatalog
 from metiquo.features.champions import (
     ChampionMetaFeatureCalculator,
     champion_meta_feature_definitions,
@@ -120,13 +121,16 @@ class FeatureCoverageReport:
 class TargetGameRepository:
     """Énumérer uniquement les games dont le contexte canonique était déjà connu."""
 
-    def __init__(self, *, engine: Engine) -> None:
+    def __init__(self, *, engine: Engine, provider: str, dataset: str) -> None:
         self._engine = engine
+        self._provider = provider
+        self._dataset = dataset
 
     def list_from(self, from_date: date) -> tuple[TargetGameCandidate, ...]:
         games = cast(Table, Game.__table__)
         stats = cast(Table, GameTeamStat.__table__)
         snapshots = cast(Table, OeSnapshot.__table__)
+        catalogs = cast(Table, SourceCatalog.__table__)
         competitions = cast(Table, Competition.__table__)
         patches = cast(Table, Patch.__table__)
         revisions = cast(Table, CanonicalEntityRevision.__table__)
@@ -136,7 +140,10 @@ class TargetGameRepository:
                 connection.execute(
                     select(games)
                     .join(snapshots, snapshots.c.id == games.c.source_snapshot_id)
+                    .join(catalogs, catalogs.c.id == snapshots.c.source_catalog_id)
                     .where(
+                        catalogs.c.provider == self._provider,
+                        catalogs.c.dataset == self._dataset,
                         snapshots.c.status == "validated",
                         or_(
                             games.c.start_at >= from_instant,
@@ -247,7 +254,11 @@ class FeatureDatasetBuilder:
         self._dataset = dataset
         self._registry = FeatureRegistry(engine=engine)
         self._store = FeatureSnapshotStore(engine=engine)
-        self._targets = TargetGameRepository(engine=engine)
+        self._targets = TargetGameRepository(
+            engine=engine,
+            provider=provider,
+            dataset=dataset,
+        )
 
     def rebuild_from(self, from_date: date) -> FeatureCoverageReport:
         feature_set = self.ensure_feature_set()

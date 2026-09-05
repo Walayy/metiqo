@@ -38,7 +38,7 @@ def test_ingestion_gate_demo_rebuilds_from_empty_database(postgresql_url: str) -
     assert report["ok"] is True
     assert report["database"] == "ephemeral"
     assert report["backfillStatus"] == "succeeded"
-    assert report["migrationRevision"] == "20260906_0008"
+    assert report["migrationRevision"] == "20260906_0016"
     idempotence = cast(dict[str, object], report["idempotence"])
     assert idempotence["canonicalStateSha256"] == (
         "8cc193e74ab3b0ca7ff8deb1df226a6b0155767ef41c73ef0ee014e489687ef8"
