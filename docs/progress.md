@@ -1108,3 +1108,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; seules les observations historiques sont append-only à ce stade, tandis que les identités fournisseur restent le socle des adapters et de l'historisation livrés par `ODD-002` à `ODD-007`.
 - **Commit/hash :** `babac85` (`feat(odds): add append-only odds schema`).
+
+## MAP-001 — Schéma et modèle d’aliases datés
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les dimensions canoniques traçables `CNL-001` et le socle fournisseur `ODD-001` sont `DONE` ; un alias ne peut cibler qu'une équipe, une compétition ou un joueur réellement présent dans `core`.
+- **Fichiers créés/modifiés :** modèle ORM `python/metiquo/db/mapping_models.py`, migration `20260907_0028`, chargement complet des métadonnées Alembic, inventaire du head et preuve PostgreSQL `tests/integration/test_entity_aliases.py`.
+- **Migrations :** création de `core.entity_aliases` avec type et UUID canoniques, fournisseur, libellés brut et normalisé, fenêtre UTC semi-ouverte, provenance `auto`/`seeded`/`manual`, confiance, approbation, notes et instant de création. Une exclusion temporelle PostgreSQL empêche le même alias normalisé de se chevaucher chez un fournisseur et un type d'entité. Un trigger polymorphe vérifie l'existence de la cible dans `core.teams`, `core.competitions` ou `core.players`.
+- **Commandes/tests exécutés :** Ruff et mypy ciblés, preuve des contraintes sur PostgreSQL, cycle Alembic complet, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** le test conserve deux UUID distincts pour l'équipe principale et son académie, accepte leurs aliases explicites distincts, puis date le passage de `Aurora Esports` à `Nova Aurora` pour la même équipe canonique. Il refuse qu'un second UUID revendique `aurora esports` pendant une fenêtre chevauchante, refuse une cible canonique absente et refuse une source manuelle dépourvue du couple approbateur/instant. Les fenêtres exigent `valid_to > valid_from`, la confiance reste dans `[0,1]` et un index couvre type, UUID canonique et bornes de validité. Le gate retourne 311 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, contrats et mypy strict sur 249 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'exclusion porte sur l'alias normalisé exact et n'introduit aucun rapprochement flou. La normalisation typographique sûre reste le livrable séparé de `MAP-002`.
+- **Commit/hash :** `8e06ce7` (`feat(mapping): add dated canonical aliases`).
