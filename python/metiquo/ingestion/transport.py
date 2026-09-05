@@ -86,6 +86,7 @@ class SourceMetadata:
     content_type: str | None = None
     etag: str | None = None
     last_modified_at: datetime | None = None
+    source_confirmed_at: datetime | None = None
     checksum_sha256: str | None = None
 
     def __post_init__(self) -> None:
@@ -98,9 +99,19 @@ class SourceMetadata:
                 "last_modified_at",
                 normalize_utc_datetime(self.last_modified_at),
             )
+        if self.source_confirmed_at is not None:
+            object.__setattr__(
+                self,
+                "source_confirmed_at",
+                normalize_utc_datetime(self.source_confirmed_at),
+            )
         if self.content_length is not None and self.content_length < 0:
             raise ValueError("content_length ne peut pas être négatif")
         _validate_optional_sha256(self.checksum_sha256)
+
+    @property
+    def source_is_confirmed(self) -> bool:
+        return self.source_confirmed_at is not None
 
 
 @dataclass(frozen=True, slots=True)
