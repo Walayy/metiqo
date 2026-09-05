@@ -34,6 +34,18 @@ from metiquo.models.benchmark import (
     TabularBenchmarkRunner,
     TabularFeatureSpec,
 )
+from metiquo.models.calibration import (
+    CALIBRATOR_VERSION,
+    ISOTONIC,
+    PLATT,
+    CalibrationCandidateEvaluation,
+    CalibrationSearchParameters,
+    CalibrationSegmentReport,
+    CalibratorArtifact,
+    CalibratorArtifactRepository,
+    CalibratorTrainer,
+    evaluate_calibration_segments,
+)
 from metiquo.models.datasets import (
     GAME_WINNER_DATASET_VERSION,
     GAME_WINNER_LABEL,
@@ -83,6 +95,7 @@ from metiquo.models.validation import (
 )
 
 __all__ = [
+    "CALIBRATOR_VERSION",
     "COMPETITION_PRIOR",
     "COMPETITION_PRIOR_VERSION",
     "ENSEMBLE_CANDIDATE_VERSION",
@@ -91,7 +104,9 @@ __all__ = [
     "GAME_WINNER_MARKET",
     "GRADIENT_BOOSTING",
     "HIST_GRADIENT_BOOSTING",
+    "ISOTONIC",
     "OOF_VALIDATION",
+    "PLATT",
     "RATING",
     "RATING_ARTIFACT_VERSION",
     "RATING_FEATURE",
@@ -105,6 +120,12 @@ __all__ = [
     "BaselineRun",
     "BaselineRunRepository",
     "BinaryMetricReport",
+    "CalibrationCandidateEvaluation",
+    "CalibrationSearchParameters",
+    "CalibrationSegmentReport",
+    "CalibratorArtifact",
+    "CalibratorArtifactRepository",
+    "CalibratorTrainer",
     "CandidateEvaluation",
     "CompetitionPriorParameters",
     "EmptyTrainingDatasetError",
@@ -150,6 +171,7 @@ __all__ = [
     "build_baseline_run",
     "collect_oof_predictions",
     "evaluate_binary_probabilities",
+    "evaluate_calibration_segments",
     "prepare_walk_forward",
     "rating_win_probability",
 ]

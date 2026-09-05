@@ -474,3 +474,100 @@ class EnsembleCandidatePrediction(Base):
     cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     label: Mapped[bool] = mapped_column(Boolean, nullable=False)
     probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+
+
+class CalibratorArtifact(Base):
+    """Calibrateur séparé choisi sur des prédictions OOS temporelles."""
+
+    __tablename__ = "calibrator_artifacts"
+    __table_args__ = (
+        CheckConstraint("market = 'game_winner'", name="supported_market"),
+        CheckConstraint("source_kind IN ('tabular', 'ensemble')", name="source_kind"),
+        CheckConstraint(
+            "(source_kind = 'tabular' AND benchmark_run_id IS NOT NULL "
+            "AND ensemble_run_id IS NULL) OR "
+            "(source_kind = 'ensemble' AND ensemble_run_id IS NOT NULL)",
+            name="source_reference",
+        ),
+        CheckConstraint("method IN ('platt', 'isotonic')", name="method"),
+        CheckConstraint("length(trim(calibrator_version)) > 0", name="calibrator_version"),
+        CheckConstraint(
+            "walk_forward_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="walk_forward_fingerprint",
+        ),
+        CheckConstraint("jsonb_typeof(parameters) = 'object'", name="parameters_object"),
+        CheckConstraint("jsonb_typeof(candidate_evaluations) = 'object'", name="candidates_object"),
+        CheckConstraint("jsonb_typeof(metrics) = 'object'", name="metrics_object"),
+        CheckConstraint("jsonb_typeof(segment_reports) = 'array'", name="segments_array"),
+        CheckConstraint("oos_prediction_count >= 1", name="prediction_count"),
+        CheckConstraint(
+            "oos_predictions_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="predictions_fingerprint",
+        ),
+        CheckConstraint("artifact_fingerprint ~ '^[0-9a-f]{64}$'", name="fingerprint"),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        UniqueConstraint("artifact_fingerprint", name="uq_ml_calibrator_artifacts_fingerprint"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    dataset_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.datasets.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    benchmark_run_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.tabular_benchmark_runs.id", ondelete="RESTRICT"),
+    )
+    ensemble_run_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.ensemble_candidate_runs.id", ondelete="RESTRICT"),
+    )
+    market: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    calibrator_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    walk_forward_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    method: Mapped[str] = mapped_column(String(32), nullable=False)
+    parameters: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    candidate_evaluations: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    metrics: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    calibration_slope: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    calibration_intercept: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    segment_reports: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
+    oos_prediction_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    oos_predictions_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    artifact_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        UtcDateTime(), nullable=False, server_default=func.now()
+    )
+
+
+class CalibratorOosPrediction(Base):
+    """Prédiction calibrée sur un bloc strictement futur au fit."""
+
+    __tablename__ = "calibrator_oos_predictions"
+    __table_args__ = (
+        CheckConstraint("position >= 0", name="position"),
+        CheckConstraint("fold_index >= 0", name="fold_index"),
+        CheckConstraint("probability >= 0 AND probability <= 1", name="probability"),
+        UniqueConstraint("artifact_id", "example_id", name="uq_calibrator_oos_example"),
+        {"schema": ML_SCHEMA},
+    )
+
+    artifact_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.calibrator_artifacts.id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    position: Mapped[int] = mapped_column(Integer, primary_key=True)
+    example_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    fold_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    label: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)

@@ -411,6 +411,8 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
         assert set(inspect(connection).get_table_names(schema="ml")) == {
             "baseline_predictions",
             "baseline_runs",
+            "calibrator_artifacts",
+            "calibrator_oos_predictions",
             "dataset_examples",
             "datasets",
             "ensemble_candidate_predictions",
