@@ -1,6 +1,6 @@
 """Modèle PostgreSQL de provenance pour les données brutes Oracle's Elixir."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -221,6 +221,38 @@ class QualityIssue(Base):
     created_at: Mapped[datetime] = mapped_column(
         UtcDateTime(), nullable=False, server_default=func.now()
     )
+
+
+class CanonicalRow(IdentityTimestampMixin, Base):
+    """Dernière valeur connue d'une clé naturelle, sans suppression implicite."""
+
+    __tablename__ = "canonical_rows"
+    __table_args__ = (
+        CheckConstraint("row_hash ~ '^[0-9a-f]{64}$'", name="row_hash"),
+        CheckConstraint("revision >= 1", name="revision"),
+        UniqueConstraint(
+            "provider", "dataset", "natural_key", name="uq_canonical_rows_natural_key"
+        ),
+        {"schema": RAW_SCHEMA},
+    )
+
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    dataset: Mapped[str] = mapped_column(String(128), nullable=False)
+    natural_key: Mapped[str] = mapped_column(Text, nullable=False)
+    row_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    event_date: Mapped[date | None] = mapped_column()
+    source_snapshot_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.snapshots.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    source_run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.ingestion_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class QuarantineItem(Base):

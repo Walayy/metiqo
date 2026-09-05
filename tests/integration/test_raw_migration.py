@@ -12,6 +12,7 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW_TABLES = {
+    "canonical_rows",
     "ingestion_runs",
     "quality_issues",
     "quarantine_items",
