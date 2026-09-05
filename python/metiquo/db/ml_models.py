@@ -667,7 +667,7 @@ class ModelStatusEvent(Base):
     __tablename__ = "model_status_events"
     __table_args__ = (
         CheckConstraint(
-            "action IN ('promote', 'retire_for_promotion', 'rollback', "
+            "action IN ('promote', 'retire', 'retire_for_promotion', 'rollback', "
             "'retire_for_rollback', 'block')",
             name="action",
         ),
@@ -706,6 +706,84 @@ class ModelStatusEvent(Base):
     evidence: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     transition_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class ModelActionJob(Base):
+    """Exécution observable d'une mutation réelle du registre de modèles."""
+
+    __tablename__ = "model_action_jobs"
+    __table_args__ = (
+        CheckConstraint("action IN ('train', 'promote', 'retire')", name="action"),
+        CheckConstraint("status IN ('running', 'succeeded', 'failed')", name="status"),
+        CheckConstraint("length(trim(name)) > 0", name="name"),
+        CheckConstraint("request_fingerprint ~ '^[0-9a-f]{64}$'", name="request_fingerprint"),
+        CheckConstraint(
+            "idempotency_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="idempotency_fingerprint",
+        ),
+        CheckConstraint("jsonb_typeof(request_payload) = 'object'", name="request_object"),
+        CheckConstraint("jsonb_typeof(result_payload) = 'object'", name="result_object"),
+        CheckConstraint("jsonb_typeof(error_payload) = 'object'", name="error_object"),
+        CheckConstraint(
+            "(status = 'running' AND finished_at IS NULL) OR "
+            "(status IN ('succeeded', 'failed') AND finished_at IS NOT NULL)",
+            name="finished_status",
+        ),
+        UniqueConstraint("request_fingerprint", name="uq_ml_model_action_jobs_request"),
+        UniqueConstraint(
+            "action",
+            "idempotency_fingerprint",
+            name="uq_ml_model_action_jobs_idempotency",
+        ),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    idempotency_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    model_version_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.model_versions.id", ondelete="RESTRICT"),
+    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    result_payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    error_payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+
+
+class ModelActionAudit(Base):
+    """Trace append-only de toute demande de train, promotion ou retrait."""
+
+    __tablename__ = "model_action_audits"
+    __table_args__ = (
+        CheckConstraint(
+            "action IN ('model.train', 'model.promote', 'model.retire')",
+            name="action",
+        ),
+        CheckConstraint("length(trim(resource_id)) > 0", name="resource_id"),
+        CheckConstraint(
+            "idempotency_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="idempotency_fingerprint",
+        ),
+        UniqueConstraint("job_id", name="uq_ml_model_action_audits_job"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    job_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.model_action_jobs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    idempotency_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
 
 
 class ShadowPrediction(Base):

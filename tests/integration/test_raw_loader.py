@@ -418,6 +418,8 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
             "ensemble_candidate_predictions",
             "ensemble_candidate_runs",
             "model_versions",
+            "model_action_audits",
+            "model_action_jobs",
             "model_status_events",
             "prematch_predictions",
             "rating_artifacts",
