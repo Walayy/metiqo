@@ -8,11 +8,13 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
@@ -34,6 +36,7 @@ class TrainingDataset(Base):
         CheckConstraint("length(trim(dataset_version)) > 0", name="dataset_version"),
         CheckConstraint("length(trim(label_definition)) > 0", name="label_definition"),
         CheckConstraint("length(trim(feature_set_version)) > 0", name="feature_set_version"),
+        CheckConstraint("dataset_hash ~ '^[0-9a-f]{64}$'", name="dataset_hash"),
         CheckConstraint("period_end > period_start", name="period"),
         CheckConstraint("cutoff_max >= cutoff_min", name="cutoff_range"),
         CheckConstraint("example_count >= 1", name="example_count"),
@@ -571,3 +574,88 @@ class CalibratorOosPrediction(Base):
     cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     label: Mapped[bool] = mapped_column(Boolean, nullable=False)
     probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+
+
+class ModelVersion(Base):
+    """Version de modèle enregistrée avec artefact externe vérifiable."""
+
+    __tablename__ = "model_versions"
+    __table_args__ = (
+        CheckConstraint("game = 'lol'", name="supported_game"),
+        CheckConstraint("market = 'game_winner'", name="supported_market"),
+        CheckConstraint("length(trim(segment)) > 0", name="segment"),
+        CheckConstraint("length(trim(algorithm)) > 0", name="algorithm"),
+        CheckConstraint("jsonb_typeof(hyperparameters) = 'object'", name="hyperparameters_object"),
+        CheckConstraint("length(trim(feature_set_version)) > 0", name="feature_set_version"),
+        CheckConstraint("training_cutoff_max >= training_cutoff_min", name="cutoff_range"),
+        CheckConstraint("jsonb_typeof(evaluation_report) = 'object'", name="report_object"),
+        CheckConstraint(
+            "evaluation_report_fingerprint ~ '^[0-9a-f]{64}$'", name="report_fingerprint"
+        ),
+        CheckConstraint("uncertainty_fingerprint ~ '^[0-9a-f]{64}$'", name="uncertainty_hash"),
+        CheckConstraint("artifact_object_year >= 2014", name="artifact_year"),
+        CheckConstraint("length(trim(artifact_object_key)) > 0", name="artifact_key"),
+        CheckConstraint("artifact_hash ~ '^[0-9a-f]{64}$'", name="artifact_hash"),
+        CheckConstraint("artifact_size_bytes >= 1", name="artifact_size"),
+        CheckConstraint("length(trim(artifact_format)) > 0", name="artifact_format"),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        CheckConstraint("status IN ('candidate', 'champion', 'retired', 'blocked')", name="status"),
+        CheckConstraint("length(trim(registered_by)) > 0", name="registered_by"),
+        CheckConstraint("length(trim(registration_reason)) > 0", name="registration_reason"),
+        CheckConstraint("length(trim(status_changed_by)) > 0", name="status_changed_by"),
+        CheckConstraint("length(trim(status_reason)) > 0", name="status_reason"),
+        CheckConstraint(
+            "registration_fingerprint ~ '^[0-9a-f]{64}$'", name="registration_fingerprint"
+        ),
+        UniqueConstraint("registration_fingerprint", name="uq_ml_model_versions_fingerprint"),
+        Index(
+            "uq_ml_model_versions_champion_scope",
+            "game",
+            "market",
+            "segment",
+            unique=True,
+            postgresql_where=text("status = 'champion'"),
+        ),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    game: Mapped[str] = mapped_column(String(32), nullable=False)
+    market: Mapped[str] = mapped_column(String(64), nullable=False)
+    segment: Mapped[str] = mapped_column(String(128), nullable=False)
+    algorithm: Mapped[str] = mapped_column(String(128), nullable=False)
+    hyperparameters: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    feature_set_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    dataset_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.datasets.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    dataset_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    training_cutoff_min: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    training_cutoff_max: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    evaluation_report: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    evaluation_report_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    calibrator_artifact_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.calibrator_artifacts.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    uncertainty_artifact_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), nullable=False
+    )
+    uncertainty_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    artifact_object_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    artifact_object_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    artifact_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    artifact_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    artifact_format: Mapped[str] = mapped_column(String(64), nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    registered_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    registered_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    registration_reason: Mapped[str] = mapped_column(String(512), nullable=False)
+    status_changed_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    status_changed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    status_reason: Mapped[str] = mapped_column(String(512), nullable=False)
+    registration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
