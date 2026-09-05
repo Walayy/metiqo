@@ -1360,3 +1360,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; `VAL-008` peut maintenant faire apparaître un nouveau snapshot/signal sans remplacer silencieusement la fiche déjà ouverte.
 - **ADR éventuel :** aucun ; une preuve legacy sans diagnostics est omise explicitement jusqu'à recalcul, choix plus sûr qu'une valeur de couverture ou distance fabriquée.
 - **Commit/hash :** `9c81ab4` (`feat(api): project real opportunities`).
+
+## VAL-008 — Gestion changement de cote en UI
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l'historique append-only `ODD-007`, les signaux immuables `VAL-006` et les écrans dashboard/détail `UI-004` et `UI-005` sont `DONE` ; la projection réelle `VAL-007` expose un nouveau signal lors d'un recalcul sans modifier l'ancien.
+- **Fichiers créés/modifiés :** polling React Query du dashboard et de la fiche signal, rapprochement strict marché/sélection, repères de snapshot, guide `docs/odds-change-ui.md`, tests unitaires de présentation et scénarios Playwright opportunités/détail.
+- **Migrations :** aucune ; les nouveaux snapshots et signaux utilisent les tables append-only existantes, tandis que ce ticket ne change que leur actualisation et leur présentation.
+- **Commandes/tests exécutés :** TypeScript et tests web ciblés, ESLint ciblé, 11 scénarios Playwright opportunités/détail, gate global `make check` sur PostgreSQL réel, suite Playwright complète puis preuve enrichie du second signal rejouée seule.
+- **Résultat exact :** les opportunités et historiques sont actualisés toutes les 30 secondes et la santé provider toutes les 60 secondes. Les réponses précédentes restent rendues pendant le refetch ; les lignes et cartes sont indexées par `signalId`, et Playwright prouve que le même nœud de ligne demeure monté pendant une requête bloquée. La cote principale reste celle du snapshot du signal ; seule une observation plus récente du même `marketId` et de la même sélection déclenche `Cote mise à jour`, avec son prix et son mouvement séparés. La fiche et son explication sont immuables par identifiant, seul l'historique est actualisé, et la table marque simultanément `Snapshot du signal` et `Dernière cote`. Le scénario de `4,20` à `3,60` confirme l'ancien prix, le nouveau prix et l'apparition d'un second `signalId` après polling sans remplacement de l'ancien. Le gate retourne 439 tests Python, 22 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 306 fichiers sont verts. Les 38 scénarios Playwright passent, dont la preuve enrichie rejouée seule après sa dernière modification.
+- **Blocker éventuel :** aucun ; `VAL-009` peut fermer P6 avec le parcours numérique complet jusqu'à l'UI.
+- **ADR éventuel :** aucun ; le polling mesuré suffit au besoin actuel et évite une infrastructure streaming sans exigence métier correspondante.
+- **Commit/hash :** `1dd4d2b` (`feat(ui): preserve signals across odds refreshes`).
