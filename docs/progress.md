@@ -664,3 +664,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les faits ne consomment que les lignes raw validées déjà persistées et les champs OE réellement présents.
 - **Commit/hash :** `d0f135e` (`feat(canonical): project traceable game facts`).
+
+## CNL-003 — Reconstruction des séries
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les games et résultats d’équipe `CNL-002` sont `DONE` et reconstruits avant les séries.
+- **Fichiers créés/modifiés :** migration `20260906_0011`, modèle `core.series`, statut de résolution sur `core.games`, projection `python/metiquo/canonical/series.py` et test PostgreSQL dédié.
+- **Migrations :** création de `core.series` avec format, équipes, score, résultat, qualité, provenance et clé déterministe ; ajout de `series_id` nullable et `series_resolution_status` fermé sur les games.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle Alembic complet ; cinq tests PostgreSQL migrations/canonique sur PostgreSQL 18.
+- **Résultat exact :** l’identifiant `seriesid` OE est prioritaire. En son absence, le fallback n’utilise que compétition, date, paire d’équipes, format et ordre de game ; deux games portant le même ordre dans ce contexte sont marquées `ambiguous` et restent sans `series_id`. Une série BO3 identifiée par OE se clôt à 2–0 avec gagnant traçable. Une série fallback BO2 à 1–1 expose `allows_draw=true`, `result_status=draw`, aucun gagnant et deux scores à 1. Deux reconstructions conservent les mêmes UUID, deux séries résolues, quatre games liées et deux games ambiguës.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le fallback minimal est volontairement refusé dès que l’ordre ne rend pas le regroupement univoque.
+- **Commit/hash :** `1d9c212` (`feat(canonical): reconstruct unambiguous series`).
