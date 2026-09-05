@@ -796,3 +796,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les timestamps autres que 15 minutes restent optionnels avec compte nul, tandis que l’activation du groupe exige au minimum gold, XP et CS à 15 minutes comme preuve commune.
 - **Commit/hash :** `7a7b3eb` (`feat(features): gate economy and objectives`).
+
+## FEAT-007 — Roster et joueurs
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les lots historiques stricts `FEAT-002` et les observations de roster `CNL-004` sont `DONE` ; le calcul n'accepte que le lot canonique as-of et ne possède aucun adaptateur vers une source roster externe.
+- **Fichiers créés/modifiés :** calculateur `python/metiquo/features/roster.py`, enrichissement du repository temporel avec les révisions joueurs et roster, exports features, tests modèle et extensions des tests PostgreSQL roster/temporalité.
+- **Migrations :** aucune ; les joueurs et observations sont relus depuis les révisions append-only `game_player_stat` et `roster_observation` déjà produites par l'historique canonique.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; onze tests modèle cumulés ; cinq tests PostgreSQL de migrations, roster et temporalité ; vérification du diff.
+- **Résultat exact :** la projection choisit pour chaque rôle la dernière observation OE connue et strictement antérieure au cutoff. Elle expose couverture des cinq rôles, continuité du cinq sur les cinq dernières games complètes, nombre de games communes, joueurs ayant changé récemment de rôle, force individuelle ramenée vers un prior explicite, trois synergies de rôles avec leurs échantillons et une roster-confidence versionnée. La fixture de substitution conserve l'ancien top avant la game du changement et le nouveau top après, avec une confiance d'observation abaissée à 0,65. Une équipe sans observation garde roster vide, métriques de force et synergie à `None`, confiance zéro et indicateur `low_confidence=true`; aucune absence n'est transformée en joueur ou résultat fictif.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la « force individuelle » reste une statistique historique régularisée et auditable, non un rating externe de joueur, tandis que les pairs top/jungle, jungle/mid et bot/support couvrent les synergies de rôles stables sans inventer une composition future.
+- **Commit/hash :** `e36cef7` (`feat(features): derive roster strength as of cutoff`).
