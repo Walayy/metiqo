@@ -25,8 +25,17 @@ from metiquo.repositories.mock import (
     MockRepositoryBundle,
     build_mock_repository_bundle,
 )
+from metiquo.repositories.postgres_canonical import (
+    CanonicalGameRecord,
+    CanonicalSeriesRecord,
+    CanonicalTeamRecord,
+    PostgresCanonicalRepository,
+)
 
 __all__ = [
+    "CanonicalGameRecord",
+    "CanonicalSeriesRecord",
+    "CanonicalTeamRecord",
     "ConcreteRepositoryFactory",
     "DataAccessBoundary",
     "DataModeViolation",
@@ -42,6 +51,7 @@ __all__ = [
     "MockPaperRepository",
     "MockRepositoryBundle",
     "MockRepositoryFactory",
+    "PostgresCanonicalRepository",
     "RealRepositoryFactory",
     "RepositoryFactory",
     "build_mock_repository_bundle",
