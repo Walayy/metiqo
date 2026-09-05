@@ -7,10 +7,11 @@ from uuid import UUID, uuid4
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Connection, create_engine, text
+from sqlalchemy import Connection, create_engine, inspect, text
 from sqlalchemy.exc import DBAPIError
 
 from metiquo.foundation.time import FixedClock, UtcInstant
+from metiquo.ingestion.invalidation import RevisionInvalidationService
 from metiquo.ingestion.raw_loader import RawTabularLoader
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -134,6 +135,10 @@ def test_double_load_is_idempotent_and_drops_each_staging_table(
         run_id=second_run_id,
         csv_path=FIXTURE,
     )
+    no_change_invalidation = RevisionInvalidationService(
+        engine=engine,
+        clock=FixedClock(UtcInstant(INSTANT)),
+    ).emit_for_run(first_run_id)
 
     assert first.natural_key_fields == ("gameid", "participantid")
     assert first.fallback_key_used is False
@@ -151,6 +156,7 @@ def test_double_load_is_idempotent_and_drops_each_staging_table(
         "quarantined": 0,
         "total": 12,
     }
+    assert no_change_invalidation is None
 
     with engine.connect() as connection:
         canonical_count = connection.execute(
@@ -254,6 +260,7 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
         ",complete,2,1800,false",
         ",complete,99,1800,false",
     )
+    lines[2] = lines[2].replace("2026-01-10", "2026-01-08")
     corrected_path.write_text("\n".join(lines[:-1]) + "\n")
     second_snapshot_id = uuid4()
     with engine.begin() as connection:
@@ -309,14 +316,14 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
     )
     assert second.statistics.to_dict() == {
         "inserted": 0,
-        "updated": 1,
-        "unchanged": 10,
+        "updated": 2,
+        "unchanged": 9,
         "quarantined": 0,
         "total": 11,
     }
 
     changed_key = '["OE-001","1"]'
-    unchanged_key = '["OE-001","2"]'
+    unchanged_key = '["OE-001","3"]'
     with engine.connect() as connection:
         canonical_count = connection.execute(
             text(
@@ -379,6 +386,30 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
     assert str(revisions[1]["event_date"]) == "2026-01-10"
     assert unchanged_revisions == 1
 
+    invalidation_service = RevisionInvalidationService(
+        engine=engine,
+        clock=FixedClock(UtcInstant(INSTANT)),
+    )
+    invalidation = invalidation_service.emit_for_run(second_run_id)
+    duplicate_emission = invalidation_service.emit_for_run(second_run_id)
+
+    assert invalidation is not None
+    assert duplicate_emission == invalidation
+    assert invalidation.source_snapshot_id == second_snapshot_id
+    assert invalidation.affected_from.isoformat() == "2026-01-08"
+    assert invalidation.changed_through.isoformat() == "2026-01-10"
+    assert invalidation.revision_count == 2
+    assert invalidation.reason == "RAW_ROW_REVISED"
+    with engine.connect() as connection:
+        assert (
+            connection.execute(
+                text("SELECT count(*) FROM features.invalidations WHERE source_run_id = :run_id"),
+                {"run_id": second_run_id},
+            ).scalar_one()
+            == 1
+        )
+        assert inspect(connection).get_table_names(schema="ml") == []
+
     with (
         pytest.raises(DBAPIError, match=r"row revision .* is append-only"),
         engine.begin() as connection,
@@ -394,5 +425,13 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
         connection.execute(
             text("DELETE FROM raw.row_revisions WHERE id = :id"),
             {"id": revisions[1]["id"]},
+        )
+    with (
+        pytest.raises(DBAPIError, match=r"feature invalidation .* is append-only"),
+        engine.begin() as connection,
+    ):
+        connection.execute(
+            text("UPDATE features.invalidations SET reason = 'changed' WHERE id = :id"),
+            {"id": invalidation.id},
         )
     engine.dispose()
