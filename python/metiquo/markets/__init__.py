@@ -15,6 +15,15 @@ from metiquo.markets.game_winner import (
     PluginAvailability,
     PluginDisabledError,
 )
+from metiquo.markets.series_pricing import (
+    ProbabilityInterval,
+    SeriesDistribution,
+    SeriesOutcome,
+    SeriesPricingEngine,
+    SeriesTerminalScore,
+    SideAdjustedProbabilities,
+    SideAssignment,
+)
 
 __all__ = [
     "GAME_WINNER_PLUGIN_VERSION",
@@ -30,4 +39,11 @@ __all__ = [
     "MarketPlugin",
     "PluginAvailability",
     "PluginDisabledError",
+    "ProbabilityInterval",
+    "SeriesDistribution",
+    "SeriesOutcome",
+    "SeriesPricingEngine",
+    "SeriesTerminalScore",
+    "SideAdjustedProbabilities",
+    "SideAssignment",
 ]
