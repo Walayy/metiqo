@@ -32,6 +32,7 @@ from metiquo.contracts.odds_provider import (
     ProviderMarket,
     ProviderSelection,
 )
+from metiquo.foundation.time import Clock
 from metiquo.mock.scenarios import MockScenario, MockScenarioCatalog
 from metiquo.repositories.boundary import DataModeViolation
 
@@ -293,6 +294,7 @@ class MockOddsProvider:
     """Provider sans réseau partageant le contrat des futurs providers réels."""
 
     catalog: MockScenarioCatalog
+    clock: Clock | None = None
     provider_code = "mock-provider"
 
     def __post_init__(self) -> None:
@@ -312,6 +314,19 @@ class MockOddsProvider:
     def _provider_event_id(scenario: MockScenario) -> str:
         return f"mock-event-{scenario.scenario_key.value}"
 
+    def _now(self) -> datetime:
+        return self.clock.now().value if self.clock is not None else self.catalog.reference_time
+
+    @staticmethod
+    def _snapshots_at(scenario: MockScenario, observed_at: datetime) -> tuple[OddsSnapshot, ...]:
+        return tuple(
+            snapshot.model_copy(
+                update={"age_seconds": int((observed_at - snapshot.captured_at).total_seconds())}
+            )
+            for snapshot in scenario.odds_history
+            if snapshot.captured_at <= observed_at
+        )
+
     def list_events(
         self,
         starts_from: datetime,
@@ -320,6 +335,7 @@ class MockOddsProvider:
     ) -> tuple[ProviderEvent, ...]:
         if starts_to < starts_from:
             raise ValueError("startsTo doit être postérieur ou égal à startsFrom")
+        observed_at = self._now()
         return tuple(
             ProviderEvent(
                 provider_event_id=self._provider_event_id(scenario),
@@ -335,14 +351,19 @@ class MockOddsProvider:
             for scenario in self.catalog.scenarios
             if (event := scenario.current_event).game_title is game_title
             and starts_from <= event.starts_at <= starts_to
+            and event.observed_at <= observed_at
+            and self._snapshots_at(scenario, observed_at)
         )
 
     def get_event_markets(self, provider_event_id: str) -> tuple[ProviderMarket, ...]:
         scenario = self._scenario(provider_event_id)
         if scenario is None:
             return ()
+        snapshots = self._snapshots_at(scenario, self._now())
+        if not snapshots:
+            return ()
         market = scenario.current_market
-        latest = scenario.odds_history[-1]
+        latest = snapshots[-1]
         return (
             ProviderMarket(
                 provider_event_id=provider_event_id,
@@ -371,14 +392,39 @@ class MockOddsProvider:
         scenario = self._scenario(provider_event_id)
         if scenario is None:
             raise LookupError(f"Événement fournisseur inconnu : {provider_event_id}")
+        observed_at = self._now()
         return OddsCaptureResult(
             provider_event_id=provider_event_id,
-            captured_at=self.catalog.reference_time,
-            snapshots=scenario.odds_history,
+            captured_at=observed_at,
+            snapshots=self._snapshots_at(scenario, observed_at),
         )
 
     def health(self) -> ProviderHealth:
-        return MockDataHealthRepository(self.catalog).list()[0]
+        observed_at = self._now()
+        snapshots = tuple(
+            snapshot
+            for scenario in self.catalog.scenarios
+            for snapshot in self._snapshots_at(scenario, observed_at)
+        )
+        if not snapshots:
+            return ProviderHealth(
+                provider_code=self.provider_code,
+                status=ProviderStatus.UNAVAILABLE,
+                checked_at=observed_at,
+                detail="Aucune observation mock disponible à cet instant",
+            )
+        failed = any(scenario.source_sync_failed for scenario in self.catalog.scenarios)
+        return ProviderHealth(
+            provider_code=self.provider_code,
+            status=ProviderStatus.DEGRADED if failed else ProviderStatus.OPERATIONAL,
+            checked_at=observed_at,
+            last_success_at=max(snapshot.captured_at for snapshot in snapshots),
+            detail=(
+                "Une synchronisation mock a échoué ; le dernier snapshot valide est conservé"
+                if failed
+                else None
+            ),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -393,7 +439,11 @@ class MockRepositoryBundle:
     odds_provider: MockOddsProvider
 
 
-def build_mock_repository_bundle(catalog: MockScenarioCatalog) -> MockRepositoryBundle:
+def build_mock_repository_bundle(
+    catalog: MockScenarioCatalog,
+    *,
+    clock: Clock | None = None,
+) -> MockRepositoryBundle:
     """Construire tous les adaptateurs mock depuis un unique catalogue immuable."""
 
     _validate_catalog(catalog)
@@ -405,5 +455,5 @@ def build_mock_repository_bundle(catalog: MockScenarioCatalog) -> MockRepository
         data_health=MockDataHealthRepository(catalog),
         mappings=MockMappingRepository(catalog),
         operations=MockOperationsRepository(catalog),
-        odds_provider=MockOddsProvider(catalog),
+        odds_provider=MockOddsProvider(catalog, clock),
     )
