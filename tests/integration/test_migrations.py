@@ -93,6 +93,7 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
             "datasets",
             "ensemble_candidate_predictions",
             "ensemble_candidate_runs",
+            "model_versions",
             "rating_artifacts",
             "tabular_benchmark_predictions",
             "tabular_benchmark_runs",
