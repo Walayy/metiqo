@@ -191,6 +191,24 @@ def test_size_limit_removes_partial_download(tmp_path: Path) -> None:
     assert destination.exists() is False
 
 
+def test_api_preexisting_destination_is_never_removed(tmp_path: Path) -> None:
+    destination = tmp_path / "source.part"
+    destination.write_bytes(b"keep-me")
+    transport = GoogleDriveApiTransport(
+        policy=_policy(),
+        bearer=SecretStr("authorized"),
+        client=FakeDriveClient(
+            [DriveHttpStream(200, {"content-type": "application/gzip"}, (b"new",))]
+        ),
+        clock=CLOCK,
+    )
+
+    with pytest.raises(FileExistsError):
+        transport.download(SOURCE, destination)
+
+    assert destination.read_bytes() == b"keep-me"
+
+
 def test_transport_is_enabled_only_when_bearer_is_configured() -> None:
     without = Settings.model_validate(
         {

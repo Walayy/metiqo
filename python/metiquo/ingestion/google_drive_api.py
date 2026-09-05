@@ -188,8 +188,11 @@ class GoogleDriveApiTransport:
 
         digest = hashlib.sha256()
         byte_size = 0
+        created = False
         try:
-            with destination.open("xb") as output:
+            output = destination.open("xb")
+            created = True
+            with output:
                 for chunk in stream.chunks:
                     if not isinstance(chunk, bytes):
                         raise self._error(
@@ -203,7 +206,8 @@ class GoogleDriveApiTransport:
                 output.flush()
                 os.fsync(output.fileno())
         except BaseException:
-            destination.unlink(missing_ok=True)
+            if created:
+                destination.unlink(missing_ok=True)
             raise
         return DownloadReceipt(
             source=source,

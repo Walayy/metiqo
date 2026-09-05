@@ -13,6 +13,7 @@ class SourceErrorCode(StrEnum):
     TIMEOUT = "SOURCE_TIMEOUT"
     TOO_LARGE = "SOURCE_TOO_LARGE"
     INVALID_RESPONSE = "SOURCE_INVALID_RESPONSE"
+    UNEXPECTED_HTML = "UNEXPECTED_HTML_RESPONSE"
     UNAVAILABLE = "SOURCE_UNAVAILABLE"
 
 
@@ -74,6 +75,10 @@ class SourceTooLarge(SourceTransportError):
 
 class SourceInvalidResponse(SourceTransportError):
     code = SourceErrorCode.INVALID_RESPONSE
+
+
+class UnexpectedHtmlResponse(SourceTransportError):
+    code = SourceErrorCode.UNEXPECTED_HTML
 
 
 class SourceUnavailable(SourceTransportError):
