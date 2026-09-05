@@ -11,7 +11,9 @@ from fastapi import APIRouter, Header, Query
 
 from metiquo.api.dto import (
     CapabilityEvaluationDto,
+    CreateAliasRequest,
     ItemResponse,
+    MappingDecisionRequest,
     ModelDecisionRequest,
     PageInfo,
     PageResponse,
@@ -19,19 +21,28 @@ from metiquo.api.dto import (
 )
 from metiquo.canonical.capabilities import CapabilityRegistry, CapabilityState
 from metiquo.contracts import (
+    AliasRecord,
     AuditEntry,
     ContractMetadata,
     DataQualityIssue,
     IngestionRunSummary,
     JobSummary,
+    MappingReview,
     ModelSummary,
     ProviderHealth,
 )
-from metiquo.contracts.enums import DataMode, FreshnessStatus, ProviderStatus
+from metiquo.contracts.enums import (
+    DataMode,
+    FreshnessStatus,
+    MappingReviewStatus,
+    ProviderStatus,
+)
 from metiquo.foundation.time import Clock
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
+from metiquo.repositories.postgres_mapping import PostgresMappingRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
 from metiquo.services.real_admin import RealAdminMutationService
+from metiquo.services.real_mapping import RealMappingMutationService
 
 Offset = Annotated[int, Query(ge=0)]
 Limit = Annotated[int, Query(ge=1, le=100)]
@@ -95,6 +106,8 @@ def build_real_admin_router(
     clock: Clock,
     capability_registry: CapabilityRegistry,
     model_repository: PostgresModelRepository,
+    mapping_repository: PostgresMappingRepository,
+    mapping_mutation_service: RealMappingMutationService,
 ) -> APIRouter:
     """Exposer exactement les DTO d'administration partagés avec le mode mock."""
 
@@ -147,7 +160,89 @@ def build_real_admin_router(
 
     @router.get("/audit-log", response_model=PageResponse[AuditEntry])
     def list_audit(offset: Offset = 0, limit: Limit = 20) -> PageResponse[AuditEntry]:
-        return _page(model_repository.list_audit(), offset, limit, repository, clock)
+        values = tuple(
+            sorted(
+                (*model_repository.list_audit(), *mapping_repository.list_audit()),
+                key=lambda item: (item.occurred_at, item.audit_id),
+                reverse=True,
+            )
+        )
+        return _page(values, offset, limit, repository, clock)
+
+    @router.get("/mappings/pending", response_model=PageResponse[MappingReview])
+    def list_pending_mappings(
+        offset: Offset = 0,
+        limit: Limit = 20,
+    ) -> PageResponse[MappingReview]:
+        return _page(mapping_repository.list_pending(), offset, limit, repository, clock)
+
+    def mapping_decision(
+        mapping_review_id: UUID,
+        request: MappingDecisionRequest,
+        idempotency_key: str,
+        status: MappingReviewStatus,
+    ) -> ItemResponse[MappingReview]:
+        return ItemResponse(
+            data=mapping_mutation_service.decide_mapping(
+                idempotency_key,
+                mapping_review_id,
+                status,
+                request.reviewer,
+                request.reason,
+                request.candidate_event_id,
+            ),
+            meta=_meta(repository, clock),
+        )
+
+    @router.post(
+        "/mappings/{mapping_review_id}/approve",
+        response_model=ItemResponse[MappingReview],
+    )
+    def approve_mapping(
+        mapping_review_id: UUID,
+        request: MappingDecisionRequest,
+        idempotency_key: IdempotencyKey,
+    ) -> ItemResponse[MappingReview]:
+        return mapping_decision(
+            mapping_review_id,
+            request,
+            idempotency_key,
+            MappingReviewStatus.APPROVED,
+        )
+
+    @router.post(
+        "/mappings/{mapping_review_id}/reject",
+        response_model=ItemResponse[MappingReview],
+    )
+    def reject_mapping(
+        mapping_review_id: UUID,
+        request: MappingDecisionRequest,
+        idempotency_key: IdempotencyKey,
+    ) -> ItemResponse[MappingReview]:
+        return mapping_decision(
+            mapping_review_id,
+            request,
+            idempotency_key,
+            MappingReviewStatus.REJECTED,
+        )
+
+    @router.post("/aliases", response_model=ItemResponse[AliasRecord])
+    def create_alias(
+        request: CreateAliasRequest,
+        idempotency_key: IdempotencyKey,
+    ) -> ItemResponse[AliasRecord]:
+        return ItemResponse(
+            data=mapping_mutation_service.create_alias(
+                idempotency_key,
+                request.provider,
+                request.alias,
+                request.canonical_id,
+                request.entity_type,
+                request.reviewer,
+                request.reason,
+            ),
+            meta=_meta(repository, clock),
+        )
 
     @router.get(
         "/capabilities",

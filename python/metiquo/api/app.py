@@ -37,9 +37,11 @@ from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
+from metiquo.repositories.postgres_mapping import PostgresMappingRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
 from metiquo.services import MockMutationService, ReadService, build_mock_read_service
 from metiquo.services.real_admin import RealAdminMutationService
+from metiquo.services.real_mapping import RealMappingMutationService
 
 ERROR_STATUSES: Final[dict[ErrorCode, int]] = {
     ErrorCode.INVALID_INPUT: 400,
@@ -161,6 +163,12 @@ def create_app(
             resolved_settings.odds_provider_max_age_seconds,
         )
         resolved_model_repository = PostgresModelRepository(real_engine)
+        resolved_mapping_repository = PostgresMappingRepository(real_engine, resolved_clock)
+        resolved_mapping_mutations = RealMappingMutationService(
+            real_engine,
+            resolved_mapping_repository,
+            resolved_clock,
+        )
         resolved_real_mutations = real_mutation_service or RealAdminMutationService(
             real_engine,
             resolved_settings,
@@ -184,6 +192,8 @@ def create_app(
                 resolved_clock,
                 CapabilityRegistry(engine=real_engine, clock=resolved_clock),
                 resolved_model_repository,
+                resolved_mapping_repository,
+                resolved_mapping_mutations,
             )
         )
 

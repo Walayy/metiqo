@@ -76,13 +76,26 @@
       },
       "AuditEntry": {
         "additionalProperties": false,
-        "description": "Trace immutable d'une mutation applicative mock.",
+        "description": "Trace immutable d'une mutation applicative.",
         "properties": {
           "action": {
             "maxLength": 255,
             "minLength": 1,
             "title": "Action",
             "type": "string"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
           },
           "auditId": {
             "format": "uuid",
@@ -97,10 +110,35 @@
             "title": "Idempotencyfingerprint",
             "type": "string"
           },
+          "impact": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Impact"
+          },
           "occurredAt": {
             "format": "date-time",
             "title": "Occurredat",
             "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
           },
           "resourceId": {
             "anyOf": [
@@ -415,10 +453,34 @@
             "title": "Canonicalid",
             "type": "string"
           },
+          "entityType": {
+            "default": "team",
+            "enum": [
+              "team",
+              "competition",
+              "player"
+            ],
+            "title": "Entitytype",
+            "type": "string"
+          },
           "provider": {
             "maxLength": 255,
             "minLength": 1,
             "title": "Provider",
+            "type": "string"
+          },
+          "reason": {
+            "default": "Alias créé manuellement",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "reviewer": {
+            "default": "admin-local",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reviewer",
             "type": "string"
           }
         },
@@ -1105,6 +1167,61 @@
             },
             "title": "Reasons",
             "type": "array"
+          },
+          "selectionsInverted": {
+            "default": false,
+            "title": "Selectionsinverted",
+            "type": "boolean"
+          },
+          "teamA": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teama"
+          },
+          "teamAId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teamaid"
+          },
+          "teamB": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teamb"
+          },
+          "teamBId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teambid"
           }
         },
         "required": [
@@ -1119,6 +1236,18 @@
       "MappingDecisionRequest": {
         "additionalProperties": false,
         "properties": {
+          "candidateEventId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidateeventid"
+          },
           "reason": {
             "maxLength": 255,
             "minLength": 1,
@@ -1143,6 +1272,12 @@
         "additionalProperties": false,
         "description": "Ambiguïté de mapping dont toute décision reste auditée.",
         "properties": {
+          "affectedSnapshotCount": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Affectedsnapshotcount",
+            "type": "integer"
+          },
           "candidates": {
             "items": {
               "$ref": "#/components/schemas/MappingCandidate"
@@ -1167,6 +1302,12 @@
               }
             ],
             "title": "Decisionreason"
+          },
+          "historicalSignalsRewritten": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Historicalsignalsrewritten",
+            "type": "integer"
           },
           "mappingReviewId": {
             "format": "uuid",
@@ -1225,6 +1366,18 @@
               }
             ],
             "title": "Reviewer"
+          },
+          "selectedEventId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedeventid"
           },
           "status": {
             "$ref": "#/components/schemas/MappingReviewStatus"

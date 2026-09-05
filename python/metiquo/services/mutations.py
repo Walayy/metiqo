@@ -339,6 +339,7 @@ class MockMutationService:
         status: MappingReviewStatus,
         reviewer: str,
         reason: str,
+        candidate_event_id: UUID | None = None,
     ) -> MappingReview:
         def operation() -> MappingReview:
             current = self._mappings.get(mapping_review_id)
@@ -346,10 +347,17 @@ class MockMutationService:
                 raise BusinessError(ErrorCode.NOT_FOUND, "Mapping introuvable")
             if current.status is not MappingReviewStatus.PENDING:
                 raise BusinessError(ErrorCode.INVALID_STATE, "Le mapping est déjà décidé")
+            if status is MappingReviewStatus.APPROVED:
+                selected = candidate_event_id or current.candidates[0].event_id
+                if all(candidate.event_id != selected for candidate in current.candidates):
+                    raise BusinessError(ErrorCode.INVALID_INPUT, "Candidat de mapping inconnu")
             result = MappingReview.model_validate(
                 {
                     **current.model_dump(),
                     "status": status,
+                    "selected_event_id": selected
+                    if status is MappingReviewStatus.APPROVED
+                    else None,
                     "reviewed_at": self._clock.now().value,
                     "reviewer": reviewer,
                     "decision_reason": reason,
@@ -365,6 +373,7 @@ class MockMutationService:
                 "mappingReviewId": str(mapping_review_id),
                 "reviewer": reviewer,
                 "reason": reason,
+                "candidateEventId": str(candidate_event_id) if candidate_event_id else None,
             },
             cache=self._mapping_cache,
             operation=operation,
@@ -377,6 +386,9 @@ class MockMutationService:
         provider: str,
         alias: str,
         canonical_id: UUID,
+        entity_type: str = "team",
+        reviewer: str = "admin-local",
+        reason: str = "Alias créé manuellement",
     ) -> AliasRecord:
         def operation() -> AliasRecord:
             return AliasRecord(
@@ -391,7 +403,14 @@ class MockMutationService:
         return self._execute(
             action="alias.create",
             idempotency_key=key,
-            payload={"provider": provider, "alias": alias, "canonicalId": str(canonical_id)},
+            payload={
+                "provider": provider,
+                "alias": alias,
+                "canonicalId": str(canonical_id),
+                "entityType": entity_type,
+                "reviewer": reviewer,
+                "reason": reason,
+            },
             cache=self._alias_cache,
             operation=operation,
             resource_id=lambda result: str(result.alias_id),

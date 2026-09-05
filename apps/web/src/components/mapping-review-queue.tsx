@@ -95,9 +95,11 @@ function CandidateCard({
           <li key={reason}>• {reason}</li>
         ))}
       </ul>
-      <span className="text-xs leading-5 text-ink-secondary">
-        Le DTO mock expose les raisons, pas leur pondération individuelle.
-      </span>
+      {candidate.selectionsInverted ? (
+        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+          Participants inversés : les sélections A/B seront remappées.
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -151,13 +153,11 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
   };
   const decision = useMutation({
     mutationFn: async (action: "approve" | "reject") => {
-      const candidateTrace = selectedCandidate
-        ? ` Candidat retenu pour l’audit : ${selectedCandidate.eventId}.`
-        : "";
       return postJson<ItemResponseMappingReview>(
         `/admin/mappings/${review.mappingReviewId}/${action}`,
         {
-          reason: `${reason.trim()}.${action === "approve" ? candidateTrace : ""}`.trim(),
+          candidateEventId: action === "approve" ? selectedCandidate?.eventId : undefined,
+          reason: reason.trim(),
           reviewer: reviewer.trim(),
         },
       );
@@ -165,18 +165,28 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
     onSuccess: refreshAudit,
   });
   const aliasMutation = useMutation({
-    mutationFn: () =>
-      postJson<ItemResponseAliasRecord>("/admin/aliases", {
+    mutationFn: () => {
+      const canonicalTeamId = selectedCandidate?.selectionsInverted
+        ? selectedCandidate.teamBId
+        : selectedCandidate?.teamAId;
+      return postJson<ItemResponseAliasRecord>("/admin/aliases", {
         alias: alias.trim(),
-        canonicalId: selectedEventId,
+        canonicalId: canonicalTeamId,
+        entityType: "team",
         provider: review.provider,
-      }),
+        reason: reason.trim() || "Alias créé pendant la revue du mapping",
+        reviewer: reviewer.trim(),
+      });
+    },
     onSuccess: refreshAudit,
   });
   const canDecide = reviewer.trim().length > 0 && reason.trim().length > 0 && !decision.isPending;
   const canApprove = canDecide && selectedEventId.length > 0;
   const canCreateAlias =
-    alias.trim().length > 0 && selectedEventId.length > 0 && !aliasMutation.isPending;
+    alias.trim().length > 0 &&
+    reviewer.trim().length > 0 &&
+    Boolean(selectedCandidate?.teamAId && selectedCandidate.teamBId) &&
+    !aliasMutation.isPending;
 
   return (
     <Card aria-label={`Mapping ${review.providerEventId}`}>
@@ -252,8 +262,9 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
           {selectedCandidate ? (
             <p>
               Une approbation auditera le rapprochement de « {review.rawParticipants.join(" — ")} »
-              vers « {selectedCandidate.label} ». Aucun événement ni cote historique n’est réécrit
-              par cet écran mock.
+              vers « {selectedCandidate.label} ». {review.affectedSnapshotCount} observation(s)
+              existante(s) deviendront consultables sous l’événement canonique ; aucune cote ni
+              aucun signal historique ne sera réécrit.
             </p>
           ) : (
             <p>Aucun candidat sélectionné : l’approbation reste désactivée.</p>
@@ -277,7 +288,11 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
             />
           </label>
           <p className="break-all text-xs text-ink-secondary">
-            Destination : {selectedEventId || "aucune"}. La date est enregistrée par le serveur.
+            Destination équipe :{" "}
+            {(selectedCandidate?.selectionsInverted
+              ? selectedCandidate.teamBId
+              : selectedCandidate?.teamAId) ?? "aucune"}
+            . La date et l’approbateur sont enregistrés par le serveur.
           </p>
           <Button
             disabled={!canCreateAlias}

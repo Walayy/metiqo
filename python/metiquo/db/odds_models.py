@@ -366,3 +366,88 @@ class EventMappingCandidateScore(Base):
     format_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
     total_score: Mapped[Decimal] = mapped_column(Numeric(6, 5), nullable=False)
     selections_inverted: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+
+class MappingReviewRecord(Base):
+    """État courant d'une revue manuelle adossée à une tentative immuable."""
+
+    __tablename__ = "mapping_reviews"
+    __table_args__ = (
+        CheckConstraint("status IN ('pending', 'approved', 'rejected')", name="status"),
+        CheckConstraint(
+            "(status = 'pending' AND selected_event_id IS NULL AND reviewed_at IS NULL "
+            "AND reviewer IS NULL AND decision_reason IS NULL) OR "
+            "(status = 'approved' AND selected_event_id IS NOT NULL AND reviewed_at IS NOT NULL "
+            "AND reviewer IS NOT NULL AND decision_reason IS NOT NULL) OR "
+            "(status = 'rejected' AND selected_event_id IS NULL AND reviewed_at IS NOT NULL "
+            "AND reviewer IS NOT NULL AND decision_reason IS NOT NULL)",
+            name="decision_state",
+        ),
+        CheckConstraint(
+            "reviewed_at IS NULL OR reviewed_at >= created_at",
+            name="review_order",
+        ),
+        UniqueConstraint("attempt_id", name="uq_odds_mapping_reviews_attempt"),
+        Index("ix_odds_mapping_reviews_status_created", "status", "created_at"),
+        {"schema": ODDS_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    attempt_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "odds.event_mapping_attempts.id",
+            name="fk_mapping_reviews_attempt",
+            ondelete="RESTRICT",
+        ),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    selected_event_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    reviewer: Mapped[str | None] = mapped_column(String(255))
+    decision_reason: Mapped[str | None] = mapped_column(String(512))
+
+
+class MappingAuditRecord(Base):
+    """Audit append-only des décisions et créations d'alias."""
+
+    __tablename__ = "mapping_audits"
+    __table_args__ = (
+        CheckConstraint(
+            "action IN ('mapping.approved', 'mapping.rejected', 'alias.create')",
+            name="action",
+        ),
+        CheckConstraint("length(trim(resource_id)) > 0", name="resource_id"),
+        CheckConstraint("length(trim(actor)) > 0", name="actor"),
+        CheckConstraint("length(trim(reason)) > 0", name="reason"),
+        CheckConstraint(
+            "idempotency_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="idempotency_fingerprint",
+        ),
+        UniqueConstraint(
+            "idempotency_fingerprint",
+            name="uq_odds_mapping_audits_idempotency",
+        ),
+        Index("ix_odds_mapping_audits_occurred", "occurred_at"),
+        {"schema": ODDS_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
+    review_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "odds.mapping_reviews.id",
+            name="fk_mapping_audits_review",
+            ondelete="RESTRICT",
+        ),
+    )
+    entity_alias_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True))
+    resource_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    actor: Mapped[str] = mapped_column(String(255), nullable=False)
+    reason: Mapped[str] = mapped_column(String(512), nullable=False)
+    impact: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    idempotency_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)

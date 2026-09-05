@@ -141,9 +141,15 @@ class SettlePaperBetRequest(ApiRequestModel):
 class MappingDecisionRequest(ApiRequestModel):
     reviewer: NonEmptyText
     reason: NonEmptyText
+    candidate_event_id: UUID | None = Field(default=None, alias="candidateEventId")
 
 
 class CreateAliasRequest(ApiRequestModel):
     provider: NonEmptyText
     alias: NonEmptyText
     canonical_id: UUID = Field(alias="canonicalId")
+    entity_type: Literal["team", "competition", "player"] = Field(
+        default="team", alias="entityType"
+    )
+    reviewer: NonEmptyText = "admin-local"
+    reason: NonEmptyText = "Alias créé manuellement"

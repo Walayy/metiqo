@@ -43,13 +43,17 @@ export type AliasRecord = {
 /**
  * AuditEntry
  *
- * Trace immutable d'une mutation applicative mock.
+ * Trace immutable d'une mutation applicative.
  */
 export type AuditEntry = {
     /**
      * Action
      */
     action: string;
+    /**
+     * Actor
+     */
+    actor?: string | null;
     /**
      * Auditid
      */
@@ -60,9 +64,19 @@ export type AuditEntry = {
      */
     idempotencyFingerprint: string;
     /**
+     * Impact
+     */
+    impact?: {
+        [key: string]: unknown;
+    } | null;
+    /**
      * Occurredat
      */
     occurredAt: string;
+    /**
+     * Reason
+     */
+    reason?: string | null;
     /**
      * Resourceid
      */
@@ -242,9 +256,21 @@ export type CreateAliasRequest = {
      */
     canonicalId: string;
     /**
+     * Entitytype
+     */
+    entityType?: 'team' | 'competition' | 'player';
+    /**
      * Provider
      */
     provider: string;
+    /**
+     * Reason
+     */
+    reason?: string;
+    /**
+     * Reviewer
+     */
+    reviewer?: string;
 };
 
 /**
@@ -606,12 +632,36 @@ export type MappingCandidate = {
      * Reasons
      */
     reasons: Array<string>;
+    /**
+     * Selectionsinverted
+     */
+    selectionsInverted?: boolean;
+    /**
+     * Teama
+     */
+    teamA?: string | null;
+    /**
+     * Teamaid
+     */
+    teamAId?: string | null;
+    /**
+     * Teamb
+     */
+    teamB?: string | null;
+    /**
+     * Teambid
+     */
+    teamBId?: string | null;
 };
 
 /**
  * MappingDecisionRequest
  */
 export type MappingDecisionRequest = {
+    /**
+     * Candidateeventid
+     */
+    candidateEventId?: string | null;
     /**
      * Reason
      */
@@ -629,6 +679,10 @@ export type MappingDecisionRequest = {
  */
 export type MappingReview = {
     /**
+     * Affectedsnapshotcount
+     */
+    affectedSnapshotCount?: number;
+    /**
      * Candidates
      */
     candidates: Array<MappingCandidate>;
@@ -640,6 +694,10 @@ export type MappingReview = {
      * Decisionreason
      */
     decisionReason?: string | null;
+    /**
+     * Historicalsignalsrewritten
+     */
+    historicalSignalsRewritten?: number;
     /**
      * Mappingreviewid
      */
@@ -668,6 +726,10 @@ export type MappingReview = {
      * Reviewer
      */
     reviewer?: string | null;
+    /**
+     * Selectedeventid
+     */
+    selectedEventId?: string | null;
     status: MappingReviewStatus;
 };
 

@@ -16,6 +16,11 @@ class MappingCandidate(ContractModel):
     label: NonEmptyText
     confidence: ProbabilityValue
     reasons: tuple[NonEmptyText, ...]
+    team_a_id: UUID | None = Field(default=None, alias="teamAId")
+    team_a: NonEmptyText | None = Field(default=None, alias="teamA")
+    team_b_id: UUID | None = Field(default=None, alias="teamBId")
+    team_b: NonEmptyText | None = Field(default=None, alias="teamB")
+    selections_inverted: bool = Field(default=False, alias="selectionsInverted")
 
 
 class MappingReview(ContractModel):
@@ -28,6 +33,9 @@ class MappingReview(ContractModel):
     raw_participants: tuple[NonEmptyText, ...] = Field(alias="rawParticipants", min_length=2)
     candidates: tuple[MappingCandidate, ...]
     status: MappingReviewStatus
+    selected_event_id: UUID | None = Field(default=None, alias="selectedEventId")
+    affected_snapshot_count: int = Field(default=0, alias="affectedSnapshotCount", ge=0)
+    historical_signals_rewritten: int = Field(default=0, alias="historicalSignalsRewritten", ge=0)
     created_at: UtcDateTime = Field(alias="createdAt")
     reviewed_at: UtcDateTime | None = Field(default=None, alias="reviewedAt")
     reviewer: NonEmptyText | None = None

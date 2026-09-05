@@ -548,6 +548,14 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
           <p className="break-all text-xs text-ink-secondary">
             Empreinte d’idempotence : {entry.idempotencyFingerprint}
           </p>
+          {entry.actor ? (
+            <p className="text-xs text-ink-secondary">
+              {entry.actor} · {entry.reason ?? "motif non renseigné"}
+            </p>
+          ) : null}
+          {entry.impact ? (
+            <p className="text-xs text-ink-secondary">Impact : {JSON.stringify(entry.impact)}</p>
+          ) : null}
         </li>
       ))}
     </ol>
