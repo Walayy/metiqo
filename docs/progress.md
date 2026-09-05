@@ -436,6 +436,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le composant centralise la promotion locale sans modifier le contrat synchrone des transports.
 - **Commit/hash :** `0f6081f38f44f805cf7dcd52775352b56faaa6b8` (`feat(ingestion): add safe streaming download promotion`).
 
+## OE-010 — Taxonomie d’erreurs et retries
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-006`, `OE-007` et `OE-009` sont `DONE`.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/source_errors.py`, `python/metiquo/ingestion/retry.py`, `tests/ingestion/test_source_errors_retry.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 15 tests ciblés de taxonomie/retry ; suite Python complète ; contrôle Prettier global ; validation Compose ; `git diff --check`.
+- **Résultat exact :** les douze exceptions normatives existent avec codes stables : not-found, permission, quota, rate-limit, timeout, HTML inattendu, type inattendu, checksum, archive corrompue, schéma incompatible, qualité et promotion atomique. Chaque instance conserve message sûr, transport, ID source, statut HTTP, contexte, timestamp UTC, compteur de tentatives et possibilité de retry dans `to_dict`. `RetryExecutor` applique un backoff exponentiel plafonné avec jitter injecté uniquement à quota, rate-limit, timeout et indisponibilité. Trois échecs avant succès produisent exactement les délais contrôlés `1,0`, `4,0`, `3,75` secondes ; un dernier échec porte `attempts=3`. Une permission permanente artificiellement marquée retryable n'est malgré tout appelée qu'une fois et ne dort jamais. La suite retourne 163 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la liste et la sémantique viennent directement de la SFG.
+- **Commit/hash :** `cc00bd06d6c20e9f051031e9c0e72eaa7f2a72db` (`feat(ingestion): add source error taxonomy and retries`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
