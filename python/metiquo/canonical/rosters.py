@@ -14,6 +14,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from metiquo.canonical.dimensions import LOL_DATASET, ORACLES_ELIXIR_PROVIDER
 from metiquo.canonical.games import CanonicalGameBuilder
+from metiquo.canonical.history import CanonicalHistoryRecorder
 from metiquo.db.core_models import Game, GamePlayerStat, RosterObservation
 from metiquo.db.raw_models import CanonicalRow
 from metiquo.foundation.time import Clock, SystemClock, normalize_utc_datetime
@@ -105,7 +106,13 @@ class CanonicalRosterBuilder:
                     }
                 )
             _upsert_observations(connection, values)
-        return CanonicalRosterStatistics(len(values), substitutions)
+        statistics = CanonicalRosterStatistics(len(values), substitutions)
+        CanonicalHistoryRecorder(engine=self._engine).record(
+            provider=provider,
+            dataset=dataset,
+            entity_types={"roster_observation"},
+        )
+        return statistics
 
     @staticmethod
     def _observed_players(provider: str, dataset: str) -> Select[tuple[Any, ...]]:

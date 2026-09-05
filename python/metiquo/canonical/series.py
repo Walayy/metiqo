@@ -19,6 +19,7 @@ from metiquo.canonical.dimensions import (
     normalize_identity,
 )
 from metiquo.canonical.games import CanonicalGameBuilder
+from metiquo.canonical.history import CanonicalHistoryRecorder
 from metiquo.db.core_models import Game, GameTeamStat, Series, Team
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot
 from metiquo.foundation.time import Clock, SystemClock
@@ -99,13 +100,19 @@ class CanonicalSeriesBuilder:
                 resolved += len(group)
             self._mark_games(connection, missing, None, "missing_context")
 
-        return CanonicalSeriesStatistics(
+        statistics = CanonicalSeriesStatistics(
             source_games=len(candidates),
             series=created,
             resolved_games=resolved,
             ambiguous_games=ambiguous,
             missing_context_games=len(missing),
         )
+        CanonicalHistoryRecorder(engine=self._engine).record(
+            provider=provider,
+            dataset=dataset,
+            entity_types={"series", "game"},
+        )
+        return statistics
 
     @staticmethod
     def _validated_rows(provider: str, dataset: str) -> Select[tuple[Any, ...]]:

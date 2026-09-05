@@ -27,6 +27,8 @@ RAW_TABLES = {
     "source_catalog",
 }
 CORE_TABLES = {
+    "canonical_entity_revisions",
+    "canonical_entity_sources",
     "competitions",
     "game_player_stats",
     "game_team_stats",

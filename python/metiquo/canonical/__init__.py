@@ -5,6 +5,7 @@ from metiquo.canonical.dimensions import (
     CanonicalDimensionStatistics,
 )
 from metiquo.canonical.games import CanonicalGameBuilder, CanonicalGameStatistics
+from metiquo.canonical.history import CanonicalHistoryRecorder, CanonicalHistoryStatistics
 from metiquo.canonical.rosters import (
     CanonicalRosterBuilder,
     CanonicalRosterStatistics,
@@ -18,6 +19,8 @@ __all__ = [
     "CanonicalDimensionStatistics",
     "CanonicalGameBuilder",
     "CanonicalGameStatistics",
+    "CanonicalHistoryRecorder",
+    "CanonicalHistoryStatistics",
     "CanonicalRosterBuilder",
     "CanonicalRosterStatistics",
     "CanonicalSeriesBuilder",

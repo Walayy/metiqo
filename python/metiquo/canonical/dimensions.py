@@ -11,6 +11,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import Connection, Engine, RowMapping, Select, Table, select
 from sqlalchemy.dialects.postgresql import insert
 
+from metiquo.canonical.history import CanonicalHistoryRecorder
 from metiquo.db.core_models import Competition, GameTitle, Patch, Player, Team
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot
 from metiquo.foundation.time import Clock, SystemClock
@@ -96,7 +97,7 @@ class CanonicalDimensionBuilder:
             self._upsert_entities(connection, Player, game_title_id, players)
             self._upsert_entities(connection, Patch, game_title_id, patches)
 
-        return CanonicalDimensionStatistics(
+        statistics = CanonicalDimensionStatistics(
             source_rows=len(rows),
             game_titles=1,
             competitions=len(competitions),
@@ -104,6 +105,12 @@ class CanonicalDimensionBuilder:
             players=len(players),
             patches=len(patches),
         )
+        CanonicalHistoryRecorder(engine=self._engine).record(
+            provider=provider,
+            dataset=dataset,
+            entity_types={"game_title", "competition", "team", "player", "patch"},
+        )
+        return statistics
 
     @staticmethod
     def _validated_rows(provider: str, dataset: str) -> Select[tuple[Any, ...]]:

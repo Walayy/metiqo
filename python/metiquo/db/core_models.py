@@ -437,3 +437,108 @@ class RosterObservation(CanonicalProvenanceMixin, Base):
     role: Mapped[str] = mapped_column(String(8), nullable=False)
     continuity_status: Mapped[str] = mapped_column(String(32), nullable=False)
     observation_confidence: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+
+
+class CanonicalEntityRevision(Base):
+    """État canonique append-only avec sa provenance au moment du calcul."""
+
+    __tablename__ = "canonical_entity_revisions"
+    __table_args__ = (
+        CheckConstraint(
+            "entity_type IN ('game_title', 'competition', 'team', 'player', 'patch', "
+            "'game', 'series', 'game_team_stat', 'game_player_stat', 'roster_observation')",
+            name="entity_type",
+        ),
+        CheckConstraint("revision >= 1", name="revision"),
+        CheckConstraint("payload_hash ~ '^[0-9a-f]{64}$'", name="payload_hash"),
+        CheckConstraint("length(trim(transformation_version)) > 0", name="transformation_version"),
+        CheckConstraint("length(trim(quality_status)) > 0", name="quality_status"),
+        CheckConstraint(
+            "(revision = 1 AND previous_revision_id IS NULL) "
+            "OR (revision > 1 AND previous_revision_id IS NOT NULL)",
+            name="revision_chain",
+        ),
+        UniqueConstraint(
+            "entity_type",
+            "entity_id",
+            "revision",
+            name="uq_canonical_entity_revisions_entity_revision",
+        ),
+        Index(
+            "ix_core_canonical_entity_revisions_entity",
+            "entity_type",
+            "entity_id",
+            "revision",
+        ),
+        {"schema": CORE_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    entity_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    entity_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    previous_revision_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "core.canonical_entity_revisions.id",
+            name="fk_cer_previous_revision",
+            ondelete="RESTRICT",
+        ),
+    )
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    transformation_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    processed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    correction: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    quality_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_snapshot_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.snapshots.id", name="fk_cer_snapshot", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    source_run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.ingestion_runs.id", name="fk_cer_run", ondelete="RESTRICT"),
+        nullable=False,
+    )
+
+
+class CanonicalEntitySource(Base):
+    """Copie immuable de chaque ligne raw ayant produit une révision core."""
+
+    __tablename__ = "canonical_entity_sources"
+    __table_args__ = (
+        CheckConstraint("source_row_hash ~ '^[0-9a-f]{64}$'", name="source_row_hash"),
+        CheckConstraint("source_row_revision >= 1", name="source_row_revision"),
+        Index("ix_core_canonical_entity_sources_raw", "source_raw_row_id"),
+        {"schema": CORE_SCHEMA},
+    )
+
+    entity_revision_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "core.canonical_entity_revisions.id",
+            name="fk_ces_revision",
+            ondelete="RESTRICT",
+        ),
+        primary_key=True,
+    )
+    source_raw_row_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.canonical_rows.id", name="fk_ces_raw_row", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    source_snapshot_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.snapshots.id", name="fk_ces_snapshot", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    source_run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("raw.ingestion_runs.id", name="fk_ces_run", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    source_natural_key: Mapped[str] = mapped_column(Text, nullable=False)
+    source_row_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_row_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)

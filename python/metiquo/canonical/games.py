@@ -20,6 +20,7 @@ from metiquo.canonical.dimensions import (
     CanonicalDimensionBuilder,
     normalize_identity,
 )
+from metiquo.canonical.history import CanonicalHistoryRecorder
 from metiquo.db.core_models import (
     Competition,
     Game,
@@ -106,12 +107,18 @@ class CanonicalGameBuilder:
                 )
                 team_count += counts[0]
                 player_count += counts[1]
-        return CanonicalGameStatistics(
+        statistics = CanonicalGameStatistics(
             source_rows=len(rows),
             games=len(grouped),
             team_stats=team_count,
             player_stats=player_count,
         )
+        CanonicalHistoryRecorder(engine=self._engine).record(
+            provider=provider,
+            dataset=dataset,
+            entity_types={"game", "game_team_stat", "game_player_stat"},
+        )
+        return statistics
 
     @staticmethod
     def _validated_rows(provider: str, dataset: str) -> Select[tuple[Any, ...]]:
