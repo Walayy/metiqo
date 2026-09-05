@@ -424,6 +424,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le miroir est une copie privée validée, jamais une nouvelle source ni une preuve de fraîcheur.
 - **Commit/hash :** `1d5056bae0855d1b13cb883839e86a81705e7cc1` (`feat(ingestion): add mirror and fixture transports`).
 
+## OE-009 — Téléchargeur sûr en streaming
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-005` est `DONE` et tous les transports implémentés satisfont son contrat.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/safe_download.py`, `python/metiquo/ingestion/source_errors.py`, `python/metiquo/ingestion/transport.py`, `python/metiquo/config.py`, `.env.example`, `docker-compose.yml`, `tests/ingestion/test_safe_download.py`, ajustement du test de politique transport, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 8 tests ciblés de téléchargement sûr dont flux de 32 Mio sous `tracemalloc` ; suite Python complète ; contrôle Prettier global ; validation Compose ; `git diff --check`.
+- **Résultat exact :** `SafeDownloader` réserve un répertoire temporaire privé `0700` sur le même volume, impose une destination interne `.part`, appelle le transport en streaming, mesure la durée totale configurable, contrôle identité du reçu, taille physique, SHA-256 recalculé et empreinte attendue optionnelle. Il inspecte seulement 64 Kio pour refuser HTML, incohérences MIME, texte non UTF-8 ou délimiteur ambigu et pour reconnaître CSV, gzip ou zip. Le fichier est passé en `0600` puis renommé atomiquement vers son nom final ; tout échec supprime le répertoire temporaire, tandis qu'une destination existante est préservée. Le test de 32 Mio conserve un pic Python inférieur à 8 Mio, des blocs source de 64 Kio et aucun `.part` résiduel ; interruption, timeout, hash divergent, contenu invalide et conflit de promotion sont couverts. La suite retourne 148 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le composant centralise la promotion locale sans modifier le contrat synchrone des transports.
+- **Commit/hash :** `0f6081f38f44f805cf7dcd52775352b56faaa6b8` (`feat(ingestion): add safe streaming download promotion`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
