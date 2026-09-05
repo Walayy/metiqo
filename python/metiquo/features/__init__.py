@@ -1,5 +1,12 @@
 """Fabrication de features versionnées et strictement temporelles."""
 
+from metiquo.features.economy import (
+    EconomyFeatureCalculator,
+    EconomyFeatureResult,
+    EconomyParameters,
+    TeamEconomyMetrics,
+    economy_feature_definitions,
+)
 from metiquo.features.form import (
     FormWindow,
     RecentFormCalculator,
@@ -54,6 +61,9 @@ __all__ = [
     "AsOfGameRepository",
     "AsOfInputAudit",
     "CutoffViolationError",
+    "EconomyFeatureCalculator",
+    "EconomyFeatureResult",
+    "EconomyParameters",
     "EloParameters",
     "EloRatingCalculator",
     "FeatureCutoff",
@@ -78,10 +88,12 @@ __all__ = [
     "SideSample",
     "TargetSide",
     "TargetSideScenario",
+    "TeamEconomyMetrics",
     "TeamRating",
     "TeamRecentForm",
     "TeamSideStrength",
     "UnregisteredFeatureError",
+    "economy_feature_definitions",
     "latest_entity_revisions_as_of",
     "polars_strictly_before",
     "rating_feature_definitions",
