@@ -1288,3 +1288,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; `VAL-002` peut consommer ces probabilités bookmaker normalisées.
 - **ADR éventuel :** aucun ; seule la normalisation proportionnelle est activée pour le MVP, les autres méthodes devant annoncer une nouvelle version et leurs capacités explicites.
 - **Commit/hash :** `92f1a14` (`feat(pricing): normalize bookmaker margin`).
+
+## VAL-002 — Cote juste, edge, EV et EV prudente
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les prédictions pré-match immuables `ML-013` fournissent les probabilités centrale et basse ; `VAL-001` fournit la cote offerte et sa probabilité bookmaker no-vig dans un même objet validé.
+- **Fichiers créés/modifiés :** moteur `python/metiquo/pricing/value.py`, validation renforcée de `NoVigQuote`, exports pricing, guide `docs/value-pricing.md` et cinq tests numériques dans `tests/pricing/test_value.py`.
+- **Migrations :** aucune ; le ticket calcule des résultats immuables en mémoire, avant la politique persistée de `VAL-003` et les opportunités suivantes.
+- **Commandes/tests exécutés :** Ruff et mypy strict ciblés, 17 tests pricing, Prettier et CSpell, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** `value-pricing-v1` consomme directement une `NoVigQuote`, une probabilité modèle centrale et sa borne basse ordonnée. Il applique `fair_odds = 1/p`, `edge = p - p_book_no_vig`, `EV = p*O - 1` et `EV_prudente = p_low*O - 1` en `Decimal` de précision locale fixe. L'exemple SFG à `4,00`, `30 %` et `27 %` produit une cote juste `3,333…`, un edge d'environ `6,19 %`, une EV de `20 %` et une EV prudente de `8 %`. À `p=0`, la cote juste est explicitement absente et signalée non bornée plutôt que sérialisée en infini, avec les deux EV à `-1` ; à `p=1`, elle vaut exactement `1`. Une preuve sur les 101 valeurs centésimales confirme formules, monotonie de la cote juste et ordre EV prudente/EV. Le gate retourne 411 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 291 fichiers sont verts.
+- **Blocker éventuel :** aucun ; `VAL-003` peut désormais versionner les seuils appliqués à ces métriques.
+- **ADR éventuel :** aucun ; l'absence de cote juste à probabilité zéro est une représentation finie et explicite que le futur gate transformera en abstention.
+- **Commit/hash :** `3e2e6ab` (`feat(pricing): compute fair odds and value`).
