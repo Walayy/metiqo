@@ -1036,3 +1036,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le protocole reste volontairement binaire et fermé, tandis que la vérification physique de l'artefact demeure la responsabilité du registre avant activation du gate.
 - **Commit/hash :** `251db68` (`feat(markets): add gated game winner plugin`).
+
+## ML-013 — Service de prédiction pré-match
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le plugin `GAME_WINNER` `ML-012` et les feature snapshots reproductibles `FEAT-011` sont `DONE` ; le service utilise leurs contrats sans recalcul hors du pipeline temporel.
+- **Fichiers créés/modifiés :** service et runtime `python/metiquo/models/predictions.py`, construction ciblée dans `python/metiquo/features/dataset.py`, migration `20260907_0025`, modèle ORM, exports et preuve PostgreSQL `tests/integration/test_prematch_predictions.py`.
+- **Migrations :** création de `ml.prematch_predictions`. Chaque ligne conserve événement, équipes, feature snapshot, modèle, calibrateur, incertitude, cutoff, instant, probabilités et bornes A/B, confiance, état d'abstention, commit, empreinte stable d'inférence et empreinte propre à l'instant. Des clés étrangères, contraintes numériques, un trigger de cohérence et un trigger append-only protègent la preuve.
+- **Commandes/tests exécutés :** Ruff, mypy strict, migration aller-retour, test PostgreSQL ciblé, puis gate global complet.
+- **Résultat exact :** le service vérifie que le cutoff et l'instant de calcul précèdent le début planifié, que le champion a été entraîné strictement avant le cutoff et qu'il était déjà enregistré. Le loader relit le champion courant, vérifie physiquement son binaire via le registre, résout son artefact d'incertitude puis reconstruit le prédicteur. La feature candidate est calculée au cutoff exact ; un snapshot renvoyant un autre événement ou instant est refusé. La base exige que snapshot, équipes, cutoff, champion, calibrateur et incertitude correspondent encore au moment de l'insertion. La preuve entraîne le modèle sur la première game de la fixture, prédit la suivante avec un cutoff antérieur, puis répète la requête dix minutes plus tard : les deux lignes et leurs empreintes temporelles sont distinctes, tandis que le snapshot, la version modèle, les probabilités et l'empreinte d'inférence sont identiques. Toute tentative de modification échoue. Le gate retourne 297 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 232 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le décodage du binaire et la résolution de l'incertitude restent des adapters injectés, mais le loader impose leur passage par le registre vérifié avant toute inférence.
+- **Commit/hash :** `5a43240` (`feat(ml): persist reproducible prematch predictions`).
