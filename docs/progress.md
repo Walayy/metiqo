@@ -472,6 +472,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; les règles matérialisent la section 9.10 de la SFG sans inférence réparatrice.
 - **Commit/hash :** `6019ae8c553721578ee2b295c68eacde924e7ab6` (`feat(ingestion): validate physical source files`).
 
+## OE-013 — Contrat de schéma évolutif
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-012` est `DONE` et garantit un CSV physiquement lisible.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/schema_contract.py`, fixtures `schema_additive.csv` et `schema_missing_core.csv`, `tests/ingestion/test_schema_contract.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 5 tests ciblés schéma/capacités ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `EvolvingSchemaContract` distingue sept colonnes cœur, les colonnes optionnelles et les exigences propres à `market.match_winner`, `feature.team_form`, `feature.side_strength` et `feature.early_game`. Chaque header observé produit un `SchemaDocument` qui conserve l'ordre et toutes les colonnes additives dans le raw, une empreinte, les absences et une matrice de capacités. La fixture avec `vendor_metric` peut être ingérée, conserve la valeur `42` et ne change pas les capacités compatibles. L'absence de `gameid` bloque l'ingestion avec le diagnostic `SCHEMA_CORE_MISSING`; l'absence de `datacompleteness` ne bloque pas le raw mais désactive uniquement le marché match-winner sans reconstruire une complétude. Le diff rapporte ajout, retrait, changement de type et ordre, et l'empreinte inclut les additives. La suite retourne 184 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le registre de capacités matérialise l'abstention ciblée exigée par la SFG.
+- **Commit/hash :** `42347a6a4afb490371eb274cbf7ff726d68c4906` (`feat(ingestion): add evolving schema contract`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
