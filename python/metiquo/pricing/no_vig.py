@@ -81,6 +81,16 @@ class NoVigQuote:
     raw_implied_probability: Probability
     no_vig_probability: Probability
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.selection, SelectionType):
+            raise TypeError("selection doit être un SelectionType")
+        if not isinstance(self.decimal_odds, DecimalOdds):
+            raise TypeError("decimal_odds doit être un DecimalOdds")
+        if not isinstance(self.raw_implied_probability, Probability):
+            raise TypeError("raw_implied_probability doit être une Probability")
+        if not isinstance(self.no_vig_probability, Probability):
+            raise TypeError("no_vig_probability doit être une Probability")
+
 
 @dataclass(frozen=True, slots=True)
 class NoVigMarketResult:
