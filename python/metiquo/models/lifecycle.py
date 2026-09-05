@@ -358,6 +358,57 @@ class ModelLifecycle:
             )
         return LifecycleResult(model_version_id, BLOCKED, None, (event_id,))
 
+    def retire(
+        self,
+        model_version_id: UUID,
+        *,
+        actor: str,
+        reason: str,
+    ) -> LifecycleResult:
+        """Retirer explicitement un candidat ou un champion avec une preuve append-only."""
+
+        _validate_decision(actor, reason)
+        models = cast(Table, ModelVersionRow.__table__)
+        events = cast(Table, ModelStatusEventRow.__table__)
+        occurred_at = self._clock.now().value
+        with self._engine.begin() as connection:
+            target = (
+                connection.execute(
+                    select(models).where(models.c.id == model_version_id).with_for_update()
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if target is None:
+                raise ValueError("version de modèle introuvable")
+            current_status = cast(str, target["status"])
+            if current_status not in {CANDIDATE, CHAMPION}:
+                raise ValueError("seul un candidat ou un champion actif peut être retiré")
+            connection.execute(
+                update(models)
+                .where(models.c.id == model_version_id)
+                .values(
+                    status=RETIRED,
+                    status_changed_by=actor,
+                    status_changed_at=occurred_at,
+                    status_reason=reason,
+                )
+            )
+            event_id = _record_event(
+                connection,
+                events,
+                model_version_id=model_version_id,
+                related_model_version_id=None,
+                action="retire",
+                from_status=current_status,
+                to_status=RETIRED,
+                actor=actor,
+                reason=reason,
+                evidence={"manual": True},
+                occurred_at=occurred_at,
+            )
+        return LifecycleResult(model_version_id, RETIRED, None, (event_id,))
+
     def record_shadow(
         self,
         model_version_id: UUID,

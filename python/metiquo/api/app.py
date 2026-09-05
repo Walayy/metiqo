@@ -28,6 +28,7 @@ from metiquo.api.read_routes import build_read_router
 from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, ReadinessProbe
 from metiquo.api.real_admin_routes import build_real_admin_router
 from metiquo.api.real_historical_routes import build_real_historical_router
+from metiquo.api.real_model_routes import build_real_model_router
 from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.config import Settings, load_settings
 from metiquo.contracts.enums import DataMode
@@ -36,6 +37,7 @@ from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
+from metiquo.repositories.postgres_models import PostgresModelRepository
 from metiquo.services import MockMutationService, ReadService, build_mock_read_service
 from metiquo.services.real_admin import RealAdminMutationService
 
@@ -155,10 +157,13 @@ def create_app(
         resolved_repository = real_admin_repository or PostgresAdminRepository(
             real_engine, resolved_clock
         )
+        resolved_model_repository = PostgresModelRepository(real_engine)
         resolved_real_mutations = real_mutation_service or RealAdminMutationService(
             real_engine,
             resolved_settings,
             resolved_repository,
+            resolved_model_repository,
+            clock=resolved_clock,
         )
         app.state.real_admin_engine = real_engine
         app.include_router(
@@ -168,12 +173,14 @@ def create_app(
                 resolved_clock,
             )
         )
+        app.include_router(build_real_model_router(resolved_model_repository, resolved_clock))
         app.include_router(
             build_real_admin_router(
                 resolved_repository,
                 resolved_real_mutations,
                 resolved_clock,
                 CapabilityRegistry(engine=real_engine, clock=resolved_clock),
+                resolved_model_repository,
             )
         )
 

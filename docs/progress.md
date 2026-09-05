@@ -1072,3 +1072,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'explication reste calculée à la demande depuis les preuves immuables, sans générateur de texte libre ni donnée externe.
 - **Commit/hash :** `09bfb3d` (`feat(ml): render structured non-causal explanations`).
+
+## ML-016 — API/UI modèles, train et promotion réels
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le lifecycle audité `ML-011`, les explications structurées `ML-015`, le dashboard `UI-007` et les mutations contractuelles `MCK-006` sont `DONE` ; la surface réelle réutilise leurs DTO sans branche spécifique dans le composant.
+- **Fichiers créés/modifiés :** projection `python/metiquo/repositories/postgres_models.py`, routes réelles de lecture et d’administration, orchestration idempotente dans `python/metiquo/services/real_admin.py`, lifecycle de retrait explicite, migration `20260907_0026`, dashboard modèles, fixture Playwright réelle et test d’intégration PostgreSQL.
+- **Migrations :** création de `ml.model_action_jobs` pour l’état observable des entraînements/décisions et de `ml.model_action_audits` pour la demande append-only ; extension contrôlée des événements de lifecycle avec l’action `retire`. Le downgrade conserve les retraits historiques via une contrainte antérieure `NOT VALID`, puis laisse `ML-011` supprimer normalement la table plus bas dans la chaîne.
+- **Commandes/tests exécutés :** Ruff, mypy strict, test API PostgreSQL, cinq scénarios d’intégration et de migration successifs, Playwright réel ciblé, inspection et action d’entraînement dans le Navigateur, puis gate global `make check` avec PostgreSQL.
+- **Résultat exact :** `/api/v1/models` et `/api/v1/backtests` exposent versions, métriques, baselines et rapports réels avec les mêmes enveloppes que le mock ; les détails et filtres partagent aussi les mêmes routes. La version publique réelle est l’UUID exact conservé dans chaque prédiction. Le dashboard affiche cet identifiant, les métriques persistées et les commandes d’entraînement, promotion et retrait. Chaque mutation crée un job idempotent et une trace sans stocker la clé brute. Le train délègue au workflow réel injecté et échoue explicitement s’il est absent. La promotion relit le benchmark du calibrateur, exige un gate promotable, les gains strictement positifs face à `competition_prior`, `recent_form` et `rating`, et au moins deux métriques dont une probabiliste primaire ; une fixture refusée retourne `409`, la fixture valide devient champion, puis son retrait est historisé. Le test Playwright prouve la promotion et le rafraîchissement du même dashboard sur DTO réels. Le gate retourne 306 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 240 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; ML-016 définit la frontière de workflow synchrone et observable, tandis que la commande reproductible et son assemblage de bout en bout restent le livrable explicite de `ML-017`.
+- **Commit/hash :** `a14eb55` (`feat(ml): expose real model operations`).

@@ -126,6 +126,8 @@ En mode mock, l’API expose les collections et détails versionnés sous `/api/
 
 Le contrat complet et reproductible est versionné dans `packages/contracts/openapi/v1.json`.
 
+En `APP_DATA_MODE=real`, les mêmes DTO `/api/v1/models` et `/api/v1/backtests` sont projetés depuis le registre PostgreSQL et ses rapports walk-forward. Les mutations `/api/v1/admin/models/train`, `/{modelVersionId}/promote` et `/{modelVersionId}/retire` exigent aussi `Idempotency-Key`, créent un job observable et alimentent le journal append-only `/api/v1/admin/audit-log`. Une promotion reste refusée tant que le benchmark enregistré ne bat pas les trois baselines requises sur le gate multi-métrique. Le workflow d’entraînement concret est injecté derrière la frontière `RealModelTrainingWorkflow` ; sans lui, la demande réelle échoue explicitement en `DEPENDENCY_UNAVAILABLE` et le job conserve cet échec.
+
 Le package `@metiquo/contracts` génère depuis ce fichier les DTO, le client Fetch et les options TanStack Query. `make openapi` régénère le contrat backend puis le client ; `make openapi-check` échoue si l’un des deux n’est plus synchronisé. Aucun DTO API n’est recopié à la main dans le frontend.
 
 ## Frontend et design system

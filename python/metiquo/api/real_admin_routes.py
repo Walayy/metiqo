@@ -9,18 +9,28 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, Query
 
-from metiquo.api.dto import CapabilityEvaluationDto, ItemResponse, PageInfo, PageResponse
+from metiquo.api.dto import (
+    CapabilityEvaluationDto,
+    ItemResponse,
+    ModelDecisionRequest,
+    PageInfo,
+    PageResponse,
+    TrainModelRequest,
+)
 from metiquo.canonical.capabilities import CapabilityRegistry, CapabilityState
 from metiquo.contracts import (
+    AuditEntry,
     ContractMetadata,
     DataQualityIssue,
     IngestionRunSummary,
     JobSummary,
+    ModelSummary,
     ProviderHealth,
 )
 from metiquo.contracts.enums import DataMode, FreshnessStatus, ProviderStatus
 from metiquo.foundation.time import Clock
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
+from metiquo.repositories.postgres_models import PostgresModelRepository
 from metiquo.services.real_admin import RealAdminMutationService
 
 Offset = Annotated[int, Query(ge=0)]
@@ -71,6 +81,7 @@ def build_real_admin_router(
     mutation_service: RealAdminMutationService,
     clock: Clock,
     capability_registry: CapabilityRegistry,
+    model_repository: PostgresModelRepository,
 ) -> APIRouter:
     """Exposer exactement les DTO d'administration partagés avec le mode mock."""
 
@@ -115,9 +126,15 @@ def build_real_admin_router(
         status: Literal["idle", "succeeded", "failed", "running"] | None = None,
     ) -> PageResponse[JobSummary]:
         values = tuple(
-            item for item in repository.list_jobs() if status is None or item.status == status
+            item
+            for item in (*model_repository.list_jobs(), *repository.list_jobs())
+            if status is None or item.status == status
         )
         return _page(values, offset, limit, repository, clock)
+
+    @router.get("/audit-log", response_model=PageResponse[AuditEntry])
+    def list_audit(offset: Offset = 0, limit: Limit = 20) -> PageResponse[AuditEntry]:
+        return _page(model_repository.list_audit(), offset, limit, repository, clock)
 
     @router.get(
         "/capabilities",
@@ -144,6 +161,56 @@ def build_real_admin_router(
     ) -> ItemResponse[IngestionRunSummary]:
         return ItemResponse(
             data=mutation_service.sync(idempotency_key, year),
+            meta=_meta(repository, clock),
+        )
+
+    @router.post("/models/train", response_model=ItemResponse[ModelSummary])
+    def train(
+        request: TrainModelRequest,
+        idempotency_key: IdempotencyKey,
+    ) -> ItemResponse[ModelSummary]:
+        return ItemResponse(
+            data=mutation_service.train(
+                idempotency_key,
+                request.game_title,
+                request.market_type,
+            ),
+            meta=_meta(repository, clock),
+        )
+
+    @router.post(
+        "/models/{model_version_id}/promote",
+        response_model=ItemResponse[ModelSummary],
+    )
+    def promote(
+        model_version_id: UUID,
+        request: ModelDecisionRequest,
+        idempotency_key: IdempotencyKey,
+    ) -> ItemResponse[ModelSummary]:
+        return ItemResponse(
+            data=mutation_service.promote(
+                idempotency_key,
+                model_version_id,
+                request.reason,
+            ),
+            meta=_meta(repository, clock),
+        )
+
+    @router.post(
+        "/models/{model_version_id}/retire",
+        response_model=ItemResponse[ModelSummary],
+    )
+    def retire(
+        model_version_id: UUID,
+        request: ModelDecisionRequest,
+        idempotency_key: IdempotencyKey,
+    ) -> ItemResponse[ModelSummary]:
+        return ItemResponse(
+            data=mutation_service.retire(
+                idempotency_key,
+                model_version_id,
+                request.reason,
+            ),
             meta=_meta(repository, clock),
         )
 
