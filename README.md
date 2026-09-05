@@ -95,9 +95,12 @@ uv run --frozen oe sync --year 2026 --require-fresh --json
 uv run --frozen oe verify --snapshot <uuid> --json
 uv run --frozen oe diff --left <uuid> --right <uuid> --json
 uv run --frozen oe rebuild-canonical --from 2025-01-01 --json
+uv run --frozen oe model-train --market game_winner --json
 ```
 
-Les alias équivalents sont `make oe-catalog`, `make oe-backfill FROM=2014 TO=2026`, `make oe-sync YEAR=2026`, `make oe-sync-current REQUIRE_FRESH=1`, `make oe-validate SNAPSHOT=<uuid>`, `make oe-diff LEFT=<uuid> RIGHT=<uuid>` et `make oe-rebuild-canonical FROM=2025-01-01`. `JSON=1` active la sortie compacte destinée à la CI.
+Les alias équivalents sont `make oe-catalog`, `make oe-backfill FROM=2014 TO=2026`, `make oe-sync YEAR=2026`, `make oe-sync-current REQUIRE_FRESH=1`, `make oe-validate SNAPSHOT=<uuid>`, `make oe-diff LEFT=<uuid> RIGHT=<uuid>`, `make oe-rebuild-canonical FROM=2025-01-01` et `make model-train MARKET=game_winner`. `JSON=1` active la sortie compacte destinée à la CI.
+
+`model-train` relit le dernier dataset `game_winner` immuable, ou celui désigné par `DATASET=<uuid>`. La commande publie les trois baselines, le benchmark walk-forward, la décision d'ensemble, le calibrateur et le rapport segmenté, puis enregistre un artefact adressé par contenu. Un gate réussi laisse un candidat en attente d'une promotion manuelle ; un gate refusé place immédiatement la version en `blocked` et renvoie le code `5`. Le rapport inclut une prédiction rejouée depuis la version, le dataset et le feature snapshot exacts. Les features dont le nom contient `bookmaker`, `market_odds` ou `odds` restent interdites à la construction du dataset comme à celle du modèle indépendant.
 
 Les codes retour sont stables : `0` succès, `2` usage ou configuration invalide, `3` snapshot frais requis mais indisponible, `4` échec de source ou de pipeline, `5` intégrité du snapshot invalide et `6` backfill partiel. Les erreurs machine-readable contiennent toujours `ok=false` et un `errorCode` sans secret.
 
@@ -126,7 +129,7 @@ En mode mock, l’API expose les collections et détails versionnés sous `/api/
 
 Le contrat complet et reproductible est versionné dans `packages/contracts/openapi/v1.json`.
 
-En `APP_DATA_MODE=real`, les mêmes DTO `/api/v1/models` et `/api/v1/backtests` sont projetés depuis le registre PostgreSQL et ses rapports walk-forward. Les mutations `/api/v1/admin/models/train`, `/{modelVersionId}/promote` et `/{modelVersionId}/retire` exigent aussi `Idempotency-Key`, créent un job observable et alimentent le journal append-only `/api/v1/admin/audit-log`. Une promotion reste refusée tant que le benchmark enregistré ne bat pas les trois baselines requises sur le gate multi-métrique. Le workflow d’entraînement concret est injecté derrière la frontière `RealModelTrainingWorkflow` ; sans lui, la demande réelle échoue explicitement en `DEPENDENCY_UNAVAILABLE` et le job conserve cet échec.
+En `APP_DATA_MODE=real`, les mêmes DTO `/api/v1/models` et `/api/v1/backtests` sont projetés depuis le registre PostgreSQL et ses rapports walk-forward. Les mutations `/api/v1/admin/models/train`, `/{modelVersionId}/promote` et `/{modelVersionId}/retire` exigent aussi `Idempotency-Key`, créent un job observable et alimentent le journal append-only `/api/v1/admin/audit-log`. Une promotion reste refusée tant que le benchmark enregistré ne bat pas les trois baselines requises sur le gate multi-métrique. Le workflow d’entraînement concret utilisé par `model-train` implémente aussi la frontière `RealModelTrainingWorkflow` de l’API ; sans injection dans le processus API, la demande réelle échoue explicitement en `DEPENDENCY_UNAVAILABLE` et le job conserve cet échec.
 
 Le package `@metiquo/contracts` génère depuis ce fichier les DTO, le client Fetch et les options TanStack Query. `make openapi` régénère le contrat backend puis le client ; `make openapi-check` échoue si l’un des deux n’est plus synchronisé. Aucun DTO API n’est recopié à la main dans le frontend.
 
