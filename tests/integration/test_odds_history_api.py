@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from typing import cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -14,7 +15,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
 from httpx2 import ASGITransport, AsyncClient, Response
-from sqlalchemy import create_engine
+from sqlalchemy import Table, create_engine, select
 
 from metiquo.api.app import create_app
 from metiquo.api.readiness import ReadinessCheck
@@ -36,7 +37,9 @@ from metiquo.contracts.odds_provider import (
     ProviderMarket,
     ProviderSelection,
 )
+from metiquo.db.odds_models import EventMappingAttempt, EventMappingCandidateScore
 from metiquo.foundation.time import FixedClock, UtcInstant
+from metiquo.mapping import EventMappingStatus, PostgresEventMatchingService
 from metiquo.providers import provider_market_uuid
 from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
 from metiquo.services.odds_capture import OddsCaptureService, OddsCaptureSource
@@ -180,7 +183,7 @@ def test_real_odds_history_and_provider_health_survive_capture_failure(
     provider = _HistoryProvider(
         f"licensed-{uuid4().hex[:8]}",
         provider_event,
-        event.event_id,
+        uuid4(),
         _NOW - timedelta(seconds=30),
     )
     service = OddsCaptureService(engine, FixedClock(UtcInstant(_NOW)))
@@ -191,6 +194,26 @@ def test_real_odds_history_and_provider_health_survive_capture_failure(
     )
 
     report = service.capture_event(provider, provider_event, source)
+    mapping = PostgresEventMatchingService(
+        engine,
+        FixedClock(UtcInstant(_NOW)),
+    ).match_event(provider.provider_code, provider_event, (event,))
+    attempts = cast(Table, EventMappingAttempt.__table__)
+    scores = cast(Table, EventMappingCandidateScore.__table__)
+    with engine.connect() as connection:
+        stored_score = connection.execute(
+            select(
+                attempts.c.weights_version,
+                attempts.c.reason_code,
+                scores.c.team_score,
+                scores.c.time_score,
+                scores.c.competition_score,
+                scores.c.format_score,
+                scores.c.total_score,
+            )
+            .join(scores, scores.c.attempt_id == attempts.c.id)
+            .where(attempts.c.id == mapping.attempt_id)
+        ).one()
     app = create_app(
         settings=_settings(postgresql_url),
         readiness_probe=_ReadyProbe(),
@@ -205,6 +228,19 @@ def test_real_odds_history_and_provider_health_survive_capture_failure(
     sources = _request(app, "/api/v1/admin/data-sources?limit=100")
 
     assert report.inserted_snapshots == 1
+    assert report.event_id != event.event_id
+    assert mapping.status is EventMappingStatus.AUTO_MATCHED
+    assert mapping.selected_event_id == event.event_id
+    assert mapping.attempt_id is not None
+    assert tuple(stored_score) == (
+        "event-match-v1",
+        "AUTO_THRESHOLD",
+        Decimal("1.0000"),
+        Decimal("1.0000"),
+        Decimal("1.0000"),
+        Decimal("1.0000"),
+        Decimal("1.00000"),
+    )
     assert fresh_history.json()["meta"]["freshness"] == "fresh"
     assert history.status_code == 200
     assert history.json()["page"]["total"] == 1

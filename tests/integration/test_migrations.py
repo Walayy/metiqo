@@ -43,6 +43,8 @@ CORE_TABLES = {
     "teams",
 }
 ODDS_TABLES = {
+    "event_mapping_attempts",
+    "event_mapping_candidate_scores",
     "events",
     "markets",
     "provider_health",

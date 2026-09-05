@@ -1228,3 +1228,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; tant que `MAP-003` n'a pas résolu les identités externes, la lecture repose sur l'identifiant événement déjà partagé, sans rapprochement implicite dangereux.
 - **Commit/hash :** `3ffc775` (`feat(odds): expose provider health history`).
+
+## MAP-003 — Score de matching événement
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la normalisation typographique sûre `MAP-002`, l'historisation des événements fournisseur `ODD-007` et les événements canoniques `CNL-003` sont `DONE` ; le score relie leurs contrats sans rapprochement flou.
+- **Fichiers créés/modifiés :** moteur `python/metiquo/mapping/event_matching.py`, exports mapping, modèles d'audit odds, migration `20260907_0029`, raccord de l'historique odds canonique, guide et sept fixtures de scoring, adaptation des preuves de migration et du parcours API PostgreSQL.
+- **Migrations :** `20260907_0029` crée `odds.event_mapping_attempts` et `odds.event_mapping_candidate_scores`, leurs contraintes, index et protections append-only. Chaque tentative conserve statut, événement sélectionné éventuel, score supérieur, orientation, version et motif ; chaque candidat conserve son rang et les quatre composantes.
+- **Commandes/tests exécutés :** Ruff, mypy strict, tests ciblés scoring/migrations/API canonique, démonstration d'ingestion depuis une base vide, puis gate global `make check` sur PostgreSQL réel.
+- **Résultat exact :** `event-match-v1` applique les poids équipes `0,60`, heure `0,20`, compétition `0,15` et format `0,05`. Les équipes utilisent uniquement l'égalité normalisée ou un alias daté ; un ordre A/B inversé obtient le même score et échange ensuite `TEAM_A`/`TEAM_B`. L'heure vaut `1` à cinq minutes, `0,75` à trente minutes, `0,25` à deux heures puis `0`. Un score `>= 0,95` est automatique, `>= 0,75` passe en revue et le reste est rejeté ; deux candidats à `0,05` ou moins restent en revue. `TBD`, `Winner of`, `Loser of` et `To be determined` sont refusés. Seul `auto_matched` expose un identifiant et autorise le remapping, ce qui bloque explicitement toute prédiction ambiguë. La preuve intégrée capture un événement sous un UUID fournisseur distinct, persiste les quatre scores à `1`, le résout puis retrouve ses cotes via l'UUID canonique. Le gate retourne 378 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, scan conformité, contrats et mypy strict sur 277 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les bandes horaires et la marge de proximité appartiennent à la politique versionnée initiale et pourront évoluer sous une nouvelle version sans réécrire l'audit.
+- **Commit/hash :** `0cc7b23` (`feat(mapping): score provider events safely`).
