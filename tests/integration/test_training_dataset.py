@@ -17,7 +17,11 @@ from metiquo.db.core_models import CanonicalEntityRevision, GameTeamStat
 from metiquo.db.raw_models import Snapshot
 from metiquo.features import FeatureDatasetBuilder
 from metiquo.foundation.time import FixedClock, UtcInstant
-from metiquo.models import GameWinnerDatasetBuilder, GameWinnerDatasetRequest
+from metiquo.models import (
+    GameWinnerDatasetBuilder,
+    GameWinnerDatasetRequest,
+    TrainingExampleRepository,
+)
 from tests.integration.test_canonical_rosters import _seed_rosters
 from tests.integration.test_migrations import alembic_config
 
@@ -78,6 +82,14 @@ def test_game_winner_dataset_is_reproducible_and_rejects_unvalidated_labels(
         example.label_source_snapshot_id in first.oe_snapshot_ids for example in first.examples
     )
     assert builder.get(first.dataset_id) == first
+    loaded = TrainingExampleRepository(engine=engine).load(first)
+    assert tuple(item.example_id for item in loaded) == tuple(
+        item.event_id for item in first.examples
+    )
+    assert {item.patch for item in loaded} == {"14.4"}
+    assert tuple(item.label for item in loaded) == tuple(
+        item.label_team_a_win for item in first.examples
+    )
     with engine.connect() as connection:
         for example in first.examples:
             result = connection.execute(

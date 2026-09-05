@@ -904,3 +904,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; `game_winner` est volontairement le seul marché admis dans ce premier schéma et les cotes restent hors du dataset du modèle indépendant.
 - **Commit/hash :** `f548ade` (`feat(ml): version reproducible training datasets`).
+
+## ML-002 — Validation walk-forward
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les datasets et labels immuables `ML-001`, les cutoffs stricts `FEAT-002` et les transformations train-only `FEAT-010` sont `DONE`.
+- **Fichiers créés/modifiés :** moteur `python/metiquo/models/validation.py`, exports ML, extension du test d'intégration du dataset et tests modèle des splits, transformations et prédictions hors échantillon.
+- **Migrations :** aucune ; le plan et son empreinte sont déterministes à partir du dataset versionné, tandis que les futurs runs enregistreront cette preuve.
+- **Commandes/tests exécutés :** Ruff, mypy strict, tests ciblés modèle/PostgreSQL, puis gate global avec anti-leakage, composants et PostgreSQL réel.
+- **Résultat exact :** `WalkForwardSplitter` refuse tout split principal autre que `walk_forward`, groupe les exemples partageant exactement le même cutoff, utilise un train expansif et ne valide que sur des périodes strictement futures. La dernière fenêtre est exclue de tous les folds et son UUID est rendu explicitement comme test final intact. Deux folds synthétiques couvrent quatre prédictions OOF sans doublon ; toute couverture incomplète, tout UUID extérieur à la validation du fold ou toute probabilité hors de `[0,1]` est refusé. `prepare_walk_forward` ajuste scaler et catégories sur le train exact de chaque fold : les valeurs extrêmes et la catégorie présentes seulement dans le test final n'entrent dans aucun artefact. Le tuning n'accepte que les UUID OOF et rejette le test final. Le rapport ventile initial train, validation OOF et test final par patch et statut international, et l'empreinte du plan reste stable quel que soit l'ordre d'entrée. Le gate retourne 273 tests Python et 20 tests composants réussis ; format, lint, types et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la validation principale aléatoire et l'emploi du test final pour choisir des seuils sont explicitement impossibles.
+- **Commit/hash :** `32a740f` (`feat(ml): enforce walk-forward validation`).
