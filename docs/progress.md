@@ -568,6 +568,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; fraîcheur et politique de consommation sont séparées pour rendre l'état observable même lorsqu'une politique le refuse.
 - **Commit/hash :** `5060ebc` (`feat(ingestion): enforce freshness policies`).
 
+## OE-021 — Backfill multi-années reprenable
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** catalogue `OE-003`, chargement/révisions `OE-017`/`OE-018` et politique de fraîcheur `OE-020` sont disponibles pour le processeur annuel injecté.
+- **Fichiers créés/modifiés :** migration `20260906_0008`, `python/metiqo/db/raw_models.py`, `python/metiqo/ingestion/backfill.py`, tests PostgreSQL de reprise/concurrence et listes de tables de migration.
+- **Migrations :** création de `raw.backfill_jobs` rendu unique par empreinte de requête et `raw.backfill_years` avec statut, tentatives, dernier run, erreur et timestamps par année.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés avec upgrade/downgrade ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** `BackfillOrchestrator` matérialise toute plage inclusive, saute les années réussies et retente les états pending/running/failed. Il détient un verrou advisory PostgreSQL de session dérivé de `(provider, année)` pendant le processeur annuel, puis lie le run produit au checkpoint. Un arrêt simulé après 2024 laisse 2025 `running` ; la reprise appelle 2025 à la tentative 2 puis 2026, sans rejouer 2024, et un troisième appel converge sans travail. Deux exécutions concurrentes partagent le même job ; une seule acquiert le verrou 2026 et appelle le processeur. La suite retourne 225 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les advisory locks PostgreSQL évitent une infrastructure distribuée supplémentaire au MVP.
+- **Commit/hash :** `9ecffd8` (`feat(ingestion): resume multi-year backfills`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
