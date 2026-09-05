@@ -1060,3 +1060,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'hypothèse d'indépendance conditionnelle entre games est explicite dans ce premier moteur et les marchés score exact/nombre de games restent désactivés.
 - **Commit/hash :** `2ef7113` (`feat(markets): derive uncertainty-aware series pricing`).
+
+## ML-015 — Explications structurées
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le service de prédiction immuable `ML-013` est `DONE` ; chaque explication exige son UUID de prédiction, sa version modèle et son feature snapshot exacts.
+- **Fichiers créés/modifiés :** builder `python/metiquo/models/explanations.py` et suite `tests/model/test_explanations.py`.
+- **Migrations :** aucune ; l'explication est une vue déterministe versionnée de preuves déjà immuables.
+- **Commandes/tests exécutés :** Ruff, mypy strict, tests de templates ciblés, puis gate global complet avec PostgreSQL réel.
+- **Résultat exact :** le vocabulaire autorise uniquement les quatorze features du modèle tabulaire et leur associe des libellés contrôlés. Une preuve SHAP, native ou par coefficient doit contenir des contributions finies, sans doublon, et reconstruire la sortie du modèle depuis sa valeur de base dans une tolérance explicite. Les facteurs non nuls sont triés par magnitude puis par nom stable et ventilés en positifs/négatifs. Chaque phrase porte un identifiant de template, ses paramètres et au moins un champ structuré ; les contributions sont toujours affichées comme contributions du modèle et jamais comme causes. L'intervalle, la confiance, l'âge des données et toutes les features du modèle manquantes sont rendus par des templates fixes. Les valeurs brutes ne sont pas interpolées dans le texte : la fixture injecte une chaîne non fiable dans un champ et vérifie son absence de la narration. Les features de rumeur/absence et les explications rattachées au mauvais snapshot sont refusées. Deux constructions identiques produisent la même référence par hash. Le gate retourne 305 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 236 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'explication reste calculée à la demande depuis les preuves immuables, sans générateur de texte libre ni donnée externe.
+- **Commit/hash :** `09bfb3d` (`feat(ml): render structured non-causal explanations`).
