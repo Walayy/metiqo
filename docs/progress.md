@@ -398,6 +398,19 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; l'activation en environnement réel nécessitera naturellement un bearer fourni hors dépôt.
 - **ADR éventuel :** aucun ; l'API Drive autorisée reste prioritaire conformément à la SFG, sans mécanisme de contournement de quota.
 - **Commit/hash :** `50f2c5a6f4d96592d6f2e8bb22a81c8f944b9027` (`feat(ingestion): add Google Drive API transport`).
+- **Correctif/hash :** `40ede5414254013a13633b943d691e2559509f7e` garantit aussi qu'un échec d'ouverture exclusive ne supprime jamais une destination API préexistante ; le test conserve exactement les octets initiaux.
+
+## OE-007 — GoogleDrivePublicHttpTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-005` est `DONE` ; le transport API `OE-006` reste prioritaire lorsqu'il est configuré.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/google_drive_public.py`, `python/metiquo/ingestion/source_errors.py`, trois fixtures HTML quota/consent/login, `tests/ingestion/test_google_drive_public.py`, renforcement de `tests/ingestion/test_google_drive_api.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** formatage Ruff et Prettier des fixtures ; Ruff check ; mypy strict global ; 17 tests ciblés Drive API/public ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `GoogleDrivePublicHttpTransport` utilise exclusivement l'URL publique standard `drive.google.com/uc?export=download&id=…`, sans paramètre `confirm`, cookie extrait ni boucle de contournement. Connexion, lecture et redirections sont bornées par la politique commune. Le premier bloc et le type MIME sont inspectés avant toute création de fichier : les pages HTML de quota, consentement et connexion sont refusées en HTTP 200 comme en HTTP 403, y compris lorsqu'une page HTML ment avec `application/octet-stream`. Le flux binaire est haché et synchronisé par blocs ; limite de taille et nettoyage du partiel sont conservés. Les transports API et public préservent tous deux une destination préexistante. Le contract test commun passe et la suite retourne 136 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; ce fallback public respecte le flux officiel et refuse explicitement tout bypass de quota.
+- **Commit/hash :** `40ede5414254013a13633b943d691e2559509f7e` (`feat(ingestion): add safe public Drive transport`).
 
 ## MCK-007 — Gate P1 — démo mock complète
 
