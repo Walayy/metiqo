@@ -45,7 +45,7 @@ test("shows abstention reasons and blocks paper trading for a stale signal", asy
     page.getByRole("heading", { level: 2, name: "Signal ancien — décision bloquée" }),
   ).toBeVisible();
   await expect(page.getByRole("region", { name: "Raisons d’abstention" })).toContainText(
-    "ODDS_STALE",
+    "Cote trop ancienne",
   );
   await expect(page.getByRole("button", { name: "Paper bet bloqué" })).toBeDisabled();
 });
