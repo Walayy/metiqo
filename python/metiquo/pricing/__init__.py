@@ -38,6 +38,12 @@ from metiquo.pricing.policy_repository import (
     PostgresValuePolicyRepository,
     ValuePolicyAudit,
 )
+from metiquo.pricing.signal_repository import (
+    PostgresSignalRepository,
+    SignalIntegrityError,
+    SignalPublication,
+    StoredSignal,
+)
 from metiquo.pricing.value import (
     VALUE_PRICING_POLICY_VERSION,
     ValuePrice,
@@ -62,9 +68,13 @@ __all__ = [
     "NoVigQuote",
     "NoVigStrategy",
     "PolicyRegistrationError",
+    "PostgresSignalRepository",
     "PostgresValuePolicyRepository",
     "ProportionalNoVigStrategy",
     "ResolvedValuePolicy",
+    "SignalIntegrityError",
+    "SignalPublication",
+    "StoredSignal",
     "ValueAdmissionDecision",
     "ValueAdmissionGate",
     "ValueAdmissionInput",
