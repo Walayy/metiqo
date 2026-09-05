@@ -520,6 +520,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le pointeur explicite évite de confondre ordre temporel et publication atomique.
 - **Commit/hash :** `fdf1889` (`feat(ingestion): promote snapshots atomically`).
 
+## OE-017 — Staging et chargement raw tabulaire
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-016` garantit que seuls un snapshot validé et son pointeur courant peuvent être chargés.
+- **Fichiers créés/modifiés :** migration `20260905_0005`, `python/metiqo/db/raw_models.py`, `python/metiqo/ingestion/raw_loader.py`, tests PostgreSQL de chargement et de migrations.
+- **Migrations :** création de `raw.canonical_rows` avec clé naturelle unique, hash de ligne, payload JSON complet, date métier, provenance snapshot/run, révision et garde-fous de suppression par clés étrangères restrictives.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés ; `make check` complet avec base réelle et contrat OpenAPI.
+- **Résultat exact :** `RawTabularLoader` lit le CSV en lots configurables, conserve les colonnes additives, calcule une clé naturelle canonique sur `(gameid, participantid)` et un hash déterministe, puis charge une table temporaire propre au run avec `ON COMMIT DROP`. Une stratégie de secours n'est utilisée que si elle est explicitement configurée. Le merge classe inserted, updated, unchanged et quarantined, ignore les clés invalides ou dupliquées, ne supprime jamais une ligne absente et clôt le run dans la même transaction. Le test charge deux fois le même snapshot : `12/0/0/0`, puis `0/0/12/0`, avec exactement 12 lignes canoniques de révision 1 et aucune table de staging résiduelle. La suite retourne 211 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** le module standard `csv` avec insertions par lots est retenu à ce stade : il fournit le flux adapté demandé sans ajouter Polars, tout en conservant le contrat remplaçable derrière le loader.
+- **Commit/hash :** `8935c2a` (`feat(ingestion): load raw rows idempotently`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
