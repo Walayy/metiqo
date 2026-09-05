@@ -3,7 +3,7 @@
 from typing import Self
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from metiquo.contracts.base import (
     ContractModel,
@@ -24,6 +24,7 @@ from metiquo.contracts.enums import (
     ModelStatus,
     SelectionType,
     ValueGrade,
+    order_abstention_reasons,
 )
 
 
@@ -83,10 +84,22 @@ class Quality(ContractModel):
     )
     publishable: bool
 
+    @field_validator("abstention_reasons")
+    @classmethod
+    def abstentions_are_unique_and_ordered(
+        cls,
+        reasons: tuple[AbstentionReason, ...],
+    ) -> tuple[AbstentionReason, ...]:
+        if reasons != order_abstention_reasons(reasons):
+            raise ValueError("les abstentions doivent être uniques et dans l'ordre public")
+        return reasons
+
     @model_validator(mode="after")
     def publication_matches_abstention(self) -> Self:
-        if self.publishable and self.abstention_reasons:
-            raise ValueError("Une décision avec abstention ne peut pas être publiable")
+        if self.publishable == bool(self.abstention_reasons):
+            raise ValueError(
+                "une décision publiable ne doit porter aucune abstention et inversement"
+            )
         return self
 
 

@@ -137,17 +137,17 @@ def test_multiple_failures_are_complete_deduplicated_and_ordered() -> None:
 
     assert decision.admitted is False
     assert decision.reasons == (
-        AbstentionReason.CAPABILITY_DISABLED,
+        AbstentionReason.ODDS_STALE,
+        AbstentionReason.MARKET_SUSPENDED,
+        AbstentionReason.EVENT_MAPPING_AMBIGUOUS,
         AbstentionReason.SOURCE_STALE,
         AbstentionReason.MODEL_STALE,
-        AbstentionReason.EVENT_MAPPING_AMBIGUOUS,
-        AbstentionReason.MARKET_RULES_UNKNOWN,
-        AbstentionReason.MARKET_SUSPENDED,
-        AbstentionReason.EVENT_ALREADY_STARTED,
-        AbstentionReason.ODDS_STALE,
         AbstentionReason.EDGE_TOO_SMALL,
         AbstentionReason.EXPECTED_VALUE_TOO_SMALL,
         AbstentionReason.CONSERVATIVE_EV_NEGATIVE,
+        AbstentionReason.MARKET_RULES_UNKNOWN,
+        AbstentionReason.EVENT_ALREADY_STARTED,
+        AbstentionReason.CAPABILITY_DISABLED,
     )
 
 

@@ -90,6 +90,37 @@ class AbstentionReason(StrEnum):
     ODDS_INFORMATIONAL_ONLY = "ODDS_INFORMATIONAL_ONLY"
 
 
+SFG_ABSTENTION_REASONS: tuple[AbstentionReason, ...] = (
+    AbstentionReason.ODDS_STALE,
+    AbstentionReason.MARKET_SUSPENDED,
+    AbstentionReason.EVENT_MAPPING_AMBIGUOUS,
+    AbstentionReason.INSUFFICIENT_HISTORY,
+    AbstentionReason.ROSTER_UNCERTAIN,
+    AbstentionReason.SOURCE_STALE,
+    AbstentionReason.MODEL_STALE,
+    AbstentionReason.OUT_OF_DISTRIBUTION,
+    AbstentionReason.CALIBRATION_FAILED,
+    AbstentionReason.EDGE_TOO_SMALL,
+    AbstentionReason.CONSERVATIVE_EV_NEGATIVE,
+    AbstentionReason.MARKET_RULES_UNKNOWN,
+    AbstentionReason.PATCH_CONTEXT_UNKNOWN,
+    AbstentionReason.EVENT_ALREADY_STARTED,
+    AbstentionReason.CAPABILITY_DISABLED,
+)
+
+_ABSTENTION_REASON_PRIORITY = {reason: index for index, reason in enumerate(AbstentionReason)}
+
+
+def order_abstention_reasons(
+    reasons: tuple[AbstentionReason, ...],
+) -> tuple[AbstentionReason, ...]:
+    """Dédupliquer et ordonner les raisons selon le contrat public."""
+
+    if any(not isinstance(reason, AbstentionReason) for reason in reasons):
+        raise TypeError("chaque raison doit être une AbstentionReason")
+    return tuple(sorted(set(reasons), key=_ABSTENTION_REASON_PRIORITY.__getitem__))
+
+
 class OddsPhase(StrEnum):
     """Phase d'utilisation d'une cote, le live restant hors du MVP."""
 

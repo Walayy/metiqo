@@ -34,6 +34,7 @@ import type { ReactNode } from "react";
 import { OddsChart } from "./event-detail";
 import {
   describeOpportunity,
+  formatAbstentionReasons,
   formatDateTime,
   formatDecimal,
   formatPercent,
@@ -374,16 +375,18 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
               </SectionCard>
 
               <SectionCard icon={<CircleAlert className="size-4.5" />} title="Raisons d’abstention">
-                {explanation?.reasons.length ? (
+                {opportunity.quality.abstentionReasons?.length ? (
                   <ul className="grid gap-2">
-                    {explanation.reasons.map((reason) => (
-                      <li
-                        className="rounded-lg border border-border-subtle bg-surface-muted px-3 py-2 text-sm"
-                        key={reason}
-                      >
-                        {reason}
-                      </li>
-                    ))}
+                    {formatAbstentionReasons(opportunity.quality.abstentionReasons).map(
+                      (reason) => (
+                        <li
+                          className="rounded-lg border border-border-subtle bg-surface-muted px-3 py-2 text-sm"
+                          key={reason}
+                        >
+                          {reason}
+                        </li>
+                      ),
+                    )}
                   </ul>
                 ) : (
                   <p className="text-sm text-ink-secondary">Aucune raison d’abstention.</p>
