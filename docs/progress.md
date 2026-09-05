@@ -988,3 +988,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; l'incertitude reste un artefact distinct, sans nouvel entraînement ni consultation du test final, et les décisions de faible confiance demeurent explicables par des codes stables.
 - **Commit/hash :** `163e3d0` (`feat(ml): estimate calibrated uncertainty`).
+
+## ML-009 — Rapport d’évaluation et segments
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** calibration hors échantillon `ML-007` et incertitude conforme `ML-008` sont `DONE` ; le rapport accepte exclusivement les prédictions de preuve calibrées appartenant à la validation OOF du plan et rejette le test final.
+- **Fichiers créés/modifiés :** moteur `python/metiquo/models/evaluation.py`, chemin dédié aux probabilités historiques déjà calibrées dans l'artefact d'incertitude, exports ML et tests numériques/segments.
+- **Migrations :** aucune ; le rapport et son identifiant sont dérivés d'une empreinte déterministe que `ML-010` pourra enregistrer avec la version modèle.
+- **Commandes/tests exécutés :** Ruff, tests modèle et mypy ciblés, puis gate global complet avec PostgreSQL réel.
+- **Résultat exact :** le rapport calcule log loss, Brier, ROC-AUC secondaire, ECE, pente/intercept de calibration, sharpness par largeur moyenne, couverture d'intervalle hors abstention et taux d'abstention. Chaque bloc conserve ses effectifs positifs, négatifs, évalués et abstentions. Les segments ligue, patch, stage et format sont toujours présents ; les buckets de probabilité marché et la robustesse outsider ne sont créés que pour des cotes observées explicitement fournies. Chaque segment porte son effectif, un drapeau de faible échantillon et des raisons de dérive sur log loss, calibration, couverture ou abstention. La politique de promotion exige une métrique probabiliste primaire et rejette donc accuracy ou AUC seules. La preuve numérique retrouve `0,223144` de log loss, `0,040000` de Brier, `1,000000` d'AUC, `0,200000` d'ECE, `0,400000` de largeur et une couverture parfaite. Le gate retourne 288 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, mypy strict sur 219 fichiers et contrats sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les cotes restent un contexte facultatif observé pour l'analyse par segment et ne deviennent jamais une feature du modèle indépendant.
+- **Commit/hash :** `35ef0b8` (`feat(ml): report segmented model evaluation`).
