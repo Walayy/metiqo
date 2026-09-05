@@ -1132,3 +1132,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les accents absents et les tokens sponsor/academy ne sont volontairement pas effacés, car une absence de correspondance est moins dangereuse qu'une fusion erronée.
 - **Commit/hash :** `836102e` (`feat(mapping): normalize entity names safely`).
+
+## ODD-002 — Contrat OddsProvider
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le schéma append-only `ODD-001` est `DONE` ; le port reprend ses identités fournisseur/événement/marché/sélection et ses vocabulaires communs sans importer de modèle ORM ni d'adaptateur concret.
+- **Fichiers créés/modifiés :** port contrôlable à l'exécution `python/metiquo/providers/contracts.py`, DTO fournisseur renforcés, export de compatibilité repository, identifiant de sélection dans le mock, contrat OpenAPI régénéré et suite partagée `tests/providers/odds_provider_contract.py`.
+- **Migrations :** aucune ; `providerSelectionId` relie désormais le DTO normalisé à l'identité déjà persistée par `odds.selections`.
+- **Commandes/tests exécutés :** Ruff, mypy et 17 tests de contrats ciblés, régénération OpenAPI, puis deux passages du gate global `make check`, dont le second depuis les artefacts de contrat enregistrés.
+- **Résultat exact :** `OddsProvider` est un `Protocol` indépendant et contrôlable à l'exécution qui expose `list_events`, `get_event_markets`, `capture_snapshot` et `health`. Les événements refusent les participants dupliqués ; les marchés refusent les identifiants ou issues normalisées dupliqués ; chaque sélection conserve son identifiant fournisseur, son issue commune, son libellé et sa cote décimale. La suite réutilisable vérifie la fenêtre et le jeu des événements, l'unicité et la cohérence des marchés/sélections, l'appartenance fournisseur et l'ordre temporel des snapshots, l'identité du contrôle de santé, le tuple vide pour les marchés d'un événement inconnu, puis les erreurs de capture et de fenêtre. Un adaptateur de référence passe exactement cette suite sans qu'elle connaisse sa classe. Le scan de frontière interdit toute dépendance vers mock, import manuel ou futur flux licencié. Le gate retourne 333 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, lint, contrats et mypy strict sur 257 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; l'ancien import `metiquo.repositories.contracts.OddsProvider` reste un export temporaire compatible, tandis que la source de vérité appartient désormais au package `providers`.
+- **Commit/hash :** `20df453` (`feat(odds): formalize provider contract`).
