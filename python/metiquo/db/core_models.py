@@ -1,6 +1,7 @@
 """Modèles canoniques League of Legends dérivés exclusivement du raw Oracle's Elixir."""
 
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -11,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -390,3 +392,48 @@ class GamePlayerStat(CanonicalProvenanceMixin, Base):
     gold: Mapped[int | None] = mapped_column(BigInteger)
     availability: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
     stats: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+
+class RosterObservation(CanonicalProvenanceMixin, Base):
+    __tablename__ = "roster_observations"
+    __table_args__ = (
+        CheckConstraint("role IN ('top', 'jng', 'mid', 'bot', 'sup')", name="role"),
+        CheckConstraint(
+            "continuity_status IN ('first_seen', 'confirmed', 'substitution_observed')",
+            name="continuity_status",
+        ),
+        CheckConstraint(
+            "observation_confidence >= 0 AND observation_confidence <= 1",
+            name="observation_confidence",
+        ),
+        CheckConstraint("source_row_hash ~ '^[0-9a-f]{64}$'", name="source_row_hash"),
+        CheckConstraint("source_row_revision >= 1", name="source_row_revision"),
+        CheckConstraint("length(trim(transformation_version)) > 0", name="transformation_version"),
+        UniqueConstraint(
+            "game_id", "team_id", "role", name="uq_roster_observations_game_team_role"
+        ),
+        UniqueConstraint("game_id", "player_id", name="uq_roster_observations_game_player"),
+        Index("ix_core_roster_observations_team_observed", "team_id", "observed_at"),
+        {"schema": CORE_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    game_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    team_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    player_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.players.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    observed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    role: Mapped[str] = mapped_column(String(8), nullable=False)
+    continuity_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    observation_confidence: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)

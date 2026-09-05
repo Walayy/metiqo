@@ -5,6 +5,12 @@ from metiquo.canonical.dimensions import (
     CanonicalDimensionStatistics,
 )
 from metiquo.canonical.games import CanonicalGameBuilder, CanonicalGameStatistics
+from metiquo.canonical.rosters import (
+    CanonicalRosterBuilder,
+    CanonicalRosterStatistics,
+    ProjectedRosterMember,
+    RosterProjectionService,
+)
 from metiquo.canonical.series import CanonicalSeriesBuilder, CanonicalSeriesStatistics
 
 __all__ = [
@@ -12,6 +18,10 @@ __all__ = [
     "CanonicalDimensionStatistics",
     "CanonicalGameBuilder",
     "CanonicalGameStatistics",
+    "CanonicalRosterBuilder",
+    "CanonicalRosterStatistics",
     "CanonicalSeriesBuilder",
     "CanonicalSeriesStatistics",
+    "ProjectedRosterMember",
+    "RosterProjectionService",
 ]
