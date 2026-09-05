@@ -26,6 +26,16 @@ from metiquo.features.registry import (
     RegisteredFeatureVector,
     UnregisteredFeatureError,
 )
+from metiquo.features.side import (
+    SideFeatureCalculator,
+    SideFeatureResult,
+    SideParameters,
+    SideSample,
+    TargetSide,
+    TargetSideScenario,
+    TeamSideStrength,
+    side_feature_definitions,
+)
 from metiquo.features.temporal import (
     AsOfGameBatch,
     AsOfGameRepository,
@@ -62,12 +72,20 @@ __all__ = [
     "RegisteredFeatureDefinition",
     "RegisteredFeatureSet",
     "RegisteredFeatureVector",
+    "SideFeatureCalculator",
+    "SideFeatureResult",
+    "SideParameters",
+    "SideSample",
+    "TargetSide",
+    "TargetSideScenario",
     "TeamRating",
     "TeamRecentForm",
+    "TeamSideStrength",
     "UnregisteredFeatureError",
     "latest_entity_revisions_as_of",
     "polars_strictly_before",
     "rating_feature_definitions",
     "recent_form_feature_definitions",
+    "side_feature_definitions",
     "strictly_before_cutoff",
 ]

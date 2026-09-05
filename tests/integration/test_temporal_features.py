@@ -38,6 +38,7 @@ def test_as_of_repository_excludes_game_at_cutoff_and_records_max_input_time(
     dataset = f"feat_002_{uuid4().hex}"
     identities = _seed_series(engine, dataset)
     injected_game = identities["all_games"][0]
+    early_game = identities["all_games"][1]
     raw = cast(Table, CanonicalRow.__table__)
     with engine.begin() as connection:
         rows = connection.execute(
@@ -54,6 +55,16 @@ def test_as_of_repository_excludes_game_at_cutoff_and_records_max_input_time(
                 .where(raw.c.id == row["id"])
                 .values(payload=payload, event_date=_CUTOFF_AT.date())
             )
+        early_rows = connection.execute(
+            select(raw.c.id, raw.c.payload).where(
+                raw.c.dataset == dataset,
+                raw.c.payload["gameid"].astext == early_game,
+            )
+        ).mappings()
+        for row in early_rows:
+            payload = dict(cast(dict[str, object], row["payload"]))
+            payload["golddiffat15"] = "120" if payload["side"] == "Blue" else "-120"
+            connection.execute(update(raw).where(raw.c.id == row["id"]).values(payload=payload))
     CanonicalSeriesBuilder(
         engine=engine,
         clock=FixedClock(UtcInstant(_PROCESSED_AT)),
@@ -73,6 +84,11 @@ def test_as_of_repository_excludes_game_at_cutoff_and_records_max_input_time(
     assert len(batch.source_revision_ids) == 15
     assert len(batch.source_snapshot_ids) == 1
     assert all(len(game.team_stats) == 2 for game in batch.games)
+    early = next(game for game in batch.games if game.source_game_id == early_game)
+    assert {stat.side: stat.stats["gold_diff_at_15"] for stat in early.team_stats} == {
+        "Blue": 120,
+        "Red": -120,
+    }
 
     team_id = batch.games[0].team_stats[0].team_id
     assert len(repository.list_before(cutoff=cutoff, team_ids=frozenset({team_id})).games) == 5

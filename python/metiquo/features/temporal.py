@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from types import MappingProxyType
 from typing import Any, cast
@@ -13,7 +13,7 @@ import polars as pl
 from sqlalchemy import Engine, RowMapping, Select, Table, func, select
 from sqlalchemy.sql.elements import ColumnElement
 
-from metiquo.db.core_models import CanonicalEntityRevision
+from metiquo.db.core_models import CanonicalEntityRevision, CanonicalEntitySource
 from metiquo.foundation.time import normalize_utc_datetime
 
 
@@ -102,6 +102,7 @@ class HistoricalTeamGame:
     source_snapshot_id: UUID
     source_run_id: UUID
     source_processed_at: datetime
+    stats: Mapping[str, int | bool] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,7 +213,24 @@ class AsOfGameRepository:
                 .mappings()
                 .all()
             )
-        stats_by_game = _team_stats(stat_rows)
+            sources = cast(Table, CanonicalEntitySource.__table__)
+            stat_revision_ids = tuple(cast(UUID, row["id"]) for row in stat_rows)
+            source_rows = (
+                connection.execute(
+                    select(sources.c.entity_revision_id, sources.c.source_payload).where(
+                        sources.c.entity_revision_id.in_(stat_revision_ids)
+                    )
+                )
+                .mappings()
+                .all()
+                if stat_revision_ids
+                else ()
+            )
+        source_payloads = {
+            cast(UUID, row["entity_revision_id"]): cast(Mapping[str, object], row["source_payload"])
+            for row in source_rows
+        }
+        stats_by_game = _team_stats(stat_rows, source_payloads)
         games: list[HistoricalGame] = []
         for row in game_rows:
             payload = _payload(row)
@@ -266,7 +284,10 @@ class AsOfGameRepository:
         return AsOfGameBatch(tuple(games), audit, revision_ids, snapshot_ids)
 
 
-def _team_stats(rows: Iterable[RowMapping]) -> dict[UUID, tuple[HistoricalTeamGame, ...]]:
+def _team_stats(
+    rows: Iterable[RowMapping],
+    source_payloads: Mapping[UUID, Mapping[str, object]],
+) -> dict[UUID, tuple[HistoricalTeamGame, ...]]:
     grouped: dict[UUID, list[tuple[RowMapping, Mapping[str, object]]]] = {}
     for row in rows:
         payload = _payload(row)
@@ -283,6 +304,7 @@ def _team_stats(rows: Iterable[RowMapping]) -> dict[UUID, tuple[HistoricalTeamGa
                         next(
                             (item for item in team_ids if item != _uuid(payload, "team_id")), None
                         ),
+                        source_payloads.get(cast(UUID, row["id"]), {}),
                     )
                     for row, payload in values
                 ),
@@ -296,6 +318,7 @@ def _historical_team_game(
     row: RowMapping,
     payload: Mapping[str, object],
     opponent_id: UUID | None,
+    source_payload: Mapping[str, object],
 ) -> HistoricalTeamGame:
     availability = cast(Mapping[str, bool], payload.get("availability", {}))
     return HistoricalTeamGame(
@@ -315,6 +338,7 @@ def _historical_team_game(
         source_snapshot_id=cast(UUID, row["source_snapshot_id"]),
         source_run_id=cast(UUID, row["source_run_id"]),
         source_processed_at=_datetime(row["processed_at"]),
+        stats=MappingProxyType(_source_stats(source_payload)),
     )
 
 
@@ -379,3 +403,52 @@ def _optional_uuid(value: object) -> UUID | None:
 
 def _optional_int(value: object) -> int | None:
     return None if value is None else int(str(value))
+
+
+_SOURCE_INTEGER_STATS = {
+    f"{metric}_diff_at_{minute}": (f"{source}diffat{minute}",)
+    for metric, source in (("gold", "gold"), ("xp", "xp"), ("cs", "cs"))
+    for minute in (10, 15, 20, 25)
+}
+_SOURCE_BOOLEAN_STATS = {
+    "first_baron": ("firstbaron",),
+    "first_blood": ("firstblood",),
+    "first_dragon": ("firstdragon",),
+    "first_herald": ("firstherald",),
+    "first_tower": ("firsttower",),
+}
+
+
+def _source_stats(payload: Mapping[str, object]) -> dict[str, int | bool]:
+    values: dict[str, int | bool] = {}
+    for name, aliases in _SOURCE_INTEGER_STATS.items():
+        value = _first_source_int(payload, aliases)
+        if value is not None:
+            values[name] = value
+    for name, aliases in _SOURCE_BOOLEAN_STATS.items():
+        value = _first_source_bool(payload, aliases)
+        if value is not None:
+            values[name] = value
+    return values
+
+
+def _first_source_int(payload: Mapping[str, object], aliases: tuple[str, ...]) -> int | None:
+    for alias in aliases:
+        value = payload.get(alias)
+        if value is None or str(value).strip() == "":
+            continue
+        try:
+            return int(str(value))
+        except ValueError:
+            continue
+    return None
+
+
+def _first_source_bool(payload: Mapping[str, object], aliases: tuple[str, ...]) -> bool | None:
+    for alias in aliases:
+        value = str(payload.get(alias, "")).strip().casefold()
+        if value in {"1", "true", "yes"}:
+            return True
+        if value in {"0", "false", "no"}:
+            return False
+    return None
