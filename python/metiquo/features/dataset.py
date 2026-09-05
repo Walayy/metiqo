@@ -236,6 +236,32 @@ class TargetGameRepository:
             )
         return tuple(sorted(targets, key=lambda item: (item.event_time, item.game_id)))
 
+    def get(self, event_id: UUID) -> TargetGameCandidate | None:
+        """Relire une candidate précise en conservant les mêmes gates canoniques."""
+
+        games = cast(Table, Game.__table__)
+        with self._engine.connect() as connection:
+            row = (
+                connection.execute(
+                    select(games.c.event_date, games.c.start_at).where(games.c.id == event_id)
+                )
+                .mappings()
+                .one_or_none()
+            )
+        if row is None:
+            return None
+        start_at = cast(datetime | None, row["start_at"])
+        event_date = cast(date | None, row["event_date"])
+        if start_at is None and event_date is None:
+            return None
+        from_date = normalize_utc_datetime(start_at).date() if start_at is not None else event_date
+        if from_date is None:
+            return None
+        return next(
+            (candidate for candidate in self.list_from(from_date) if candidate.game_id == event_id),
+            None,
+        )
+
 
 class FeatureDatasetBuilder:
     """Calculer, enregistrer et reconstruire le feature set P3 fermé."""
@@ -310,6 +336,38 @@ class FeatureDatasetBuilder:
             rebuilt_count=len(rebuilt.replacements),
         )
 
+    def build_for_prediction(
+        self,
+        event_id: UUID,
+        *,
+        cutoff_at: datetime,
+    ) -> StoredFeatureSnapshot:
+        """Construire le vecteur exact d'une prédiction strictement pré-match."""
+
+        normalized_cutoff = normalize_utc_datetime(cutoff_at)
+        target = self._targets.get(event_id)
+        if target is None:
+            raise ValueError("game canonique prédictible introuvable")
+        if normalized_cutoff >= target.event_time:
+            raise ValueError("le cutoff pré-match doit précéder le début de la game")
+        if target.source_processed_at > normalized_cutoff:
+            raise ValueError("le contexte de la game n'était pas connu au cutoff")
+        feature_set = self.ensure_feature_set()
+        existing = self._latest_snapshot(
+            event_id,
+            feature_set.feature_set_id,
+            cutoff_at=normalized_cutoff,
+        )
+        if existing is not None:
+            return existing
+        return self._store.create(
+            self._specification(
+                target,
+                feature_set,
+                cutoff_at=normalized_cutoff,
+            )
+        )
+
     def ensure_feature_set(self) -> RegisteredFeatureSet:
         definitions = (
             *rating_feature_definitions(),
@@ -339,10 +397,11 @@ class FeatureDatasetBuilder:
         team_b_id: UUID | None = None,
         supersedes_snapshot_id: UUID | None = None,
         invalidation_ids: frozenset[UUID] = frozenset(),
+        cutoff_at: datetime | None = None,
     ) -> FeatureSnapshotSpec:
         resolved_a = team_a_id or target.team_a_id
         resolved_b = team_b_id or target.team_b_id
-        cutoff = FeatureCutoff(target.event_time)
+        cutoff = FeatureCutoff(cutoff_at or target.event_time)
         batch = AsOfGameRepository(self._engine).list_before(
             cutoff=cutoff,
             team_ids=frozenset({resolved_a, resolved_b}),
@@ -442,15 +501,20 @@ class FeatureDatasetBuilder:
         self,
         event_id: UUID,
         feature_set_id: UUID,
+        *,
+        cutoff_at: datetime | None = None,
     ) -> StoredFeatureSnapshot | None:
         table = cast(Table, FeatureSnapshot.__table__)
+        filters = [
+            table.c.event_id == event_id,
+            table.c.feature_set_id == feature_set_id,
+        ]
+        if cutoff_at is not None:
+            filters.append(table.c.cutoff_at == cutoff_at)
         with self._engine.connect() as connection:
             snapshot_id = connection.execute(
                 select(table.c.id)
-                .where(
-                    table.c.event_id == event_id,
-                    table.c.feature_set_id == feature_set_id,
-                )
+                .where(*filters)
                 .order_by(table.c.generation.desc(), table.c.created_at.desc())
                 .limit(1)
             ).scalar_one_or_none()
