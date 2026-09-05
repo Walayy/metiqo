@@ -652,3 +652,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; les dimensions appliquent directement l’interdiction P3 de calculer depuis un téléchargement ad hoc.
 - **Commit/hash :** `60ad1b3` (`feat(canonical): add traceable LoL dimensions`).
+
+## CNL-002 — core.games et statistiques équipes/joueurs
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** les dimensions traçables `CNL-001` sont `DONE` et reconstruites automatiquement avant les faits.
+- **Fichiers créés/modifiés :** migration `20260906_0010`, extension des modèles core, projection `python/metiquo/canonical/games.py`, exports canoniques et tests PostgreSQL de fixtures.
+- **Migrations :** création de `core.games`, `core.game_team_stats` et `core.game_player_stats` avec identités déterministes, liens aux dimensions, contraintes de structure, provenance raw obligatoire et documents JSONB d’availability.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict ciblé ; cycle complet Alembic ; tests PostgreSQL des migrations, dimensions et faits exécutés sur PostgreSQL 18.
+- **Résultat exact :** quatre fixtures matérialisent une partie complète, une incomplète, un remake et un forfeit depuis 18 lignes raw validées. Chaque partie expose séparément `complete`, `remake`, `forfeit`, `usable_for_training` et `quality_status`. Toute partie marquée complète possède exactement deux équipes Blue/Red distinctes et un seul résultat gagnant. La partie complète produit dix lignes joueurs par rôle ; les trois autres conservent leurs deux lignes équipes. Les champs source absents, notamment gold et assists, restent `NULL` et leur clé d’availability vaut `false`, sans zéro de remplacement. Un second build conserve tous les UUID et cardinalités ; les quatre tests canoniques/migrations passent.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les faits ne consomment que les lignes raw validées déjà persistées et les champs OE réellement présents.
+- **Commit/hash :** `d0f135e` (`feat(canonical): project traceable game facts`).
