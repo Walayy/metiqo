@@ -2,6 +2,7 @@
 
 from metiquo.providers.contracts import OddsProvider
 from metiquo.providers.disabled import DisabledProvider, ProviderDisabledError
+from metiquo.providers.identity import provider_entity_uuid, provider_market_uuid
 from metiquo.providers.licensed_feed import (
     LicensedFeedActivationError,
     LicensedOddsFeedConfiguration,
@@ -31,4 +32,6 @@ __all__ = [
     "OddsProvider",
     "ProviderDisabledError",
     "StakeAuthorizedProvider",
+    "provider_entity_uuid",
+    "provider_market_uuid",
 ]
