@@ -77,7 +77,12 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
         assert set(ALL_SCHEMAS) <= schema_names
         assert set(inspect(connection).get_table_names(schema="raw")) == RAW_TABLES
         assert set(inspect(connection).get_table_names(schema="core")) == CORE_TABLES
-        assert set(inspect(connection).get_table_names(schema="features")) == {"invalidations"}
+        assert set(inspect(connection).get_table_names(schema="features")) == {
+            "feature_definitions",
+            "feature_set_members",
+            "feature_sets",
+            "invalidations",
+        }
         assert all(
             inspect(connection).get_table_names(schema=name) == []
             for name in ALL_SCHEMAS
