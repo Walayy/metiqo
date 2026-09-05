@@ -223,6 +223,11 @@ def test_normative_enums_have_stable_values() -> None:
         "PATCH_CONTEXT_UNKNOWN",
         "EVENT_ALREADY_STARTED",
         "CAPABILITY_DISABLED",
+        "SELECTION_MISSING",
+        "MARKET_OUTCOMES_INCOMPLETE",
+        "ODDS_TEMPORAL_ORDER_INVALID",
+        "LIVE_BETTING_OUT_OF_SCOPE",
+        "ODDS_INFORMATIONAL_ONLY",
     }
 
 

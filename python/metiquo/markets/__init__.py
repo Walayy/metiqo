@@ -1,5 +1,11 @@
 """Plugins de marchés activés par capacités et modèles vérifiés."""
 
+from metiquo.markets.admissibility import (
+    MarketAdmissibilityDecision,
+    MarketAdmissibilityGate,
+    MarketAdmissibilityInput,
+    OddsFreshnessPolicy,
+)
 from metiquo.markets.game_winner import (
     GAME_WINNER_PLUGIN_VERSION,
     GameWinnerBenchmarkTrainer,
@@ -36,7 +42,11 @@ __all__ = [
     "GameWinnerProbability",
     "GameWinnerSettlement",
     "GameWinnerTrainingBackend",
+    "MarketAdmissibilityDecision",
+    "MarketAdmissibilityGate",
+    "MarketAdmissibilityInput",
     "MarketPlugin",
+    "OddsFreshnessPolicy",
     "PluginAvailability",
     "PluginDisabledError",
     "ProbabilityInterval",

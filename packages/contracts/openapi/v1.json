@@ -18,7 +18,12 @@
           "MARKET_RULES_UNKNOWN",
           "PATCH_CONTEXT_UNKNOWN",
           "EVENT_ALREADY_STARTED",
-          "CAPABILITY_DISABLED"
+          "CAPABILITY_DISABLED",
+          "SELECTION_MISSING",
+          "MARKET_OUTCOMES_INCOMPLETE",
+          "ODDS_TEMPORAL_ORDER_INVALID",
+          "LIVE_BETTING_OUT_OF_SCOPE",
+          "ODDS_INFORMATIONAL_ONLY"
         ],
         "title": "AbstentionReason",
         "type": "string"
