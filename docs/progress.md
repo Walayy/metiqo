@@ -387,6 +387,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le contrat reste synchrone comme la SFG et sépare la politique de chaque implémentation.
 - **Commit/hash :** `95ca6d9b9318444502375ace24357e033748105c` (`feat(ingestion): define source transport contract`).
 
+## OE-006 — GoogleDriveApiTransport
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-005` est `DONE` et fournit les DTO, le protocole et la politique commune.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/google_drive_api.py`, `python/metiquo/ingestion/source_errors.py`, `python/metiquo/config.py`, `tests/ingestion/test_google_drive_api.py`, `docs/progress.md`.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 8 tests Drive API ; 19 tests ciblés Drive/configuration ; suite Python complète ; `git diff --check`.
+- **Résultat exact :** `GoogleDriveApiTransport` n'est construit depuis les settings que lorsqu'un bearer autorisé non vide est présent et masqué par `SecretStr`. Il interroge l'endpoint metadata Drive v3, vérifie l'ID et la taille, puis télécharge `alt=media` en blocs de 256 Kio avec SHA-256 incrémental, `fsync`, limite avant et pendant le flux, timeouts injectés et redirections bornées. Les réponses Drive sont classées en not-found, permission, quota, rate-limit, timeout, taille, réponse invalide ou indisponibilité, avec code sûr et possibilité de retry. Les tests prouvent qu'une erreur quota HTTP 403 ne crée aucun fichier, qu'un dépassement en cours de flux supprime le partiel et que le credential n'apparaît ni dans le transport, ni dans l'exception sérialisée. Le transport satisfait les contract tests communs ; la suite retourne 127 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun ; l'activation en environnement réel nécessitera naturellement un bearer fourni hors dépôt.
+- **ADR éventuel :** aucun ; l'API Drive autorisée reste prioritaire conformément à la SFG, sans mécanisme de contournement de quota.
+- **Commit/hash :** `50f2c5a6f4d96592d6f2e8bb22a81c8f944b9027` (`feat(ingestion): add Google Drive API transport`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
