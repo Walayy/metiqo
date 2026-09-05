@@ -26,7 +26,16 @@ RAW_TABLES = {
     "snapshots",
     "source_catalog",
 }
-CORE_TABLES = {"competitions", "game_titles", "patches", "players", "teams"}
+CORE_TABLES = {
+    "competitions",
+    "game_player_stats",
+    "game_team_stats",
+    "game_titles",
+    "games",
+    "patches",
+    "players",
+    "teams",
+}
 
 
 def alembic_config(url: str) -> Config:

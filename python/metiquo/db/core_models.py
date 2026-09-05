@@ -1,9 +1,21 @@
 """Modèles canoniques League of Legends dérivés exclusivement du raw Oracle's Elixir."""
 
-from datetime import datetime
+from datetime import date, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -155,3 +167,145 @@ class Patch(CanonicalProvenanceMixin, Base):
     version: Mapped[str] = mapped_column(String(64), nullable=False)
     normalized_name: Mapped[str] = mapped_column(String(255), nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(255))
+
+
+class Game(CanonicalProvenanceMixin, Base):
+    __tablename__ = "games"
+    __table_args__ = (
+        CheckConstraint("length(trim(source_game_id)) > 0", name="source_game_id"),
+        CheckConstraint("source_row_hash ~ '^[0-9a-f]{64}$'", name="source_row_hash"),
+        CheckConstraint("source_row_revision >= 1", name="source_row_revision"),
+        CheckConstraint("length(trim(transformation_version)) > 0", name="transformation_version"),
+        CheckConstraint(
+            "quality_status IN ('complete', 'incomplete', 'remake', 'forfeit')",
+            name="quality_status",
+        ),
+        CheckConstraint("game_length_seconds IS NULL OR game_length_seconds > 0", name="length"),
+        CheckConstraint("best_of IS NULL OR best_of >= 1", name="best_of"),
+        CheckConstraint("game_number IS NULL OR game_number >= 1", name="game_number"),
+        CheckConstraint(
+            "NOT usable_for_training OR (complete AND NOT remake AND NOT forfeit)",
+            name="training_eligibility",
+        ),
+        UniqueConstraint(
+            "game_title_id", "source_game_id", name="uq_games_game_title_source_identity"
+        ),
+        Index("ix_core_games_event_date", "event_date"),
+        {"schema": CORE_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    game_title_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.game_titles.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    competition_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.competitions.id", ondelete="RESTRICT"),
+    )
+    patch_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.patches.id", ondelete="RESTRICT"),
+    )
+    source_game_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    event_date: Mapped[date | None] = mapped_column()
+    start_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    game_length_seconds: Mapped[int | None] = mapped_column(Integer)
+    best_of: Mapped[int | None] = mapped_column(Integer)
+    game_number: Mapped[int | None] = mapped_column(Integer)
+    complete: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    remake: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    forfeit: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    usable_for_training: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    quality_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    availability: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
+
+
+class GameTeamStat(CanonicalProvenanceMixin, Base):
+    __tablename__ = "game_team_stats"
+    __table_args__ = (
+        CheckConstraint("side IN ('Blue', 'Red')", name="side"),
+        CheckConstraint("kills IS NULL OR kills >= 0", name="kills_non_negative"),
+        CheckConstraint("deaths IS NULL OR deaths >= 0", name="deaths_non_negative"),
+        CheckConstraint("gold IS NULL OR gold >= 0", name="gold_non_negative"),
+        CheckConstraint("towers IS NULL OR towers >= 0", name="towers_non_negative"),
+        CheckConstraint("dragons IS NULL OR dragons >= 0", name="dragons_non_negative"),
+        CheckConstraint("barons IS NULL OR barons >= 0", name="barons_non_negative"),
+        CheckConstraint("source_row_hash ~ '^[0-9a-f]{64}$'", name="source_row_hash"),
+        CheckConstraint("source_row_revision >= 1", name="source_row_revision"),
+        CheckConstraint("length(trim(transformation_version)) > 0", name="transformation_version"),
+        UniqueConstraint("game_id", "team_id", name="uq_game_team_stats_game_team"),
+        UniqueConstraint("game_id", "side", name="uq_game_team_stats_game_side"),
+        {"schema": CORE_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    game_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    team_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    side: Mapped[str] = mapped_column(String(8), nullable=False)
+    result: Mapped[bool | None] = mapped_column(Boolean)
+    kills: Mapped[int | None] = mapped_column(Integer)
+    deaths: Mapped[int | None] = mapped_column(Integer)
+    gold: Mapped[int | None] = mapped_column(BigInteger)
+    towers: Mapped[int | None] = mapped_column(Integer)
+    dragons: Mapped[int | None] = mapped_column(Integer)
+    barons: Mapped[int | None] = mapped_column(Integer)
+    availability: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
+    stats: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+
+class GamePlayerStat(CanonicalProvenanceMixin, Base):
+    __tablename__ = "game_player_stats"
+    __table_args__ = (
+        CheckConstraint("side IN ('Blue', 'Red')", name="side"),
+        CheckConstraint("position IN ('top', 'jng', 'mid', 'bot', 'sup')", name="position"),
+        CheckConstraint("kills IS NULL OR kills >= 0", name="kills_non_negative"),
+        CheckConstraint("deaths IS NULL OR deaths >= 0", name="deaths_non_negative"),
+        CheckConstraint("assists IS NULL OR assists >= 0", name="assists_non_negative"),
+        CheckConstraint("creep_score IS NULL OR creep_score >= 0", name="creep_score_non_negative"),
+        CheckConstraint("gold IS NULL OR gold >= 0", name="gold_non_negative"),
+        CheckConstraint("source_row_hash ~ '^[0-9a-f]{64}$'", name="source_row_hash"),
+        CheckConstraint("source_row_revision >= 1", name="source_row_revision"),
+        CheckConstraint("length(trim(transformation_version)) > 0", name="transformation_version"),
+        UniqueConstraint("game_id", "player_id", name="uq_game_player_stats_game_player"),
+        UniqueConstraint(
+            "game_id", "side", "position", name="uq_game_player_stats_game_side_position"
+        ),
+        {"schema": CORE_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    game_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    player_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.players.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    team_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.teams.id", ondelete="RESTRICT"),
+    )
+    side: Mapped[str] = mapped_column(String(8), nullable=False)
+    position: Mapped[str] = mapped_column(String(8), nullable=False)
+    champion: Mapped[str | None] = mapped_column(String(128))
+    result: Mapped[bool | None] = mapped_column(Boolean)
+    kills: Mapped[int | None] = mapped_column(Integer)
+    deaths: Mapped[int | None] = mapped_column(Integer)
+    assists: Mapped[int | None] = mapped_column(Integer)
+    creep_score: Mapped[int | None] = mapped_column(Integer)
+    gold: Mapped[int | None] = mapped_column(BigInteger)
+    availability: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
+    stats: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)

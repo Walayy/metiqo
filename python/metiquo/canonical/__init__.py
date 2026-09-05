@@ -4,5 +4,11 @@ from metiquo.canonical.dimensions import (
     CanonicalDimensionBuilder,
     CanonicalDimensionStatistics,
 )
+from metiquo.canonical.games import CanonicalGameBuilder, CanonicalGameStatistics
 
-__all__ = ["CanonicalDimensionBuilder", "CanonicalDimensionStatistics"]
+__all__ = [
+    "CanonicalDimensionBuilder",
+    "CanonicalDimensionStatistics",
+    "CanonicalGameBuilder",
+    "CanonicalGameStatistics",
+]
