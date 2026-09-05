@@ -592,6 +592,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; la CLI compose les frontières déjà imposées par la SFG et ne crée ni source statistique alternative ni accès local non déclaré.
 - **Commit/hash :** `d61d758` (`feat(ingestion): expose Oracle Elixir operator CLI`).
 
+## OE-023 — API/admin et UI santé réelles
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la politique de fraîcheur `OE-020`, la CLI/coordinator `OE-022` et le dashboard de santé `UI-008` sont disponibles.
+- **Fichiers créés/modifiés :** projections PostgreSQL `python/metiqo/repositories/postgres_admin.py`, service de mutation réelle idempotente, routes API réelles, branchement conditionnel dans la fabrique FastAPI, enrichissements optionnels du contrat `IngestionRunSummary`, contrat OpenAPI et client généré, dashboard partagé, tests API PostgreSQL et Playwright real-fixture.
+- **Migrations :** aucune nouvelle migration ; les projections lisent `raw.source_catalog`, `raw.snapshots`, `raw.ingestion_runs`, `raw.quality_issues`, `raw.quarantine_items` et les jobs de backfill existants.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; TypeScript strict ; génération et vérification OpenAPI ; test d'intégration API mock/réel sur PostgreSQL ; `make check` sur base jetable vide ; Playwright ciblé `real-data-health.spec.ts` sur build de production ; inspection Navigateur d'une API réelle et d'un frontend démarré avec `APP_DATA_MODE=real`.
+- **Résultat exact :** les endpoints `data-sources`, `ingestion-runs`, `quality-issues`, `jobs` et `oracles-elixir/sync` sont disponibles en mode réel sans monter les autres domaines prématurément. Mock et réel sérialisent les mêmes clés de DTO ; les champs de provenance optionnels exposent hash, année, lignes, plage métier, empreinte/changement de schéma, transport et code d'erreur. Une tentative en échec plus récente classe la source `degraded` tout en conservant le dernier snapshot validé et toutes les lectures en HTTP `200`. Le sync réel déduplique sa clé d'idempotence et n'accepte aucune fixture. Le Navigateur a confirmé le badge `REAL`, le hash, les 12 lignes, la couverture, le schéma stable, l'historique, l'anomalie ouverte et la quarantaine sur le même composant que le mock. La suite complète retourne 229 tests réussis ; le test Playwright real-fixture passe sur le build de production.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la différence de mode se situe dans les adaptateurs et les métadonnées, pas dans les composants UI ni les contrats publics.
+- **Commit/hash :** `d91ab04` (`feat(admin): expose real ingestion health`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
