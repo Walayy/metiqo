@@ -8,13 +8,14 @@ from decimal import Decimal
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import Engine, RowMapping, Table, func, select
+from sqlalchemy import Engine, RowMapping, Table, exists, func, or_, select
 
 from metiquo.contracts import Event, Market, OddsSnapshot
 from metiquo.contracts.enums import EventStatus, MarketStatus, ProviderStatus, SelectionType
 from metiquo.contracts.enums import GameTitle as ContractGameTitle
 from metiquo.db.core_models import Competition, Game, GameTeamStat, Series, Team
 from metiquo.db.odds_models import (
+    EventMappingAttempt,
     OddsProviderRecord,
     OddsSnapshotRecord,
     ProviderOddsSelection,
@@ -210,6 +211,18 @@ class PostgresCanonicalRepository:
         snapshots = cast(Table, OddsSnapshotRecord.__table__)
         providers = cast(Table, OddsProviderRecord.__table__)
         selections = cast(Table, ProviderOddsSelection.__table__)
+        attempts = cast(Table, EventMappingAttempt.__table__)
+        mapped_inversion = (
+            select(attempts.c.selections_inverted)
+            .where(
+                attempts.c.provider_event_id == snapshots.c.event_id,
+                attempts.c.selected_event_id == event_id,
+                attempts.c.result_status == "auto_matched",
+            )
+            .order_by(attempts.c.evaluated_at.desc(), attempts.c.id.desc())
+            .limit(1)
+            .scalar_subquery()
+        )
         with self.engine.connect() as connection:
             rows = (
                 connection.execute(
@@ -217,11 +230,21 @@ class PostgresCanonicalRepository:
                         snapshots,
                         providers.c.code.label("provider_code"),
                         selections.c.selection_type,
+                        func.coalesce(mapped_inversion, False).label("selections_inverted"),
                     )
                     .join(providers, providers.c.id == snapshots.c.provider_id)
                     .join(selections, selections.c.id == snapshots.c.selection_id)
                     .where(
-                        snapshots.c.event_id == event_id,
+                        or_(
+                            snapshots.c.event_id == event_id,
+                            exists(
+                                select(attempts.c.id).where(
+                                    attempts.c.provider_event_id == snapshots.c.event_id,
+                                    attempts.c.selected_event_id == event_id,
+                                    attempts.c.result_status == "auto_matched",
+                                )
+                            ),
+                        ),
                         snapshots.c.captured_at.is_not(None),
                     )
                     .order_by(snapshots.c.captured_at, snapshots.c.id)
@@ -230,17 +253,23 @@ class PostgresCanonicalRepository:
                 .all()
             )
         now = self.clock.now().value
-        return tuple(self._odds_snapshot(row, now) for row in rows)
+        return tuple(self._odds_snapshot(row, now, event_id) for row in rows)
 
     @staticmethod
-    def _odds_snapshot(row: RowMapping, now: datetime) -> OddsSnapshot:
+    def _odds_snapshot(row: RowMapping, now: datetime, canonical_event_id: UUID) -> OddsSnapshot:
         captured_at = cast(datetime, row["captured_at"])
         decimal_odds = cast(Decimal, row["decimal_odds"])
+        selection = SelectionType(str(row["selection_type"]))
+        if bool(row["selections_inverted"]):
+            if selection is SelectionType.TEAM_A:
+                selection = SelectionType.TEAM_B
+            elif selection is SelectionType.TEAM_B:
+                selection = SelectionType.TEAM_A
         return OddsSnapshot(
             odds_snapshot_id=cast(UUID, row["id"]),
-            event_id=cast(UUID, row["event_id"]),
+            event_id=canonical_event_id,
             market_id=cast(UUID, row["market_id"]),
-            selection=SelectionType(str(row["selection_type"])),
+            selection=selection,
             provider=str(row["provider_code"]),
             provider_status=ProviderStatus(str(row["provider_status"])),
             market_status=MarketStatus(str(row["market_status"])),

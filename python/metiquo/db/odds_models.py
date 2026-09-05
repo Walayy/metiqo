@@ -282,3 +282,87 @@ class OddsSnapshotRecord(Base):
     raw_payload_sha256: Mapped[str | None] = mapped_column(String(64))
     provenance_reference: Mapped[str] = mapped_column(String(1024), nullable=False)
     observation_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class EventMappingAttempt(Base):
+    """Décision append-only de résolution d'un événement fournisseur."""
+
+    __tablename__ = "event_mapping_attempts"
+    __table_args__ = (
+        CheckConstraint(
+            "result_status IN ('auto_matched', 'review', 'rejected')",
+            name="result_status",
+        ),
+        CheckConstraint("top_score BETWEEN 0 AND 1", name="top_score"),
+        CheckConstraint(
+            "(result_status = 'auto_matched') = (selected_event_id IS NOT NULL)",
+            name="selected_event",
+        ),
+        CheckConstraint("length(trim(weights_version)) > 0", name="weights_version"),
+        CheckConstraint("length(trim(reason_code)) > 0", name="reason_code"),
+        Index(
+            "ix_odds_event_mapping_attempts_provider_event_time",
+            "provider_event_id",
+            "evaluated_at",
+        ),
+        {"schema": ODDS_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    provider_event_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("odds.events.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    result_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    selected_event_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True))
+    top_score: Mapped[Decimal] = mapped_column(Numeric(6, 5), nullable=False)
+    selections_inverted: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    weights_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    reason_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+
+
+class EventMappingCandidateScore(Base):
+    """Composantes auditables d'un candidat de matching événement."""
+
+    __tablename__ = "event_mapping_candidate_scores"
+    __table_args__ = (
+        CheckConstraint("rank >= 1", name="rank"),
+        CheckConstraint("team_score BETWEEN 0 AND 1", name="team_score"),
+        CheckConstraint("time_score BETWEEN 0 AND 1", name="time_score"),
+        CheckConstraint("competition_score BETWEEN 0 AND 1", name="competition_score"),
+        CheckConstraint("format_score BETWEEN 0 AND 1", name="format_score"),
+        CheckConstraint("total_score BETWEEN 0 AND 1", name="total_score"),
+        UniqueConstraint("attempt_id", "rank", name="uq_odds_event_mapping_candidate_rank"),
+        UniqueConstraint(
+            "attempt_id",
+            "canonical_event_id",
+            name="uq_odds_event_mapping_candidate_event",
+        ),
+        Index(
+            "ix_odds_event_mapping_candidates_event_score",
+            "canonical_event_id",
+            "total_score",
+        ),
+        {"schema": ODDS_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    attempt_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "odds.event_mapping_attempts.id",
+            name="fk_event_mapping_scores_attempt",
+            ondelete="RESTRICT",
+        ),
+        nullable=False,
+    )
+    canonical_event_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    rank: Mapped[int] = mapped_column(nullable=False)
+    team_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    time_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    competition_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    format_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    total_score: Mapped[Decimal] = mapped_column(Numeric(6, 5), nullable=False)
+    selections_inverted: Mapped[bool] = mapped_column(Boolean, nullable=False)
