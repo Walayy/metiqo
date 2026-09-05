@@ -72,6 +72,7 @@ class RawLoadResult:
 @dataclass(frozen=True, slots=True)
 class _StagedRow:
     candidate_id: UUID
+    revision_id: UUID
     ordinal: int
     natural_key: str | None
     row_hash: str | None
@@ -82,6 +83,7 @@ class _StagedRow:
     def parameters(self) -> dict[str, object]:
         return {
             "candidate_id": self.candidate_id,
+            "revision_id": self.revision_id,
             "ordinal": self.ordinal,
             "natural_key": self.natural_key,
             "row_hash": self.row_hash,
@@ -148,6 +150,15 @@ class RawTabularLoader:
                 provider=provider,
                 dataset=dataset,
                 total=total,
+            )
+            self._record_revisions(
+                connection=connection,
+                staging_table=staging_table,
+                provider=provider,
+                dataset=dataset,
+                snapshot_id=snapshot_id,
+                run_id=run_id,
+                committed_at=committed_at,
             )
             self._merge(
                 connection=connection,
@@ -232,6 +243,7 @@ class RawTabularLoader:
                 f"""
                 CREATE TEMP TABLE {staging_table} (
                   candidate_id uuid NOT NULL,
+                  revision_id uuid NOT NULL,
                   ordinal bigint NOT NULL,
                   natural_key text,
                   row_hash varchar(64),
@@ -274,9 +286,10 @@ class RawTabularLoader:
         statement = text(
             f"""
             INSERT INTO {staging_table} (
-              candidate_id, ordinal, natural_key, row_hash, payload, event_date, reason_code
+              candidate_id, revision_id, ordinal, natural_key, row_hash,
+              payload, event_date, reason_code
             ) VALUES (
-              :candidate_id, :ordinal, :natural_key, :row_hash,
+              :candidate_id, :revision_id, :ordinal, :natural_key, :row_hash,
               CAST(:payload AS jsonb), :event_date, :reason_code
             )
             """
@@ -315,6 +328,7 @@ class RawTabularLoader:
             payload_json = _canonical_json(payload)
             yield _StagedRow(
                 candidate_id=uuid4(),
+                revision_id=uuid4(),
                 ordinal=ordinal,
                 natural_key=natural_key,
                 row_hash=None
@@ -376,6 +390,62 @@ class RawTabularLoader:
             unchanged=int(counts["unchanged"]),
             quarantined=int(counts["quarantined"]),
             total=total,
+        )
+
+    @staticmethod
+    def _record_revisions(
+        *,
+        connection: Connection,
+        staging_table: str,
+        provider: str,
+        dataset: str,
+        snapshot_id: UUID,
+        run_id: UUID,
+        committed_at: datetime,
+    ) -> None:
+        connection.execute(
+            text(
+                f"""
+                INSERT INTO raw.row_revisions (
+                  id, snapshot_id, run_id, provider, dataset, natural_key,
+                  row_hash, revision, operation, previous_revision_id,
+                  payload, event_date, valid_from, created_at
+                )
+                SELECT source.revision_id, :snapshot_id, :run_id, :provider, :dataset,
+                       source.natural_key, source.row_hash,
+                       CASE WHEN canonical.id IS NULL THEN 1 ELSE canonical.revision + 1 END,
+                       CASE WHEN canonical.id IS NULL THEN 'inserted' ELSE 'updated' END,
+                       previous.id, source.payload, source.event_date,
+                       :committed_at, :committed_at
+                FROM (
+                  SELECT staged.*,
+                         count(*) OVER (PARTITION BY natural_key) AS key_count
+                  FROM {staging_table} AS staged
+                  WHERE reason_code IS NULL
+                ) AS source
+                LEFT JOIN raw.canonical_rows AS canonical
+                  ON canonical.provider = :provider
+                 AND canonical.dataset = :dataset
+                 AND canonical.natural_key = source.natural_key
+                LEFT JOIN raw.row_revisions AS previous
+                  ON previous.provider = canonical.provider
+                 AND previous.dataset = canonical.dataset
+                 AND previous.natural_key = canonical.natural_key
+                 AND previous.revision = canonical.revision
+                WHERE source.key_count = 1
+                  AND (
+                    canonical.id IS NULL
+                    OR canonical.row_hash IS DISTINCT FROM source.row_hash
+                  )
+                """
+            ),
+            {
+                "provider": provider,
+                "dataset": dataset,
+                "snapshot_id": snapshot_id,
+                "run_id": run_id,
+                "committed_at": committed_at,
+            },
         )
 
     @staticmethod

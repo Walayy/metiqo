@@ -8,6 +8,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import Connection, create_engine, text
+from sqlalchemy.exc import DBAPIError
 
 from metiquo.foundation.time import FixedClock, UtcInstant
 from metiquo.ingestion.raw_loader import RawTabularLoader
@@ -191,6 +192,10 @@ def test_double_load_is_idempotent_and_drops_each_staging_table(
             text("SELECT to_regclass(:name)"),
             {"name": f"pg_temp.{second.staging_table}"},
         ).scalar_one()
+        revision_count = connection.execute(
+            text("SELECT count(*) FROM raw.row_revisions WHERE snapshot_id = :snapshot_id"),
+            {"snapshot_id": snapshot_id},
+        ).scalar_one()
 
     assert canonical_count == 12
     assert sample["revision"] == 1
@@ -215,4 +220,179 @@ def test_double_load_is_idempotent_and_drops_each_staging_table(
     assert counters_by_id[second_run_id] == second.statistics.to_dict()
     assert first_staging is None
     assert second_staging is None
+    assert revision_count == 12
+    engine.dispose()
+
+
+@pytest.mark.integration
+def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows(
+    postgresql_url: str,
+    tmp_path: Path,
+) -> None:
+    command.upgrade(alembic_config(postgresql_url), "head")
+    engine = create_engine(postgresql_url)
+    with engine.begin() as connection:
+        catalog_id, first_snapshot_id, first_run_id, second_run_id = (
+            _seed_published_snapshot_and_load_runs(connection)
+        )
+
+    loader = RawTabularLoader(
+        engine=engine,
+        clock=FixedClock(UtcInstant(INSTANT)),
+    )
+    first = loader.load(
+        source_catalog_id=catalog_id,
+        snapshot_id=first_snapshot_id,
+        run_id=first_run_id,
+        csv_path=FIXTURE,
+    )
+    assert first.statistics.inserted == 12
+
+    corrected_path = tmp_path / "corrected.csv"
+    lines = FIXTURE.read_text().splitlines()
+    lines[1] = lines[1].replace(
+        ",complete,2,1800,false",
+        ",complete,99,1800,false",
+    )
+    corrected_path.write_text("\n".join(lines[:-1]) + "\n")
+    second_snapshot_id = uuid4()
+    with engine.begin() as connection:
+        catalog = (
+            connection.execute(
+                text("SELECT drive_file_id, dataset FROM raw.source_catalog WHERE id = :id"),
+                {"id": catalog_id},
+            )
+            .mappings()
+            .one()
+        )
+        drive_file_id = catalog["drive_file_id"]
+        dataset = catalog["dataset"]
+        connection.execute(
+            text(
+                """
+                INSERT INTO raw.snapshots (
+                  id, source_catalog_id, year, source_file_id, status, sha256,
+                  byte_size, content_type, object_key, received_at, validated_at
+                ) VALUES (
+                  :snapshot_id, :catalog_id, 2026, :drive_file_id, 'validated', :sha256,
+                  :byte_size, 'text/csv', :object_key, :instant, :instant
+                )
+                """
+            ),
+            {
+                "snapshot_id": second_snapshot_id,
+                "catalog_id": catalog_id,
+                "drive_file_id": drive_file_id,
+                "sha256": second_snapshot_id.hex * 2,
+                "byte_size": corrected_path.stat().st_size,
+                "object_key": (f"year=2026/sha256={second_snapshot_id.hex * 2}/source.csv"),
+                "instant": INSTANT,
+            },
+        )
+        connection.execute(
+            text(
+                "UPDATE raw.source_catalog SET current_snapshot_id = :snapshot_id "
+                "WHERE id = :catalog_id"
+            ),
+            {"snapshot_id": second_snapshot_id, "catalog_id": catalog_id},
+        )
+        connection.execute(
+            text("UPDATE raw.ingestion_runs SET snapshot_id = :snapshot_id WHERE id = :run_id"),
+            {"snapshot_id": second_snapshot_id, "run_id": second_run_id},
+        )
+
+    second = loader.load(
+        source_catalog_id=catalog_id,
+        snapshot_id=second_snapshot_id,
+        run_id=second_run_id,
+        csv_path=corrected_path,
+    )
+    assert second.statistics.to_dict() == {
+        "inserted": 0,
+        "updated": 1,
+        "unchanged": 10,
+        "quarantined": 0,
+        "total": 11,
+    }
+
+    changed_key = '["OE-001","1"]'
+    unchanged_key = '["OE-001","2"]'
+    with engine.connect() as connection:
+        canonical_count = connection.execute(
+            text(
+                "SELECT count(*) FROM raw.canonical_rows "
+                "WHERE provider = 'oracles_elixir' AND dataset = :dataset"
+            ),
+            {"dataset": dataset},
+        ).scalar_one()
+        canonical = (
+            connection.execute(
+                text(
+                    """
+                SELECT revision, payload, source_snapshot_id, source_run_id
+                FROM raw.canonical_rows
+                WHERE dataset = :dataset AND natural_key = :natural_key
+                """
+                ),
+                {"dataset": dataset, "natural_key": changed_key},
+            )
+            .mappings()
+            .one()
+        )
+        revisions = (
+            connection.execute(
+                text(
+                    """
+                SELECT id, revision, operation, previous_revision_id, payload,
+                       snapshot_id, run_id, event_date
+                FROM raw.row_revisions
+                WHERE dataset = :dataset AND natural_key = :natural_key
+                ORDER BY revision
+                """
+                ),
+                {"dataset": dataset, "natural_key": changed_key},
+            )
+            .mappings()
+            .all()
+        )
+        unchanged_revisions = connection.execute(
+            text(
+                "SELECT count(*) FROM raw.row_revisions "
+                "WHERE dataset = :dataset AND natural_key = :natural_key"
+            ),
+            {"dataset": dataset, "natural_key": unchanged_key},
+        ).scalar_one()
+
+    assert canonical_count == 12
+    assert canonical["revision"] == 2
+    assert canonical["payload"]["kills"] == "99"
+    assert canonical["source_snapshot_id"] == second_snapshot_id
+    assert canonical["source_run_id"] == second_run_id
+    assert [row["revision"] for row in revisions] == [1, 2]
+    assert [row["operation"] for row in revisions] == ["inserted", "updated"]
+    assert revisions[0]["previous_revision_id"] is None
+    assert revisions[1]["previous_revision_id"] == revisions[0]["id"]
+    assert revisions[0]["payload"]["kills"] == "2"
+    assert revisions[1]["payload"]["kills"] == "99"
+    assert revisions[1]["snapshot_id"] == second_snapshot_id
+    assert revisions[1]["run_id"] == second_run_id
+    assert str(revisions[1]["event_date"]) == "2026-01-10"
+    assert unchanged_revisions == 1
+
+    with (
+        pytest.raises(DBAPIError, match=r"row revision .* is append-only"),
+        engine.begin() as connection,
+    ):
+        connection.execute(
+            text("UPDATE raw.row_revisions SET operation = 'inserted' WHERE id = :id"),
+            {"id": revisions[1]["id"]},
+        )
+    with (
+        pytest.raises(DBAPIError, match=r"row revision .* is append-only"),
+        engine.begin() as connection,
+    ):
+        connection.execute(
+            text("DELETE FROM raw.row_revisions WHERE id = :id"),
+            {"id": revisions[1]["id"]},
+        )
     engine.dispose()

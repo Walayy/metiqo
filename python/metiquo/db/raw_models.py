@@ -313,8 +313,12 @@ class RowRevision(Base):
         UniqueConstraint(
             "provider", "dataset", "natural_key", "revision", name="uq_row_revisions_revision"
         ),
-        UniqueConstraint(
-            "provider", "dataset", "natural_key", "row_hash", name="uq_row_revisions_hash"
+        Index(
+            "ix_row_revisions_natural_key_hash",
+            "provider",
+            "dataset",
+            "natural_key",
+            "row_hash",
         ),
         {"schema": RAW_SCHEMA},
     )
@@ -340,6 +344,7 @@ class RowRevision(Base):
         PostgreSQLUUID(as_uuid=True), ForeignKey("raw.row_revisions.id", ondelete="RESTRICT")
     )
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    event_date: Mapped[date | None] = mapped_column()
     valid_from: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         UtcDateTime(), nullable=False, server_default=func.now()
