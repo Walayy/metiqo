@@ -12,6 +12,18 @@ from metiquo.mapping.event_matching import (
     PostgresEventMatchingService,
     UnresolvedEventMappingError,
 )
+from metiquo.mapping.market_mapping import (
+    CanonicalMarketMapping,
+    MarketMappingDecision,
+    MarketMappingEngine,
+    MarketMappingReason,
+    MarketMappingStatus,
+    MarketRulesReference,
+    PostgresMarketMappingService,
+    RawProviderMarket,
+    SettlementPolicy,
+    UnresolvedMarketMappingError,
+)
 from metiquo.mapping.normalization import (
     NORMALIZATION_VERSION,
     normalize_entity_name,
@@ -21,6 +33,7 @@ from metiquo.mapping.normalization import (
 __all__ = [
     "MATCHING_WEIGHTS_VERSION",
     "NORMALIZATION_VERSION",
+    "CanonicalMarketMapping",
     "EventCandidateScore",
     "EventMappingDecision",
     "EventMappingReason",
@@ -28,8 +41,17 @@ __all__ = [
     "EventMatchingPolicy",
     "EventMatchingScorer",
     "EventMatchingWeights",
+    "MarketMappingDecision",
+    "MarketMappingEngine",
+    "MarketMappingReason",
+    "MarketMappingStatus",
+    "MarketRulesReference",
     "PostgresEventMatchingService",
+    "PostgresMarketMappingService",
+    "RawProviderMarket",
+    "SettlementPolicy",
     "UnresolvedEventMappingError",
+    "UnresolvedMarketMappingError",
     "normalize_entity_name",
     "typographically_equal",
 ]

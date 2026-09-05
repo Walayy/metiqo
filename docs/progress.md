@@ -1252,3 +1252,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; la tentative et ses scores restent append-only, tandis que seule la ligne d'état de revue est mutable afin de représenter la décision courante sans réécrire sa preuve.
 - **Commit/hash :** `cd58db5` (`feat(mapping): add audited review workflow`).
+
+## MAP-005 — Mapping canonique des marchés
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** l'historique de capture `ODD-007` et le registre de capacités fermé par défaut `CNL-006` sont `DONE` ; le mapping complète leur preuve de règles sans activer de nouveau plugin implicitement.
+- **Fichiers créés/modifiés :** moteur structurel `python/metiquo/mapping/market_mapping.py`, exports publics, modèles odds, migration `20260907_0031`, guide de mapping et treize fixtures unitaires/PostgreSQL, plus adaptation des preuves de migration.
+- **Migrations :** `20260907_0031` crée `odds.market_rules` et `odds.market_mapping_attempts`. Les références de règlement et toutes les tentatives sont append-only ; une tentative inconnue conserve le libellé et le descripteur provider JSON sans renseigner de type, période ou règle canonique.
+- **Commandes/tests exécutés :** Ruff, mypy strict, tests de conventions DB, douze fixtures structurelles, preuve PostgreSQL de mapping/stockage/immutabilité, cycle Alembic puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** une référence versionnée active doit correspondre exactement au type, à la période, à la présence d'une ligne, à l'unité, au nombre et à l'ensemble des issues ainsi qu'aux politiques remake, forfait et annulation. Le libellé n'est jamais lu par la décision : deux libellés différents passent avec la même structure, tandis que `Match winner` associé à un type inconnu reste `unknown`. Une règle séparée est nécessaire pour une issue `DRAW`; référence absente, inconnue ou inactive et toute divergence structurelle ferment le marché avec un motif stable. `require_mapped()` refuse alors toute structure, ce qui empêche le marché d'atteindre prédiction ou pricing. L'enregistrement de règle est idempotent à signature identique et refuse une redéfinition. Le gate retourne 392 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 284 fichiers sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; le registre ne pré-enregistre que des signatures explicitement fournies et ne déduit jamais une règle à partir d'un texte commercial.
+- **Commit/hash :** `047b824` (`feat(mapping): resolve markets structurally`).
