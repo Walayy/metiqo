@@ -1276,3 +1276,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; P5 est fermé et la phase P6 peut démarrer par `VAL-001`.
 - **ADR éventuel :** aucun ; le contexte de sortie est volontairement minimal et ne calcule pas encore de probabilité ou de prix, responsabilités de P6.
 - **Commit/hash :** `98c96a5` (`feat(mapping): gate resolved odds for pricing`).
+
+## VAL-001 — Probabilité implicite et no-vig
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le mapping structurel `MAP-005` est `DONE` et fournit le domaine canonique exact des issues avant tout calcul de prix.
+- **Fichiers créés/modifiés :** moteur `python/metiquo/pricing/no_vig.py`, exports pricing, guide numérique `docs/no-vig-pricing.md` et douze tests manuels/de propriétés dans `tests/pricing/test_no_vig.py`.
+- **Migrations :** aucune ; ce ticket introduit des valeurs immuables de calcul sans persistance avant les politiques et opportunités des tickets suivants.
+- **Commandes/tests exécutés :** Ruff et mypy strict ciblés, 36 tests pricing/finance/admissibilité/série, Prettier et CSpell, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** `implied_probability()` applique `q = 1/O` en précision décimale fixe. `proportional-v1` normalise les probabilités brutes par leur overround et enregistre sa version dans chaque résultat. Les domaines équipe A/équipe B, équipe A/nul/équipe B et over/under sont les seuls ensembles reconnus comme mutuellement exclusifs et exhaustifs. Une cote non finie ou inférieure à `1`, un doublon, une issue inattendue ou un marché incomplet est refusé ; seule une stratégie future déclarant explicitement la compatibilité partielle peut franchir ce dernier contrôle, et sa sortie doit encore fournir une probabilité par cote et sommer à `1` dans la tolérance `1E-24`. Les preuves couvrent l'exemple manuel `4,00`/`1,25`, un marché avec nul et 625 combinaisons représentatives de cotes. Le gate retourne 406 tests Python, 20 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 289 fichiers sont verts.
+- **Blocker éventuel :** aucun ; `VAL-002` peut consommer ces probabilités bookmaker normalisées.
+- **ADR éventuel :** aucun ; seule la normalisation proportionnelle est activée pour le MVP, les autres méthodes devant annoncer une nouvelle version et leurs capacités explicites.
+- **Commit/hash :** `92f1a14` (`feat(pricing): normalize bookmaker margin`).
