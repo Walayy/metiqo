@@ -54,6 +54,14 @@ from metiquo.features.rating import (
     TeamRating,
     rating_feature_definitions,
 )
+from metiquo.features.rebuild import (
+    FeatureRebuildCandidate,
+    FeatureRebuildPlan,
+    FeatureRebuildPlanner,
+    FeatureRebuildResult,
+    FeatureSnapshotReplacement,
+    PlannedInvalidation,
+)
 from metiquo.features.registry import (
     FeatureDefinitionSpec,
     FeatureRegistry,
@@ -122,9 +130,14 @@ __all__ = [
     "ExpectedRosterMember",
     "FeatureCutoff",
     "FeatureDefinitionSpec",
+    "FeatureRebuildCandidate",
+    "FeatureRebuildPlan",
+    "FeatureRebuildPlanner",
+    "FeatureRebuildResult",
     "FeatureRegistry",
     "FeatureRegistryConflictError",
     "FeatureSetSpec",
+    "FeatureSnapshotReplacement",
     "FeatureSnapshotSpec",
     "FeatureSnapshotStore",
     "FormWindow",
@@ -135,6 +148,7 @@ __all__ = [
     "HistoricalRosterObservation",
     "HistoricalTeamGame",
     "NumericTransform",
+    "PlannedInvalidation",
     "PreprocessorParameters",
     "PriorObservation",
     "PriorParameters",

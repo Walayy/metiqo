@@ -37,11 +37,17 @@ def upgrade() -> None:
         sa.Column("values", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("missingness", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("source_game_ids", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("target_game_ids", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("source_revision_ids", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("source_snapshot_ids", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("source_games_fingerprint", sa.String(length=64), nullable=False),
         sa.Column("code_commit", sa.String(length=64), nullable=False),
         sa.Column("leakage_checks", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            "rebuild_invalidation_ids",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+        ),
         sa.Column("vector_hash", sa.String(length=64), nullable=False),
         sa.Column("snapshot_hash", sa.String(length=64), nullable=False),
         sa.Column("supersedes_snapshot_id", postgresql.UUID(as_uuid=True), nullable=True),
@@ -64,6 +70,10 @@ def upgrade() -> None:
         sa.CheckConstraint("jsonb_typeof(missingness) = 'object'", name="missingness_object"),
         sa.CheckConstraint("jsonb_typeof(source_game_ids) = 'array'", name="games_array"),
         sa.CheckConstraint(
+            "jsonb_typeof(target_game_ids) = 'array'",
+            name="target_games_array",
+        ),
+        sa.CheckConstraint(
             "jsonb_typeof(source_revision_ids) = 'array'",
             name="revisions_array",
         ),
@@ -72,6 +82,10 @@ def upgrade() -> None:
             name="snapshots_array",
         ),
         sa.CheckConstraint("jsonb_typeof(leakage_checks) = 'object'", name="leakage_object"),
+        sa.CheckConstraint(
+            "jsonb_typeof(rebuild_invalidation_ids) = 'array'",
+            name="rebuild_invalidations_array",
+        ),
         sa.CheckConstraint(
             "source_games_fingerprint ~ '^[0-9a-f]{64}$'",
             name="games_fingerprint",

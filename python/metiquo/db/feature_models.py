@@ -119,9 +119,14 @@ class FeatureSnapshot(Base):
         CheckConstraint("jsonb_typeof(values) = 'object'", name="values_object"),
         CheckConstraint("jsonb_typeof(missingness) = 'object'", name="missingness_object"),
         CheckConstraint("jsonb_typeof(source_game_ids) = 'array'", name="games_array"),
+        CheckConstraint("jsonb_typeof(target_game_ids) = 'array'", name="target_games_array"),
         CheckConstraint("jsonb_typeof(source_revision_ids) = 'array'", name="revisions_array"),
         CheckConstraint("jsonb_typeof(source_snapshot_ids) = 'array'", name="snapshots_array"),
         CheckConstraint("jsonb_typeof(leakage_checks) = 'object'", name="leakage_object"),
+        CheckConstraint(
+            "jsonb_typeof(rebuild_invalidation_ids) = 'array'",
+            name="rebuild_invalidations_array",
+        ),
         CheckConstraint("source_games_fingerprint ~ '^[0-9a-f]{64}$'", name="games_fingerprint"),
         CheckConstraint("vector_hash ~ '^[0-9a-f]{64}$'", name="vector_hash"),
         CheckConstraint("snapshot_hash ~ '^[0-9a-f]{64}$'", name="snapshot_hash"),
@@ -162,11 +167,13 @@ class FeatureSnapshot(Base):
     values: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     missingness: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
     source_game_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    target_game_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     source_revision_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     source_snapshot_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     source_games_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
     leakage_checks: Mapped[dict[str, bool]] = mapped_column(JSONB, nullable=False)
+    rebuild_invalidation_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     vector_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     snapshot_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     supersedes_snapshot_id: Mapped[UUID | None] = mapped_column(

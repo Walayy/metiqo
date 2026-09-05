@@ -39,6 +39,7 @@ class FeatureSnapshotSpec:
     code_commit: str
     leakage_checks: Mapping[str, bool]
     supersedes_snapshot_id: UUID | None = None
+    rebuild_invalidation_ids: frozenset[UUID] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,11 +57,13 @@ class StoredFeatureSnapshot:
     values: Mapping[str, object]
     missingness: Mapping[str, bool]
     source_game_ids: tuple[UUID, ...]
+    target_game_ids: tuple[UUID, ...]
     source_revision_ids: tuple[UUID, ...]
     source_snapshot_ids: tuple[UUID, ...]
     source_games_fingerprint: str
     code_commit: str
     leakage_checks: Mapping[str, bool]
+    rebuild_invalidation_ids: tuple[UUID, ...]
     vector_hash: str
     snapshot_hash: str
     supersedes_snapshot_id: UUID | None
@@ -123,11 +126,13 @@ class FeatureSnapshotStore:
                 values=document["values"],
                 missingness=document["missingness"],
                 source_game_ids=document["source_game_ids"],
+                target_game_ids=document["target_game_ids"],
                 source_revision_ids=document["source_revision_ids"],
                 source_snapshot_ids=document["source_snapshot_ids"],
                 source_games_fingerprint=document["source_games_fingerprint"],
                 code_commit=specification.code_commit,
                 leakage_checks=document["leakage_checks"],
+                rebuild_invalidation_ids=document["rebuild_invalidation_ids"],
                 vector_hash=document["vector_hash"],
                 snapshot_hash=snapshot_hash,
                 supersedes_snapshot_id=specification.supersedes_snapshot_id,
@@ -230,6 +235,9 @@ def _snapshot_document(specification: FeatureSnapshotSpec) -> dict[str, object]:
             else None
         ),
         "missingness": missingness,
+        "rebuild_invalidation_ids": [
+            str(value) for value in sorted(specification.rebuild_invalidation_ids, key=str)
+        ],
         "source_game_ids": [str(value) for value in source_game_ids],
         "source_games_fingerprint": games_fingerprint,
         "source_revision_ids": [str(value) for value in source_revisions],
@@ -240,6 +248,7 @@ def _snapshot_document(specification: FeatureSnapshotSpec) -> dict[str, object]:
             else None
         ),
         "target_oe_snapshot_id": str(specification.target_oe_snapshot_id),
+        "target_game_ids": [str(value) for value in sorted(specification.target_game_ids, key=str)],
         "team_a_id": str(specification.team_a_id),
         "team_b_id": str(specification.team_b_id),
         "values": values,
@@ -276,6 +285,7 @@ def _stored(row: RowMapping) -> StoredFeatureSnapshot:
         values=MappingProxyType(dict(cast(Mapping[str, object], row["values"]))),
         missingness=MappingProxyType(dict(cast(Mapping[str, bool], row["missingness"]))),
         source_game_ids=tuple(UUID(value) for value in cast(list[str], row["source_game_ids"])),
+        target_game_ids=tuple(UUID(value) for value in cast(list[str], row["target_game_ids"])),
         source_revision_ids=tuple(
             UUID(value) for value in cast(list[str], row["source_revision_ids"])
         ),
@@ -285,6 +295,9 @@ def _stored(row: RowMapping) -> StoredFeatureSnapshot:
         source_games_fingerprint=str(row["source_games_fingerprint"]),
         code_commit=str(row["code_commit"]),
         leakage_checks=MappingProxyType(dict(cast(Mapping[str, bool], row["leakage_checks"]))),
+        rebuild_invalidation_ids=tuple(
+            UUID(value) for value in cast(list[str], row["rebuild_invalidation_ids"])
+        ),
         vector_hash=str(row["vector_hash"]),
         snapshot_hash=str(row["snapshot_hash"]),
         supersedes_snapshot_id=cast(UUID | None, row["supersedes_snapshot_id"]),
