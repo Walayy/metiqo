@@ -150,9 +150,19 @@ class CalibratorArtifact:
     def calibrate(self, probability: Decimal) -> Decimal:
         """Appliquer l'artefact de déploiement à une probabilité brute."""
 
-        if not probability.is_finite() or not 0 <= probability <= 1:
-            raise ValueError("la probabilité brute doit être dans [0,1]")
-        return _stored_probability(_apply_parameters(self.method, self.parameters, probability))
+        return calibrate_probability(self.method, self.parameters, probability)
+
+
+def calibrate_probability(
+    method: str,
+    parameters: Mapping[str, object],
+    probability: Decimal,
+) -> Decimal:
+    """Rejouer un calibrateur sérialisé sans dépendre de son objet d'entraînement."""
+
+    if not probability.is_finite() or not 0 <= probability <= 1:
+        raise ValueError("la probabilité brute doit être dans [0,1]")
+    return _stored_probability(_apply_parameters(method, parameters, probability))
 
 
 class CalibratorTrainer:

@@ -21,7 +21,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Engine, Table, create_engine, func, insert, select
 
-from metiquo.config import ConfigurationError, Settings, load_settings
+from metiquo.config import ConfigurationError, ObjectStoreBackend, Settings, load_settings
 from metiquo.contracts.enums import DataMode
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
 from metiquo.features.dataset import FeatureDatasetBuilder
@@ -41,6 +41,11 @@ from metiquo.ingestion.invalidation import RevisionInvalidationService
 from metiquo.ingestion.object_store import FilesystemObjectStore
 from metiquo.ingestion.raw_loader import RawTabularLoader
 from metiquo.ingestion.sync import OracleElixirYearSync, SyncFailed
+from metiquo.models import (
+    GameWinnerTrainingWorkflow,
+    ModelArtifactStore,
+    WalkForwardConfig,
+)
 
 _PROVIDER = "oracles_elixir"
 _DATASET = "league_of_legends_match_data"
@@ -113,6 +118,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     features_rebuild.add_argument("--code-commit")
     _machine_output(features_rebuild)
+
+    model_train = commands.add_parser(
+        "model-train",
+        help="entraîner et enregistrer un candidat game_winner reproductible",
+    )
+    model_train.add_argument("--market", choices=("game_winner",), required=True)
+    model_train.add_argument("--dataset", type=UUID)
+    model_train.add_argument("--code-commit")
+    model_train.add_argument("--minimum-train-periods", type=int, default=20)
+    model_train.add_argument("--validation-periods", type=int, default=10)
+    model_train.add_argument("--final-test-periods", type=int, default=10)
+    _machine_output(model_train)
     return parser
 
 
@@ -188,6 +205,19 @@ def _dispatch(
                 code_commit=arguments.code_commit,
             ),
             ExitCode.SUCCESS,
+        )
+    if arguments.command == "model-train":
+        document = _model_train(
+            engine,
+            settings,
+            dataset_id=arguments.dataset,
+            code_commit=arguments.code_commit,
+            minimum_train_periods=arguments.minimum_train_periods,
+            validation_periods=arguments.validation_periods,
+            final_test_periods=arguments.final_test_periods,
+        )
+        return document, (
+            ExitCode.SUCCESS if document["gatePassed"] else ExitCode.INTEGRITY_FAILURE
         )
     raise CliError(
         "commande non reconnue",
@@ -520,6 +550,41 @@ def _features_rebuild(
     }
 
 
+def _model_train(
+    engine: Engine,
+    settings: Settings,
+    *,
+    dataset_id: UUID | None,
+    code_commit: str | None,
+    minimum_train_periods: int,
+    validation_periods: int,
+    final_test_periods: int,
+) -> dict[str, object]:
+    if settings.object_store_backend is not ObjectStoreBackend.FILESYSTEM:
+        raise CliError(
+            "model-train exige actuellement OBJECT_STORE_BACKEND=filesystem",
+            code="MODEL_STORE_UNSUPPORTED",
+            exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+        )
+    result = GameWinnerTrainingWorkflow(
+        engine=engine,
+        artifacts=ModelArtifactStore(FilesystemObjectStore(settings.object_store_root / "models")),
+        code_commit=code_commit or _current_git_commit(),
+        dataset_id=dataset_id,
+        walk_forward=WalkForwardConfig(
+            minimum_train_periods=minimum_train_periods,
+            validation_periods=validation_periods,
+            final_test_periods=final_test_periods,
+        ),
+    ).run()
+    return {
+        "ok": result.gate_passed,
+        "command": "model-train",
+        "market": "game_winner",
+        **result.document(),
+    }
+
+
 def _current_git_commit() -> str:
     result = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -583,6 +648,8 @@ def _machine_output(parser: argparse.ArgumentParser) -> None:
 def _emit(document: dict[str, object], *, machine_readable: bool, failed: bool) -> None:
     if machine_readable:
         output = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    elif failed and document.get("command") == "model-train":
+        output = json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True)
     elif failed:
         output = f"ERREUR [{document.get('errorCode', 'UNKNOWN')}]: {document.get('message', '')}"
     else:

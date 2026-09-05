@@ -44,6 +44,7 @@ from metiquo.models.calibration import (
     CalibratorArtifact,
     CalibratorArtifactRepository,
     CalibratorTrainer,
+    calibrate_probability,
     evaluate_calibration_segments,
 )
 from metiquo.models.datasets import (
@@ -110,6 +111,14 @@ from metiquo.models.registry import (
     ModelRegistry,
     ModelVersion,
 )
+from metiquo.models.training import (
+    REPRODUCIBLE_ARTIFACT_VERSION,
+    GameWinnerTrainingWorkflow,
+    ReproducedPrediction,
+    TrainingGateResult,
+    build_reproducible_artifact,
+    reproduce_prediction,
+)
 from metiquo.models.uncertainty import (
     ABSOLUTE_CONFORMAL,
     TEMPORAL_FOLD_CONFORMAL,
@@ -164,6 +173,7 @@ __all__ = [
     "RATING_FEATURE",
     "RECENT_FORM",
     "RECENT_FORM_VERSION",
+    "REPRODUCIBLE_ARTIFACT_VERSION",
     "RETIRED",
     "TABULAR_BENCHMARK_VERSION",
     "TEMPORAL_FOLD_CONFORMAL",
@@ -201,6 +211,7 @@ __all__ = [
     "FoldProbabilities",
     "GameWinnerDatasetBuilder",
     "GameWinnerDatasetRequest",
+    "GameWinnerTrainingWorkflow",
     "LifecycleResult",
     "ModelArtifactChecksumError",
     "ModelArtifactReference",
@@ -225,6 +236,7 @@ __all__ = [
     "RatingTrainingResult",
     "RecentFormParameters",
     "ReliabilityBin",
+    "ReproducedPrediction",
     "SegmentCounts",
     "ShadowPrediction",
     "StoredTrainingDataset",
@@ -236,6 +248,7 @@ __all__ = [
     "TabularFeatureSpec",
     "TemporalFold",
     "TrainingExampleRepository",
+    "TrainingGateResult",
     "UncertaintyArtifact",
     "UncertaintyArtifactBuilder",
     "UncertaintyCandidateEvaluation",
@@ -249,9 +262,12 @@ __all__ = [
     "assert_baseline_runs_comparable",
     "binary_metric_report_from_document",
     "build_baseline_run",
+    "build_reproducible_artifact",
+    "calibrate_probability",
     "collect_oof_predictions",
     "evaluate_binary_probabilities",
     "evaluate_calibration_segments",
     "prepare_walk_forward",
     "rating_win_probability",
+    "reproduce_prediction",
 ]
