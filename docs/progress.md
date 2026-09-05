@@ -1324,3 +1324,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun ; `VAL-005` peut transformer ces décisions refusées en abstentions de première classe jusque dans l’interface.
 - **ADR éventuel :** aucun ; l’ordre constitue une surface publique stable pour l’audit, sans court-circuit qui masquerait les causes secondaires.
 - **Commit/hash :** `58d5b66` (`feat(pricing): enforce ordered admission guards`).
+
+## VAL-005 — Abstention de première classe
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** la matrice d’admission `VAL-004` et les estimations de couverture, confiance et distance au domaine `ML-008` sont `DONE` ; leurs motifs sont réunis sans transformer un refus attendu en exception système.
+- **Fichiers créés/modifiés :** vocabulaire et ordre public des abstentions, invariants `Quality`, moteur `python/metiquo/pricing/abstention.py`, raccord de l’ordre au gate d’admission, libellés UI exhaustifs, fiche signal, guide `docs/value-abstention.md` et scénarios Python/TypeScript dédiés.
+- **Migrations :** aucune ; la persistance append-only des abstentions appartient à `VAL-006`, tandis que ce ticket ferme leur représentation métier et leur présentation.
+- **Commandes/tests exécutés :** Ruff, mypy strict, 65 tests pricing/contrats/mock ciblés, TypeScript et cinq tests web, génération OpenAPI sans diff de schéma, Prettier et CSpell, puis gate global `make check` avec PostgreSQL réel.
+- **Résultat exact :** les quinze raisons SFG sont conservées dans `SFG_ABSTENTION_REASONS` et les extensions déjà requises par les contrôles de marché/pricing restent contractuelles. `ValueDecisionEngine` retourne soit une value admise, soit une `AbstentionDecision` non vide ; un blocage ML peut donc produire une décision valide avec `evaluated_value=None`. `LOW_DATA_COVERAGE` devient `INSUFFICIENT_HISTORY`, les codes OOD convergent vers `OUT_OF_DISTRIBUTION`, les causes amont et admission sont réunies, triées par l’ordre public et débarrassées des doublons. Un code bloquant inconnu est refusé à la frontière. `Quality` exige désormais exactement zéro motif pour une décision publiable et au moins un motif unique et ordonné sinon. Le dashboard et la fiche signal affichent les libellés français de chacun des 22 codes, avec exhaustivité vérifiée par le type généré. Le gate retourne 438 tests Python, 21 tests composants et 9 tests anti-fuite réussis ; format, conformité provider, contrats et mypy strict sur 301 fichiers sont verts.
+- **Blocker éventuel :** aucun ; `VAL-006` peut persister les valeurs calculées et les abstentions sans changer leur sémantique.
+- **ADR éventuel :** aucun ; l’abstention reste une décision structurante prévue par la SFG, désormais rendue explicite plutôt que redéfinie.
+- **Commit/hash :** `7008a5e` (`feat(pricing): make abstention a first-class outcome`).
