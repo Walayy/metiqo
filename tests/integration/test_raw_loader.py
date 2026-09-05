@@ -418,7 +418,9 @@ def test_retroactive_change_creates_linked_revision_without_deleting_absent_rows
             "ensemble_candidate_predictions",
             "ensemble_candidate_runs",
             "model_versions",
+            "model_status_events",
             "rating_artifacts",
+            "shadow_predictions",
             "tabular_benchmark_predictions",
             "tabular_benchmark_runs",
         }
