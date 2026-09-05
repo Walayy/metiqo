@@ -139,6 +139,7 @@ def build_opportunity() -> Opportunity:
         book=build_odds_snapshot(),
         model=build_prediction(),
         value=Value(
+            policy_version="test-value-policy-v1",
             fair_odds=Decimal("3.3333"),
             edge=Decimal("0.0619"),
             expected_value=Decimal("0.20"),

@@ -569,6 +569,7 @@ def _build_opportunity(
         book=book,
         model=prediction,
         value=Value(
+            policy_version="mock-value-policy-v1",
             fair_odds=profile.fair_odds,
             edge=profile.edge,
             expected_value=profile.expected_value,

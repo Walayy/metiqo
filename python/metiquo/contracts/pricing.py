@@ -62,6 +62,7 @@ class Prediction(ContractModel):
 class Value(ContractModel):
     """Comparaison exacte entre prix du modèle et prix observé."""
 
+    policy_version: VersionText = Field(alias="policyVersion")
     fair_odds: DecimalOddsValue = Field(alias="fairOdds")
     edge: SignedUnitValue
     expected_value: ExpectedValueDecimal = Field(alias="expectedValue")

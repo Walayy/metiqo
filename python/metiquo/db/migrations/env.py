@@ -11,6 +11,7 @@ from metiquo.db import feature_models as _feature_models  # noqa: F401
 from metiquo.db import mapping_models as _mapping_models  # noqa: F401
 from metiquo.db import ml_models as _ml_models  # noqa: F401
 from metiquo.db import odds_models as _odds_models  # noqa: F401
+from metiquo.db import pricing_models as _pricing_models  # noqa: F401
 from metiquo.db import raw_models as _raw_models  # noqa: F401
 from metiquo.db.base import Base
 
