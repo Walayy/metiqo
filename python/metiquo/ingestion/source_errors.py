@@ -9,7 +9,7 @@ from types import MappingProxyType
 
 from metiquo.foundation.time import normalize_utc_datetime
 
-type SourceErrorContextValue = str | int | bool | None
+type SourceErrorContextValue = str | int | float | bool | None
 
 
 class SourceErrorCode(StrEnum):

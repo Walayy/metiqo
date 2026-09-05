@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 import time
@@ -170,6 +171,14 @@ def _inspect_physical_file(
         sample = stream.read(_SAMPLE_SIZE)
     prefix = sample.lstrip().lower()
     declared = (declared_content_type or "").partition(";")[0].strip().casefold()
+    if not sample:
+        raise UnexpectedContentType(
+            "corps source vide",
+            transport=transport.name,
+            source_id=source.source_id,
+            retryable=False,
+            context={"rule": "EMPTY_BODY"},
+        )
     if prefix.startswith((b"<!doctype html", b"<html")) or declared in {
         "text/html",
         "application/xhtml+xml",
@@ -179,7 +188,21 @@ def _inspect_physical_file(
             transport=transport.name,
             source_id=source.source_id,
             retryable=False,
+            context={"rule": "HTML_BODY"},
         )
+    if prefix.startswith((b"{", b"[")):
+        try:
+            json.loads(sample)
+        except json.JSONDecodeError:
+            pass
+        else:
+            raise UnexpectedContentType(
+                "corps JSON d'erreur refusé",
+                transport=transport.name,
+                source_id=source.source_id,
+                retryable=False,
+                context={"rule": "JSON_ERROR_BODY"},
+            )
     if sample.startswith(b"\x1f\x8b"):
         if declared.startswith("text/"):
             raise UnexpectedContentType(
@@ -187,9 +210,18 @@ def _inspect_physical_file(
                 transport=transport.name,
                 source_id=source.source_id,
                 retryable=False,
+                context={"rule": "MIME_MAGIC_MISMATCH"},
             )
         return PhysicalFileProfile("application/gzip", "gzip", None, None)
     if sample.startswith(b"PK\x03\x04"):
+        if declared.startswith("text/"):
+            raise UnexpectedContentType(
+                "magic zip incompatible avec le type de contenu déclaré",
+                transport=transport.name,
+                source_id=source.source_id,
+                retryable=False,
+                context={"rule": "MIME_MAGIC_MISMATCH"},
+            )
         return PhysicalFileProfile("application/zip", "zip", None, None)
 
     try:
@@ -200,6 +232,7 @@ def _inspect_physical_file(
             transport=transport.name,
             source_id=source.source_id,
             retryable=False,
+            context={"rule": "UNKNOWN_ENCODING"},
         ) from error
     first_line = decoded.splitlines()[0] if decoded.splitlines() else ""
     delimiter = _detect_delimiter(first_line)
@@ -209,6 +242,7 @@ def _inspect_physical_file(
             transport=transport.name,
             source_id=source.source_id,
             retryable=False,
+            context={"rule": "DELIMITER_AMBIGUOUS"},
         )
     if declared and declared not in {
         "application/csv",
@@ -221,6 +255,7 @@ def _inspect_physical_file(
             transport=transport.name,
             source_id=source.source_id,
             retryable=False,
+            context={"rule": "MIME_CSV_MISMATCH"},
         )
     return PhysicalFileProfile("text/csv", "none", "utf-8", delimiter)
 
