@@ -91,6 +91,7 @@ class _HistoryProvider:
                 raw_label="Match winner",
                 market_type=MarketType.MATCH_WINNER,
                 period=MarketPeriod.SERIES,
+                unit="winner",
                 selections=(
                     ProviderSelection(
                         provider_selection_id="team-a",
@@ -100,6 +101,9 @@ class _HistoryProvider:
                     ),
                 ),
                 status=MarketStatus.OPEN,
+                remake_policy="void",
+                forfeit_policy="settle",
+                cancelled_policy="void",
                 captured_at=self.captured_at,
                 settlement_rules_version="rules-v1",
             ),

@@ -383,6 +383,7 @@ class MockOddsProvider:
                 market_type=market.type,
                 period=market.period,
                 line=market.line,
+                unit="winner",
                 selections=(
                     ProviderSelection(
                         provider_selection_id=(
@@ -394,6 +395,9 @@ class MockOddsProvider:
                     ),
                 ),
                 status=market.status,
+                remake_policy="void",
+                forfeit_policy="settle",
+                cancelled_policy="void",
                 captured_at=latest.captured_at,
                 settlement_rules_version=market.settlement_rules_version or "unknown",
             ),

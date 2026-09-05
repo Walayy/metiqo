@@ -72,6 +72,7 @@ class OddsCaptureReport:
     inserted_snapshots: int
     duplicate_snapshots: int
     inserted_snapshot_ids: tuple[UUID, ...]
+    markets: tuple[ProviderMarket, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,6 +150,12 @@ class OddsCaptureService:
             inserted_snapshots=len(inserted_ids),
             duplicate_snapshots=len(observations) - len(inserted_ids),
             inserted_snapshot_ids=inserted_ids,
+            markets=tuple(
+                {
+                    observation.market.provider_market_id: observation.market
+                    for observation in observations
+                }.values()
+            ),
         )
 
     def _record_failure(

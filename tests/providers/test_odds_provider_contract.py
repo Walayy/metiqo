@@ -73,6 +73,7 @@ class _ReferenceOddsProvider:
                 raw_label="Match Winner",
                 market_type=MarketType.MATCH_WINNER,
                 period=MarketPeriod.SERIES,
+                unit="winner",
                 selections=(
                     ProviderSelection(
                         provider_selection_id="reference-team-a",
@@ -88,6 +89,9 @@ class _ReferenceOddsProvider:
                     ),
                 ),
                 status=MarketStatus.OPEN,
+                remake_policy="void",
+                forfeit_policy="settle",
+                cancelled_policy="void",
                 captured_at=_NOW,
                 settlement_rules_version="match-winner-v1",
             ),
@@ -180,8 +184,12 @@ def test_normalized_market_rejects_duplicate_selection_identity() -> None:
             raw_label="Match Winner",
             market_type=MarketType.MATCH_WINNER,
             period=MarketPeriod.SERIES,
+            unit="winner",
             selections=(selection, selection),
             status=MarketStatus.OPEN,
+            remake_policy="void",
+            forfeit_policy="settle",
+            cancelled_policy="void",
             captured_at=_NOW,
             settlement_rules_version="match-winner-v1",
         )

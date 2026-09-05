@@ -14,6 +14,7 @@ from sqlalchemy import Engine, RowMapping, Table, select
 from sqlalchemy.dialects.postgresql import insert
 
 from metiquo.contracts.enums import MarketPeriod, MarketType, SelectionType
+from metiquo.contracts.odds_provider import ProviderMarket
 from metiquo.db.odds_models import (
     MarketMappingAttempt,
     MarketRulesRecord,
@@ -323,6 +324,24 @@ class PostgresMarketMappingService:
         if value is None:
             raise ValueError("l'événement provider du marché est introuvable")
         return cast(UUID, value)
+
+
+def raw_market_from_provider(market: ProviderMarket) -> RawProviderMarket:
+    """Projeter le contrat provider explicite sans consulter son libellé."""
+
+    return RawProviderMarket(
+        provider_market_id=market.provider_market_id,
+        raw_label=market.raw_label,
+        declared_type=market.market_type.value,
+        period=market.period.value,
+        line=market.line,
+        unit=market.unit,
+        selection_types=tuple(selection.selection.value for selection in market.selections),
+        settlement_rules_reference=market.settlement_rules_version,
+        remake_policy=market.remake_policy,
+        forfeit_policy=market.forfeit_policy,
+        cancelled_policy=market.cancelled_policy,
+    )
 
 
 def _rule_from_row(row: RowMapping) -> MarketRulesReference:
