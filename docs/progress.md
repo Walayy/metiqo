@@ -556,6 +556,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; les consommateurs futurs créeront de nouvelles versions de features depuis ce marqueur, sans réécrire snapshots ou prédictions passées.
 - **Commit/hash :** `71c3509` (`feat(features): emit revision invalidations`).
 
+## OE-020 — États de fraîcheur et politiques stale
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-016` fournit le pointeur courant validé et `OE-010` les codes d'échec source structurés.
+- **Fichiers créés/modifiés :** `python/metiqo/ingestion/freshness.py`, configuration serveur, `.env.example`, Compose, tests unitaires de politique et extension du test PostgreSQL de quarantaine.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 11 tests de fraîcheur ; test PostgreSQL de quarantaine ; validation Compose ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** `PostgresFreshnessRepository` ne lit comme utilisable que le snapshot explicitement pointé et `validated`, puis expose les échecs ou quarantaines plus récents. `FreshnessService` classe `fresh`, `stale`, `degraded`, `failed` et `quarantined`, publie `asOf`, `snapshotId`, âge, SLA et code de raison. Le SLA initial de 10 800 secondes est configurable. `allow-stale` peut réutiliser le dernier validé en annonçant son état non frais, mais n'invente jamais un snapshot ; `require-fresh` refuse tout autre état avec `FreshDataRequired.exit_code=3`. Le test réel prouve qu'une quarantaine résolue reste annoncée tout en ne rendant utilisable que l'ancien snapshot validé. La suite retourne 223 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; fraîcheur et politique de consommation sont séparées pour rendre l'état observable même lorsqu'une politique le refuse.
+- **Commit/hash :** `5060ebc` (`feat(ingestion): enforce freshness policies`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
