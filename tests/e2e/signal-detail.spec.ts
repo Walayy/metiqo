@@ -33,7 +33,7 @@ test("explains an admissible signal without causal or guaranteed language", asyn
 });
 
 test("shows abstention reasons and blocks paper trading for a stale signal", async ({ page }) => {
-  await page.goto("/?eligibility=all&freshness=stale");
+  await page.goto("/?eligibility=all&freshness=stale&grade=BLOCKED");
 
   await page
     .getByRole("row")
