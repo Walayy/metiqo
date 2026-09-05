@@ -378,3 +378,99 @@ class TabularBenchmarkPrediction(Base):
     cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     label: Mapped[bool] = mapped_column(Boolean, nullable=False)
     probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
+
+
+class EnsembleCandidateRun(Base):
+    """Décision immuable d'activer ou non un mélange rating/tabulaire."""
+
+    __tablename__ = "ensemble_candidate_runs"
+    __table_args__ = (
+        CheckConstraint("market = 'game_winner'", name="supported_market"),
+        CheckConstraint("length(trim(ensemble_version)) > 0", name="ensemble_version"),
+        CheckConstraint(
+            "walk_forward_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="walk_forward_fingerprint",
+        ),
+        CheckConstraint("jsonb_typeof(candidate_weights) = 'array'", name="weights_array"),
+        CheckConstraint("jsonb_array_length(candidate_weights) >= 1", name="weights_nonempty"),
+        CheckConstraint("jsonb_typeof(candidate_evaluations) = 'object'", name="candidates_object"),
+        CheckConstraint("selected_rating_weight > 0", name="selected_weight_lower"),
+        CheckConstraint("selected_rating_weight < 1", name="selected_weight_upper"),
+        CheckConstraint("jsonb_typeof(baseline_run_ids) = 'array'", name="baselines_array"),
+        CheckConstraint("jsonb_array_length(baseline_run_ids) = 3", name="baselines_count"),
+        CheckConstraint("jsonb_typeof(decision) = 'object'", name="decision_object"),
+        CheckConstraint("jsonb_typeof(metrics) = 'object'", name="metrics_object"),
+        CheckConstraint("worst_fold_log_loss >= 0", name="worst_fold_log_loss"),
+        CheckConstraint("prediction_count >= 1", name="prediction_count"),
+        CheckConstraint(
+            "predictions_fingerprint ~ '^[0-9a-f]{64}$'", name="predictions_fingerprint"
+        ),
+        CheckConstraint("run_fingerprint ~ '^[0-9a-f]{64}$'", name="run_fingerprint"),
+        CheckConstraint("code_commit ~ '^[0-9a-f]{7,64}$'", name="code_commit"),
+        UniqueConstraint("run_fingerprint", name="uq_ml_ensemble_candidate_runs_fingerprint"),
+        {"schema": ML_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True, default=uuid4)
+    dataset_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.datasets.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    benchmark_run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.tabular_benchmark_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    rating_run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.baseline_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    market: Mapped[str] = mapped_column(String(64), nullable=False)
+    ensemble_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    walk_forward_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    candidate_weights: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    candidate_evaluations: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    selected_rating_weight: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    baseline_run_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    decision: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    metrics: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    worst_fold_log_loss: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    prediction_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    predictions_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    run_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    code_commit: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        UtcDateTime(), nullable=False, server_default=func.now()
+    )
+
+
+class EnsembleCandidatePrediction(Base):
+    """Probabilité OOF du poids d'ensemble sélectionné."""
+
+    __tablename__ = "ensemble_candidate_predictions"
+    __table_args__ = (
+        CheckConstraint("position >= 0", name="position"),
+        CheckConstraint("fold_index >= 0", name="fold_index"),
+        CheckConstraint("probability >= 0 AND probability <= 1", name="probability"),
+        UniqueConstraint("run_id", "example_id", name="uq_ensemble_predictions_example"),
+        {"schema": ML_SCHEMA},
+    )
+
+    run_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("ml.ensemble_candidate_runs.id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    position: Mapped[int] = mapped_column(Integer, primary_key=True)
+    example_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("core.games.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    fold_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    cutoff_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    label: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    probability: Mapped[Decimal] = mapped_column(Numeric(9, 8), nullable=False)
