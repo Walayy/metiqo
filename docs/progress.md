@@ -484,6 +484,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; le registre de capacités matérialise l'abstention ciblée exigée par la SFG.
 - **Commit/hash :** `42347a6a4afb490371eb274cbf7ff726d68c4906` (`feat(ingestion): add evolving schema contract`).
 
+## OE-014 — Data Quality métier
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-013` est `DONE` et expose les colonnes/capacités réellement disponibles.
+- **Fichiers créés/modifiés :** `python/metiquo/ingestion/data_quality.py`, fixtures `dq_valid.csv` et `dq_problematic.csv`, `tests/ingestion/test_data_quality.py`, `docs/progress.md`.
+- **Migrations :** aucune ; `QualityReport.to_dict` fournit le contenu déterministe de `quality-report.json` et les issues prêtes pour `raw.quality_issues`.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; 15 tests ciblés DQ ; suite Python complète ; contrôle Prettier global ; `git diff --check`.
+- **Résultat exact :** `DataQualityValidator` scanne IDs game/participant, validité et plausibilité des dates, unicité des clés naturelles, cohérence participant-équipe par side, équipes opposées distinctes, sides, plages numériques, gagnant/perdant, structure des deux lignes équipe et des dix lignes joueur. Il signale explicitement games incomplètes, remakes et forfeits. La comparaison au précédent bloque une suppression massive sous le ratio configuré sauf approbation explicite et compte les clés disparues. Les 17 codes `QualityCode` sont stables ; chaque issue porte severity `blocking`, `capability-only` ou `warning`, ligne, clé, capacité et contexte. Une game incomplète désactive seulement `market.match_winner`; une structure joueur partielle seulement `feature.player_form`. La fixture valide passe 12 lignes sans issue, la fixture problématique produit les trois niveaux, et `require_pass` lève un `DataQualityFailed` structuré. La suite retourne 199 tests réussis et 8 ignorés.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les seuils et abstentions suivent directement les règles métier SFG.
+- **Commit/hash :** `16380b7e926309128a9054c4bec32a2e62c48263` (`feat(ingestion): enforce business data quality`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
