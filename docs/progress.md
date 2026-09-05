@@ -544,6 +544,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; l'historique append-only et la non-suppression suivent directement `SFG-DATA-005`.
 - **Commit/hash :** `91199f3` (`feat(ingestion): historize row revisions`).
 
+## OE-019 — Diff année courante et invalidation
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OE-018` fournit des révisions append-only datées et rattachées à leur run.
+- **Fichiers créés/modifiés :** migration `20260906_0007`, `python/metiqo/db/feature_models.py`, `python/metiqo/ingestion/invalidation.py`, tests PostgreSQL de migrations et de corrections rétroactives.
+- **Migrations :** création de `features.invalidations` avec plage affectée, provenance, nombre de révisions, unicité par run, index temporel et trigger append-only.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; tests PostgreSQL ciblés avec upgrade/downgrade ; `make check` complet et contrat OpenAPI.
+- **Résultat exact :** `RevisionInvalidationService` ne considère que les révisions `updated` d'un run terminé, refuse une correction sans date métier et agrège une source unique. Il émet de façon idempotente un marqueur `RAW_ROW_REVISED` dont `affected_from` est la date minimale et `changed_through` la date maximale observée ; la reconstruction reste donc demandée à partir de la première date touchée. Deux corrections aux 8 et 10 janvier donnent un seul événement à partir du 8, tandis qu'un run d'insertions seules n'émet rien. Le service n'importe ni ne modifie aucune persistance de prédiction ; le test confirme que le schéma `ml` reste vide et que PostgreSQL refuse de modifier l'invalidation publiée. La suite retourne 212 tests réussis avec PostgreSQL disponible.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; les consommateurs futurs créeront de nouvelles versions de features depuis ce marqueur, sans réécrire snapshots ou prédictions passées.
+- **Commit/hash :** `71c3509` (`feat(features): emit revision invalidations`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
