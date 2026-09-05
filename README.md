@@ -66,7 +66,7 @@ make openapi-check
 make docker-build
 ```
 
-`make test` exécute les tests de composants frontend puis la suite Python. `make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` exécute le parcours mock complet, l’audit axe A/AA, le contrôle CLS, les parcours clavier/tactiles et la régression visuelle desktop/tablette/mobile. Les cibles `oe-*` documentées par la SFG sont réservées et échouent explicitement tant que les tickets Oracle’s Elixir correspondants ne sont pas implémentés.
+`make test` exécute les tests de composants frontend puis la suite Python. `make test-migrations` exécute la suite PostgreSQL réelle quand `TEST_DATABASE_URL` est défini. `make test-e2e` exécute le parcours mock complet, l’audit axe A/AA, le contrôle CLS, les parcours clavier/tactiles et la régression visuelle desktop/tablette/mobile.
 
 La CI appelle ces mêmes cibles locales. Toute modification d’une décision structurante de la SFG §33 exige un ADR accepté dans `docs/adr/`.
 
@@ -83,6 +83,23 @@ Dans la stack locale, `make db-migrate` applique les migrations à la base Postg
 Le mode réel conserve ces sept namespaces. Le mode mock traduit tous ses accès applicatifs vers le schéma physique séparé `mock` et interdit les accès réseau Oracle’s Elixir ou fournisseur de cotes avant appel du transport. Une factory liée à un mode refuse toute donnée portant l’autre mode.
 
 `MOCK_SEED` fixe les identifiants et les valeurs des douze scénarios normatifs. Leur catalogue utilise les contrats métier communs, une horloge injectée et des timestamps relatifs ; il ne lit ni le réseau ni l’heure système implicitement.
+
+## CLI Oracle’s Elixir
+
+Après migration de PostgreSQL, la commande `oe` expose les opérations du pipeline. Le mode `real` utilise uniquement la découverte officielle, l’API Google Drive éventuellement authentifiée, le téléchargement public puis le miroir de snapshots validés. Le mode `mock` interdit ces transports et exige `--fixture` pour chaque synchronisation locale.
+
+```console
+uv run --frozen oe catalog refresh --json
+uv run --frozen oe backfill --from-year 2014 --to-year 2026 --json
+uv run --frozen oe sync --year 2026 --require-fresh --json
+uv run --frozen oe verify --snapshot <uuid> --json
+uv run --frozen oe diff --left <uuid> --right <uuid> --json
+uv run --frozen oe rebuild-canonical --from 2025-01-01 --json
+```
+
+Les alias équivalents sont `make oe-catalog`, `make oe-backfill FROM=2014 TO=2026`, `make oe-sync YEAR=2026`, `make oe-sync-current REQUIRE_FRESH=1`, `make oe-validate SNAPSHOT=<uuid>`, `make oe-diff LEFT=<uuid> RIGHT=<uuid>` et `make oe-rebuild-canonical FROM=2025-01-01`. `JSON=1` active la sortie compacte destinée à la CI.
+
+Les codes retour sont stables : `0` succès, `2` usage ou configuration invalide, `3` snapshot frais requis mais indisponible, `4` échec de source ou de pipeline, `5` intégrité du snapshot invalide et `6` backfill partiel. Les erreurs machine-readable contiennent toujours `ok=false` et un `errorCode` sans secret.
 
 ## API de lecture mock
 

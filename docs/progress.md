@@ -580,6 +580,18 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **ADR éventuel :** aucun ; les advisory locks PostgreSQL évitent une infrastructure distribuée supplémentaire au MVP.
 - **Commit/hash :** `9ecffd8` (`feat(ingestion): resume multi-year backfills`).
 
+## OE-022 — CLI et Make Oracle’s Elixir
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le backfill reprenable `OE-021` et l'ensemble des composants `OE-003` à `OE-020` sont assemblés par un coordinateur annuel sans nouveau chemin de transport.
+- **Fichiers créés/modifiés :** `python/metiqo/ingestion/sync.py`, package `python/metiqo/cli`, point d'entrée `oe` dans `pyproject.toml`, `Makefile`, tests CLI PostgreSQL et alias Make, `README.md`.
+- **Migrations :** aucune nouvelle migration ; la CLI exige que la base soit déjà à la révision Alembic courante.
+- **Commandes/tests exécutés :** Ruff format/check ; mypy strict global ; parcours PostgreSQL réel `catalog refresh → sync → verify → diff → second sync → rebuild-canonical → backfill` avec ObjectStore temporaire et fixture locale en mode mock ; simulations des sept alias Make ; `make check` complet sur une base PostgreSQL jetable recréée vide.
+- **Résultat exact :** la commande `oe` expose `catalog refresh`, `backfill`, `sync`, `verify`, `diff` et `rebuild-canonical`. Le mode mock exige explicitement `--fixture` et ne construit aucun transport réseau ; le mode réel conserve l'ordre API Drive optionnelle, téléchargement public puis miroir validé. La sortie `--json` est compacte et les codes `0`, `2`, `3`, `4`, `5` et `6` distinguent succès, usage/configuration, fraîcheur stricte, source/pipeline, intégrité et backfill partiel. Le parcours d'intégration publie 12 lignes au premier run, retrouve le même snapshot et 12 lignes inchangées au second, vérifie le hash, compare les manifestes, rejoue le canonical puis termine le backfill. La suite complète retourne 228 tests réussis avec PostgreSQL disponible ; composants, format, lint, types et OpenAPI sont verts.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; la CLI compose les frontières déjà imposées par la SFG et ne crée ni source statistique alternative ni accès local non déclaré.
+- **Commit/hash :** `d61d758` (`feat(ingestion): expose Oracle Elixir operator CLI`).
+
 ## MCK-007 — Gate P1 — démo mock complète
 
 - **Statut :** `DONE`
