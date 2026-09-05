@@ -84,10 +84,14 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
             "feature_sets",
             "invalidations",
         }
+        assert set(inspect(connection).get_table_names(schema="ml")) == {
+            "dataset_examples",
+            "datasets",
+        }
         assert all(
             inspect(connection).get_table_names(schema=name) == []
             for name in ALL_SCHEMAS
-            if name not in {"raw", "core", "features"}
+            if name not in {"raw", "core", "features", "ml"}
         )
         assert connection.execute(text("SHOW TIME ZONE")).scalar_one() == "UTC"
     engine.dispose()

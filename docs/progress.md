@@ -892,3 +892,15 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Blocker éventuel :** aucun.
 - **ADR éventuel :** aucun ; le pipeline reste limité à l'historique canonique déjà persisté et n'effectue ni téléchargement ad hoc ni enrichissement externe.
 - **Commit/hash :** `ff6b136` (`feat(features): build reproducible feature datasets`) et `da8456d` (`fix(features): isolate rebuild inputs and integration state`).
+
+## ML-001 — Dataset d'entraînement versionné
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** le gate reproductible `FEAT-014`, les labels canoniques historisés `CNL-005` et les snapshots OE validés `OE-011` sont `DONE` ; le builder consomme uniquement le feature set enregistré et les tables canoniques issues du provider/dataset demandés.
+- **Fichiers créés/modifiés :** migration `20260906_0017`, modèles `TrainingDataset` et `TrainingDatasetExample`, builder `python/metiquo/models/datasets.py`, exports ML et test PostgreSQL de reproductibilité/provenance.
+- **Migrations :** création de `ml.datasets` et `ml.dataset_examples`. Le manifeste porte marché, provider/dataset, version de dataset, feature set/version/hash, définition du label, filtre qualité, période, plage de cutoffs, compétitions, snapshots OE, exclusions, compteurs, empreinte des exemples, hash global et commit de code. Chaque exemple référence sa game, son feature snapshot, ses équipes, son cutoff, son label booléen, la révision canonique `game_team_stat` source et son snapshot OE. Deux triggers interdisent UPDATE et DELETE sur les deux tables.
+- **Commandes/tests exécutés :** formatters, ESLint, Ruff, cspell, TypeScript strict, mypy strict sur 197 fichiers, neuf tests anti-leakage, 20 tests composants, 271 tests Python avec PostgreSQL réel, contrôle OpenAPI/client et 35 tests d'intégration PostgreSQL séparés.
+- **Résultat exact :** la fixture produit deux exemples `game_winner` ordonnés avec les mêmes UUID et le même hash de dataset lorsque la requête, les données, le feature set et le commit sont identiques, même si l'horloge de création change. Le hash couvre les documents d'exemples, leurs hashes de vecteur/snapshot, la sélection de compétitions, tous les snapshots OE, les filtres et les exclusions identifiées par game. Chaque label est relu depuis la statistique de l'équipe A, exige une paire binaire cohérente, puis conserve l'UUID de la révision `game_team_stat` et d'un snapshot `validated` du provider/dataset exact. Une corruption simulée vers un snapshot en quarantaine exclut cette seule game avec la raison `label_snapshot_not_validated`, crée un nouveau dataset à un exemple et laisse le premier entièrement consultable. Les feature sets contenant une colonne de cote/bookmaker sont refusés avant construction.
+- **Blocker éventuel :** aucun.
+- **ADR éventuel :** aucun ; `game_winner` est volontairement le seul marché admis dans ce premier schéma et les cotes restent hors du dataset du modèle indépendant.
+- **Commit/hash :** `f548ade` (`feat(ml): version reproducible training datasets`).
