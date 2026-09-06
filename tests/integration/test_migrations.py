@@ -120,6 +120,8 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
         }
         assert set(inspect(connection).get_table_names(schema="odds")) == ODDS_TABLES
         assert set(inspect(connection).get_table_names(schema="signals")) == {
+            "paper_bets",
+            "settlements",
             "signals",
             "value_evaluations",
             "value_policies",
