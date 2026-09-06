@@ -1407,4 +1407,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les 16 tests passent en 62,58 secondes ; le test CLI passe ensuite en 7,52 secondes et les 11 tests de configuration passent. Le service impose un montant explicite, une devise configurée, un signal admis et une nouvelle admission au moment de l'entrée. Un modèle retiré ou une cote stale bloque l'entrée sans écriture partielle. Un replay identique conserve sa réponse initiale ; une clé réutilisée avec un autre payload ou une seconde décision sur le même signal est refusée. Le disponible déduit les mises ouvertes et les positions en revue, puis ajoute une seule fois le dernier règlement. Deux créations concurrentes de `8` avec une limite d'exposition `10` produisent exactement une entrée. Le capital initial ne peut être augmenté par simple changement de configuration après la première entrée. La CLI réelle crée le pari et renvoie un conflit métier structuré en cas de montant modifié.
 - **Blocker éventuel :** aucun ; l'auto-paper et Kelly restent désactivés. `PAP-003` peut interpréter les résultats game winner, avant le job et les API réelles des tickets suivants.
 - **ADR éventuel :** aucun ; les créations sont manuelles dans ce MVP et ne contactent aucune API d'exécution bookmaker.
-- **Commit/hash :** commit dédié `feat(paper): create controlled fictitious entries`, hash consigné après création.
+- **Commit/hash :** `df09e12` (`feat(paper): create controlled fictitious entries`).
+
+## PAP-003 — Settlement GAME_WINNER
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `ML-012`, `PAP-001` et `CNL-002` sont `DONE`.
+- **Fichiers créés/modifiés :** moteurs et preuves de règlement `paper/game_settlement.py`, `paper/settlement_rules.py`, fixtures `tests/paper/test_game_settlement.py`, guide ledger.
+- **Migrations :** aucune ; le moteur produit une décision immuable destinée au job `PAP-005` et aux révisions du ledger.
+- **Commandes/tests exécutés :** 18 nouvelles fixtures de règlement et les cinq tests du plugin game winner via `python -m pytest`, Ruff et mypy strict ciblés, Prettier et CSpell.
+- **Résultat exact :** les 23 tests passent en 2,44 secondes. Le gain et la perte respectent l'orientation de sélection. Les neuf combinaisons remake/forfait/annulation et `settle`/`void`/`review` appliquent la politique référencée. Source non validée ou future, game incorrecte, règle inconnue, résultat absent, incomplet ou contradictoire restent `pending_review`. Une même preuve et les mêmes règles donnent exactement la même décision et la même empreinte ; aucun P&L n'est inventé par ce moteur.
+- **Blocker éventuel :** aucun ; `PAP-004` ajoute le règlement série, puis `PAP-005` charge les preuves depuis PostgreSQL et persiste les règlements.
+- **ADR éventuel :** aucun ; le moteur pur interprète les preuves et le job réalise leurs lectures et leur audit transactionnel.
+- **Commit/hash :** commit dédié `feat(paper): settle game winner with recorded rules`, hash consigné après création.
