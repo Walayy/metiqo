@@ -212,3 +212,50 @@ class SignalRecord(Base):
     odds_age_seconds: Mapped[int] = mapped_column(nullable=False)
     computed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
     signal_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class ValueEvaluationRecord(Base):
+    """Preuve du parcours complet, même lorsque le mapping interdit un signal."""
+
+    __tablename__ = "value_evaluations"
+    __table_args__ = (
+        CheckConstraint("grade IN ('VALUE', 'NO_EDGE', 'BLOCKED')", name="grade"),
+        CheckConstraint("jsonb_typeof(evidence) = 'object'", name="evidence_object"),
+        CheckConstraint("jsonb_typeof(abstention_reasons) = 'array'", name="reasons_array"),
+        CheckConstraint(
+            "(grade = 'VALUE' AND jsonb_array_length(abstention_reasons) = 0) OR "
+            "(grade <> 'VALUE' AND jsonb_array_length(abstention_reasons) > 0)",
+            name="grade_reasons",
+        ),
+        CheckConstraint("grade = 'BLOCKED' OR signal_id IS NOT NULL", name="signal_required"),
+        CheckConstraint("fingerprint ~ '^[0-9a-f]{64}$'", name="fingerprint"),
+        UniqueConstraint("fingerprint", name="uq_value_evaluations_fingerprint"),
+        Index("ix_signals_value_evaluations_computed", "computed_at"),
+        {"schema": SIGNALS_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), primary_key=True)
+    odds_snapshot_id: Mapped[UUID] = mapped_column(
+        ForeignKey("odds.snapshots.id", ondelete="RESTRICT"), nullable=False
+    )
+    event_mapping_attempt_id: Mapped[UUID] = mapped_column(
+        ForeignKey("odds.event_mapping_attempts.id", ondelete="RESTRICT"), nullable=False
+    )
+    market_mapping_attempt_id: Mapped[UUID] = mapped_column(
+        ForeignKey("odds.market_mapping_attempts.id", ondelete="RESTRICT"), nullable=False
+    )
+    prediction_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("ml.prematch_predictions.id", ondelete="RESTRICT")
+    )
+    policy_version: Mapped[str] = mapped_column(
+        ForeignKey("signals.value_policies.version", ondelete="RESTRICT"), nullable=False
+    )
+    signal_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("signals.signals.id", ondelete="RESTRICT")
+    )
+    engine_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    grade: Mapped[str] = mapped_column(String(16), nullable=False)
+    abstention_reasons: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    computed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)

@@ -13,7 +13,7 @@ import tempfile
 import zipfile
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from enum import IntEnum
 from pathlib import Path
 from typing import cast
@@ -46,6 +46,7 @@ from metiquo.models import (
     ModelArtifactStore,
     WalkForwardConfig,
 )
+from metiquo.services.value_pipeline import PostgresValuePipeline, ValueEvaluationRequest
 
 _PROVIDER = "oracles_elixir"
 _DATASET = "league_of_legends_match_data"
@@ -130,6 +131,15 @@ def build_parser() -> argparse.ArgumentParser:
     model_train.add_argument("--validation-periods", type=int, default=10)
     model_train.add_argument("--final-test-periods", type=int, default=10)
     _machine_output(model_train)
+    value = commands.add_parser(
+        "value-evaluate", help="évaluer et persister un signal depuis ses preuves"
+    )
+    value.add_argument("--odds-snapshot", type=UUID, required=True)
+    value.add_argument("--event-mapping", type=UUID, required=True)
+    value.add_argument("--market-mapping", type=UUID, required=True)
+    value.add_argument("--policy", required=True)
+    value.add_argument("--prediction", type=UUID)
+    _machine_output(value)
     return parser
 
 
@@ -183,6 +193,34 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "value-evaluate":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "value-evaluate exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        result = PostgresValuePipeline(
+            engine,
+            source_sla=timedelta(seconds=settings.oe_freshness_sla_seconds),
+        ).evaluate(
+            ValueEvaluationRequest(
+                odds_snapshot_id=arguments.odds_snapshot,
+                event_mapping_attempt_id=arguments.event_mapping,
+                market_mapping_attempt_id=arguments.market_mapping,
+                policy_version=arguments.policy,
+                prediction_id=arguments.prediction,
+            )
+        )
+        return {
+            "command": "value-evaluate",
+            "evaluationId": str(result.evaluation_id),
+            "signalId": str(result.signal.signal_id) if result.signal else None,
+            "grade": result.grade.value,
+            "abstentionReasons": [reason.value for reason in result.reasons],
+            "computedAt": result.computed_at.isoformat(),
+            "fingerprint": result.fingerprint,
+        }, ExitCode.SUCCESS
     if arguments.command == "catalog":
         return _catalog_refresh(settings, engine), ExitCode.SUCCESS
     if arguments.command == "sync":

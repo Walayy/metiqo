@@ -104,6 +104,8 @@ Les alias équivalents sont `make oe-catalog`, `make oe-backfill FROM=2014 TO=20
 
 Les codes retour sont stables : `0` succès, `2` usage ou configuration invalide, `3` snapshot frais requis mais indisponible, `4` échec de source ou de pipeline, `5` intégrité du snapshot invalide et `6` backfill partiel. Les erreurs machine-readable contiennent toujours `ok=false` et un `errorCode` sans secret.
 
+Le [gate value P6](docs/value-gate.md) relie les preuves PostgreSQL par `oe value-evaluate` ou `make value-evaluate`. L'opérateur fournit les identifiants de cote, mapping et prédiction ainsi que la politique ; le service calcule le grade et les motifs, puis conserve atomiquement le signal et son audit. `make test-value` vérifie ce parcours sur PostgreSQL, y compris les refus avant calcul.
+
 Un contenu téléchargé puis refusé par la validation physique, le contrat de schéma ou la qualité métier est écrit dans l’ObjectStore de quarantaine et lié au run en échec. Il ne déplace jamais `raw.source_catalog.current_snapshot_id`. Une réponse HTML de quota est refusée avant la création d’un snapshot ; avec `--allow-stale`, la commande annonce explicitement `degraded` ou `quarantined` et l’identifiant du dernier snapshot validé réutilisé.
 
 ### Gate P2 ingestion

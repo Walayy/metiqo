@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Protocol, cast
 from uuid import UUID
 
-from sqlalchemy import Engine, Table, select
+from sqlalchemy import Connection, Engine, Table, select
 
 from metiquo.config import Settings
 from metiquo.contracts.enums import FreshnessStatus
@@ -37,14 +38,19 @@ class FreshnessRepository(Protocol):
 class PostgresFreshnessRepository:
     """Lire uniquement le pointeur validé et les incidents plus récents."""
 
-    def __init__(self, engine: Engine) -> None:
+    def __init__(self, engine: Engine | Connection) -> None:
         self._engine = engine
         self._catalog = cast(Table, SourceCatalog.__table__)
         self._snapshots = cast(Table, Snapshot.__table__)
         self._runs = cast(Table, IngestionRun.__table__)
 
     def get_facts(self, source_catalog_id: UUID) -> FreshnessFacts:
-        with self._engine.connect() as connection:
+        context = (
+            nullcontext(self._engine)
+            if isinstance(self._engine, Connection)
+            else self._engine.connect()
+        )
+        with context as connection:
             catalog = (
                 connection.execute(
                     select(self._catalog.c.status, self._catalog.c.current_snapshot_id).where(

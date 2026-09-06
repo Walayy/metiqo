@@ -89,6 +89,18 @@ test-ingestion:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate ingestion))
 	uv run --frozen pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
 
+.PHONY: test-value value-evaluate
+test-value:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate value))
+	uv run --frozen pytest tests/pricing tests/integration/test_value_pipeline.py tests/integration/test_signal_persistence.py tests/integration/test_migrations.py -vv
+
+value-evaluate:
+	$(if $(strip $(ODDS_SNAPSHOT)),,$(error ODDS_SNAPSHOT est requis))
+	$(if $(strip $(EVENT_MAPPING)),,$(error EVENT_MAPPING est requis))
+	$(if $(strip $(MARKET_MAPPING)),,$(error MARKET_MAPPING est requis))
+	$(if $(strip $(POLICY)),,$(error POLICY est requis))
+	uv run --frozen oe value-evaluate --odds-snapshot $(ODDS_SNAPSHOT) --event-mapping $(EVENT_MAPPING) --market-mapping $(MARKET_MAPPING) --policy $(POLICY) $(if $(strip $(PREDICTION)),--prediction $(PREDICTION),) $(OE_JSON_FLAG)
+
 test-e2e:
 	pnpm run test:e2e
 

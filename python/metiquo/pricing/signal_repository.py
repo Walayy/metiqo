@@ -166,30 +166,38 @@ class PostgresSignalRepository:
 
     def append(self, publication: SignalPublication) -> StoredSignal:
         computed_at = self._clock.now().value
-        signals = cast(Table, SignalRecord.__table__)
         with self.engine.begin() as connection:
-            _require_policy(connection, publication.decision.policy_version)
-            sources = _load_sources(
-                connection,
-                publication.odds_snapshot_id,
-                publication.prediction_id,
-                publication.event_mapping_attempt_id,
-            )
-            values = _build_values(publication, sources, computed_at)
-            fingerprint = _content_hash(values)
-            signal_id = uuid5(NAMESPACE_URL, f"metiquo:signal:{fingerprint}")
-            connection.execute(
-                insert(signals)
-                .values(id=signal_id, signal_fingerprint=fingerprint, **values)
-                .on_conflict_do_nothing(index_elements=[signals.c.signal_fingerprint])
-            )
-            row = (
-                connection.execute(
-                    select(signals).where(signals.c.signal_fingerprint == fingerprint)
-                )
-                .mappings()
-                .one()
-            )
+            return self.append_in_transaction(connection, publication, computed_at=computed_at)
+
+    def append_in_transaction(
+        self,
+        connection: Connection,
+        publication: SignalPublication,
+        *,
+        computed_at: datetime,
+    ) -> StoredSignal:
+        """Publier avec la preuve du gate dans une seule transaction propriétaire."""
+        signals = cast(Table, SignalRecord.__table__)
+        _require_policy(connection, publication.decision.policy_version)
+        sources = _load_sources(
+            connection,
+            publication.odds_snapshot_id,
+            publication.prediction_id,
+            publication.event_mapping_attempt_id,
+        )
+        values = _build_values(publication, sources, normalize_utc_datetime(computed_at))
+        fingerprint = _content_hash(values)
+        signal_id = uuid5(NAMESPACE_URL, f"metiquo:signal:{fingerprint}")
+        connection.execute(
+            insert(signals)
+            .values(id=signal_id, signal_fingerprint=fingerprint, **values)
+            .on_conflict_do_nothing(index_elements=[signals.c.signal_fingerprint])
+        )
+        row = (
+            connection.execute(select(signals).where(signals.c.signal_fingerprint == fingerprint))
+            .mappings()
+            .one()
+        )
         return _stored(row)
 
     def get(self, signal_id: UUID) -> StoredSignal:
