@@ -1443,4 +1443,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les 45 tests paper passent en 42,20 secondes. Le parcours crée une entrée, attend une nouvelle publication raw, exécute le vrai builder canonique, respecte le délai puis règle le BO1 gagné à `70` pour une mise `10` et une cote `8`. Le replay conserve trois révisions au total : attente de résultat, attente de délai, règlement. Une correction OE ne remplace pas ce gain automatiquement ; une action motivée ajoute ensuite la perte `−10` en quatrième révision. La source stale maintient `pending_review`. Une connexion défaillante deux fois reprend au troisième essai ; une panne persistante s'arrête au troisième et apparaît en échec dans le rapport. La CLI traite le pari puis annonce zéro décision à traiter lors du passage suivant. Le statut et le P&L proviennent du résultat OE et du moteur, jamais d'un choix manuel du résultat.
 - **Blocker éventuel :** aucun ; l'activation d'un scheduler récurrent appartient à P8. Les anciennes décisions sans preuve d'événement restent en revue. Le parcours réel conserve la restriction P6 au modèle game winner et aux BO1 pour les marchés de série.
 - **ADR éventuel :** aucun ; le lot transactionnel et sa CLI sont utilisables avant l'orchestrateur de jobs P8, sans exécution bookmaker.
-- **Commit/hash :** commit dédié `feat(paper): run audited OE settlement jobs`, hash consigné après création.
+- **Commit/hash :** `78ab603` (`feat(paper): run audited OE settlement jobs`).
+
+## PAP-006 — Closing line proxy et CLV
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `ODD-007` et `PAP-001` sont `DONE` ; la preuve d'horaire immuable ajoutée dans `PAP-005` définit la clôture.
+- **Fichiers créés/modifiés :** projection `paper/closing_line.py`, deux scénarios PostgreSQL utilisant la vraie capture d'import manuel, cible `test-paper` et guide de méthode.
+- **Migrations :** aucune ; le proxy est une projection déterministe des snapshots append-only et de l'horaire figé du ledger.
+- **Commandes/tests exécutés :** deux tests PostgreSQL CLV, Ruff, mypy strict ciblé, Prettier et CSpell.
+- **Résultat exact :** les deux tests passent en 7,58 secondes. La capture à `4` trente secondes avant le début produit un CLV de `1` pour une entrée à `8`. Une cote suspendue plus récente, une cote post-start et une cote importée après le début avec timestamp rétroactif sont toutes exclues. Le replay donne la même preuve et ne change pas l'entrée à `8`. Sans observation suffisamment récente, le CLV reste null avec `CLOSING_TOO_OLD` ; avant l'événement il est indisponible avec `EVENT_NOT_STARTED`. La requête groupée conserve les identifiants et empreintes sans reconstruire de prix.
+- **Blocker éventuel :** aucun ; `PAP-007` peut agréger le CLV disponible avec son nombre d'observations et exposer séparément les indisponibilités.
+- **ADR éventuel :** aucun ; la méthode explicite est un ratio de prix observé, limité à une fenêtre de 90 secondes par défaut, et ne prétend pas être la clôture officielle du bookmaker.
+- **Commit/hash :** commit dédié `feat(paper): derive observed closing line proxy`, hash consigné après création.
