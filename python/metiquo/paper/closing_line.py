@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal, localcontext
 from uuid import UUID
 
-from sqlalchemy import DateTime, Engine, cast, select, true
+from sqlalchemy import Connection, DateTime, Engine, cast, select, true
 from sqlalchemy.orm import Session, aliased
 
 from metiquo.db.odds_models import OddsSnapshotRecord
@@ -60,7 +60,7 @@ class PostgresClosingLineRepository:
     """Projection déterministe de faits immuables, avec requête groupée sans N+1."""
 
     def __init__(
-        self, engine: Engine, *, max_age_seconds: int = 90, clock: Clock | None = None
+        self, engine: Engine | Connection, *, max_age_seconds: int = 90, clock: Clock | None = None
     ) -> None:
         if max_age_seconds <= 0:
             raise ValueError("L'âge maximal de clôture doit être positif")

@@ -65,7 +65,7 @@ from metiquo.pricing import (
     ValuePricingInput,
 )
 from metiquo.pricing.policy import ValueThresholds, value_policy_from_storage
-from metiquo.pricing.signal_repository import StoredSignal
+from metiquo.pricing.signal_repository import StoredSignal, canonical_selected_team
 
 VALUE_PIPELINE_VERSION = "value-pipeline-v1"
 _PRICE_REASONS = frozenset(
@@ -370,14 +370,18 @@ class PostgresValuePipeline:
                 )
             )
             no_vig_version = no_vig.strategy_version
+            selected_team = canonical_selected_team(connection, game.id, canonical_selection)
+            if selected_team not in {prediction.team_a_id, prediction.team_b_id}:
+                raise SignalIntegrityError("l'équipe cotée n'appartient pas à la prédiction")
+            evidence["selectedTeamId"] = str(selected_team)
             probability = (
                 prediction.team_a_probability
-                if canonical_selection is SelectionType.TEAM_A
+                if selected_team == prediction.team_a_id
                 else prediction.team_b_probability
             )
             low = (
                 prediction.team_a_low
-                if canonical_selection is SelectionType.TEAM_A
+                if selected_team == prediction.team_a_id
                 else prediction.team_b_low
             )
             value = ValuePricingEngine().calculate(

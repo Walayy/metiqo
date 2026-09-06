@@ -147,6 +147,22 @@ class PostgresPaperService:
             game = session.get(Game, prediction.event_id, with_for_update={"read": True})
             feature = session.get(FeatureSnapshot, prediction.feature_snapshot_id)
             assert game is not None and feature is not None and game.start_at is not None
+            if signal.selected_team_id is None:
+                raise BusinessError(
+                    ErrorCode.INVALID_STATE,
+                    "Le signal doit prouver l'identité de l'équipe sélectionnée",
+                )
+            other_team = (
+                prediction.team_b_id
+                if signal.selected_team_id == prediction.team_a_id
+                else prediction.team_a_id
+            )
+            canonical_a = (
+                signal.selected_team_id if signal.selection_type == "TEAM_A" else other_team
+            )
+            canonical_b = (
+                other_team if signal.selection_type == "TEAM_A" else signal.selected_team_id
+            )
             available, exposure = self._available(session)
             if (
                 stake_amount > available
@@ -200,12 +216,15 @@ class PostgresPaperService:
                     "entryEvaluationFingerprint": admission.fingerprint,
                     "signalFingerprint": signal.signal_fingerprint,
                     "eventProof": {
+                        "competitionId": str(game.competition_id)
+                        if game.competition_id
+                        else "unknown",
                         "gameId": str(game.id),
                         "bestOf": game.best_of,
                         "gameNumber": game.game_number,
                         "startAt": game.start_at.isoformat(),
-                        "teamAId": str(feature.team_a_id),
-                        "teamBId": str(feature.team_b_id),
+                        "teamAId": str(canonical_a),
+                        "teamBId": str(canonical_b),
                     },
                 },
             )

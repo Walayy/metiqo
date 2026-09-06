@@ -12,7 +12,7 @@ from uuid import uuid4
 
 import pytest
 from alembic import command
-from sqlalchemy import Engine, create_engine, func, select, text
+from sqlalchemy import Engine, create_engine, func, insert, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
@@ -50,6 +50,42 @@ from tests.integration.test_value_policy import _policy
 _SLA = timedelta(days=14)
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize("context", [True], indirect=True)
+def test_model_and_provider_team_orders_are_resolved_by_identity(context: _Context) -> None:
+    now = context.captured_at + timedelta(seconds=10)
+    pipeline = PostgresValuePipeline(
+        context.engine, source_sla=_SLA, clock=FixedClock(UtcInstant(now))
+    )
+    for inverted, expected_team, expected_probability in (
+        (False, context.prediction.team_a_id, context.prediction.team_a_probability),
+        (True, context.prediction.team_b_id, context.prediction.team_b_probability),
+    ):
+        result = pipeline.evaluate(_capture(context, inverted=inverted))
+        assert result.signal is not None and result.grade is ValueGrade.VALUE
+        assert result.signal.selected_team_id == expected_team
+        assert result.signal.model_probability == expected_probability
+        assert (
+            PostgresSignalRepository(context.engine).reproduce(result.signal.signal_id)
+            == result.signal
+        )
+    assert result.signal is not None
+    with Session(context.engine) as session:
+        stored = session.get(SignalRecord, result.signal.signal_id)
+        assert stored is not None
+        forged = {
+            column.name: getattr(stored, column.name) for column in SignalRecord.__table__.columns
+        }
+    forged.update(
+        id=uuid4(), selected_team_id=context.prediction.team_a_id, signal_fingerprint="f" * 64
+    )
+    with (
+        pytest.raises(DBAPIError, match="selected team identity"),
+        context.engine.begin() as connection,
+    ):
+        connection.execute(insert(SignalRecord).values(**forged))
+
+
 @dataclass(frozen=True)
 class _Context:
     engine: Engine
@@ -61,7 +97,10 @@ class _Context:
 
 @pytest.fixture
 def context(
-    postgresql_url: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    postgresql_url: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
 ) -> Iterator[_Context]:
     command.upgrade(alembic_config(postgresql_url), "head")
     engine = create_engine(postgresql_url, connect_args={"options": "-c timezone=UTC"})
@@ -93,6 +132,7 @@ def context(
         cutoff,
         cutoff - timedelta(hours=1),
         tmp_path,
+        reverse_teams=bool(getattr(request, "param", False)),
     )
     captured = cutoff + timedelta(minutes=20)
     policy = _policy(f"p6-{uuid4().hex}", Decimal("0.03"))

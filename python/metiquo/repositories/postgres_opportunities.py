@@ -6,7 +6,7 @@ from importlib.metadata import version
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import Engine, RowMapping, Table, select
+from sqlalchemy import Engine, RowMapping, Table, func, select
 from sqlalchemy.sql import Select
 
 from metiquo.contracts import (
@@ -30,6 +30,7 @@ from metiquo.contracts.enums import (
     SelectionType,
     ValueGrade,
 )
+from metiquo.db.core_models import Team
 from metiquo.db.ml_models import ModelVersion, PrematchPrediction
 from metiquo.db.odds_models import (
     OddsProviderRecord,
@@ -92,6 +93,7 @@ class PostgresOpportunityRepository:
                 signals.c.id.label("signal_id"),
                 signals.c.odds_snapshot_id,
                 signals.c.selection_type,
+                func.coalesce(Team.display_name, Team.normalized_name).label("selected_team_name"),
                 signals.c.policy_version,
                 signals.c.offered_odds,
                 signals.c.raw_implied_probability,
@@ -138,6 +140,7 @@ class PostgresOpportunityRepository:
                 .join(markets, markets.c.id == snapshots.c.market_id)
                 .join(predictions, predictions.c.id == signals.c.prediction_id)
                 .join(models, models.c.id == predictions.c.model_version_id)
+                .join(Team, Team.id == signals.c.selected_team_id)
             )
             .where(
                 signals.c.value_computed.is_(True),
@@ -153,7 +156,7 @@ class PostgresOpportunityRepository:
         if event is None:
             return None
         selection = SelectionType(str(row["selection_type"]))
-        selection_label = event.team_a if selection is SelectionType.TEAM_A else event.team_b
+        selection_label = str(row["selected_team_name"])
         market_id = cast(UUID, row["market_id"])
         captured_at = row["captured_at"]
         computed_at = row["computed_at"]

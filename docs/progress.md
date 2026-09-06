@@ -1455,4 +1455,17 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les deux tests passent en 7,58 secondes. La capture à `4` trente secondes avant le début produit un CLV de `1` pour une entrée à `8`. Une cote suspendue plus récente, une cote post-start et une cote importée après le début avec timestamp rétroactif sont toutes exclues. Le replay donne la même preuve et ne change pas l'entrée à `8`. Sans observation suffisamment récente, le CLV reste null avec `CLOSING_TOO_OLD` ; avant l'événement il est indisponible avec `EVENT_NOT_STARTED`. La requête groupée conserve les identifiants et empreintes sans reconstruire de prix.
 - **Blocker éventuel :** aucun ; `PAP-007` peut agréger le CLV disponible avec son nombre d'observations et exposer séparément les indisponibilités.
 - **ADR éventuel :** aucun ; la méthode explicite est un ratio de prix observé, limité à une fenêtre de 90 secondes par défaut, et ne prétend pas être la clôture officielle du bookmaker.
-- **Commit/hash :** commit dédié `feat(paper): derive observed closing line proxy`, hash consigné après création.
+- **Commit/hash :** `6c9894c` (`feat(paper): derive observed closing line proxy`).
+
+## PAP-007 — Métriques financières honnêtes
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `PAP-005` et `PAP-006` sont `DONE` ; les décisions, résultats et proxies de clôture proviennent des repositories PostgreSQL.
+- **Fichiers créés/modifiés :** moteur `paper/metrics.py`, service `paper/reporting.py`, commande `paper-report`, configuration de clôture, modèle de rapport, guide `docs/paper-financial-metrics.md`, tests de calcul manuel et de rapport réel. Correction transversale de l'identité d'équipe dans le pricing, la projection et la preuve de création paper.
+- **Migrations :** `20260908_0037` ajoute les rapports financiers append-only. `20260908_0038` fige `selected_team_id` et exige sa cohérence avec la sélection canonique et la prédiction lors de toute nouvelle publication. Les lignes anciennes restent inchangées et explicitement non vérifiées lorsqu'elles ne disposent pas de cette preuve.
+- **Commandes/tests exécutés :** quatre tests de métriques, 26 tests PostgreSQL signal/value/création/règlement/rapport, Ruff et mypy strict ciblés ; contrôle global `make check` avec PostgreSQL 18 réel, incluant migrations, gate ingestion et compatibilité OpenAPI.
+- **Résultat exact :** les 26 tests PostgreSQL passent en 78,03 secondes et mypy ciblé passe sur 201 fichiers. Le calcul manuel confirme une perte nette de `10` pour `40` de mises réglées, soit un yield de `−0,25`, un drawdown de `30` et un intervalle par blocs `[-1 ; 0,5]`. La fixture intégrée confirme une perte de `10`, un yield de `−1` et un CLV de `−0,2`, dans les deux orientations possibles des équipes du modèle. Le test a révélé que l'ordre UUID du modèle pouvait différer de l'ordre Blue/Red canonique ; la probabilité et le règlement sont maintenant liés à l'identité d'équipe, avec refus SQL d'une identité forgée et reproduction déterministe. Aucune performance réelle n'est déduite de ces fixtures.
+- **Validation globale :** `make check` réussit : 503 tests Python en 215,59 secondes, tests composants, contrôles de format, lint, orthographe, typage et client OpenAPI verts.
+- **Blocker éventuel :** aucun ; `PAP-008` complète l'audit des opportunités non prises, mouvements de cote et corrections.
+- **ADR éventuel :** aucun ; les agrégats sont matérialisés hors requête web, avec méthode, tailles d'échantillon, motifs d'indisponibilité, preuves et empreintes.
+- **Commit/hash :** commit dédié `feat(paper): report observed financial metrics and bind team identity`, hash consigné après création.

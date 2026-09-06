@@ -49,6 +49,7 @@ from metiquo.models import (
     WalkForwardConfig,
 )
 from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
+from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
 from metiquo.services.value_pipeline import PostgresValuePipeline, ValueEvaluationRequest
 
@@ -160,6 +161,11 @@ def build_parser() -> argparse.ArgumentParser:
     settle.add_argument("--correction-reason")
     settle.add_argument("--limit", type=int, default=100)
     _machine_output(settle)
+    report = commands.add_parser(
+        "paper-report", help="matérialiser les métriques du ledger observé"
+    )
+    report.add_argument("--currency", required=True)
+    _machine_output(report)
     return parser
 
 
@@ -213,6 +219,23 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "paper-report":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "paper-report exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        financial_report = PostgresFinancialReportingService(
+            engine, closing_max_age_seconds=settings.paper_closing_max_age_seconds
+        ).build(currency=arguments.currency)
+        return {
+            "command": "paper-report",
+            "reportId": str(financial_report.report_id),
+            "computedAt": financial_report.computed_at.isoformat(),
+            "fingerprint": financial_report.report_fingerprint,
+            "report": financial_report.document,
+        }, ExitCode.SUCCESS
     if arguments.command == "paper-settle":
         if settings.app_data_mode is not DataMode.REAL:
             raise CliError(

@@ -192,6 +192,9 @@ class SignalRecord(Base):
         nullable=False,
     )
     selection_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    selected_team_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("core.teams.id", ondelete="RESTRICT")
+    )
     offered_odds: Mapped[Decimal] = mapped_column(Numeric(38, 28), nullable=False)
     raw_implied_probability: Mapped[Decimal] = mapped_column(Numeric(38, 28), nullable=False)
     model_probability: Mapped[Decimal] = mapped_column(Numeric(38, 28), nullable=False)

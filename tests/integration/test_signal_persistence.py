@@ -24,8 +24,10 @@ from metiquo.contracts.enums import (
     SelectionType,
     ValueGrade,
 )
+from metiquo.db.core_models import GameTeamStat
 from metiquo.db.pricing_models import SignalRecord
 from metiquo.features import FeatureDatasetBuilder
+from metiquo.features.snapshots import StoredFeatureSnapshot
 from metiquo.foundation.finance import DecimalOdds, Probability
 from metiquo.foundation.time import FixedClock, UtcInstant
 from metiquo.ingestion.object_store import FilesystemObjectStore
@@ -361,7 +363,35 @@ def _prediction(
     cutoff: datetime,
     registered_at: datetime,
     tmp_path: Path,
+    *,
+    reverse_teams: bool = False,
 ) -> StoredPrematchPrediction:
+    class CanonicalFixtureFeatures(FeatureDatasetBuilder):
+        def build_for_prediction(
+            self, event_id: UUID, *, cutoff_at: datetime
+        ) -> StoredFeatureSnapshot:
+            target = self._targets.get(event_id)
+            assert target is not None
+            with engine.connect() as connection:
+                teams = dict(
+                    connection.execute(
+                        select(GameTeamStat.side, GameTeamStat.team_id).where(
+                            GameTeamStat.game_id == event_id
+                        )
+                    )
+                    .tuples()
+                    .all()
+                )
+            return self._store.create(
+                self._specification(
+                    target,
+                    self.ensure_feature_set(),
+                    cutoff_at=cutoff_at,
+                    team_a_id=teams["Red" if reverse_teams else "Blue"],
+                    team_b_id=teams["Blue" if reverse_teams else "Red"],
+                )
+            )
+
     calibrator_id, benchmark_id = _database_prerequisites(engine, dataset_id)
     plan, calibrator = _calibrator(
         dataset_id=dataset_id,
@@ -396,7 +426,7 @@ def _prediction(
     )
     return PrematchPredictionService(
         engine=engine,
-        features=FeatureDatasetBuilder(
+        features=CanonicalFixtureFeatures(
             engine=engine,
             code_commit="abcdef1",
             dataset=dataset_name,

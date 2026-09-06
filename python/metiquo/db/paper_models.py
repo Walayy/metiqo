@@ -11,6 +11,33 @@ from sqlalchemy.orm import Mapped, mapped_column
 from metiquo.db.base import Base, UtcDateTime
 
 
+class FinancialReportRecord(Base):
+    __tablename__ = "financial_reports"
+    __table_args__ = (
+        CheckConstraint("currency ~ '^[A-Z]{3}$'", name="currency"),
+        CheckConstraint(
+            "jsonb_typeof(document) = 'object' AND jsonb_typeof(input_evidence) = 'object'",
+            name="documents",
+        ),
+        CheckConstraint(
+            "input_fingerprint ~ '^[0-9a-f]{64}$' AND report_fingerprint ~ '^[0-9a-f]{64}$'",
+            name="fingerprints",
+        ),
+        UniqueConstraint("input_fingerprint", name="uq_financial_reports_inputs"),
+        Index("ix_financial_reports_currency_computed", "currency", "computed_at"),
+        {"schema": "signals"},
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    method_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    computed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    document: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    input_evidence: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    report_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class PaperBetRecord(Base):
     __tablename__ = "paper_bets"
     __table_args__ = (
