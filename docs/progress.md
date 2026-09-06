@@ -1395,4 +1395,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les cinq tests passent, puis les deux tests enrichis passent en 10,70 secondes. L'insertion SQL directe refuse une cote non horodatée, un prix forgé, un montant non fini, une entrée après début et une source de règlement en quarantaine. Le P&L est contrôlé depuis montant et cote observée. Une correction conserve la séquence `pending_review`, perte `−10`, gain corrigé `70` avec acteur et motif ; la perte initiale reste lisible. Le cycle complet upgrade/downgrade/upgrade et le gate ingestion sur une base créée vide passent avec la révision 36.
 - **Blocker éventuel :** aucun ; `PAP-002` ajoute le service de création et sa bankroll fictive. Les triggers exigent une source validée pour un règlement définitif ; les plugins des tickets suivants doivent encore interpréter son résultat.
 - **ADR éventuel :** aucun ; séparer décision et révisions de règlement préserve l'historique prévu par la SFG.
-- **Commit/hash :** commit dédié `feat(paper): add immutable ledger schema`, hash consigné après création.
+- **Commit/hash :** `9ce5f3a` (`feat(paper): add immutable ledger schema`).
+
+## PAP-002 — Création contrôlée de paper bets
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `PAP-001` et `VAL-005` sont `DONE` ; l'admission actuelle réutilise le parcours `VAL-009` dans la transaction du ledger.
+- **Fichiers créés/modifiés :** `python/metiquo/paper/creation.py`, transaction publique du gate value, commande `oe paper-create`, paramètres de bankroll typés et exemple d'environnement, tests PostgreSQL de création/concurrence/CLI, guide ledger.
+- **Migrations :** aucune ; les preuves de bankroll et la référence de réévaluation utilisent l'audit JSON immuable de la décision.
+- **Commandes/tests exécutés :** 16 tests PostgreSQL création/value, test CLI réel ajouté et rejoué après correction de son import de module, 11 tests de configuration, Ruff et mypy strict ciblés, Prettier et CSpell.
+- **Résultat exact :** les 16 tests passent en 62,58 secondes ; le test CLI passe ensuite en 7,52 secondes et les 11 tests de configuration passent. Le service impose un montant explicite, une devise configurée, un signal admis et une nouvelle admission au moment de l'entrée. Un modèle retiré ou une cote stale bloque l'entrée sans écriture partielle. Un replay identique conserve sa réponse initiale ; une clé réutilisée avec un autre payload ou une seconde décision sur le même signal est refusée. Le disponible déduit les mises ouvertes et les positions en revue, puis ajoute une seule fois le dernier règlement. Deux créations concurrentes de `8` avec une limite d'exposition `10` produisent exactement une entrée. Le capital initial ne peut être augmenté par simple changement de configuration après la première entrée. La CLI réelle crée le pari et renvoie un conflit métier structuré en cas de montant modifié.
+- **Blocker éventuel :** aucun ; l'auto-paper et Kelly restent désactivés. `PAP-003` peut interpréter les résultats game winner, avant le job et les API réelles des tickets suivants.
+- **ADR éventuel :** aucun ; les créations sont manuelles dans ce MVP et ne contactent aucune API d'exécution bookmaker.
+- **Commit/hash :** commit dédié `feat(paper): create controlled fictitious entries`, hash consigné après création.

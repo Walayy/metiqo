@@ -101,6 +101,13 @@ class Settings(BaseSettings):
     signal_max_kelly_fraction: Decimal = Field(default=Decimal("0.25"), ge=0, le=1)
     signal_min_mapping_confidence: Decimal = Field(default=Decimal("0.80"), ge=0, le=1)
 
+    paper_bankroll_policy_version: str = Field(
+        default="paper-manual-v1", min_length=1, max_length=128
+    )
+    paper_bankroll_currency: str = Field(default="EUR", pattern=r"^[A-Z]{3}$")
+    paper_bankroll_initial: Decimal = Field(default=Decimal(1000), gt=0, allow_inf_nan=False)
+    paper_max_open_exposure: Decimal = Field(default=Decimal(100), gt=0, allow_inf_nan=False)
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, value: SecretStr) -> SecretStr:

@@ -14,6 +14,7 @@ import zipfile
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from enum import IntEnum
 from pathlib import Path
 from typing import cast
@@ -25,6 +26,7 @@ from metiquo.config import ConfigurationError, ObjectStoreBackend, Settings, loa
 from metiquo.contracts.enums import DataMode
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
 from metiquo.features.dataset import FeatureDatasetBuilder
+from metiquo.foundation.errors import BusinessError
 from metiquo.foundation.time import SystemClock
 from metiquo.ingestion.backfill import BackfillOrchestrator, YearSyncResult
 from metiquo.ingestion.catalog import (
@@ -46,6 +48,7 @@ from metiquo.models import (
     ModelArtifactStore,
     WalkForwardConfig,
 )
+from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
 from metiquo.services.value_pipeline import PostgresValuePipeline, ValueEvaluationRequest
 
 _PROVIDER = "oracles_elixir"
@@ -140,6 +143,13 @@ def build_parser() -> argparse.ArgumentParser:
     value.add_argument("--policy", required=True)
     value.add_argument("--prediction", type=UUID)
     _machine_output(value)
+    paper = commands.add_parser("paper-create", help="enregistrer une décision fictive manuelle")
+    paper.add_argument("--signal", type=UUID, required=True)
+    paper.add_argument("--stake", type=Decimal, required=True)
+    paper.add_argument("--currency", required=True)
+    paper.add_argument("--idempotency-key", required=True)
+    paper.add_argument("--actor", required=True)
+    _machine_output(paper)
     return parser
 
 
@@ -170,7 +180,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "runId": str(error.run_id),
         }
         exit_code = ExitCode.SOURCE_FAILURE
-    except (CliError, ConfigurationError, ValueError) as error:
+    except (CliError, ConfigurationError, ValueError, BusinessError) as error:
         document = {
             "ok": False,
             "errorCode": getattr(error, "code", "INVALID_CONFIGURATION"),
@@ -193,6 +203,33 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "paper-create":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "paper-create exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        bet = PostgresPaperService(
+            engine,
+            bankroll=PaperBankrollPolicy(
+                settings.paper_bankroll_policy_version,
+                settings.paper_bankroll_currency,
+                settings.paper_bankroll_initial,
+                settings.paper_max_open_exposure,
+            ),
+            source_sla=timedelta(seconds=settings.oe_freshness_sla_seconds),
+        ).create(
+            arguments.idempotency_key,
+            arguments.signal,
+            arguments.stake,
+            arguments.currency,
+            actor=arguments.actor,
+        )
+        return {
+            "command": "paper-create",
+            "paperBet": bet.model_dump(mode="json", by_alias=True),
+        }, ExitCode.SUCCESS
     if arguments.command == "value-evaluate":
         if settings.app_data_mode is not DataMode.REAL:
             raise CliError(

@@ -116,8 +116,15 @@ class PostgresValuePipeline:
         self.clock = clock or SystemClock()
 
     def evaluate(self, request: ValueEvaluationRequest) -> ValueEvaluation:
+        with self.engine.begin() as connection:
+            return self.evaluate_in_transaction(connection, request)
+
+    def evaluate_in_transaction(
+        self, connection: Connection, request: ValueEvaluationRequest
+    ) -> ValueEvaluation:
+        """Permettre au propriétaire de la transaction de joindre une décision paper."""
         now = self.clock.now().value
-        with self.engine.begin() as connection, Session(bind=connection) as session:
+        with Session(bind=connection) as session:
             return self._evaluate(connection, session, request, now)
 
     def _evaluate(
