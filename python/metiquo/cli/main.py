@@ -49,6 +49,7 @@ from metiquo.models import (
     WalkForwardConfig,
 )
 from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
+from metiquo.paper.settlement_job import PostgresPaperSettlementService
 from metiquo.services.value_pipeline import PostgresValuePipeline, ValueEvaluationRequest
 
 _PROVIDER = "oracles_elixir"
@@ -150,6 +151,15 @@ def build_parser() -> argparse.ArgumentParser:
     paper.add_argument("--idempotency-key", required=True)
     paper.add_argument("--actor", required=True)
     _machine_output(paper)
+    settle = commands.add_parser(
+        "paper-settle", help="régler le ledger depuis les résultats OE validés"
+    )
+    settle.add_argument("--paper-bet", type=UUID)
+    settle.add_argument("--idempotency-key")
+    settle.add_argument("--actor", default="oe-settlement-job")
+    settle.add_argument("--correction-reason")
+    settle.add_argument("--limit", type=int, default=100)
+    _machine_output(settle)
     return parser
 
 
@@ -203,6 +213,41 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "paper-settle":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "paper-settle exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        service = PostgresPaperSettlementService(
+            engine,
+            source_sla=timedelta(seconds=settings.oe_freshness_sla_seconds),
+            settlement_delay=timedelta(seconds=settings.paper_settlement_delay_seconds),
+        )
+        if arguments.paper_bet is not None:
+            bet = service.settle(
+                arguments.paper_bet,
+                key=arguments.idempotency_key,
+                actor=arguments.actor,
+                correction_reason=arguments.correction_reason,
+            )
+            return {
+                "command": "paper-settle",
+                "paperBet": bet.model_dump(mode="json", by_alias=True),
+            }, ExitCode.SUCCESS
+        if arguments.correction_reason or arguments.idempotency_key:
+            raise ValueError("Une correction ou une clé explicite exige --paper-bet")
+        report = service.run_pending(
+            limit=arguments.limit, max_attempts=settings.paper_settlement_max_attempts
+        )
+        return {
+            "command": "paper-settle",
+            "processed": report.processed,
+            "settled": report.settled,
+            "pending": report.pending,
+            "failed": [str(identity) for identity in report.failed],
+        }, ExitCode.SOURCE_FAILURE if report.failed else ExitCode.SUCCESS
     if arguments.command == "paper-create":
         if settings.app_data_mode is not DataMode.REAL:
             raise CliError(

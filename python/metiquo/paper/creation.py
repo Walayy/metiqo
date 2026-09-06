@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 
 from metiquo.contracts import PaperBet
 from metiquo.contracts.enums import PaperBetStatus, ValueGrade
+from metiquo.db.core_models import Game
+from metiquo.db.feature_models import FeatureSnapshot
 from metiquo.db.ml_models import PrematchPrediction
 from metiquo.db.odds_models import MarketMappingAttempt
 from metiquo.db.paper_models import PaperBetRecord, PaperSettlementRecord
@@ -28,6 +30,10 @@ def decimal_text(value: Decimal) -> str:
 
 def fingerprint(document: dict[str, object]) -> str:
     return sha256(json.dumps(document, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def bankroll_lock_id(currency: str) -> int:
+    return int.from_bytes(sha256(f"paper-bankroll:{currency}".encode()).digest()[:8], signed=True)
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,9 +104,7 @@ class PostgresPaperService:
         )
         now = self.clock.now().value
         # La devise identifie le compte, indépendamment de la version de sa politique.
-        lock = int.from_bytes(
-            sha256(f"paper-bankroll:{currency}".encode()).digest()[:8], signed=True
-        )
+        lock = bankroll_lock_id(currency)
         with self.engine.begin() as connection, Session(bind=connection) as session:
             connection.execute(text("SELECT pg_advisory_xact_lock(:lock)"), {"lock": lock})
             previous = session.scalar(
@@ -140,6 +144,9 @@ class PostgresPaperService:
                 and mapping is not None
                 and mapping.rules_reference is not None
             )
+            game = session.get(Game, prediction.event_id, with_for_update={"read": True})
+            feature = session.get(FeatureSnapshot, prediction.feature_snapshot_id)
+            assert game is not None and feature is not None and game.start_at is not None
             available, exposure = self._available(session)
             if (
                 stake_amount > available
@@ -192,6 +199,14 @@ class PostgresPaperService:
                     "entryEvaluationId": str(admission.evaluation_id),
                     "entryEvaluationFingerprint": admission.fingerprint,
                     "signalFingerprint": signal.signal_fingerprint,
+                    "eventProof": {
+                        "gameId": str(game.id),
+                        "bestOf": game.best_of,
+                        "gameNumber": game.game_number,
+                        "startAt": game.start_at.isoformat(),
+                        "teamAId": str(feature.team_a_id),
+                        "teamBId": str(feature.team_b_id),
+                    },
                 },
             )
             connection.execute(

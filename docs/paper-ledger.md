@@ -27,3 +27,14 @@ Les tests `tests/integration/test_paper_ledger.py` insèrent directement en SQL 
 Le moteur `GameWinnerSettlementEngine` interprète les résultats game winner. Il exige une source validée et connue à l'instant du calcul, la bonne game ou une série BO1, des règles enregistrées et deux résultats d'équipes complémentaires. Chaque exception remake, forfait ou annulation applique `settle`, `void` ou `review` selon sa règle ; des drapeaux contradictoires restent en revue. La décision conserve les empreintes du résultat, de la règle et du moteur et produit la même empreinte lors d'un replay. Le chargement réel des preuves OE et la persistance automatique des règlements sont raccordés par PAP-005.
 
 `SeriesWinnerSettlementEngine` vérifie le score terminal des BO1, BO3 et BO5. Les formats pairs BO2 et BO4 exigent toutes les games et un marché explicite à trois issues avec nul. Le vainqueur canonique doit correspondre au score ; aucune issue n'est déduite d'un résultat core marqué non résolu. Un score impossible, non terminal, un format modifié ou une série écourtée restent en revue. Une annulation peut produire un void uniquement avec la règle référencée correspondante et une preuve source validée.
+
+Le job `PostgresPaperSettlementService` charge les résultats, les snapshots et les règles directement depuis PostgreSQL. La création paper fige désormais les équipes, le format et l'horaire attendus dans `eventProof`. Une décision ancienne sans cette preuve reste en revue. Le job vérifie la fraîcheur OE, la cohérence des équipes et des sources, l'arrivée de la preuve après la fin de la game, puis attend `PAPER_SETTLEMENT_DELAY_SECONDS` après la fin ou le traitement du résultat, selon l'instant le plus tardif. Les empreintes des lignes et la révision canonique sont conservées avec le règlement.
+
+```console
+make paper-settle JSON=1
+uv run --frozen oe paper-settle --paper-bet <uuid> --json
+```
+
+Le lot traite jusqu'à 100 décisions ouvertes ou en revue. Les erreurs de connexion, deadlocks et échecs de sérialisation sont repris jusqu'à `PAPER_SETTLEMENT_MAX_ATTEMPTS`, trois par défaut et cinq au maximum ; les autres erreurs ne sont pas rejouées. Le rapport expose les identifiants en échec et la CLI renvoie un code non nul si le lot en contient. Un replay identique ne duplique pas le règlement. Les créations et règlements utilisent le même verrou de bankroll par devise.
+
+Un règlement définitif reste figé lors des passages automatiques. Une correction nécessite `--paper-bet`, `--correction-reason`, un acteur identifiable et, pour un replay explicite, `--idempotency-key`. Elle recalcule le résultat OE et ajoute une révision ; aucun montant ni statut gagnant ne peut être fourni manuellement à la commande. Le parcours intégré couvre une série BO1 issue du modèle game winner ; le gate P6 continue de refuser de transformer sa probabilité de game en probabilité BO3.

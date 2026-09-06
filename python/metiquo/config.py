@@ -107,6 +107,8 @@ class Settings(BaseSettings):
     paper_bankroll_currency: str = Field(default="EUR", pattern=r"^[A-Z]{3}$")
     paper_bankroll_initial: Decimal = Field(default=Decimal(1000), gt=0, allow_inf_nan=False)
     paper_max_open_exposure: Decimal = Field(default=Decimal(100), gt=0, allow_inf_nan=False)
+    paper_settlement_delay_seconds: int = Field(default=300, ge=0)
+    paper_settlement_max_attempts: int = Field(default=3, ge=1, le=5)
 
     @field_validator("database_url")
     @classmethod

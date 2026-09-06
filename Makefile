@@ -89,7 +89,14 @@ test-ingestion:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate ingestion))
 	uv run --frozen pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
 
-.PHONY: test-value value-evaluate
+.PHONY: test-value value-evaluate test-paper paper-settle
+test-paper:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le ledger paper))
+	uv run --frozen python -m pytest tests/paper tests/integration/test_paper_ledger.py tests/integration/test_paper_creation.py tests/integration/test_paper_settlement_job.py -vv
+
+paper-settle:
+	uv run --frozen oe paper-settle $(if $(strip $(PAPER_BET)),--paper-bet $(PAPER_BET),) $(OE_JSON_FLAG)
+
 test-value:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate value))
 	uv run --frozen pytest tests/pricing tests/integration/test_value_pipeline.py tests/integration/test_signal_persistence.py tests/integration/test_migrations.py -vv

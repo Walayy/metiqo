@@ -1431,4 +1431,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les 36 tests passent en 1,97 seconde, dont 13 nouveaux scénarios série. Les scores terminaux BO1/BO3/BO5 produisent gain/perte, et le nul BO2 exige une troisième issue déclarée. Le vainqueur doit confirmer le score core. Score incomplet, impossible, vainqueur contradictoire ou non résolu, format changé, série écourtée et source non validée restent en revue. Une annulation sans règle explicite reste en revue ; une politique `void` référencée permet le void. Les replays produisent la même décision.
 - **Blocker éventuel :** aucun ; `PAP-005` peut raccorder les moteurs au chargement OE et aux révisions du ledger.
 - **ADR éventuel :** aucun ; les formats pairs ont un domaine explicite à trois issues, sans extrapoler une règle de push implicite.
-- **Commit/hash :** commit dédié `feat(paper): settle series from terminal scores`, hash consigné après création.
+- **Commit/hash :** `dacd4c4` (`feat(paper): settle series from terminal scores`).
+
+## PAP-005 — Job de règlement depuis OE
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `PAP-003`, `PAP-004` et `OE-020` sont `DONE`.
+- **Fichiers créés/modifiés :** service `paper/settlement_job.py`, preuve d'événement figée à la création, verrou bankroll partagé, configuration délai/reprises, CLI `paper-settle`, cibles Make et cinq tests PostgreSQL d'arrivée/règlement/reprise/CLI.
+- **Migrations :** aucune ; les preuves de résultat et les corrections utilisent les révisions append-only de `signals.settlements`.
+- **Commandes/tests exécutés :** tests d'arrivée et de création, correction du typage enum au retour du DTO, puis `make test-paper` sur PostgreSQL réel ; Ruff, mypy strict ciblé, Prettier et CSpell.
+- **Résultat exact :** les 45 tests paper passent en 42,20 secondes. Le parcours crée une entrée, attend une nouvelle publication raw, exécute le vrai builder canonique, respecte le délai puis règle le BO1 gagné à `70` pour une mise `10` et une cote `8`. Le replay conserve trois révisions au total : attente de résultat, attente de délai, règlement. Une correction OE ne remplace pas ce gain automatiquement ; une action motivée ajoute ensuite la perte `−10` en quatrième révision. La source stale maintient `pending_review`. Une connexion défaillante deux fois reprend au troisième essai ; une panne persistante s'arrête au troisième et apparaît en échec dans le rapport. La CLI traite le pari puis annonce zéro décision à traiter lors du passage suivant. Le statut et le P&L proviennent du résultat OE et du moteur, jamais d'un choix manuel du résultat.
+- **Blocker éventuel :** aucun ; l'activation d'un scheduler récurrent appartient à P8. Les anciennes décisions sans preuve d'événement restent en revue. Le parcours réel conserve la restriction P6 au modèle game winner et aux BO1 pour les marchés de série.
+- **ADR éventuel :** aucun ; le lot transactionnel et sa CLI sont utilisables avant l'orchestrateur de jobs P8, sans exécution bookmaker.
+- **Commit/hash :** commit dédié `feat(paper): run audited OE settlement jobs`, hash consigné après création.
