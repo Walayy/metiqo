@@ -1419,4 +1419,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les 23 tests passent en 2,44 secondes. Le gain et la perte respectent l'orientation de sélection. Les neuf combinaisons remake/forfait/annulation et `settle`/`void`/`review` appliquent la politique référencée. Source non validée ou future, game incorrecte, règle inconnue, résultat absent, incomplet ou contradictoire restent `pending_review`. Une même preuve et les mêmes règles donnent exactement la même décision et la même empreinte ; aucun P&L n'est inventé par ce moteur.
 - **Blocker éventuel :** aucun ; `PAP-004` ajoute le règlement série, puis `PAP-005` charge les preuves depuis PostgreSQL et persiste les règlements.
 - **ADR éventuel :** aucun ; le moteur pur interprète les preuves et le job réalise leurs lectures et leur audit transactionnel.
-- **Commit/hash :** commit dédié `feat(paper): settle game winner with recorded rules`, hash consigné après création.
+- **Commit/hash :** `daead10` (`feat(paper): settle game winner with recorded rules`).
+
+## PAP-004 — Settlement SERIES_WINNER
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `ML-014`, `PAP-001` et `CNL-003` sont `DONE`.
+- **Fichiers créés/modifiés :** `paper/series_settlement.py`, 13 fixtures série et guide ledger.
+- **Migrations :** aucune ; les décisions utilisent le même contrat immuable et les mêmes règles référencées que le moteur game winner.
+- **Commandes/tests exécutés :** tests paper et pricing série via `python -m pytest`, Ruff, mypy strict ciblé, Prettier et CSpell.
+- **Résultat exact :** les 36 tests passent en 1,97 seconde, dont 13 nouveaux scénarios série. Les scores terminaux BO1/BO3/BO5 produisent gain/perte, et le nul BO2 exige une troisième issue déclarée. Le vainqueur doit confirmer le score core. Score incomplet, impossible, vainqueur contradictoire ou non résolu, format changé, série écourtée et source non validée restent en revue. Une annulation sans règle explicite reste en revue ; une politique `void` référencée permet le void. Les replays produisent la même décision.
+- **Blocker éventuel :** aucun ; `PAP-005` peut raccorder les moteurs au chargement OE et aux révisions du ledger.
+- **ADR éventuel :** aucun ; les formats pairs ont un domaine explicite à trois issues, sans extrapoler une règle de push implicite.
+- **Commit/hash :** commit dédié `feat(paper): settle series from terminal scores`, hash consigné après création.
