@@ -22,6 +22,7 @@ from metiquo.paper.metrics import (
     FinancialMetricsEngine,
     FinancialObservation,
 )
+from metiquo.paper.reporting_audit import reporting_audit
 from metiquo.paper.settlement_job import settled_dto
 
 
@@ -159,12 +160,14 @@ class PostgresFinancialReportingService:
                 )
                 or 0
             )
+            audit = reporting_audit(session, now=now, currency=currency)
             evidence: dict[str, object] = {
                 "entries": inputs,
                 "signalCount": signals,
                 "methodVersion": FINANCIAL_METHOD_VERSION,
                 "currency": currency,
                 "closingMaxAgeSeconds": self.closing_max_age_seconds,
+                "auditFingerprint": fingerprint(audit),
             }
             input_hash = fingerprint(evidence)
             existing = session.scalar(
@@ -179,6 +182,7 @@ class PostgresFinancialReportingService:
                 .calculate(observations, signals_count=signals, currency=currency)
                 .document()
             )
+            document["audit"] = audit
             report_hash = fingerprint({"inputs": evidence, "report": document})
             identity = uuid5(NAMESPACE_URL, f"metiquo:financial-report:{report_hash}")
             connection.execute(

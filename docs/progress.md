@@ -1468,4 +1468,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Validation globale :** `make check` réussit : 503 tests Python en 215,59 secondes, tests composants, contrôles de format, lint, orthographe, typage et client OpenAPI verts.
 - **Blocker éventuel :** aucun ; `PAP-008` complète l'audit des opportunités non prises, mouvements de cote et corrections.
 - **ADR éventuel :** aucun ; les agrégats sont matérialisés hors requête web, avec méthode, tailles d'échantillon, motifs d'indisponibilité, preuves et empreintes.
-- **Commit/hash :** commit dédié `feat(paper): report observed financial metrics and bind team identity`, hash consigné après création.
+- **Commit/hash :** `824c803` (`feat(paper): report observed financial metrics and bind team identity`).
+
+## PAP-008 — Anti-biais et immutabilité reporting
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `PAP-007` est `DONE` avec contrôle global vert ; les politiques et leur audit immuables sont déjà validés par `VAL-003`.
+- **Fichiers créés/modifiés :** `paper/reporting_audit.py`, raccord au rapport matérialisé, tests PostgreSQL de complétude/correction/changement de cote, cible `test-paper` et documentation des conventions.
+- **Migrations :** aucune ; le rapport stocke son audit et son empreinte dans les documents append-only de la migration 37.
+- **Commandes/tests exécutés :** test de complétude d'abord en échec sur l'absence d'audit, puis huit tests rapport/politiques ; après ajout du changement de cote, les deux scénarios d'audit enrichis ; Ruff, mypy strict ciblé, Prettier et CSpell.
+- **Résultat exact :** les huit tests passent en 13,15 secondes, puis les deux scénarios enrichis passent en 8,48 secondes ; mypy passe sur dix fichiers. Les signaux pris, non pris, les réévaluations d'entrée et les abstentions précoces sont conservés séparément. Une perte de `10` corrigée en gain de `70` conserve les deux révisions et l'ajustement de `80`, avec auteur, motif, preuves et rapport antérieur inchangé. Une cote passée de `8` à `4` avant l'entrée refuse l'ancien signal et reste dans l'audit avec une variation de `−0,5`, une opportunité non prise, zéro pari et aucun ROI numérique. Le slippage des entrées réussies vaut zéro sous la règle du snapshot exact ; ce fait n'est pas présenté comme une absence de coût d'exécution réelle. La suppression physique des signaux, évaluations, règlements et rapports échoue.
+- **Blocker éventuel :** aucun ; `PAP-009` raccorde les API et écrans réels à ces services et projections.
+- **ADR éventuel :** aucun ; les seuils restent versionnés hors fenêtre finale et le reporting n'optimise aucune politique.
+- **Commit/hash :** commit dédié `feat(paper): preserve complete reporting audit`, hash consigné après création.
