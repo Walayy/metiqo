@@ -99,7 +99,9 @@ test("promotes a real candidate and keeps the exact prediction version visible",
   ).toContainText("1280");
   await candidate.getByRole("button", { name: "Promouvoir" }).click();
 
-  await expect(page.getByRole("status")).toContainText("Action terminée · champion");
+  await expect(page.getByRole("status").filter({ hasText: "Action terminée" })).toContainText(
+    "Action terminée · champion",
+  );
   await expect(page.getByRole("region", { name: "Champions actifs" })).toContainText(
     "real-game-winner-v42",
   );

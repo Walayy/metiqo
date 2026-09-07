@@ -1,5 +1,7 @@
 "use client";
 
+import { readBackend, requestBackend } from "../lib/backend";
+
 import type { AuthStatus } from "@metiquo/contracts/types";
 import {
   Button,
@@ -15,7 +17,7 @@ const SESSION_KEY = ["owner-session"] as const;
 const AUTH_URL = "/api/backend/api/v1/auth";
 
 async function sessionStatus(): Promise<AuthStatus> {
-  const response = await fetch(`${AUTH_URL}/session`, {
+  const response = await readBackend(`${AUTH_URL}/session`, {
     cache: "no-store",
     credentials: "same-origin",
     signal: AbortSignal.timeout(15_000),
@@ -48,7 +50,7 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
     setPending(true);
     setError(null);
     try {
-      const response = await fetch(`${AUTH_URL}/login`, {
+      const response = await requestBackend(`${AUTH_URL}/login`, {
         method: "POST",
         cache: "no-store",
         credentials: "same-origin",
@@ -81,7 +83,7 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
     setPending(true);
     setError(null);
     try {
-      const response = await fetch(`${AUTH_URL}/logout`, {
+      const response = await requestBackend(`${AUTH_URL}/logout`, {
         headers: { "X-Metiquo-CSRF": "1" },
         method: "POST",
         credentials: "same-origin",
@@ -103,7 +105,7 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
 
   if (session.isPending)
     return <RemoteLoadingState label="Vérification de la connexion" minHeight="32rem" rows={8} />;
-  if (session.isError)
+  if (session.isError && session.data?.mode !== "disabled")
     return (
       <RemoteRecoverableErrorState
         title="Connexion indisponible"
@@ -111,8 +113,23 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
         onRetry={() => void session.refetch()}
       />
     );
-  if (session.data.mode === "disabled") return children;
-  if (session.data.authenticated)
+  if (session.data?.mode === "disabled")
+    return (
+      <>
+        {session.isError ? (
+          <RemoteRecoverableErrorState
+            compact
+            className="mb-6"
+            title="Actualisation indisponible"
+            description="La vérification du service est indisponible. La dernière lecture locale reste affichée."
+            onRetry={() => void session.refetch()}
+            retryDisabled={session.isFetching}
+          />
+        ) : null}
+        {children}
+      </>
+    );
+  if (session.data?.authenticated)
     return (
       <>
         <div className="mb-6 flex min-h-11 items-center justify-end gap-4">

@@ -149,9 +149,7 @@ test("shows measured operations with readable data during a source failure", asy
   await panel.screenshot({ path: testInfo.outputPath("operational-status.png") });
 });
 
-test("distinguishes blocking catalogue errors from recoverable quality errors", async ({
-  page,
-}) => {
+test("offers independent recovery for temporary catalogue and quality errors", async ({ page }) => {
   await page.route("**/api/backend/api/v1/admin/data-sources**", async (route) => {
     await route.fulfill({ body: "{}", contentType: "application/json", status: 503 });
   });
@@ -164,5 +162,14 @@ test("distinguishes blocking catalogue errors from recoverable quality errors", 
   await expect(
     page.getByRole("alert").filter({ hasText: "Actualisation impossible" }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Réessayer" })).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Catalogue des sources" })
+      .getByRole("button", { name: "Réessayer" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Anomalies bloquantes" })
+      .getByRole("button", { name: "Réessayer" }),
+  ).toBeVisible();
 });

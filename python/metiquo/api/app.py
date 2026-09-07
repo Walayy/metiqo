@@ -12,7 +12,8 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import Engine, create_engine
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
+from sqlalchemy.exc import TimeoutError as DatabaseTimeoutError
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import RequestResponseEndpoint
@@ -155,6 +156,19 @@ def _router(settings: Settings, readiness_probe: ReadinessProbe, clock: Clock) -
     return router
 
 
+def _api_database_engine(database_url: str) -> Engine:
+    """Bound HTTP work independently from long-running worker transactions."""
+    return create_engine(
+        database_url,
+        connect_args={
+            "connect_timeout": 2,
+            "options": "-c timezone=UTC -c statement_timeout=8000 -c lock_timeout=3000",
+        },
+        pool_pre_ping=True,
+        pool_timeout=2,
+    )
+
+
 def create_app(
     *,
     settings: Settings | None = None,
@@ -221,11 +235,7 @@ def create_app(
         real_engine = (
             real_admin_repository.engine
             if real_admin_repository is not None
-            else create_engine(
-                resolved_settings.database_url.get_secret_value(),
-                connect_args={"options": "-c timezone=UTC"},
-                pool_pre_ping=True,
-            )
+            else _api_database_engine(resolved_settings.database_url.get_secret_value())
         )
         resolved_repository = real_admin_repository or PostgresAdminRepository(
             real_engine,
@@ -287,9 +297,7 @@ def create_app(
         auth_engine = (
             app.state.real_admin_engine
             if resolved_settings.app_data_mode is DataMode.REAL
-            else create_engine(
-                resolved_settings.database_url.get_secret_value(), pool_pre_ping=True
-            )
+            else _api_database_engine(resolved_settings.database_url.get_secret_value())
         )
         owner_auth = OwnerAuthService(auth_engine, resolved_settings, clock=resolved_clock)
     app.state.owner_auth = owner_auth
@@ -377,6 +385,26 @@ def create_app(
                     )
                 status_code = response.status_code
                 response.headers["X-Trace-Id"] = str(trace)
+                return response
+            except (OperationalError, DatabaseTimeoutError):
+                # Never replay an interrupted transaction, including an uncertain write.
+                # The caller receives a bounded, non-sensitive recovery response.
+                status_code = 503
+                response = _problem_response(
+                    ProblemDetails(
+                        title="Service de données indisponible",
+                        status=503,
+                        detail=(
+                            "La base ne répond pas pour le moment. "
+                            "Réessayez dans quelques instants."
+                        ),
+                        code=ErrorCode.DEPENDENCY_UNAVAILABLE.value,
+                        instance=request.url.path,
+                    )
+                )
+                response.headers["X-Trace-Id"] = str(trace)
+                response.headers["Retry-After"] = "1"
+                response.headers["Cache-Control"] = "no-store"
                 return response
             finally:
                 elapsed = perf_counter() - started

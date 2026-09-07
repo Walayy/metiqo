@@ -19,6 +19,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { useOnline } from "../lib/connectivity";
 import { ThemeMenu } from "./theme-menu";
 
 export type DataMode = "mock" | "real";
@@ -45,16 +46,26 @@ type AppShellProperties = Readonly<{
 }>;
 
 function DataModeBadge({ dataMode }: Readonly<{ dataMode: DataMode }>) {
+  const online = useOnline();
   return (
     <Badge
+      role="status"
+      aria-label="Connexion réseau"
+      aria-live="polite"
+      aria-atomic="true"
       className={
         dataMode === "mock"
-          ? "border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200"
-          : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+          ? "relative border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200"
+          : "relative border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
       }
     >
       <span aria-hidden="true" className="mr-1.5 size-1.5 rounded-full bg-current" />
-      {dataMode.toUpperCase()}
+      <span>{dataMode.toUpperCase()}</span>
+      {!online ? (
+        <span className="absolute right-0 top-full mt-0.5 whitespace-nowrap text-[10px] leading-3 text-ink-primary">
+          Hors connexion
+        </span>
+      ) : null}
     </Badge>
   );
 }

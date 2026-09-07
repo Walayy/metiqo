@@ -1,5 +1,8 @@
 "use client";
 
+import { canReadPrevious, readBackend } from "../lib/backend";
+import { QueryRecovery } from "./query-recovery";
+
 import type { ItemResponsePaperMetricsDto } from "@metiquo/contracts/types";
 import { Card, CardContent, RemoteRecoverableErrorState, RemoteSkeleton } from "@metiquo/ui";
 import { useQuery } from "@tanstack/react-query";
@@ -29,7 +32,7 @@ export function PaperFinancialReport() {
   const report = useQuery({
     queryKey: ["paper-metrics", "EUR"],
     queryFn: async ({ signal }): Promise<ItemResponsePaperMetricsDto> => {
-      const response = await fetch("/api/backend/api/v1/paper-bets/metrics?currency=EUR", {
+      const response = await readBackend("/api/backend/api/v1/paper-bets/metrics?currency=EUR", {
         signal,
       });
       if (!response.ok) throw new Error("Rapport financier indisponible");
@@ -37,7 +40,7 @@ export function PaperFinancialReport() {
     },
     refetchInterval: 30_000,
   });
-  if (report.isError)
+  if (report.isError && !canReadPrevious(report))
     return (
       <RemoteRecoverableErrorState
         description={report.error.message}
@@ -47,6 +50,7 @@ export function PaperFinancialReport() {
   const value = report.data?.data;
   return (
     <section aria-label="Rapport financier" aria-busy={report.isPending} className="grid gap-4">
+      <QueryRecovery queries={[report]} />
       <h2 className="text-xl font-semibold">Métriques financières · EUR</h2>
       <p
         className="min-h-15 text-sm leading-5 text-ink-secondary sm:min-h-10 xl:min-h-5"
@@ -54,7 +58,7 @@ export function PaperFinancialReport() {
       >
         {report.isPending ? (
           "Chargement du rapport…"
-        ) : !value?.reportId ? (
+        ) : !value?.reportId || !report.data ? (
           "Aucun rapport calculé dans ce mode. ROI et CLV indisponibles."
         ) : (
           <>

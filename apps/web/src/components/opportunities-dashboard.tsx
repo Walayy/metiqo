@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend } from "../lib/backend";
+
 import type {
   FreshnessStatus,
   ListOpportunitiesApiV1OpportunitiesGetData,
@@ -64,7 +68,7 @@ type DisplayMode = "table" | "cards";
 type OpportunityQuery = NonNullable<ListOpportunitiesApiV1OpportunitiesGetData["query"]>;
 
 async function fetchContract<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_PROXY_BASE_URL}${path}`, {
+  const response = await readBackend(`${API_PROXY_BASE_URL}${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -778,7 +782,8 @@ export function OpportunitiesDashboard() {
         }
         loadingFallback={<DashboardLoadingState />}
       >
-        {opportunitiesQuery.isError ? (
+        <QueryRecovery queries={[opportunitiesQuery]} />
+        {opportunitiesQuery.isError && !canReadPrevious(opportunitiesQuery) ? (
           <RemoteRecoverableErrorState
             description="Les opportunités n’ont pas pu être chargées. Aucun détail technique sensible n’est affiché."
             onRetry={() => {

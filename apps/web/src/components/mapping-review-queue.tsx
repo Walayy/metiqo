@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
+
 import type {
   AliasRecord,
   ItemResponseAliasRecord,
@@ -35,7 +39,7 @@ import { formatDateTime, formatPercent } from "./opportunity-presenters";
 const MAPPINGS_PATH = "/api/backend/api/v1/admin/mappings";
 
 async function getPending(signal: AbortSignal): Promise<PageResponseMappingReview> {
-  const response = await fetch(`${MAPPINGS_PATH}/pending?offset=0&limit=100`, {
+  const response = await readBackend(`${MAPPINGS_PATH}/pending?offset=0&limit=100`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -44,7 +48,7 @@ async function getPending(signal: AbortSignal): Promise<PageResponseMappingRevie
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`/api/backend/api/v1${path}`, {
+  const response = await requestBackend(`/api/backend/api/v1${path}`, {
     body: JSON.stringify(body),
     headers: {
       accept: "application/json",
@@ -406,7 +410,8 @@ export function MappingReviewQueue() {
             </p>
           </div>
         </div>
-        {mappings.isError ? (
+        <QueryRecovery queries={[mappings]} />
+        {mappings.isError && !canReadPrevious(mappings) ? (
           <RemoteRecoverableErrorState
             description="La file reste inchangée ; rechargez-la avant toute décision."
             onRetry={() => void mappings.refetch()}

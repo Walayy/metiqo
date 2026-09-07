@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
+
 import type {
   AuditEntry,
   CapabilityEvaluationDto,
@@ -21,7 +25,6 @@ import {
   Button,
   Card,
   CardContent,
-  RemoteBlockingErrorState,
   RemoteDataBoundary,
   RemoteEmptyState,
   RemoteLoadingState,
@@ -52,7 +55,7 @@ import { OperationalStatusPanel } from "./operational-status-panel";
 const API_BASE = "/api/backend/api/v1/admin";
 
 async function readResource<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await readBackend(`${API_BASE}${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -63,7 +66,7 @@ async function readResource<T>(path: string, signal: AbortSignal): Promise<T> {
 async function startSync(
   key: string,
 ): Promise<ItemResponseIngestionRunSummary | ItemResponseJobSummary> {
-  const response = await fetch(`${API_BASE}/oracles-elixir/sync`, {
+  const response = await requestBackend(`${API_BASE}/oracles-elixir/sync`, {
     headers: {
       accept: "application/json",
       "Idempotency-Key": key,
@@ -436,10 +439,13 @@ export function DataHealthDashboard() {
       />
 
       <Panel icon={<Database className="size-5" />} title="Catalogue des sources">
-        {sources.isError ? (
-          <RemoteBlockingErrorState
-            description="Le catalogue primaire est indisponible : aucun état de source fiable ne peut être affiché."
+        <QueryRecovery queries={[sources]} />
+        {sources.isError && !canReadPrevious(sources) ? (
+          <RemoteRecoverableErrorState
+            description="Le catalogue primaire ne répond pas. Réessayez pour lire le dernier état validé."
             title="Catalogue indisponible"
+            onRetry={() => void sources.refetch()}
+            retryDisabled={sources.isFetching}
           />
         ) : (
           <RemoteDataBoundary
@@ -458,7 +464,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<Fingerprint className="size-5" />} title="Snapshot et couverture">
-        {runs.isError ? (
+        <QueryRecovery queries={[runs]} />
+        {runs.isError && !canReadPrevious(runs) ? (
           <RemoteRecoverableErrorState
             onRetry={() => void runs.refetch()}
             title="Historique indisponible"
@@ -474,7 +481,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<FileClock className="size-5" />} title="Tentatives d’ingestion">
-        {runs.isError ? (
+        <QueryRecovery queries={[runs]} />
+        {runs.isError && !canReadPrevious(runs) ? (
           <RemoteRecoverableErrorState onRetry={() => void runs.refetch()} />
         ) : runs.data?.data.length ? (
           <IngestionHistory runs={runs.data.data} />
@@ -484,7 +492,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<ListChecks className="size-5" />} title="Capacités par snapshot">
-        {capabilities.isError ? (
+        <QueryRecovery queries={[capabilities]} />
+        {capabilities.isError && !canReadPrevious(capabilities) ? (
           <RemoteRecoverableErrorState
             description="Les capacités restent fermées tant que leur dernière évaluation n’est pas disponible."
             onRetry={() => void capabilities.refetch()}
@@ -498,7 +507,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<ShieldAlert className="size-5" />} title="Anomalies bloquantes">
-        {issues.isError ? (
+        <QueryRecovery queries={[issues]} />
+        {issues.isError && !canReadPrevious(issues) ? (
           <RemoteRecoverableErrorState
             description="Les snapshots valides restent consultables ; la liste d’anomalies peut être rechargée séparément."
             onRetry={() => void issues.refetch()}
@@ -717,7 +727,8 @@ export function AdminOperationsDashboard() {
       </Panel>
 
       <Panel icon={<Activity className="size-5" />} title="Jobs">
-        {jobs.isError ? (
+        <QueryRecovery queries={[jobs]} />
+        {jobs.isError && !canReadPrevious(jobs) ? (
           <RemoteRecoverableErrorState onRetry={() => void jobs.refetch()} />
         ) : jobs.data?.data.length ? (
           <JobList jobs={jobs.data.data} />
@@ -733,7 +744,8 @@ export function AdminOperationsDashboard() {
       <OperationalStatusPanel />
 
       <Panel icon={<ListChecks className="size-5" />} title="Journal d’audit">
-        {audit.isError ? (
+        <QueryRecovery queries={[audit]} />
+        {audit.isError && !canReadPrevious(audit) ? (
           <RemoteRecoverableErrorState onRetry={() => void audit.refetch()} />
         ) : audit.data?.data.length ? (
           <AuditList entries={audit.data.data} />

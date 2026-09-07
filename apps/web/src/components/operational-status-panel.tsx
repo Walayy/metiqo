@@ -1,5 +1,8 @@
 "use client";
 
+import { canReadPrevious, readBackend } from "../lib/backend";
+import { QueryRecovery } from "./query-recovery";
+
 import type { OperationalStatus, SystemStatusResponse } from "@metiquo/contracts/types";
 import {
   Badge,
@@ -153,7 +156,7 @@ export function OperationalStatusPanel() {
   const status = useQuery({
     queryKey: ["admin", "system-status"],
     queryFn: async ({ signal }): Promise<SystemStatusResponse> => {
-      const response = await fetch("/api/backend/api/v1/system/status", { signal });
+      const response = await readBackend("/api/backend/api/v1/system/status", { signal });
       if (!response.ok) throw new Error("État opérationnel indisponible");
       return (await response.json()) as SystemStatusResponse;
     },
@@ -167,7 +170,8 @@ export function OperationalStatusPanel() {
             Actualiser l’état
           </Button>
         </div>
-        {status.isError ? (
+        <QueryRecovery queries={[status]} />
+        {status.isError && !canReadPrevious(status) ? (
           <RemoteRecoverableErrorState onRetry={() => void status.refetch()} />
         ) : (
           <Measurements
@@ -182,8 +186,10 @@ export function OperationalStatusPanel() {
               <Badge>{status.data.dataMode}</Badge>Mesure du{" "}
               {formatDateTime(status.data.generatedAt)}
             </>
-          ) : (
+          ) : status.isPending ? (
             <RemoteSkeleton width="14rem" />
+          ) : (
+            "Date de mesure indisponible"
           )}
         </p>
       </CardContent>

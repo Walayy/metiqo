@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
+
 import type {
   ItemResponseOpportunity,
   ItemResponsePaperBet,
@@ -48,7 +52,7 @@ const statusLabels: Readonly<Record<PaperBetStatus, string>> = {
 };
 
 async function getJson<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/backend${path}`, {
+  const response = await readBackend(`/api/backend${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -57,7 +61,7 @@ async function getJson<T>(path: string, signal: AbortSignal): Promise<T> {
 }
 
 async function postJson<T>(path: string, body: unknown, key?: string): Promise<T> {
-  const response = await fetch(`/api/backend${path}`, {
+  const response = await requestBackend(`/api/backend${path}`, {
     body: JSON.stringify(body),
     headers: {
       accept: "application/json",
@@ -491,7 +495,8 @@ export function PaperTradingDashboard() {
             Historique et P&L
           </h2>
         </div>
-        {paperBets.isError ? (
+        <QueryRecovery queries={[paperBets]} />
+        {paperBets.isError && !canReadPrevious(paperBets) ? (
           <RemoteRecoverableErrorState onRetry={() => void paperBets.refetch()} />
         ) : (
           <RemoteDataBoundary

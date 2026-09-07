@@ -1,5 +1,8 @@
 "use client";
 
+import { BackendReadError, canReadPrevious, readBackend } from "../lib/backend";
+import { QueryRecovery } from "./query-recovery";
+
 import type { ItemResponsePaperBet } from "@metiquo/contracts/types";
 import {
   Button,
@@ -8,6 +11,8 @@ import {
   RemoteBlockingErrorState,
   RemoteDataBoundary,
   RemoteLoadingState,
+  RemoteRecoverableErrorState,
+  RemotePermissionDeniedState,
 } from "@metiquo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, FlaskConical } from "lucide-react";
@@ -18,10 +23,13 @@ import { PaperStatusBadge, ProfitLoss } from "./paper-trading-dashboard";
 import { RealPaperSettlement } from "./real-paper-settlement";
 
 async function getPaperBet(paperBetId: string, signal: AbortSignal) {
-  const response = await fetch(`/api/backend/api/v1/paper-bets/${encodeURIComponent(paperBetId)}`, {
-    headers: { accept: "application/json" },
-    signal,
-  });
+  const response = await readBackend(
+    `/api/backend/api/v1/paper-bets/${encodeURIComponent(paperBetId)}`,
+    {
+      headers: { accept: "application/json" },
+      signal,
+    },
+  );
   if (!response.ok) throw new Error("Paper bet introuvable");
   return (await response.json()) as ItemResponsePaperBet;
 }
@@ -33,7 +41,18 @@ export function PaperBetDetail({ paperBetId }: Readonly<{ paperBetId: string }>)
     refetchInterval: 30_000,
   });
 
-  if (paperBet.isError) {
+  if (paperBet.isError && !canReadPrevious(paperBet)) {
+    const status = paperBet.error instanceof BackendReadError ? paperBet.error.status : null;
+    if (status === 401 || status === 403) return <RemotePermissionDeniedState />;
+    if (status !== 404 && status !== 410)
+      return (
+        <RemoteRecoverableErrorState
+          title="Décision paper indisponible"
+          description="La lecture a échoué temporairement. La décision n’a pas été supprimée."
+          onRetry={() => void paperBet.refetch()}
+          retryDisabled={paperBet.isFetching}
+        />
+      );
     return (
       <RemoteBlockingErrorState
         action={
@@ -52,6 +71,7 @@ export function PaperBetDetail({ paperBetId }: Readonly<{ paperBetId: string }>)
       isLoading={paperBet.isPending}
       loadingFallback={<RemoteLoadingState minHeight="32rem" rows={8} />}
     >
+      <QueryRecovery queries={[paperBet]} />
       {paperBet.data ? (
         <div className="grid gap-6 sm:gap-8">
           <header className="grid gap-3">

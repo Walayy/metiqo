@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend } from "../lib/backend";
+
 import type {
   ItemResponseOpportunity,
   ItemResponseOpportunityExplanation,
@@ -49,7 +53,7 @@ import {
 const ODDS_REFRESH_INTERVAL_MS = 30_000;
 
 async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/backend${path}`, {
+  const response = await readBackend(`/api/backend${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -265,11 +269,12 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
 
       <RemoteDataBoundary
         className="min-w-0"
-        isLoading={isPending}
+        isLoading={isPending && !isError}
         isRefetching={isFetching && !isPending}
         loadingFallback={<RemoteLoadingState label="Chargement du signal" rows={8} />}
       >
-        {isError ? (
+        <QueryRecovery queries={[opportunityQuery, explanationQuery, historyQuery]} />
+        {isError && ![opportunityQuery, explanationQuery, historyQuery].every(canReadPrevious) ? (
           <RemoteRecoverableErrorState
             description="Le détail du signal n’a pas pu être assemblé."
             onRetry={() => {

@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
+
 import type {
   BacktestSummary,
   ItemResponseModelSummary,
@@ -34,7 +38,7 @@ import type { ReactNode } from "react";
 import { formatDateTime, formatDecimal } from "./opportunity-presenters";
 
 async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/backend${path}`, {
+  const response = await readBackend(`/api/backend${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -58,7 +62,7 @@ async function runModelAction(request: ModelAction): Promise<ItemResponseModelSu
               ? "Promotion manuelle depuis le tableau des modèles"
               : "Retrait manuel depuis le tableau des modèles",
         };
-  const response = await fetch(`/api/backend${endpoint}`, {
+  const response = await requestBackend(`/api/backend${endpoint}`, {
     body: JSON.stringify(body),
     headers: {
       accept: "application/json",
@@ -375,11 +379,12 @@ export function ModelsDashboard() {
 
       <RemoteDataBoundary
         className="min-w-0"
-        isLoading={isPending}
+        isLoading={isPending && !isError}
         isRefetching={isFetching && !isPending}
         loadingFallback={<RemoteLoadingState label="Chargement des modèles" rows={8} />}
       >
-        {isError ? (
+        <QueryRecovery queries={[modelsQuery, backtestsQuery]} />
+        {isError && ![modelsQuery, backtestsQuery].every(canReadPrevious) ? (
           <RemoteRecoverableErrorState
             description="Le registre ou les backtests ne répondent pas."
             onRetry={() => void Promise.all([modelsQuery.refetch(), backtestsQuery.refetch()])}

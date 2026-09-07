@@ -1,5 +1,7 @@
 "use client";
 
+import { requestBackend } from "../lib/backend";
+
 import type { ItemResponsePaperBet, PaperBet } from "@metiquo/contracts/types";
 import { Button, RemoteRecoverableErrorState } from "@metiquo/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,7 +23,7 @@ export function RealPaperSettlement({ bet }: Readonly<{ bet: PaperBet }>) {
       });
       if (identity.current.payload !== payload)
         identity.current = { payload, key: crypto.randomUUID() };
-      const response = await fetch("/api/backend/api/v1/admin/paper-bets/settle", {
+      const response = await requestBackend("/api/backend/api/v1/admin/paper-bets/settle", {
         method: "POST",
         body: payload,
         headers: {
