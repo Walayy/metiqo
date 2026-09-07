@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from decimal import Decimal
-from typing import Literal, cast
+from typing import Any, Literal, cast
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from sqlalchemy import Connection, Engine, RowMapping, Table, select
+from sqlalchemy.sql import Select
 
 from metiquo.contracts import AuditEntry, BacktestSummary, JobSummary, ModelSummary
 from metiquo.contracts.enums import BacktestKind, DataMode, GameTitle, MarketType, ModelStatus
@@ -15,6 +16,7 @@ from metiquo.db.ml_models import BaselineRun
 from metiquo.db.ml_models import ModelActionAudit as ModelActionAuditRow
 from metiquo.db.ml_models import ModelActionJob as ModelActionJobRow
 from metiquo.db.ml_models import ModelVersion as ModelVersionRow
+from metiquo.repositories.pagination import ReadPage, page_rows
 
 _PUBLIC_METRICS = {
     "brier_score": "brier",
@@ -57,12 +59,50 @@ class PostgresModelRepository:
             )
         return self._model(row, baseline)
 
+    def models_page(
+        self, *, offset: int = 0, limit: int = 20, status: ModelStatus | None = None
+    ) -> ReadPage[ModelSummary]:
+        models = cast(Table, ModelVersionRow.__table__)
+        statement = select(models).order_by(models.c.registered_at.desc(), models.c.id)
+        if status is not None:
+            statement = statement.where(models.c.status == status.value)
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            page = page_rows(connection, statement, offset=offset, limit=limit)
+            baselines = self._baseline_metrics(connection, page.items)
+        return ReadPage(
+            tuple(self._model(row, baselines.get(row["dataset_id"], {})) for row in page.items),
+            page.total,
+        )
+
+    def backtests_page(
+        self, *, offset: int = 0, limit: int = 20, kind: BacktestKind | None = None
+    ) -> ReadPage[BacktestSummary]:
+        if kind is not None and kind is not BacktestKind.STATISTICAL:
+            return ReadPage((), 0)
+        models = cast(Table, ModelVersionRow.__table__)
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            page = page_rows(
+                connection,
+                self._backtests_statement().order_by(models.c.registered_at.desc(), models.c.id),
+                offset=offset,
+                limit=limit,
+            )
+            baselines = self._baseline_metrics(connection, page.items)
+        return ReadPage(
+            tuple(self._backtest(row, baselines.get(row["dataset_id"], {})) for row in page.items),
+            page.total,
+        )
+
     def list_backtests(self) -> tuple[BacktestSummary, ...]:
         models = cast(Table, ModelVersionRow.__table__)
         with self.engine.connect() as connection:
             rows = tuple(
                 connection.execute(
-                    select(models).order_by(models.c.registered_at.desc())
+                    self._backtests_statement().order_by(models.c.registered_at.desc())
                 ).mappings()
             )
             baselines = self._baseline_metrics(connection, rows)
@@ -70,11 +110,37 @@ class PostgresModelRepository:
             self._backtest(row, baselines.get(cast(UUID, row["dataset_id"]), {})) for row in rows
         )
 
-    def get_backtest(self, backtest_id: UUID) -> BacktestSummary | None:
-        return next(
-            (item for item in self.list_backtests() if item.backtest_id == backtest_id),
-            None,
+    @staticmethod
+    def _backtests_statement() -> Select[tuple[Any, ...]]:
+        models = cast(Table, ModelVersionRow.__table__)
+        # Never invent duration or completion time for an unrepresentable report.
+        return select(models).where(
+            models.c.training_cutoff_max > models.c.training_cutoff_min,
+            models.c.registered_at >= models.c.training_cutoff_max,
         )
+
+    def get_backtest(self, backtest_id: UUID) -> BacktestSummary | None:
+        models = cast(Table, ModelVersionRow.__table__)
+        with self.engine.connect() as connection:
+            identities = connection.execute(
+                self._backtests_statement().with_only_columns(
+                    models.c.id, models.c.evaluation_report_fingerprint
+                )
+            )
+            identity = next(
+                (
+                    identity
+                    for identity, fingerprint in identities
+                    if uuid5(NAMESPACE_URL, f"metiquo:evaluation-report:{fingerprint}")
+                    == backtest_id
+                ),
+                None,
+            )
+            if identity is None:
+                return None
+            row = connection.execute(select(models).where(models.c.id == identity)).mappings().one()
+            baselines = self._baseline_metrics(connection, (row,))
+        return self._backtest(row, baselines.get(row["dataset_id"], {}))
 
     def list_jobs(self) -> tuple[JobSummary, ...]:
         jobs = cast(Table, ModelActionJobRow.__table__)

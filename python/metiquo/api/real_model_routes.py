@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from importlib.metadata import version
 from typing import Annotated
 from uuid import UUID
@@ -31,14 +30,6 @@ def _meta(clock: Clock) -> ContractMetadata:
     )
 
 
-def _page[T](values: Sequence[T], offset: int, limit: int, clock: Clock) -> PageResponse[T]:
-    return PageResponse[T](
-        data=tuple(values[offset : offset + limit]),
-        page=PageInfo(offset=offset, limit=limit, total=len(values)),
-        meta=_meta(clock),
-    )
-
-
 def build_real_model_router(repository: PostgresModelRepository, clock: Clock) -> APIRouter:
     """Exposer les mêmes DTO modèle/backtest que le catalogue mock."""
 
@@ -50,10 +41,12 @@ def build_real_model_router(repository: PostgresModelRepository, clock: Clock) -
         limit: Limit = 20,
         status: ModelStatus | None = None,
     ) -> PageResponse[ModelSummary]:
-        values = tuple(
-            item for item in repository.list_models() if status is None or item.status is status
+        page = repository.models_page(offset=offset, limit=limit, status=status)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(clock),
         )
-        return _page(values, offset, limit, clock)
 
     @router.get("/models/{model_version_id}", response_model=ItemResponse[ModelSummary])
     def get_model(model_version_id: UUID) -> ItemResponse[ModelSummary]:
@@ -72,10 +65,12 @@ def build_real_model_router(repository: PostgresModelRepository, clock: Clock) -
         limit: Limit = 20,
         kind: BacktestKind | None = None,
     ) -> PageResponse[BacktestSummary]:
-        values = tuple(
-            item for item in repository.list_backtests() if kind is None or item.kind is kind
+        page = repository.backtests_page(offset=offset, limit=limit, kind=kind)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(clock),
         )
-        return _page(values, offset, limit, clock)
 
     @router.get("/backtests/{backtest_id}", response_model=ItemResponse[BacktestSummary])
     def get_backtest(backtest_id: UUID) -> ItemResponse[BacktestSummary]:

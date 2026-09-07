@@ -126,12 +126,12 @@ def build_real_admin_router(
         limit: Limit = 20,
         status: Literal["succeeded", "failed"] | None = None,
     ) -> PageResponse[IngestionRunSummary]:
-        values = tuple(
-            item
-            for item in repository.list_ingestion_runs()
-            if status is None or item.status == status
+        page = repository.ingestion_runs_page(offset=offset, limit=limit, status=status)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
         )
-        return _page(values, offset, limit, repository, clock)
 
     @router.get("/quality-issues", response_model=PageResponse[DataQualityIssue])
     def list_quality_issues(
@@ -140,13 +140,14 @@ def build_real_admin_router(
         severity: Literal["warning", "blocking"] | None = None,
         status: Literal["open", "quarantined"] | None = None,
     ) -> PageResponse[DataQualityIssue]:
-        values = tuple(
-            item
-            for item in repository.list_quality_issues()
-            if (severity is None or item.severity == severity)
-            and (status is None or item.status == status)
+        page = repository.quality_issues_page(
+            offset=offset, limit=limit, severity=severity, status=status
         )
-        return _page(values, offset, limit, repository, clock)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
+        )
 
     @router.get("/jobs", response_model=PageResponse[JobSummary])
     def list_jobs(
@@ -178,7 +179,12 @@ def build_real_admin_router(
         offset: Offset = 0,
         limit: Limit = 20,
     ) -> PageResponse[MappingReview]:
-        return _page(mapping_repository.list_pending(), offset, limit, repository, clock)
+        page = mapping_repository.pending_page(offset=offset, limit=limit)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
+        )
 
     def mapping_decision(
         mapping_review_id: UUID,

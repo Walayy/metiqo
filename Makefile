@@ -95,6 +95,11 @@ test-ingestion:
 .PHONY: scan-secrets
 .PHONY: scan-security
 .PHONY: test-ops
+.PHONY: benchmark-reads
+benchmark-reads:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour créer la base de benchmark jetable))
+	uv run --frozen python -m infra.scripts.benchmark_reads
+
 test-ops:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate exploitation))
 	$(if $(strip $(TEST_PG_CONTAINER)),,$(error TEST_PG_CONTAINER est requis pour les backups réels))

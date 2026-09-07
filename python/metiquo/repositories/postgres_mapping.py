@@ -21,7 +21,8 @@ from metiquo.db.odds_models import (
     ProviderOddsEvent,
 )
 from metiquo.foundation.time import Clock
-from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
+from metiquo.repositories.canonical_events_sql import event_from_row, event_projection
+from metiquo.repositories.pagination import ReadPage, page_rows
 
 
 class PostgresMappingRepository:
@@ -32,10 +33,13 @@ class PostgresMappingRepository:
         self.clock = clock
 
     def list_pending(self) -> tuple[MappingReview, ...]:
-        return self._reviews(status="pending")
+        return self._reviews(status="pending").items
+
+    def pending_page(self, *, offset: int = 0, limit: int = 20) -> ReadPage[MappingReview]:
+        return self._reviews(status="pending", offset=offset, limit=limit)
 
     def get(self, mapping_review_id: UUID) -> MappingReview | None:
-        values = self._reviews(mapping_review_id=mapping_review_id)
+        values = self._reviews(mapping_review_id=mapping_review_id).items
         return values[0] if values else None
 
     def list_audit(self) -> tuple[AuditEntry, ...]:
@@ -64,7 +68,9 @@ class PostgresMappingRepository:
         *,
         status: str | None = None,
         mapping_review_id: UUID | None = None,
-    ) -> tuple[MappingReview, ...]:
+        offset: int = 0,
+        limit: int | None = None,
+    ) -> ReadPage[MappingReview]:
         reviews = cast(Table, MappingReviewRecord.__table__)
         attempts = cast(Table, EventMappingAttempt.__table__)
         provider_events = cast(Table, ProviderOddsEvent.__table__)
@@ -87,10 +93,17 @@ class PostgresMappingRepository:
             statement = statement.where(reviews.c.status == status)
         if mapping_review_id is not None:
             statement = statement.where(reviews.c.id == mapping_review_id)
-        with self.engine.connect() as connection:
-            rows = tuple(connection.execute(statement).mappings())
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            if limit is None:
+                rows = tuple(connection.execute(statement).mappings())
+                total = len(rows)
+            else:
+                page = page_rows(connection, statement, offset=offset, limit=limit)
+                rows, total = page.items, page.total
             if not rows:
-                return ()
+                return ReadPage((), total)
             attempt_ids = tuple(cast(UUID, row["attempt_id"]) for row in rows)
             provider_event_ids = tuple(
                 cast(UUID, row["internal_provider_event_id"]) for row in rows
@@ -108,18 +121,28 @@ class PostgresMappingRepository:
                     .group_by(ProviderOddsEvent.id)
                 )
             }
-        events = {
-            event.event_id: event
-            for event in PostgresCanonicalRepository(self.engine, self.clock).list()
-        }
-        return tuple(
-            self._review(
-                row,
-                candidates.get(cast(UUID, row["attempt_id"]), ()),
-                events,
-                snapshot_counts.get(cast(UUID, row["internal_provider_event_id"]), 0),
-            )
-            for row in rows
+            event_ids = {
+                row["canonical_event_id"] for group in candidates.values() for row in group
+            }
+            projection = event_projection()
+            events = {
+                item.event_id: item
+                for row in connection.execute(
+                    select(projection).where(projection.c.event_id.in_(event_ids))
+                ).mappings()
+                if (item := event_from_row(row))
+            }
+        return ReadPage(
+            tuple(
+                self._review(
+                    row,
+                    candidates.get(cast(UUID, row["attempt_id"]), ()),
+                    events,
+                    snapshot_counts.get(cast(UUID, row["internal_provider_event_id"]), 0),
+                )
+                for row in rows
+            ),
+            total,
         )
 
     @staticmethod
