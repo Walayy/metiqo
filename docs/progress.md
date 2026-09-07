@@ -1760,4 +1760,13 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** 36 tests Python/configuration/Compose/OpenAPI passent en 9,74 secondes. Les 106 parcours navigateur passent en 238,52 secondes, sans exclusion ni nouvelle tentative ; les références visuelles restent identiques. Les deux vues de conformité sont inspectées après la correction. `make release-check` sort avec 0 en mode personnel et 2 pour les refus public/commercial (le script interne retourne 1). TypeScript, mypy, lint/format/orthographe et contrats passent. Les preuves et captures sont archivées dans `docs/evidence/qa-006/`.
 - **Blocker éventuel :** aucun pour le MVP personnel. `OE-COMMERCIAL=NO-GO`, `RIOT-PRODUCT=NO-GO` et Stake désactivé restent effectifs. La consultation Oracle's Elixir retourne 403 et reste à revalider ; les politiques Riot, conditions Stake et liste ANJ sont référencées dans la checklist datée. Aucun accord écrit ni validation juridique n'est inventé.
 - **ADR éventuel :** la preuve technique contrôle intégrité, revue datée et périmètre, sans prétendre valider juridiquement une pièce. Aucun bouton ne lève une porte ; une personne responsable doit fournir les documents et modifier explicitement la configuration. Aucun déploiement n'est exécuté par la commande de contrôle.
-- **Commit/hash :** à renseigner après le commit dédié.
+- **Commit/hash :** `4c3f8a2` (`feat(compliance): block public releases without reviewed evidence`).
+
+## QA-007 — Recette Definition of Done MVP
+
+- **Statut :** `IN_PROGRESS` ; aucun résultat final n'est encore déclaré.
+- **Dépendances vérifiées :** QA-001, QA-004, QA-005 et QA-006 sont `DONE`. La CI complète QA-005 passe sur `467a4aa` et la conformité personnelle est figée dans `4c3f8a2`.
+- **Fichiers créés/modifiés :** correspondance explicite des 22 critères avec les preuves de tests, vérification des runs GitHub et des digests d'archives, contrôle de la revue visuelle, démarrage Compose sur projet neuf et nettoyage vérifié, cible `make acceptance`, workflow et documentation.
+- **Migrations :** aucune.
+- **Commandes/tests exécutés :** tests initialement en échec faute de module de recette, puis dix tests de preuves/CI passent en 1,97 seconde. Ils refusent les tests absents ou sautés, les identités dupliquées, les mauvais commits, les gates manquants, les archives altérées, les chemins sortants et les sources modifiées depuis la revue.
+- **Travail restant :** démarrage réel de la stack neuve, CI normale et exercice négatif sur le commit de release, exécution effective de `make acceptance` et archivage des 22 résultats. Aucun accord externe ou PASS simulé n'est admis.

@@ -97,6 +97,12 @@ test-ingestion:
 .PHONY: test-ops
 .PHONY: benchmark-reads
 .PHONY: release-check
+.PHONY: acceptance
+acceptance:
+	$(if $(strip $(CI_RUN)),,$(error CI_RUN est requis))
+	$(if $(strip $(NEGATIVE_CI_RUN)),,$(error NEGATIVE_CI_RUN est requis))
+	uv run --frozen python -m infra.scripts.acceptance --ci-run $(CI_RUN) --negative-ci-run $(NEGATIVE_CI_RUN)
+
 release-check:
 	$(if $(strip $(AUDIENCE)),,$(error AUDIENCE=personal|public|commercial est requis))
 	uv run --frozen python -m infra.scripts.check_release --audience $(AUDIENCE)
