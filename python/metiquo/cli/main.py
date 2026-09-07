@@ -208,11 +208,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             "message": str(error),
         }
         exit_code = getattr(error, "exit_code", ExitCode.USAGE_OR_CONFIGURATION)
-    except Exception as error:
+    except Exception:
         document = {
             "ok": False,
             "errorCode": "UNEXPECTED_FAILURE",
-            "message": str(error),
+            "message": "Échec interne ; consulter le code structuré",
         }
         exit_code = ExitCode.SOURCE_FAILURE
     _emit(document, machine_readable=machine_readable, failed=exit_code != ExitCode.SUCCESS)

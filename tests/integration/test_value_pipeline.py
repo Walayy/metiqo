@@ -245,13 +245,22 @@ def _capture(
 
 
 @pytest.mark.integration
-def test_value_gate_outsider_replay_and_real_api(context: _Context, postgresql_url: str) -> None:
+def test_value_gate_outsider_replay_and_real_api(
+    context: _Context, postgresql_url: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    from metiquo.foundation.observability import JsonFormatter
+
+    caplog.handler.setFormatter(JsonFormatter())
+    caplog.set_level("INFO", logger="metiquo.pricing")
     request = _capture(context)
     now = context.captured_at + timedelta(seconds=10)
     clock = FixedClock(UtcInstant(now))
     pipeline = PostgresValuePipeline(context.engine, source_sla=_SLA, clock=clock)
     result = pipeline.evaluate(request)
     assert result.grade is ValueGrade.VALUE
+    assert '"model_version":' in caplog.text
+    assert '"snapshot_id":' in caplog.text
+    assert '"duration_ms":' in caplog.text
     assert result.reasons == ()
     assert result == pipeline.evaluate(request)
     signal = result.signal

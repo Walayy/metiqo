@@ -76,6 +76,45 @@
         "title": "AliasRecord",
         "type": "object"
       },
+      "ApiProcessMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "failureCount": {
+            "minimum": 0.0,
+            "title": "Failurecount",
+            "type": "integer"
+          },
+          "meanLatencyMs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meanlatencyms"
+          },
+          "requestCount": {
+            "minimum": 0.0,
+            "title": "Requestcount",
+            "type": "integer"
+          },
+          "scope": {
+            "const": "current_api_process",
+            "default": "current_api_process",
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestCount",
+          "failureCount"
+        ],
+        "title": "ApiProcessMetrics",
+        "type": "object"
+      },
       "AuditEntry": {
         "additionalProperties": false,
         "description": "Trace immutable d'une mutation applicative.",
@@ -271,6 +310,51 @@
           "completedAt"
         ],
         "title": "BacktestSummary",
+        "type": "object"
+      },
+      "BackupOperationalHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "lastFailureAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastfailureat"
+          },
+          "lastSuccessAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastsuccessat"
+          },
+          "status": {
+            "enum": [
+              "not_configured",
+              "missing",
+              "fresh",
+              "stale",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "BackupOperationalHealth",
         "type": "object"
       },
       "CapabilityEvaluationDto": {
@@ -1158,8 +1242,48 @@
         "additionalProperties": false,
         "description": "État public minimal d'un job orchestré.",
         "properties": {
+          "attempt": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt"
+          },
+          "cancelRequested": {
+            "default": false,
+            "title": "Cancelrequested",
+            "type": "boolean"
+          },
           "dataMode": {
             "$ref": "#/components/schemas/DataMode"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "heartbeatAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeatat"
           },
           "jobId": {
             "format": "uuid",
@@ -1178,21 +1302,85 @@
             ],
             "title": "Lastrunat"
           },
+          "leaseExpiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leaseexpiresat"
+          },
+          "maxAttempts": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxattempts"
+          },
           "name": {
             "maxLength": 255,
             "minLength": 1,
             "title": "Name",
             "type": "string"
           },
+          "scheduledAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduledat"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
           "status": {
             "enum": [
               "idle",
+              "queued",
               "succeeded",
               "failed",
-              "running"
+              "running",
+              "cancelled",
+              "dead"
             ],
             "title": "Status",
             "type": "string"
+          },
+          "traceId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Traceid"
           }
         },
         "required": [
@@ -1589,6 +1777,74 @@
         "title": "ModelDecisionRequest",
         "type": "object"
       },
+      "ModelOperationalHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "ageSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ageseconds"
+          },
+          "modelVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelversionid"
+          },
+          "status": {
+            "enum": [
+              "fresh",
+              "stale",
+              "missing",
+              "invalid"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trainedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trainedat"
+          },
+          "trainingCutoff": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trainingcutoff"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ModelOperationalHealth",
+        "type": "object"
+      },
       "ModelStatus": {
         "description": "Cycle de vie d'une version de modèle.",
         "enum": [
@@ -1855,6 +2111,119 @@
           "provenanceReference"
         ],
         "title": "OddsSnapshot",
+        "type": "object"
+      },
+      "OperationalMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "anomalies": {
+            "minimum": 0.0,
+            "title": "Anomalies",
+            "type": "integer"
+          },
+          "api": {
+            "$ref": "#/components/schemas/ApiProcessMetrics"
+          },
+          "blockingAnomalies": {
+            "minimum": 0.0,
+            "title": "Blockinganomalies",
+            "type": "integer"
+          },
+          "databaseScope": {
+            "const": "retained_history",
+            "default": "retained_history",
+            "title": "Databasescope",
+            "type": "string"
+          },
+          "jobFailures": {
+            "minimum": 0.0,
+            "title": "Jobfailures",
+            "type": "integer"
+          },
+          "meanJobDurationSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meanjobdurationseconds"
+          },
+          "measuredJobCount": {
+            "minimum": 0.0,
+            "title": "Measuredjobcount",
+            "type": "integer"
+          },
+          "processedRows": {
+            "minimum": 0.0,
+            "title": "Processedrows",
+            "type": "integer"
+          },
+          "signals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Signals",
+            "type": "object"
+          }
+        },
+        "required": [
+          "measuredJobCount",
+          "jobFailures",
+          "processedRows",
+          "anomalies",
+          "blockingAnomalies",
+          "signals",
+          "api"
+        ],
+        "title": "OperationalMetrics",
+        "type": "object"
+      },
+      "OperationalStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "backups": {
+            "$ref": "#/components/schemas/BackupOperationalHealth"
+          },
+          "jobCounts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Jobcounts",
+            "type": "object"
+          },
+          "mappingBacklog": {
+            "minimum": 0.0,
+            "title": "Mappingbacklog",
+            "type": "integer"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/OperationalMetrics"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelOperationalHealth"
+          },
+          "readsAvailable": {
+            "title": "Readsavailable",
+            "type": "boolean"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceOperationalHealth"
+          }
+        },
+        "required": [
+          "readsAvailable",
+          "source",
+          "model",
+          "mappingBacklog",
+          "jobCounts",
+          "backups",
+          "metrics"
+        ],
+        "title": "OperationalStatus",
         "type": "object"
       },
       "Opportunity": {
@@ -3216,6 +3585,60 @@
         "title": "SettlePaperBetRequest",
         "type": "object"
       },
+      "SourceOperationalHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "ageSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ageseconds"
+          },
+          "asOf": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "reasonCode": {
+            "title": "Reasoncode",
+            "type": "string"
+          },
+          "snapshotId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshotid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FreshnessStatus"
+          }
+        },
+        "required": [
+          "status",
+          "reasonCode"
+        ],
+        "title": "SourceOperationalHealth",
+        "type": "object"
+      },
       "SystemStatusResponse": {
         "additionalProperties": false,
         "description": "État minimal versionné du système.",
@@ -3238,6 +3661,16 @@
             "format": "date-time",
             "title": "Generatedat",
             "type": "string"
+          },
+          "operations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationalStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "status": {
             "enum": [

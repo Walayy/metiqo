@@ -200,17 +200,17 @@ def test_real_model_api_projects_metrics_and_audits_gated_mutations(
     assert retired.json()["data"]["status"] == "retired"
 
     jobs = _request(app, "GET", "/api/v1/admin/jobs").json()["data"]
-    audits = _request(app, "GET", "/api/v1/admin/audit-log").json()["data"]
+    audits = _request(app, "GET", "/api/v1/admin/audit-log?limit=100").json()["data"]
     assert {item["status"] for item in jobs if item["name"].startswith("model-")} == {
         "failed",
         "succeeded",
     }
     assert len([item for item in jobs if item["name"].startswith("model-")]) == 4
-    assert {item["action"] for item in audits} == {
+    assert {
         "model.train",
         "model.promote",
         "model.retire",
-    }
+    } <= {item["action"] for item in audits}
 
     with pytest.raises(DBAPIError, match="append-only"), engine.begin() as connection:
         connection.execute(text("UPDATE ml.model_action_audits SET action = 'model.train'"))

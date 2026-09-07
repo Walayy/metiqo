@@ -1,6 +1,8 @@
 """Fabrique de l'application FastAPI."""
 
+import logging
 from importlib.metadata import version
+from time import perf_counter
 from typing import Final
 from uuid import uuid4
 
@@ -36,11 +38,12 @@ from metiquo.api.real_historical_routes import build_real_historical_router
 from metiquo.api.real_model_routes import build_real_model_router
 from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.config import Settings, load_settings
-from metiquo.contracts.enums import DataMode
+from metiquo.contracts.enums import DataMode, FreshnessStatus
 from metiquo.foundation.audit import audit_context
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.identifiers import TraceId
-from metiquo.foundation.observability import bind_log_context
+from metiquo.foundation.metrics import ApiMetrics
+from metiquo.foundation.observability import bind_log_context, configure_json_logging
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
 from metiquo.paper.reporting import PostgresFinancialReportingService
@@ -51,6 +54,7 @@ from metiquo.repositories.postgres_models import PostgresModelRepository
 from metiquo.repositories.postgres_opportunities import PostgresOpportunityRepository
 from metiquo.services import MockMutationService, ReadService, build_mock_read_service
 from metiquo.services.operational_audit import record_runtime_configuration
+from metiquo.services.operational_status import OperationalStatusService
 from metiquo.services.real_admin import RealAdminMutationService
 from metiquo.services.real_mapping import RealMappingMutationService
 
@@ -119,14 +123,26 @@ def _router(settings: Settings, readiness_probe: ReadinessProbe, clock: Clock) -
         response_model=SystemStatusResponse,
         tags=["system"],
     )
-    def system_status() -> SystemStatusResponse:
+    def system_status(request: Request) -> SystemStatusResponse:
         database = _dependency_status(readiness_probe.check())
+        operations = None
+        healthy = database.status == "available"
+        if healthy and settings.app_data_mode is DataMode.REAL:
+            operations = OperationalStatusService(
+                request.app.state.real_admin_engine, settings, clock
+            ).snapshot(request.app.state.api_metrics.snapshot())
+            healthy = (
+                operations.source.status is FreshnessStatus.FRESH
+                and operations.model.status == "fresh"
+                and operations.backups.status == "fresh"
+            )
         return SystemStatusResponse(
-            status="ready" if database.status == "available" else "degraded",
+            status="ready" if healthy else "degraded",
             api_version=version("metiquo"),
             data_mode=settings.app_data_mode,
             generated_at=clock.now().value,
             dependencies={"database": database},
+            operations=operations,
         )
 
     return router
@@ -145,11 +161,23 @@ def create_app(
     """Construire l'API après validation de la configuration."""
 
     resolved_settings = settings or load_settings()
+    if settings is None:
+        configure_json_logging(
+            secrets=tuple(
+                value.get_secret_value()
+                for value in (
+                    resolved_settings.database_url,
+                    resolved_settings.oe_google_drive_bearer,
+                )
+                if value is not None
+            )
+        )
     resolved_probe = readiness_probe or DatabaseReadinessProbe(
         resolved_settings.database_url.get_secret_value()
     )
     resolved_clock = clock or SystemClock()
     app = FastAPI(title="Metiquo API", version=version("metiquo"))
+    app.state.api_metrics = ApiMetrics()
     app.include_router(_router(resolved_settings, resolved_probe, resolved_clock))
     if resolved_settings.app_data_mode is DataMode.MOCK:
         app.include_router(build_paper_metrics_router(None, resolved_clock))
@@ -173,6 +201,8 @@ def create_app(
             resolved_clock,
             resolved_settings.odds_max_age_seconds,
             resolved_settings.odds_provider_max_age_seconds,
+            oe_freshness_sla_seconds=resolved_settings.oe_freshness_sla_seconds,
+            oe_current_year=resolved_settings.oe_current_year,
         )
         resolved_model_repository = PostgresModelRepository(real_engine)
         resolved_mapping_repository = PostgresMappingRepository(real_engine, resolved_clock)
@@ -228,22 +258,37 @@ def create_app(
             audit_context(actor="api-local", trace_id=trace),
             bind_log_context(trace_id=TraceId(trace)),
         ):
-            if resolved_settings.app_data_mode is DataMode.REAL and request.method in {
-                "POST",
-                "PUT",
-                "PATCH",
-                "DELETE",
-            }:
-                await run_in_threadpool(
-                    record_runtime_configuration,
-                    app.state.real_admin_engine,
-                    resolved_settings,
-                    service="api",
-                    clock=resolved_clock,
+            started, status_code = perf_counter(), 500
+            try:
+                if resolved_settings.app_data_mode is DataMode.REAL and request.method in {
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE",
+                }:
+                    await run_in_threadpool(
+                        record_runtime_configuration,
+                        app.state.real_admin_engine,
+                        resolved_settings,
+                        service="api",
+                        clock=resolved_clock,
+                    )
+                response = await call_next(request)
+                status_code = response.status_code
+                response.headers["X-Trace-Id"] = str(trace)
+                return response
+            finally:
+                elapsed = perf_counter() - started
+                app.state.api_metrics.observe(status_code, elapsed)
+                logging.getLogger("metiquo.api").info(
+                    "http.completed",
+                    extra={
+                        "duration_ms": round(elapsed * 1000, 3),
+                        "status_code": status_code,
+                        "method": request.method,
+                        "route": getattr(request.scope.get("route"), "path", "<unmatched>"),
+                    },
                 )
-            response = await call_next(request)
-        response.headers["X-Trace-Id"] = str(trace)
-        return response
 
     @app.exception_handler(BusinessError)
     async def business_error_handler(request: Request, error: BusinessError) -> JSONResponse:

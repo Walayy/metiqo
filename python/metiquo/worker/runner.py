@@ -3,6 +3,7 @@
 import logging
 from collections.abc import Mapping
 from threading import Event, Thread
+from time import perf_counter
 
 from sqlalchemy import text
 
@@ -100,6 +101,7 @@ class PostgresJobRunner:
                 correlation_id=context.correlation_id,
             ),
         ):
+            started = perf_counter()
             heartbeat.start()
             try:
                 self.logger.info("worker.job_started")
@@ -121,4 +123,12 @@ class PostgresJobRunner:
                 stop_heartbeat.set()
                 heartbeat.join(timeout=5)
                 self.active_cancellation = None
+                self.logger.info(
+                    "worker.job_attempt_completed",
+                    extra={
+                        "duration_ms": round((perf_counter() - started) * 1000, 3),
+                        "job_type": job.job_type,
+                        "attempt": job.attempt,
+                    },
+                )
         return True

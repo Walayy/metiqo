@@ -23,7 +23,13 @@ def main() -> int:
     """Valider la configuration et exécuter le cycle de vie sans job."""
 
     settings = load_settings()
-    configure_json_logging()
+    configure_json_logging(
+        secrets=tuple(
+            value.get_secret_value()
+            for value in (settings.database_url, settings.oe_google_drive_bearer)
+            if value is not None
+        )
+    )
     engine = (
         create_engine(settings.database_url.get_secret_value(), pool_pre_ping=True)
         if settings.app_data_mode is DataMode.REAL

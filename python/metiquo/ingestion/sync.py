@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import csv
 import gzip
+import logging
 import tempfile
 import zipfile
 from dataclasses import dataclass
 from datetime import UTC, datetime, time
 from functools import partial
 from pathlib import Path
+from time import perf_counter
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -26,7 +28,9 @@ from metiquo.db.raw_models import (
 from metiquo.db.raw_models import (
     QualityIssue as PersistedQualityIssue,
 )
+from metiquo.foundation.identifiers import SnapshotId
 from metiquo.foundation.locks import oe_scope, resource_lock
+from metiquo.foundation.observability import bind_log_context
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.data_quality import (
     DataQualityValidator,
@@ -162,8 +166,9 @@ class OracleElixirYearSync:
         request_key_hash: str | None = None,
         check_unchanged: bool = False,
     ) -> YearSyncReport:
+        started = perf_counter()
         with resource_lock(self._engine, oe_scope("oracles_elixir", year)):
-            return self._sync_year_locked(
+            report = self._sync_year_locked(
                 year=year,
                 policy=policy,
                 fixture_path=fixture_path,
@@ -171,6 +176,14 @@ class OracleElixirYearSync:
                 request_key_hash=request_key_hash,
                 check_unchanged=check_unchanged,
             )
+        with bind_log_context(
+            snapshot_id=SnapshotId(report.snapshot_id) if report.snapshot_id else None
+        ):
+            logging.getLogger("metiquo.ingestion").info(
+                "ingestion.sync_checked",
+                extra={"duration_ms": round((perf_counter() - started) * 1000, 3)},
+            )
+        return report
 
     def _sync_year_locked(
         self,

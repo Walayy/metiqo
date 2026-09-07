@@ -99,6 +99,7 @@ def test_system_status_exposes_mode_and_injected_utc_time() -> None:
         "dataMode": "mock",
         "generatedAt": "2026-09-04T18:00:00Z",
         "dependencies": {"database": {"status": "available", "reasonCode": None}},
+        "operations": None,
     }
 
 

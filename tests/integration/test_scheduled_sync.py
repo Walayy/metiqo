@@ -1,5 +1,6 @@
 """Confirmation d'un hash inchangé sans transfert ni mutation du snapshot validé."""
 
+import logging
 from datetime import timedelta
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from metiquo.ingestion.operations import verify_snapshot
 from metiquo.ingestion.raw_loader import RawTabularLoader
 from metiquo.ingestion.sync import OracleElixirYearSync
 from metiquo.ingestion.transport import SourceRef, TransportPolicy
+from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.worker.handlers import OracleSyncHandler
 from metiquo.worker.queue import PostgresJobQueue
 from metiquo.worker.runner import PostgresJobRunner
@@ -29,9 +31,20 @@ from tests.integration.test_postgres_canonical_api import _settings
 
 @pytest.mark.integration
 def test_scheduled_unchanged_check_refreshes_proof_without_redownload_or_snapshot_mutation(
-    postgresql_url: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    postgresql_url: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
+    from metiquo.foundation.observability import JsonFormatter
+
     command.upgrade(alembic_config(postgresql_url), "head")
+    caplog.handler.setFormatter(JsonFormatter())
+    caplog.set_level("INFO", logger="metiquo.ingestion")
+    logger = logging.getLogger("metiquo.ingestion")
+    monkeypatch.setattr(logger, "disabled", False)
+    monkeypatch.setattr(logger, "handlers", [caplog.handler])
+    monkeypatch.setattr(logger, "propagate", False)
     engine = create_engine(postgresql_url)
     _seed_catalogs(engine, dataset="league_of_legends_match_data", years=range(2026, 2027))
     settings = _settings(postgresql_url, "mock").model_copy(update={"object_store_root": tmp_path})
@@ -40,6 +53,7 @@ def test_scheduled_unchanged_check_refreshes_proof_without_redownload_or_snapsho
         engine=engine, settings=settings, clock=FixedClock(UtcInstant(NOW))
     ).sync_year(year=2026, policy=FreshnessPolicy(require_fresh=True), fixture_path=fixture)
     assert first.snapshot_id is not None
+    assert f'"snapshot_id":"{first.snapshot_id}"' in caplog.text
     with Session(engine) as session:
         before = session.get(Snapshot, first.snapshot_id)
         assert before is not None
@@ -60,6 +74,12 @@ def test_scheduled_unchanged_check_refreshes_proof_without_redownload_or_snapsho
     )
     assert report.snapshot_id == first.snapshot_id and report.load_run_id is None
     assert report.freshness.status is FreshnessStatus.FRESH and report.freshness.as_of == later
+    health = PostgresAdminRepository(engine, FixedClock(UtcInstant(later))).list_data_sources()[0]
+    assert health.last_success_at == later and health.age_seconds == 0
+    stale = PostgresAdminRepository(
+        engine, FixedClock(UtcInstant(later + timedelta(hours=4)))
+    ).list_data_sources()[0]
+    assert stale.freshness is FreshnessStatus.STALE
     with Session(engine) as session:
         after = session.get(Snapshot, first.snapshot_id)
         assert (

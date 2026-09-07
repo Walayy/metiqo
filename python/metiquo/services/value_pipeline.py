@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
+from time import perf_counter
 from typing import cast
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -43,6 +45,8 @@ from metiquo.db.odds_models import (
 from metiquo.db.pricing_models import ValueEvaluationRecord, ValuePolicyRecord
 from metiquo.db.raw_models import Snapshot
 from metiquo.foundation.finance import DecimalOdds, Probability
+from metiquo.foundation.identifiers import ModelVersionId, SnapshotId
+from metiquo.foundation.observability import bind_log_context
 from metiquo.foundation.time import Clock, FixedClock, SystemClock, UtcInstant
 from metiquo.ingestion.freshness import (
     FreshnessPolicy,
@@ -134,6 +138,7 @@ class PostgresValuePipeline:
         request: ValueEvaluationRequest,
         now: datetime,
     ) -> ValueEvaluation:
+        started = perf_counter()
         odds = _get(session, OddsSnapshotRecord, request.odds_snapshot_id)
         attempt = _get(session, EventMappingAttempt, request.event_mapping_attempt_id)
         mapping = _get(session, MarketMappingAttempt, request.market_mapping_attempt_id)
@@ -476,6 +481,14 @@ class PostgresValuePipeline:
             )
             .on_conflict_do_nothing(index_elements=["fingerprint"])
         )
+        with bind_log_context(
+            model_version=ModelVersionId(prediction.model_version_id) if prediction else None,
+            snapshot_id=SnapshotId(feature.target_oe_snapshot_id) if prediction else None,
+        ):
+            logging.getLogger("metiquo.pricing").info(
+                "pricing.evaluated_in_transaction",
+                extra={"duration_ms": round((perf_counter() - started) * 1000, 3)},
+            )
         return ValueEvaluation(evaluation_id, signal, grade, decision.reasons, now, fingerprint)
 
 

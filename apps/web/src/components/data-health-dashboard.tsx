@@ -46,6 +46,7 @@ import type { ReactNode } from "react";
 
 import { formatDateTime } from "./opportunity-presenters";
 import { MappingReviewQueue } from "./mapping-review-queue";
+import { OperationalStatusPanel } from "./operational-status-panel";
 
 const API_BASE = "/api/backend/api/v1/admin";
 
@@ -527,6 +528,25 @@ function JobList({ jobs }: Readonly<{ jobs: readonly JobSummary[] }>) {
           <p className="text-xs leading-5 text-ink-secondary">
             Dernière exécution : {job.lastRunAt ? formatDateTime(job.lastRunAt) : "jamais"}
           </p>
+          {job.attempt !== null && job.attempt !== undefined ? (
+            <p className="text-xs text-ink-secondary">
+              Tentative {job.attempt} / {job.maxAttempts} · {job.scope}
+            </p>
+          ) : null}
+          {job.scheduledAt && job.status === "queued" ? (
+            <p className="text-xs text-ink-secondary">
+              Planifié le {formatDateTime(job.scheduledAt)}
+            </p>
+          ) : null}
+          {job.errorCode ? (
+            <p className="break-all text-xs text-ink-secondary">Erreur : {job.errorCode}</p>
+          ) : null}
+          {job.cancelRequested ? (
+            <p className="text-xs text-ink-secondary">Annulation demandée</p>
+          ) : null}
+          {job.traceId ? (
+            <p className="break-all text-xs text-ink-secondary">Trace : {job.traceId}</p>
+          ) : null}
         </article>
       ))}
     </div>
@@ -546,7 +566,7 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
             {formatDateTime(entry.occurredAt)} · ressource {entry.resourceId ?? "—"}
           </p>
           <p className="break-all text-xs text-ink-secondary">
-            Empreinte d’idempotence : {entry.idempotencyFingerprint}
+            Empreinte : {entry.idempotencyFingerprint}
           </p>
           {entry.actor ? (
             <p className="text-xs text-ink-secondary">
@@ -554,7 +574,14 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
             </p>
           ) : null}
           {entry.impact ? (
-            <p className="text-xs text-ink-secondary">Impact : {JSON.stringify(entry.impact)}</p>
+            <details className="min-w-0 text-xs text-ink-secondary">
+              <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4">
+                Références et trace
+              </summary>
+              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">
+                {JSON.stringify(entry.impact, null, 2)}
+              </pre>
+            </details>
           ) : null}
         </li>
       ))}
@@ -665,6 +692,8 @@ export function AdminOperationsDashboard() {
 
       <MappingReviewQueue />
 
+      <OperationalStatusPanel />
+
       <Panel icon={<ListChecks className="size-5" />} title="Journal d’audit">
         {audit.isError ? (
           <RemoteRecoverableErrorState onRetry={() => void audit.refetch()} />
@@ -673,7 +702,7 @@ export function AdminOperationsDashboard() {
         ) : audit.isPending ? (
           <RemoteLoadingState minHeight="12rem" />
         ) : (
-          <RemoteEmptyState description="Aucune action auditée dans cette session mock." />
+          <RemoteEmptyState description="Aucune action auditée dans cet historique." />
         )}
       </Panel>
 

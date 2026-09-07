@@ -41,6 +41,7 @@ from metiquo.foundation.time import Clock
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_mapping import PostgresMappingRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
+from metiquo.repositories.postgres_operations import PostgresOperationsRepository
 from metiquo.services.real_admin import RealAdminMutationService
 from metiquo.services.real_mapping import RealMappingMutationService
 
@@ -149,25 +150,26 @@ def build_real_admin_router(
     def list_jobs(
         offset: Offset = 0,
         limit: Limit = 20,
-        status: Literal["idle", "succeeded", "failed", "running"] | None = None,
+        status: Literal["idle", "queued", "succeeded", "failed", "running", "cancelled", "dead"]
+        | None = None,
     ) -> PageResponse[JobSummary]:
-        values = tuple(
-            item
-            for item in (*model_repository.list_jobs(), *repository.list_jobs())
-            if status is None or item.status == status
+        page = PostgresOperationsRepository(repository.engine).jobs(
+            offset=offset, limit=limit, status=status
         )
-        return _page(values, offset, limit, repository, clock)
+        return PageResponse[JobSummary](
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
+        )
 
     @router.get("/audit-log", response_model=PageResponse[AuditEntry])
     def list_audit(offset: Offset = 0, limit: Limit = 20) -> PageResponse[AuditEntry]:
-        values = tuple(
-            sorted(
-                (*model_repository.list_audit(), *mapping_repository.list_audit()),
-                key=lambda item: (item.occurred_at, item.audit_id),
-                reverse=True,
-            )
+        page = PostgresOperationsRepository(repository.engine).audits(offset=offset, limit=limit)
+        return PageResponse[AuditEntry](
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
         )
-        return _page(values, offset, limit, repository, clock)
 
     @router.get("/mappings/pending", response_model=PageResponse[MappingReview])
     def list_pending_mappings(

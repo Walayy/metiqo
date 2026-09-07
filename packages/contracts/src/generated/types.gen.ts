@@ -41,6 +41,28 @@ export type AliasRecord = {
 };
 
 /**
+ * ApiProcessMetrics
+ */
+export type ApiProcessMetrics = {
+    /**
+     * Failurecount
+     */
+    failureCount: number;
+    /**
+     * Meanlatencyms
+     */
+    meanLatencyMs?: number | null;
+    /**
+     * Requestcount
+     */
+    requestCount: number;
+    /**
+     * Scope
+     */
+    scope?: 'current_api_process';
+};
+
+/**
  * AuditEntry
  *
  * Trace immutable d'une mutation applicative.
@@ -149,6 +171,24 @@ export type BacktestSummary = {
      * Validationscheme
      */
     validationScheme?: 'walk_forward';
+};
+
+/**
+ * BackupOperationalHealth
+ */
+export type BackupOperationalHealth = {
+    /**
+     * Lastfailureat
+     */
+    lastFailureAt?: string | null;
+    /**
+     * Lastsuccessat
+     */
+    lastSuccessAt?: string | null;
+    /**
+     * Status
+     */
+    status: 'not_configured' | 'missing' | 'fresh' | 'stale' | 'failed';
 };
 
 /**
@@ -621,7 +661,23 @@ export type ItemResponsePaperMetricsDto = {
  * État public minimal d'un job orchestré.
  */
 export type JobSummary = {
+    /**
+     * Attempt
+     */
+    attempt?: number | null;
+    /**
+     * Cancelrequested
+     */
+    cancelRequested?: boolean;
     dataMode: DataMode;
+    /**
+     * Errorcode
+     */
+    errorCode?: string | null;
+    /**
+     * Heartbeatat
+     */
+    heartbeatAt?: string | null;
     /**
      * Jobid
      */
@@ -631,13 +687,33 @@ export type JobSummary = {
      */
     lastRunAt?: string | null;
     /**
+     * Leaseexpiresat
+     */
+    leaseExpiresAt?: string | null;
+    /**
+     * Maxattempts
+     */
+    maxAttempts?: number | null;
+    /**
      * Name
      */
     name: string;
     /**
+     * Scheduledat
+     */
+    scheduledAt?: string | null;
+    /**
+     * Scope
+     */
+    scope?: string | null;
+    /**
      * Status
      */
-    status: 'idle' | 'succeeded' | 'failed' | 'running';
+    status: 'idle' | 'queued' | 'succeeded' | 'failed' | 'running' | 'cancelled' | 'dead';
+    /**
+     * Traceid
+     */
+    traceId?: string | null;
 };
 
 /**
@@ -834,6 +910,32 @@ export type ModelDecisionRequest = {
 };
 
 /**
+ * ModelOperationalHealth
+ */
+export type ModelOperationalHealth = {
+    /**
+     * Ageseconds
+     */
+    ageSeconds?: number | null;
+    /**
+     * Modelversionid
+     */
+    modelVersionId?: string | null;
+    /**
+     * Status
+     */
+    status: 'fresh' | 'stale' | 'missing' | 'invalid';
+    /**
+     * Trainedat
+     */
+    trainedAt?: string | null;
+    /**
+     * Trainingcutoff
+     */
+    trainingCutoff?: string | null;
+};
+
+/**
  * ModelStatus
  *
  * Cycle de vie d'une version de modèle.
@@ -980,6 +1082,71 @@ export type OddsSnapshot = {
      */
     rawImpliedProbability: string;
     selection: SelectionType;
+};
+
+/**
+ * OperationalMetrics
+ */
+export type OperationalMetrics = {
+    /**
+     * Anomalies
+     */
+    anomalies: number;
+    api: ApiProcessMetrics;
+    /**
+     * Blockinganomalies
+     */
+    blockingAnomalies: number;
+    /**
+     * Databasescope
+     */
+    databaseScope?: 'retained_history';
+    /**
+     * Jobfailures
+     */
+    jobFailures: number;
+    /**
+     * Meanjobdurationseconds
+     */
+    meanJobDurationSeconds?: number | null;
+    /**
+     * Measuredjobcount
+     */
+    measuredJobCount: number;
+    /**
+     * Processedrows
+     */
+    processedRows: number;
+    /**
+     * Signals
+     */
+    signals: {
+        [key: string]: number;
+    };
+};
+
+/**
+ * OperationalStatus
+ */
+export type OperationalStatus = {
+    backups: BackupOperationalHealth;
+    /**
+     * Jobcounts
+     */
+    jobCounts: {
+        [key: string]: number;
+    };
+    /**
+     * Mappingbacklog
+     */
+    mappingBacklog: number;
+    metrics: OperationalMetrics;
+    model: ModelOperationalHealth;
+    /**
+     * Readsavailable
+     */
+    readsAvailable: boolean;
+    source: SourceOperationalHealth;
 };
 
 /**
@@ -1690,6 +1857,29 @@ export type SettlePaperBetRequest = {
 };
 
 /**
+ * SourceOperationalHealth
+ */
+export type SourceOperationalHealth = {
+    /**
+     * Ageseconds
+     */
+    ageSeconds?: number | null;
+    /**
+     * Asof
+     */
+    asOf?: string | null;
+    /**
+     * Reasoncode
+     */
+    reasonCode: string;
+    /**
+     * Snapshotid
+     */
+    snapshotId?: string | null;
+    status: FreshnessStatus;
+};
+
+/**
  * SystemStatusResponse
  *
  * État minimal versionné du système.
@@ -1710,6 +1900,7 @@ export type SystemStatusResponse = {
      * Generatedat
      */
     generatedAt: string;
+    operations?: OperationalStatus | null;
     /**
      * Status
      */

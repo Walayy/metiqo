@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from typing import Literal, cast
 from uuid import UUID
 
-from sqlalchemy import Connection, Engine, Table, case, func, select
+from sqlalchemy import Connection, Engine, Table, case, func, select, true
 
 from metiquo.contracts import DataQualityIssue, IngestionRunSummary, JobSummary, ProviderHealth
 from metiquo.contracts.enums import DataMode, FreshnessStatus, ProviderStatus
@@ -35,6 +35,8 @@ class PostgresAdminRepository:
     clock: Clock = field(default_factory=SystemClock)
     odds_max_age_seconds: int = 90
     odds_provider_max_age_seconds: Mapping[str, int] = field(default_factory=dict)
+    oe_freshness_sla_seconds: int = 10800
+    oe_current_year: int | None = None
 
     def list_data_sources(self) -> tuple[ProviderHealth, ...]:
         """Réunir la source historique et chaque fournisseur de cotes observé."""
@@ -46,11 +48,17 @@ class PostgresAdminRepository:
         snapshots = cast(Table, Snapshot.__table__)
         runs = cast(Table, IngestionRun.__table__)
         quarantine = cast(Table, QuarantineItem.__table__)
+        year_filter = (
+            catalogs.c.season_year == self.oe_current_year
+            if self.oe_current_year is not None
+            else true()
+        )
         with self.engine.connect() as connection:
             catalog_rows = connection.execute(
                 select(catalogs.c.status).where(
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
+                    year_filter,
                 )
             ).all()
             last_success = connection.execute(
@@ -60,8 +68,24 @@ class PostgresAdminRepository:
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
                     snapshots.c.status == "validated",
+                    snapshots.c.id == catalogs.c.current_snapshot_id,
+                    year_filter,
                 )
             ).scalar_one()
+            confirmed_at = connection.scalar(
+                select(func.max(runs.c.finished_at))
+                .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
+                .where(
+                    catalogs.c.provider == _PROVIDER,
+                    catalogs.c.dataset == _DATASET,
+                    year_filter,
+                    runs.c.snapshot_id == catalogs.c.current_snapshot_id,
+                    runs.c.status == "succeeded",
+                    runs.c.counters["contentVerified"].astext == "true",
+                )
+            )
+            if last_success is not None and confirmed_at is not None:
+                last_success = max(last_success, confirmed_at)
             last_failure = connection.execute(
                 select(func.max(runs.c.finished_at))
                 .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
@@ -69,6 +93,7 @@ class PostgresAdminRepository:
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
                     runs.c.status == "failed",
+                    year_filter,
                 )
             ).scalar_one()
             failure_count = connection.execute(
@@ -78,6 +103,7 @@ class PostgresAdminRepository:
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
                     runs.c.status == "failed",
+                    year_filter,
                 )
             ).scalar_one()
             last_quarantine = connection.execute(
@@ -87,17 +113,21 @@ class PostgresAdminRepository:
                 .where(
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
+                    year_filter,
                 )
             ).scalar_one()
         checked_at = self.clock.now().value
-        if last_success is not None and last_success > checked_at:
-            checked_at = last_success
+        future_proof = last_success is not None and last_success > checked_at
         if not catalog_rows:
             status = ProviderStatus.UNAVAILABLE
             detail = "Aucune source Oracle's Elixir n'est cataloguée"
         elif last_success is None:
             status = ProviderStatus.UNAVAILABLE
             detail = "Aucun snapshot Oracle's Elixir validé"
+        elif future_proof:
+            status = ProviderStatus.DEGRADED
+            detail = "Horodatage de confirmation incohérent : date future"
+            last_success = None
         elif (
             any(str(row.status) != "active" for row in catalog_rows)
             or _not_older(last_failure, last_success)
@@ -109,6 +139,14 @@ class PostgresAdminRepository:
             status = ProviderStatus.OPERATIONAL
             detail = f"{len(catalog_rows)} source(s) annuelle(s) suivie(s)"
         age_seconds = _age_seconds(checked_at, last_success)
+        freshness = _status_freshness(status, last_success is not None)
+        if status is ProviderStatus.OPERATIONAL and (
+            age_seconds is not None and age_seconds > self.oe_freshness_sla_seconds
+        ):
+            status, freshness = ProviderStatus.DEGRADED, FreshnessStatus.STALE
+            detail = (
+                f"Dernière confirmation de contenu hors SLA ({self.oe_freshness_sla_seconds} s)"
+            )
         return ProviderHealth(
             provider_code=_PROVIDER,
             status=status,
@@ -117,7 +155,7 @@ class PostgresAdminRepository:
             last_capture_at=last_success,
             age_seconds=age_seconds,
             failure_count=int(failure_count),
-            freshness=_status_freshness(status, last_success is not None),
+            freshness=freshness,
             detail=detail,
         )
 

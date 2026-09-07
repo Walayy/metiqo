@@ -10,6 +10,7 @@ from metiquo.config import DataMode
 from metiquo.contracts import ContractMetadata
 from metiquo.contracts.base import ContractModel, FiniteDecimal, NonEmptyText, PositiveDecimal
 from metiquo.contracts.enums import GameTitle, MarketType, PaperBetStatus
+from metiquo.contracts.system import OperationalStatus
 
 
 class ApiModel(ContractModel):
@@ -50,6 +51,7 @@ class SystemStatusResponse(ApiModel):
     data_mode: DataMode = Field(alias="dataMode")
     generated_at: datetime = Field(alias="generatedAt")
     dependencies: dict[str, DependencyStatus]
+    operations: OperationalStatus | None = None
 
 
 class ProblemDetails(ApiModel):
