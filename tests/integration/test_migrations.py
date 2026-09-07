@@ -128,7 +128,7 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
             "value_policies",
             "value_policy_audits",
         }
-        assert set(inspect(connection).get_table_names(schema="ops")) == {"jobs"}
+        assert set(inspect(connection).get_table_names(schema="ops")) == {"jobs", "audit_events"}
         assert all(
             inspect(connection).get_table_names(schema=name) == []
             for name in ALL_SCHEMAS

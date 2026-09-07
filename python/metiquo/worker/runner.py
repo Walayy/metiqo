@@ -6,6 +6,7 @@ from threading import Event, Thread
 
 from sqlalchemy import text
 
+from metiquo.foundation.audit import audit_context
 from metiquo.foundation.identifiers import CorrelationId, JobId, TraceId
 from metiquo.foundation.locks import ResourceBusy, resource_lock
 from metiquo.foundation.observability import bind_log_context
@@ -91,8 +92,13 @@ class PostgresJobRunner:
             token,
             job.payload,
         )
-        with bind_log_context(
-            job_id=context.job_id, trace_id=context.trace_id, correlation_id=context.correlation_id
+        with (
+            audit_context(actor=job.actor, trace_id=job.trace_id),
+            bind_log_context(
+                job_id=context.job_id,
+                trace_id=context.trace_id,
+                correlation_id=context.correlation_id,
+            ),
         ):
             heartbeat.start()
             try:

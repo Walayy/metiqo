@@ -6,10 +6,11 @@ from uuid import UUID
 
 import pytest
 from alembic import command
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import DBAPIError
 
 from metiquo.contracts.enums import MarketType
+from metiquo.db.ops_models import AuditEventRecord
 from metiquo.foundation.time import FixedClock, UtcInstant
 from metiquo.pricing import (
     PolicyRegistrationError,
@@ -73,6 +74,21 @@ def test_policy_versions_are_idempotent_chained_and_audited(postgresql_url: str)
     assert matching_audits[1].previous_version == initial.version
     assert matching_audits[1].actor == "pricing-reviewer"
     assert matching_audits[1].changes["previousVersion"] == initial.version
+    with engine.connect() as connection:
+        central = (
+            connection.execute(
+                select(AuditEventRecord).where(
+                    AuditEventRecord.target_type == "signals.value_policy_audits"
+                )
+            )
+            .mappings()
+            .all()
+        )
+    assert len(central) == 2
+    assert {row["actor"] for row in central} == {"pricing-admin", "pricing-reviewer"}
+    revision = next(row for row in central if row["actor"] == "pricing-reviewer")
+    original = next(row for row in central if row["actor"] == "pricing-admin")
+    assert revision["after_refs"]["previous_policy_id"] == original["after_refs"]["policy_id"]
 
     with pytest.raises(PolicyRegistrationError, match="previous_version"):
         repository.register(

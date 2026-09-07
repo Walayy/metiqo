@@ -10,6 +10,29 @@ from sqlalchemy.orm import Mapped, mapped_column
 from metiquo.db.base import Base, UtcDateTime
 
 
+class AuditEventRecord(Base):
+    __tablename__ = "audit_events"
+    __table_args__ = (
+        CheckConstraint(
+            "jsonb_typeof(before_refs) = 'object' AND jsonb_typeof(after_refs) = 'object'",
+            name="references",
+        ),
+        CheckConstraint("length(trim(actor)) > 0 AND length(trim(action)) > 0", name="identity"),
+        Index("ix_ops_audit_target", "target_type", "target_id", "occurred_at"),
+        Index("ix_ops_audit_trace", "trace_id", "occurred_at"),
+        {"schema": "ops"},
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    actor: Mapped[str] = mapped_column(String(255), nullable=False)
+    action: Mapped[str] = mapped_column(String(128), nullable=False)
+    target_type: Mapped[str] = mapped_column(String(128), nullable=False)
+    target_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    before_refs: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    after_refs: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    trace_id: Mapped[UUID] = mapped_column(nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+
+
 class JobRecord(Base):
     __tablename__ = "jobs"
     __table_args__ = (

@@ -1,0 +1,13 @@
+# Audit opérationnel
+
+La migration `20260908_0041` crée `ops.audit_events`. Un événement contient un acteur, une action, un type et un identifiant de cible, les références avant/après, une trace UUID et la date UTC de l'enregistrement. PostgreSQL refuse UPDATE, DELETE et TRUNCATE sur ce journal.
+
+Les triggers enregistrent les mutations dans leur transaction d'origine : si elle échoue, l'audit est annulé avec elle. Ils couvrent catalogue, synchronisations, snapshots, quarantaine, backfill, alias, versions et transitions de modèle, opérations admin de modèle, providers, revue de mapping, règles de marché, politiques de seuils, décisions et règlements paper, ainsi que la file de jobs. Un simple renouvellement de heartbeat ne produit aucun événement supplémentaire.
+
+La projection choisit seulement des identifiants, états, empreintes, codes, dates et compteurs de tentative. Elle ne copie ni payload source, diagnostic libre, paramètres de modèle, texte de motif, URL, nom d'affichage de provider, ni credential. Les identifiants permettent de retrouver les preuves détaillées dans leurs journaux métier existants. L'audit central commence à la migration ; les événements plus anciens ne sont pas réinventés.
+
+`audit_context(actor=..., trace_id=...)` transmet son contexte aux transactions SQLAlchemy avec des paramètres PostgreSQL locaux à la transaction. L'API génère une trace par requête et la renvoie dans `X-Trace-Id`. Le worker utilise l'acteur initiateur et la trace du job ; la CLI utilise son acteur explicite ou `cli-local`. L'API locale actuelle utilise `api-local` ; la future session Owner fournira son identité lors du raccordement SEC-002. Sans contexte applicatif, l'audit prend l'acteur déjà présent dans la ligne ou identifie le rôle de base, avec une trace propre à l'événement.
+
+`record_runtime_configuration` conserve uniquement les modes effectifs : mode de données, environnement, mode d'authentification, type de provider et backend objet. Un verrou transactionnel évite les doublons ; un état identique réutilise son dernier événement. Le worker réel l'appelle au démarrage et l'API réelle avant ses mutations. Le mode mock conserve son isolation et ne déclenche pas ces écritures opérationnelles réelles.
+
+Les tests PostgreSQL vérifient la confidentialité de la projection, le refus de modification du journal, le rollback atomique, les transitions de jobs sans bruit de heartbeat, les changements de configuration, la trace d'une création paper via HTTP et la chaîne de révision des seuils. La lecture admin unifiée et les métriques sont raccordées dans OPS-006 ; les journaux métier existants restent consultables entre ces étapes.

@@ -1554,4 +1554,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Régression complémentaire :** un test ajouté avant correction révèle qu'une panne de chargement après validation du fichier pouvait laisser le run principal en succès. La clôture de cette tentative est maintenant corrigée en échec ; la fraîcheur reste dégradée. Les deux scénarios sync et le gate ingestion passent ensuite, soit trois tests en 31,41 secondes.
 - **Blocker éventuel :** aucun ; les preuves réseau du test utilisent un transport de fixture identifié, sans prétendre à une disponibilité externe mesurée. `OPS-005` centralise l'audit immuable.
 - **ADR éventuel :** aucun ; scheduler interne, file PostgreSQL et clés UTC persistées, sans Airflow ni service de messages.
-- **Commit/hash :** commit dédié `feat(ops): schedule OE checks and paper jobs`, hash consigné après création.
+- **Commit/hash :** `473ac8c` (`feat(ops): schedule OE checks and paper jobs`).
+
+## OPS-005 — Audit immuable
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `FND-006` et `OPS-001` sont `DONE`.
+- **Fichiers créés/modifiés :** modèle du journal central, migration 41, contexte transactionnel, liaison HTTP/CLI/worker, audit des modes effectifs et guide `docs/operational-audit.md` ; tests d'immutabilité, rollback, confidentialité, trace paper et chaîne de politiques.
+- **Migrations :** `20260908_0041` crée `ops.audit_events`, ses index de cible/trace et vingt triggers sur les mutations critiques. UPDATE, DELETE et TRUNCATE du journal sont refusés. Les journaux métier antérieurs sont conservés.
+- **Commandes/tests exécutés :** tests d'audit écrits avant le modèle ; deux tests initiaux après correction d'une fixture provider sans date, dix tests audit/migrations/queue/CLI/paper/modèle ; cinq tests audit/paper/gate ingestion ; 29 tests audit/migrations/sync/API/worker ; extension quarantaine/backfill/politiques, correction du rollback de la migration encore en développement et six tests finaux ; Ruff et mypy ciblés.
+- **Résultat exact :** les deux tests initiaux passent en 2,42 secondes ; les dix tests en 17,72 secondes ; les cinq tests en 38,96 secondes ; les 29 tests en 14,02 secondes ; les six derniers en 35,99 secondes. Un changement et son audit sont atomiques, y compris lors d'un rollback. Acteur et trace restent liés à la requête ; la création paper vérifie la correspondance avec `X-Trace-Id`. Les payloads privés et l'URL de base ne sont pas copiés. Les heartbeats inchangés n'encombrent pas le journal. La chaîne de seuils conserve la référence de politique précédente et son auteur. Les changements de configuration conservent avant/après sans doublonner un état identique. Le gate ingestion passe avec les triggers sur source, quarantaine et backfill. Les migrations et les contrôles statiques sont verts.
+- **Blocker éventuel :** aucun ; `OPS-006` unifie la lecture du nouveau journal avec les projections admin. Les opérations de sessions Owner seront raccordées à l'audit lors de `SEC-002` ; l'état d'authentification actuel et les mutations locales sont déjà tracés.
+- **ADR éventuel :** aucun ; audit dans la transaction SQL pour couvrir les appels directs, avec contexte explicite et références sélectionnées. Les journaux détaillés restent la source des preuves métier.
+- **Commit/hash :** commit dédié `feat(ops): audit critical mutations transactionally`, hash consigné après création.

@@ -26,6 +26,7 @@ from metiquo.config import ConfigurationError, ObjectStoreBackend, Settings, loa
 from metiquo.contracts.enums import DataMode
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
 from metiquo.features.dataset import FeatureDatasetBuilder
+from metiquo.foundation.audit import audit_context
 from metiquo.foundation.errors import BusinessError
 from metiquo.foundation.time import SystemClock
 from metiquo.ingestion.backfill import BackfillOrchestrator, YearSyncResult
@@ -180,7 +181,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         settings = load_settings()
         engine = _engine(settings)
         try:
-            document, exit_code = _dispatch(arguments, settings, engine)
+            with audit_context(actor=getattr(arguments, "actor", "cli-local"), trace_id=uuid4()):
+                document, exit_code = _dispatch(arguments, settings, engine)
         finally:
             engine.dispose()
     except FreshDataRequired as error:

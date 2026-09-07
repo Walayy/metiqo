@@ -5,6 +5,7 @@ import json
 import os
 from datetime import timedelta
 from pathlib import Path
+from uuid import UUID
 
 import pytest
 from httpx2 import ASGITransport, AsyncClient, Response
@@ -13,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from metiquo.api.app import create_app
 from metiquo.contracts import PaperBet
+from metiquo.db.ops_models import AuditEventRecord
 from metiquo.db.paper_models import PaperSettlementRecord
 from metiquo.foundation.time import FixedClock, UtcInstant
 from metiquo.paper.reporting import PostgresFinancialReportingService
@@ -59,6 +61,16 @@ def test_real_paper_api_create_review_loss_and_cached_metrics(
     assert created.status_code == 200, created.text
     payload = created.json()
     identity = payload["data"]["paperBetId"]
+    request_trace = UUID(created.headers["X-Trace-Id"])
+    with Session(context.engine) as session:
+        audit = session.scalar(
+            select(AuditEventRecord).where(
+                AuditEventRecord.target_type == "signals.paper_bets",
+                AuditEventRecord.target_id == identity,
+            )
+        )
+        assert audit is not None and audit.trace_id == request_trace and audit.actor == "api-local"
+        assert audit.after_refs["signal_id"] == str(values["signal_id"])
     assert payload["meta"]["dataMode"] == "real"
     assert payload["data"]["status"] == "open"
     mock_app = create_app(

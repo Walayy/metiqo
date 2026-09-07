@@ -2,12 +2,16 @@
 
 from importlib.metadata import version
 from typing import Final
+from uuid import uuid4
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import Response
 
 from metiquo.api.contract_schema import install_domain_contract_schemas
 from metiquo.api.dto import (
@@ -33,7 +37,10 @@ from metiquo.api.real_model_routes import build_real_model_router
 from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.config import Settings, load_settings
 from metiquo.contracts.enums import DataMode
+from metiquo.foundation.audit import audit_context
 from metiquo.foundation.errors import BusinessError, ErrorCode
+from metiquo.foundation.identifiers import TraceId
+from metiquo.foundation.observability import bind_log_context
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
 from metiquo.paper.reporting import PostgresFinancialReportingService
@@ -43,6 +50,7 @@ from metiquo.repositories.postgres_mapping import PostgresMappingRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
 from metiquo.repositories.postgres_opportunities import PostgresOpportunityRepository
 from metiquo.services import MockMutationService, ReadService, build_mock_read_service
+from metiquo.services.operational_audit import record_runtime_configuration
 from metiquo.services.real_admin import RealAdminMutationService
 from metiquo.services.real_mapping import RealMappingMutationService
 
@@ -212,6 +220,30 @@ def create_app(
                 resolved_mapping_mutations,
             )
         )
+
+    @app.middleware("http")
+    async def bind_request_audit(request: Request, call_next: RequestResponseEndpoint) -> Response:
+        trace = uuid4()
+        with (
+            audit_context(actor="api-local", trace_id=trace),
+            bind_log_context(trace_id=TraceId(trace)),
+        ):
+            if resolved_settings.app_data_mode is DataMode.REAL and request.method in {
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+            }:
+                await run_in_threadpool(
+                    record_runtime_configuration,
+                    app.state.real_admin_engine,
+                    resolved_settings,
+                    service="api",
+                    clock=resolved_clock,
+                )
+            response = await call_next(request)
+        response.headers["X-Trace-Id"] = str(trace)
+        return response
 
     @app.exception_handler(BusinessError)
     async def business_error_handler(request: Request, error: BusinessError) -> JSONResponse:

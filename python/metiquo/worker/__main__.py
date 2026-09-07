@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from metiquo.config import load_settings
 from metiquo.contracts.enums import DataMode
 from metiquo.foundation.observability import configure_json_logging
+from metiquo.services.operational_audit import record_runtime_configuration
 from metiquo.worker.handlers import default_handlers
 from metiquo.worker.queue import PostgresJobQueue
 from metiquo.worker.retry import RetryPolicy
@@ -57,6 +58,8 @@ def main() -> int:
     signal.signal(signal.SIGINT, request_stop)
     signal.signal(signal.SIGTERM, request_stop)
     try:
+        if engine is not None:
+            record_runtime_configuration(engine, settings, service="worker")
         return runtime.run()
     finally:
         if engine is not None:
