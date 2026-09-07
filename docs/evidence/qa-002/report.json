@@ -1,0 +1,889 @@
+{
+  "ticket": "QA-002",
+  "baseCommit": "f70b46e",
+  "status": "passed",
+  "versions": {
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34",
+    "axe": "4.13.0",
+    "next": "16.3.4",
+    "windowsNode": "24.2.0",
+    "linuxBrowserRunnerNode": "24.18.1",
+    "pnpm": "11.25.0"
+  },
+  "scope": "Chromium Windows and Chromium Linux against a Windows production Next build and mock API. Synthetic real-mode transport fixtures are not financial evidence. Owner is validated in its separate PostgreSQL exercise. Linux server build and remote CI remain release gates.",
+  "runs": [
+    {
+      "label": "Full Windows suite before final capture-only option correction",
+      "originalReport": "data/qa002-windows-final.json",
+      "originalReportSha256": "90ff5f9b59477f713384dc95081214da828dd4e3257a2bdda5d3a99bd62b3eaf",
+      "stats": {
+        "startTime": "2026-09-07T13:09:34.435Z",
+        "duration": 111179.024,
+        "expected": 70,
+        "skipped": 1,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "maxCls": 0.023898051697530863,
+      "visualTests": [
+        {
+          "test": "slow response keeps desktop / stable",
+          "status": "passed",
+          "durationMs": 3252,
+          "cls": 0.0002829367555217978,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 181
+        },
+        {
+          "test": "slow response keeps desktop /events stable",
+          "status": "passed",
+          "durationMs": 2512,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 137
+        },
+        {
+          "test": "slow response keeps desktop /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable",
+          "status": "passed",
+          "durationMs": 2465,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 134
+        },
+        {
+          "test": "slow response keeps desktop /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable",
+          "status": "passed",
+          "durationMs": 3230,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 178
+        },
+        {
+          "test": "slow response keeps desktop /models stable",
+          "status": "passed",
+          "durationMs": 2510,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 131
+        },
+        {
+          "test": "slow response keeps desktop /data stable",
+          "status": "passed",
+          "durationMs": 2586,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 135
+        },
+        {
+          "test": "slow response keeps desktop /admin stable",
+          "status": "passed",
+          "durationMs": 2519,
+          "cls": 0.023898051697530863,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 137
+        },
+        {
+          "test": "slow response keeps desktop /paper-trading stable",
+          "status": "passed",
+          "durationMs": 2508,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 133
+        },
+        {
+          "test": "slow response keeps desktop /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable",
+          "status": "passed",
+          "durationMs": 2468,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 134
+        },
+        {
+          "test": "reserves desktop operations dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1629,
+          "panelDimensions": {
+            "before": {
+              "x": 328,
+              "y": 223,
+              "width": 1072,
+              "height": 514
+            },
+            "after": {
+              "x": 328,
+              "y": 223,
+              "width": 1072,
+              "height": 514
+            }
+          },
+          "cls": 0.023898051697530863,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 61
+        },
+        {
+          "test": "reserves desktop finance dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1570,
+          "panelDimensions": {
+            "before": {
+              "x": 328,
+              "y": 152,
+              "width": 1072,
+              "height": 808
+            },
+            "after": {
+              "x": 328,
+              "y": 152,
+              "width": 1072,
+              "height": 808
+            }
+          },
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 60
+        },
+        {
+          "test": "keeps the desktop odds graph mounted and sized during a slow refresh",
+          "status": "passed",
+          "durationMs": 1226,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 58
+        },
+        {
+          "test": "slow response keeps mobile / stable",
+          "status": "passed",
+          "durationMs": 3172,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 178
+        },
+        {
+          "test": "slow response keeps mobile /events stable",
+          "status": "passed",
+          "durationMs": 2442,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 134
+        },
+        {
+          "test": "slow response keeps mobile /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable",
+          "status": "passed",
+          "durationMs": 2445,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 133
+        },
+        {
+          "test": "slow response keeps mobile /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable",
+          "status": "passed",
+          "durationMs": 3206,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 180
+        },
+        {
+          "test": "slow response keeps mobile /models stable",
+          "status": "passed",
+          "durationMs": 2403,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 131
+        },
+        {
+          "test": "slow response keeps mobile /data stable",
+          "status": "passed",
+          "durationMs": 2406,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 132
+        },
+        {
+          "test": "slow response keeps mobile /admin stable",
+          "status": "passed",
+          "durationMs": 2491,
+          "cls": 0.013459940252914354,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 135
+        },
+        {
+          "test": "slow response keeps mobile /paper-trading stable",
+          "status": "passed",
+          "durationMs": 2420,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 130
+        },
+        {
+          "test": "slow response keeps mobile /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable",
+          "status": "passed",
+          "durationMs": 2456,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 136
+        },
+        {
+          "test": "reserves mobile operations dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1506,
+          "panelDimensions": {
+            "before": {
+              "x": 16,
+              "y": -169,
+              "width": 358,
+              "height": 1182
+            },
+            "after": {
+              "x": 16,
+              "y": -169,
+              "width": 358,
+              "height": 1182
+            }
+          },
+          "cls": 0.013459940252914354,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 59
+        },
+        {
+          "test": "reserves mobile finance dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1652,
+          "panelDimensions": {
+            "before": {
+              "x": 16,
+              "y": 0,
+              "width": 358,
+              "height": 2852
+            },
+            "after": {
+              "x": 16,
+              "y": 0,
+              "width": 358,
+              "height": 2852
+            }
+          },
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 62
+        },
+        {
+          "test": "keeps the mobile odds graph mounted and sized during a slow refresh",
+          "status": "passed",
+          "durationMs": 1249,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 57
+        },
+        {
+          "test": "cancels loading animation immediately when reduced motion changes",
+          "status": "passed",
+          "durationMs": 586
+        },
+        {
+          "test": "paints only the stored dark theme despite an opposite system preference",
+          "status": "passed",
+          "durationMs": 1076,
+          "cls": 0,
+          "paintedThemes": ["dark"],
+          "paintedFrameCount": 44
+        },
+        {
+          "test": "paints only the stored light theme despite an opposite system preference",
+          "status": "passed",
+          "durationMs": 1116,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 47
+        }
+      ]
+    },
+    {
+      "label": "Final Windows visual comparison without baseline generation",
+      "originalReport": "data/qa002-windows-visual-final.json",
+      "originalReportSha256": "d974cc74d88928d290fd96c2eca266e2ac328daf124f441258e884101a1c0a7d",
+      "stats": {
+        "startTime": "2026-09-07T13:17:21.159Z",
+        "duration": 61817.779,
+        "expected": 27,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "maxCls": 0.023898051697530863,
+      "visualTests": [
+        {
+          "test": "slow response keeps desktop / stable",
+          "status": "passed",
+          "durationMs": 3417,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 180
+        },
+        {
+          "test": "slow response keeps desktop /events stable",
+          "status": "passed",
+          "durationMs": 2607,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 140
+        },
+        {
+          "test": "slow response keeps desktop /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable",
+          "status": "passed",
+          "durationMs": 2583,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 135
+        },
+        {
+          "test": "slow response keeps desktop /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable",
+          "status": "passed",
+          "durationMs": 3279,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 176
+        },
+        {
+          "test": "slow response keeps desktop /models stable",
+          "status": "passed",
+          "durationMs": 2511,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 131
+        },
+        {
+          "test": "slow response keeps desktop /data stable",
+          "status": "passed",
+          "durationMs": 2500,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 132
+        },
+        {
+          "test": "slow response keeps desktop /admin stable",
+          "status": "passed",
+          "durationMs": 2572,
+          "cls": 0.023898051697530863,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 136
+        },
+        {
+          "test": "slow response keeps desktop /paper-trading stable",
+          "status": "passed",
+          "durationMs": 2502,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 132
+        },
+        {
+          "test": "slow response keeps desktop /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable",
+          "status": "passed",
+          "durationMs": 2703,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 139
+        },
+        {
+          "test": "reserves desktop operations dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 2109,
+          "panelDimensions": {
+            "before": {
+              "x": 328,
+              "y": 223,
+              "width": 1072,
+              "height": 514
+            },
+            "after": {
+              "x": 328,
+              "y": 223,
+              "width": 1072,
+              "height": 514
+            }
+          },
+          "cls": 0.023898051697530863,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 64
+        },
+        {
+          "test": "reserves desktop finance dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1828,
+          "panelDimensions": {
+            "before": {
+              "x": 328,
+              "y": 152,
+              "width": 1072,
+              "height": 808
+            },
+            "after": {
+              "x": 328,
+              "y": 152,
+              "width": 1072,
+              "height": 808
+            }
+          },
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 64
+        },
+        {
+          "test": "keeps the desktop odds graph mounted and sized during a slow refresh",
+          "status": "passed",
+          "durationMs": 1348,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 58
+        },
+        {
+          "test": "slow response keeps mobile / stable",
+          "status": "passed",
+          "durationMs": 3232,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 178
+        },
+        {
+          "test": "slow response keeps mobile /events stable",
+          "status": "passed",
+          "durationMs": 2445,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 135
+        },
+        {
+          "test": "slow response keeps mobile /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable",
+          "status": "passed",
+          "durationMs": 2450,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 134
+        },
+        {
+          "test": "slow response keeps mobile /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable",
+          "status": "passed",
+          "durationMs": 3252,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 180
+        },
+        {
+          "test": "slow response keeps mobile /models stable",
+          "status": "passed",
+          "durationMs": 2436,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 131
+        },
+        {
+          "test": "slow response keeps mobile /data stable",
+          "status": "passed",
+          "durationMs": 2421,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 134
+        },
+        {
+          "test": "slow response keeps mobile /admin stable",
+          "status": "passed",
+          "durationMs": 2522,
+          "cls": 0.013459940252914354,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 135
+        },
+        {
+          "test": "slow response keeps mobile /paper-trading stable",
+          "status": "passed",
+          "durationMs": 2373,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 131
+        },
+        {
+          "test": "slow response keeps mobile /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable",
+          "status": "passed",
+          "durationMs": 2404,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 133
+        },
+        {
+          "test": "reserves mobile operations dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1409,
+          "panelDimensions": {
+            "before": {
+              "x": 16,
+              "y": -169,
+              "width": 358,
+              "height": 1182
+            },
+            "after": {
+              "x": 16,
+              "y": -169,
+              "width": 358,
+              "height": 1182
+            }
+          },
+          "cls": 0.013459940252914354,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 57
+        },
+        {
+          "test": "reserves mobile finance dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1434,
+          "panelDimensions": {
+            "before": {
+              "x": 16,
+              "y": 0,
+              "width": 358,
+              "height": 2852
+            },
+            "after": {
+              "x": 16,
+              "y": 0,
+              "width": 358,
+              "height": 2852
+            }
+          },
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 55
+        },
+        {
+          "test": "keeps the mobile odds graph mounted and sized during a slow refresh",
+          "status": "passed",
+          "durationMs": 1253,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 55
+        },
+        {
+          "test": "cancels loading animation immediately when reduced motion changes",
+          "status": "passed",
+          "durationMs": 551
+        },
+        {
+          "test": "paints only the stored dark theme despite an opposite system preference",
+          "status": "passed",
+          "durationMs": 1038,
+          "cls": 0,
+          "paintedThemes": ["dark"],
+          "paintedFrameCount": 45
+        },
+        {
+          "test": "paints only the stored light theme despite an opposite system preference",
+          "status": "passed",
+          "durationMs": 1035,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 45
+        }
+      ]
+    },
+    {
+      "label": "Final Linux visual/accessibility comparison without baseline generation",
+      "originalReport": "data/qa002-linux/final.json",
+      "originalReportSha256": "76f700d699156e57ce873da7744fdaf6250d9413fc26644d67397a31c6596970",
+      "stats": {
+        "startTime": "2026-09-07T13:15:13.427Z",
+        "duration": 83334.703,
+        "expected": 33,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "maxCls": 0.023898051697530863,
+      "visualTests": [
+        {
+          "test": "slow response keeps desktop / stable",
+          "status": "passed",
+          "durationMs": 3572,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 194
+        },
+        {
+          "test": "slow response keeps desktop /events stable",
+          "status": "passed",
+          "durationMs": 2501,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 132
+        },
+        {
+          "test": "slow response keeps desktop /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable",
+          "status": "passed",
+          "durationMs": 2824,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 150
+        },
+        {
+          "test": "slow response keeps desktop /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable",
+          "status": "passed",
+          "durationMs": 3266,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 169
+        },
+        {
+          "test": "slow response keeps desktop /models stable",
+          "status": "passed",
+          "durationMs": 2460,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 126
+        },
+        {
+          "test": "slow response keeps desktop /data stable",
+          "status": "passed",
+          "durationMs": 2752,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 149
+        },
+        {
+          "test": "slow response keeps desktop /admin stable",
+          "status": "passed",
+          "durationMs": 2547,
+          "cls": 0.023898051697530863,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 133
+        },
+        {
+          "test": "slow response keeps desktop /paper-trading stable",
+          "status": "passed",
+          "durationMs": 2438,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 130
+        },
+        {
+          "test": "slow response keeps desktop /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable",
+          "status": "passed",
+          "durationMs": 2480,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 124
+        },
+        {
+          "test": "reserves desktop operations dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1639,
+          "panelDimensions": {
+            "before": {
+              "x": 328,
+              "y": 223,
+              "width": 1072,
+              "height": 514
+            },
+            "after": {
+              "x": 328,
+              "y": 223,
+              "width": 1072,
+              "height": 514
+            }
+          },
+          "cls": 0.023898051697530863,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 56
+        },
+        {
+          "test": "reserves desktop finance dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1587,
+          "panelDimensions": {
+            "before": {
+              "x": 328,
+              "y": 152,
+              "width": 1072,
+              "height": 808
+            },
+            "after": {
+              "x": 328,
+              "y": 152,
+              "width": 1072,
+              "height": 808
+            }
+          },
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 60
+        },
+        {
+          "test": "keeps the desktop odds graph mounted and sized during a slow refresh",
+          "status": "passed",
+          "durationMs": 1245,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 60
+        },
+        {
+          "test": "slow response keeps mobile / stable",
+          "status": "passed",
+          "durationMs": 3172,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 179
+        },
+        {
+          "test": "slow response keeps mobile /events stable",
+          "status": "passed",
+          "durationMs": 2543,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 137
+        },
+        {
+          "test": "slow response keeps mobile /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable",
+          "status": "passed",
+          "durationMs": 2685,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 152
+        },
+        {
+          "test": "slow response keeps mobile /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable",
+          "status": "passed",
+          "durationMs": 3173,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 177
+        },
+        {
+          "test": "slow response keeps mobile /models stable",
+          "status": "passed",
+          "durationMs": 2449,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 134
+        },
+        {
+          "test": "slow response keeps mobile /data stable",
+          "status": "passed",
+          "durationMs": 2767,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 152
+        },
+        {
+          "test": "slow response keeps mobile /admin stable",
+          "status": "passed",
+          "durationMs": 2441,
+          "cls": 0.013579547630648515,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 135
+        },
+        {
+          "test": "slow response keeps mobile /paper-trading stable",
+          "status": "passed",
+          "durationMs": 2390,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 134
+        },
+        {
+          "test": "slow response keeps mobile /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable",
+          "status": "passed",
+          "durationMs": 2439,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 135
+        },
+        {
+          "test": "reserves mobile operations dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1473,
+          "panelDimensions": {
+            "before": {
+              "x": 16,
+              "y": -169,
+              "width": 358,
+              "height": 1182
+            },
+            "after": {
+              "x": 16,
+              "y": -169,
+              "width": 358,
+              "height": 1182
+            }
+          },
+          "cls": 0.013579547630648515,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 61
+        },
+        {
+          "test": "reserves mobile finance dimensions until the real response arrives",
+          "status": "passed",
+          "durationMs": 1555,
+          "panelDimensions": {
+            "before": {
+              "x": 16,
+              "y": 0,
+              "width": 358,
+              "height": 2852
+            },
+            "after": {
+              "x": 16,
+              "y": 0,
+              "width": 358,
+              "height": 2852
+            }
+          },
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 60
+        },
+        {
+          "test": "keeps the mobile odds graph mounted and sized during a slow refresh",
+          "status": "passed",
+          "durationMs": 1199,
+          "cls": 0.0001196073777341606,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 62
+        },
+        {
+          "test": "cancels loading animation immediately when reduced motion changes",
+          "status": "passed",
+          "durationMs": 620
+        },
+        {
+          "test": "paints only the stored dark theme despite an opposite system preference",
+          "status": "passed",
+          "durationMs": 1056,
+          "cls": 0,
+          "paintedThemes": ["dark"],
+          "paintedFrameCount": 46
+        },
+        {
+          "test": "paints only the stored light theme despite an opposite system preference",
+          "status": "passed",
+          "durationMs": 1023,
+          "cls": 0,
+          "paintedThemes": ["light"],
+          "paintedFrameCount": 47
+        }
+      ]
+    }
+  ],
+  "filesSha256": {
+    "apps/web/src/components/data-health-dashboard.tsx": "16c813005f5c3ffcb38d1590451a9d7e4592c3bc5c247889e86fa80a86c375c0",
+    "apps/web/src/components/operational-status-panel.tsx": "077c06bbe57923ae162eee95ed37c6b36b3d999974a75dcefba14c14c7b532d1",
+    "apps/web/src/components/paper-financial-report.tsx": "3a0675ac90cff3d2a2d6732c778b08206de2348ea7c42cc4221f7a7cae3077d8",
+    "packages/ui/src/remote-states.tsx": "aa74a51204e1c550197c1c20787a94174fe02aebd77152d1aba88b2f2830ab61",
+    "tests/e2e/panel-capture.css": "60d77d967327a775fdd50c9c7fa107fbc365fea5ab20d081c551f8d9a5154fdb",
+    "tests/e2e/tsconfig.json": "86014f0825dc4e99b13e15202861c66830d438c9d39c0e0ff815a0d168e65dc6",
+    "tests/e2e/visual-stability.spec.ts": "16296f9939ed73fdb1711d38ee786e1c6750b153b76f9b336e706d33b5968de3",
+    "tests/e2e/visual-stability.spec.ts-snapshots/finance-desktop-linux.png": "24d8b74084d037180338b2904295aba6bc2d18a750d635061e6a6c5c217f4c19",
+    "tests/e2e/visual-stability.spec.ts-snapshots/finance-desktop-win32.png": "e7335fa16e9e3cf2f5a7295c438bad4811a7a6036db43d0be0cba4f720243bb2",
+    "tests/e2e/visual-stability.spec.ts-snapshots/finance-mobile-linux.png": "9495e0fc88db118fca4dd52ac6941386ef9154d62b6415d81c6dc8f0d33615ab",
+    "tests/e2e/visual-stability.spec.ts-snapshots/finance-mobile-win32.png": "d128483021802179550dc7d5d32a00224ff6a8cd9ce29c430cfd56371a2576b0",
+    "tests/e2e/visual-stability.spec.ts-snapshots/operations-desktop-linux.png": "217ea3900c69cfd3f3f60f6a62d3823d5ff52cd5c27c603f3c23e1cf28b056da",
+    "tests/e2e/visual-stability.spec.ts-snapshots/operations-desktop-win32.png": "d039e3531c43767b91a457c13a9e2ec8e5f95f78e201665733f3cfa431aadd64",
+    "tests/e2e/visual-stability.spec.ts-snapshots/operations-mobile-linux.png": "3dfec9763c6824c123da9a5c9ce9a5acff632d38b92e986a56de6751ec727ca1",
+    "tests/e2e/visual-stability.spec.ts-snapshots/operations-mobile-win32.png": "916c882f4bbeb61dc7202bb3122b82a9a4149ce063e365059f71d0e4ee225bcc"
+  }
+}

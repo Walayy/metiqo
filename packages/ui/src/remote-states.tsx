@@ -300,18 +300,16 @@ export function RemoteDataBoundary({
   refetchLabel = "Actualisation des données",
   ...properties
 }: RemoteDataBoundaryProperties) {
-  if (isLoading || (isRefetching && !keepPreviousData)) {
-    return <>{loadingFallback ?? <RemoteLoadingState />}</>;
-  }
+  const showLoading = isLoading || (isRefetching && !keepPreviousData);
 
   return (
     <div
-      aria-busy={isRefetching}
+      aria-busy={isLoading || isRefetching}
       className={cn("relative", className)}
       data-refetching={isRefetching ? "true" : "false"}
       {...properties}
     >
-      {isRefetching ? (
+      {isRefetching && !showLoading ? (
         <div
           aria-label={refetchLabel}
           className="pointer-events-none absolute right-3 top-3 z-10"
@@ -322,7 +320,7 @@ export function RemoteDataBoundary({
           </span>
         </div>
       ) : null}
-      {children}
+      {showLoading ? (loadingFallback ?? <RemoteLoadingState />) : children}
     </div>
   );
 }

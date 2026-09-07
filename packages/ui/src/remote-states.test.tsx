@@ -122,4 +122,23 @@ describe("remote state library", () => {
     expect(screen.getByText("Rechargement sûr")).toBeInTheDocument();
     expect(screen.queryByText("Contenu sensible")).not.toBeInTheDocument();
   });
+
+  it("preserves the sized boundary and its identity across the first response", () => {
+    const { rerender } = render(
+      <RemoteDataBoundary isLoading className="min-h-96" data-testid="reserved-panel">
+        <p>Snapshot validé</p>
+      </RemoteDataBoundary>,
+    );
+    const boundary = screen.getByTestId("reserved-panel");
+    expect(boundary).toHaveClass("min-h-96");
+    expect(boundary).toHaveAttribute("aria-busy", "true");
+    rerender(
+      <RemoteDataBoundary className="min-h-96" data-testid="reserved-panel">
+        <p>Snapshot validé</p>
+      </RemoteDataBoundary>,
+    );
+    expect(screen.getByTestId("reserved-panel")).toBe(boundary);
+    expect(boundary).toHaveAttribute("aria-busy", "false");
+    expect(screen.getByText("Snapshot validé")).toBeVisible();
+  });
 });

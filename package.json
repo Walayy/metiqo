@@ -17,7 +17,8 @@
     "lint": "eslint --max-warnings=0 .",
     "spellcheck": "cspell --no-progress --show-suggestions README.md docs/**/*.md docs/**/*.yaml",
     "test:components": "pnpm --filter @metiquo/ui --filter @metiquo/web test",
-    "typecheck": "pnpm --recursive --if-present run typecheck",
+    "typecheck": "pnpm --recursive --if-present run typecheck && pnpm typecheck:e2e",
+    "typecheck:e2e": "tsc -p tests/e2e/tsconfig.json",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

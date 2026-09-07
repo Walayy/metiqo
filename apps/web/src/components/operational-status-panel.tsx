@@ -6,7 +6,7 @@ import {
   Button,
   Card,
   CardContent,
-  RemoteLoadingState,
+  RemoteSkeleton,
   RemoteRecoverableErrorState,
 } from "@metiquo/ui";
 import { useQuery } from "@tanstack/react-query";
@@ -24,52 +24,72 @@ const labels: Record<string, string> = {
   not_configured: "Non configurées",
 };
 
-function Measurements({ operations }: Readonly<{ operations: OperationalStatus }>) {
-  const { source, model, metrics, backups } = operations;
+function Measurements({
+  operations,
+  pending = false,
+  dataMode,
+}: Readonly<{
+  operations?: OperationalStatus | null;
+  pending?: boolean;
+  dataMode?: string;
+}>) {
+  const { source, model, metrics, backups } = operations ?? {};
   const states = [
     {
       name: "Source historique",
-      status: labels[source.status],
-      detail: source.asOf ? `Confirmée le ${formatDateTime(source.asOf)}` : "Aucune confirmation",
-      reason: source.reasonCode,
+      status: source ? labels[source.status] : "Indisponible",
+      detail: source?.asOf ? `Confirmée le ${formatDateTime(source.asOf)}` : "Aucune confirmation",
+      reason: source?.reasonCode,
     },
     {
       name: "Modèle champion",
-      status: labels[model.status],
-      detail: model.trainingCutoff
+      status: model ? labels[model.status] : "Indisponible",
+      detail: model?.trainingCutoff
         ? `Données jusqu’au ${formatDateTime(model.trainingCutoff)}`
         : "Aucun modèle actif",
     },
     {
       name: "Jobs",
-      status: `${String(operations.jobCounts.running ?? 0)} en cours`,
-      detail: `${String(operations.jobCounts.queued ?? 0)} en attente · ${String(metrics.jobFailures)} échecs conservés`,
+      status: operations ? `${String(operations.jobCounts.running ?? 0)} en cours` : "Indisponible",
+      detail: operations
+        ? `${String(operations.jobCounts.queued ?? 0)} en attente · ${String(operations.metrics.jobFailures)} échecs conservés`
+        : "Aucune mesure réelle",
     },
     {
       name: "Mapping à examiner",
-      status: String(operations.mappingBacklog),
+      status: operations ? String(operations.mappingBacklog) : "Indisponible",
       detail: "Revues en attente",
     },
     {
       name: "Qualité des données",
-      status: `${String(metrics.blockingAnomalies)} anomalies bloquantes`,
-      detail: `${String(metrics.anomalies)} anomalies conservées`,
+      status: metrics
+        ? `${String(metrics.blockingAnomalies)} anomalies bloquantes`
+        : "Indisponible",
+      detail: metrics
+        ? `${String(metrics.anomalies)} anomalies conservées`
+        : "Aucune mesure réelle",
     },
     {
       name: "Sauvegardes",
-      status: labels[backups.status],
-      reason: backups.errorCode,
-      detail: backups.lastSuccessAt
+      status: backups ? labels[backups.status] : "Indisponible",
+      reason: backups?.errorCode,
+      detail: backups?.lastSuccessAt
         ? `Dernier succès le ${formatDateTime(backups.lastSuccessAt)}`
         : "Aucun succès enregistré",
     },
   ];
   return (
-    <div className="grid gap-4">
-      <p className="text-sm font-medium">
-        {operations.readsAvailable
-          ? "Snapshot validé disponible en lecture"
-          : "Aucun snapshot courant utilisable"}
+    <div aria-busy={pending} className="grid gap-4">
+      <p className="min-h-15 text-sm leading-5 font-medium sm:min-h-10 xl:min-h-5" role="status">
+        {pending
+          ? "Chargement des mesures…"
+          : !operations
+            ? dataMode === "mock"
+              ? "Les mesures opérationnelles réelles sont disponibles en mode réel."
+              : "La base est indisponible ; les mesures ne peuvent pas être lues."
+            : operations.readsAvailable
+              ? "Snapshot validé disponible en lecture"
+              : "Aucun snapshot courant utilisable"}
       </p>
       <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {states.map((state) => (
@@ -77,33 +97,53 @@ function Measurements({ operations }: Readonly<{ operations: OperationalStatus }
             className="grid content-start gap-1 rounded-lg border border-border-subtle p-3"
             key={state.name}
           >
-            <dt className="text-xs text-ink-secondary">{state.name}</dt>
-            <dd className="text-sm font-semibold">{state.status}</dd>
-            <dd className="text-xs text-ink-secondary">{state.detail}</dd>
-            {state.reason ? (
-              <dd className="break-all text-xs text-ink-secondary">{state.reason}</dd>
-            ) : null}
+            <dt className="text-xs leading-4 text-ink-secondary">{state.name}</dt>
+            <dd className="min-h-5 text-sm leading-5 font-semibold">
+              {pending ? <RemoteSkeleton height="1.25rem" width="65%" /> : state.status}
+            </dd>
+            <dd className="min-h-8 text-xs leading-4 text-ink-secondary">
+              {pending ? <RemoteSkeleton width="90%" /> : state.detail}
+            </dd>
+            <dd className="min-h-4 break-all text-xs leading-4 text-ink-secondary">
+              {pending ? <RemoteSkeleton width="45%" /> : state.reason}
+            </dd>
           </div>
         ))}
       </dl>
-      <p className="text-xs leading-5 text-ink-secondary">
-        Historique conservé : {metrics.processedRows} lignes chargées · durée moyenne des jobs{" "}
-        {metrics.meanJobDurationSeconds === null || metrics.meanJobDurationSeconds === undefined
-          ? "non mesurée"
-          : `${metrics.meanJobDurationSeconds.toFixed(2)} s`}{" "}
-        ({metrics.measuredJobCount} mesurés). Signaux :{" "}
-        {Object.entries(metrics.signals)
-          .map(([grade, count]) => `${grade} ${String(count)}`)
-          .join(" · ")}
-        .
+      <p className="min-h-20 text-xs leading-5 text-ink-secondary sm:min-h-10 xl:min-h-5">
+        {pending ? (
+          <RemoteSkeleton width="90%" />
+        ) : metrics ? (
+          <>
+            Historique conservé : {metrics.processedRows} lignes chargées · durée moyenne des jobs{" "}
+            {metrics.meanJobDurationSeconds === null || metrics.meanJobDurationSeconds === undefined
+              ? "non mesurée"
+              : `${metrics.meanJobDurationSeconds.toFixed(2)} s`}{" "}
+            ({metrics.measuredJobCount} mesurés). Signaux :{" "}
+            {Object.entries(metrics.signals)
+              .map(([grade, count]) => `${grade} ${String(count)}`)
+              .join(" · ")}
+            .
+          </>
+        ) : (
+          "Les compteurs et durées apparaîtront après la collecte de mesures réelles."
+        )}
       </p>
-      <p className="text-xs leading-5 text-ink-secondary">
-        Depuis le démarrage de ce processus API : {metrics.api.requestCount} requêtes ·{" "}
-        {metrics.api.failureCount} erreurs serveur · latence moyenne{" "}
-        {metrics.api.meanLatencyMs === null || metrics.api.meanLatencyMs === undefined
-          ? "non mesurée"
-          : `${metrics.api.meanLatencyMs.toFixed(1)} ms`}
-        .
+      <p className="min-h-15 text-xs leading-5 text-ink-secondary sm:min-h-10 xl:min-h-5">
+        {pending ? (
+          <RemoteSkeleton width="75%" />
+        ) : metrics ? (
+          <>
+            Depuis le démarrage de ce processus API : {metrics.api.requestCount} requêtes ·{" "}
+            {metrics.api.failureCount} erreurs serveur · latence moyenne{" "}
+            {metrics.api.meanLatencyMs === null || metrics.api.meanLatencyMs === undefined
+              ? "non mesurée"
+              : `${metrics.api.meanLatencyMs.toFixed(1)} ms`}
+            .
+          </>
+        ) : (
+          "Aucune latence API réelle n’a été mesurée dans ce mode."
+        )}
       </p>
     </div>
   );
@@ -129,22 +169,23 @@ export function OperationalStatusPanel() {
         </div>
         {status.isError ? (
           <RemoteRecoverableErrorState onRetry={() => void status.refetch()} />
-        ) : status.isPending ? (
-          <RemoteLoadingState minHeight="12rem" />
-        ) : status.data.operations ? (
-          <Measurements operations={status.data.operations} />
         ) : (
-          <p className="text-sm text-ink-secondary">
-            {status.data.dataMode === "mock"
-              ? "Les mesures opérationnelles réelles sont disponibles en mode réel."
-              : "La base est indisponible ; les mesures ne peuvent pas être lues."}
-          </p>
+          <Measurements
+            operations={status.data?.operations ?? null}
+            pending={status.isPending}
+            dataMode={status.data?.dataMode ?? ""}
+          />
         )}
-        {status.data ? (
-          <p className="flex flex-wrap items-center gap-2 text-xs text-ink-secondary">
-            <Badge>{status.data.dataMode}</Badge>Mesure du {formatDateTime(status.data.generatedAt)}
-          </p>
-        ) : null}
+        <p className="flex min-h-6 flex-wrap items-center gap-2 text-xs text-ink-secondary">
+          {status.data ? (
+            <>
+              <Badge>{status.data.dataMode}</Badge>Mesure du{" "}
+              {formatDateTime(status.data.generatedAt)}
+            </>
+          ) : (
+            <RemoteSkeleton width="14rem" />
+          )}
+        </p>
       </CardContent>
     </Card>
   );

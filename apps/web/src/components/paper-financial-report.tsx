@@ -1,7 +1,7 @@
 "use client";
 
 import type { ItemResponsePaperMetricsDto } from "@metiquo/contracts/types";
-import { Card, CardContent, RemoteRecoverableErrorState } from "@metiquo/ui";
+import { Card, CardContent, RemoteRecoverableErrorState, RemoteSkeleton } from "@metiquo/ui";
 import { useQuery } from "@tanstack/react-query";
 
 import { formatDateTime } from "./opportunity-presenters";
@@ -46,68 +46,89 @@ export function PaperFinancialReport() {
     );
   const value = report.data?.data;
   return (
-    <section aria-label="Rapport financier" className="grid min-h-40 gap-4">
+    <section aria-label="Rapport financier" aria-busy={report.isPending} className="grid gap-4">
       <h2 className="text-xl font-semibold">Métriques financières · EUR</h2>
-      {!value?.reportId ? (
-        <p className="text-sm text-ink-secondary">
-          {report.isPending
-            ? "Chargement du rapport…"
-            : "Aucun rapport calculé dans ce mode. ROI et CLV indisponibles."}
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-ink-secondary">
-            {report.data?.meta.dataMode === "mock" ? "MOCK · " : "RÉEL · "}
+      <p
+        className="min-h-15 text-sm leading-5 text-ink-secondary sm:min-h-10 xl:min-h-5"
+        role="status"
+      >
+        {report.isPending ? (
+          "Chargement du rapport…"
+        ) : !value?.reportId ? (
+          "Aucun rapport calculé dans ce mode. ROI et CLV indisponibles."
+        ) : (
+          <>
+            {report.data.meta.dataMode === "mock" ? "MOCK · " : "RÉEL · "}
             {value.bets} paris · {value.signals} signaux · {value.pendingReview} en revue · calculé
             le {formatDateTime(value.computedAt ?? "")}{" "}
-            {report.data?.meta.freshness === "stale" ? "· rapport à actualiser" : ""}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {metrics.map(([key, label, format]) => {
-              const estimate = value.estimates?.[key];
-              const number = estimate?.value == null ? null : Number(estimate.value);
-              const rendered =
-                number == null
-                  ? "Indisponible"
-                  : new Intl.NumberFormat("fr-FR", {
-                      maximumFractionDigits: 2,
-                      ...(format === "money"
-                        ? { style: "currency", currency: value.currency }
-                        : format === "percent"
-                          ? { style: "percent" }
-                          : {}),
-                    }).format(number);
-              return (
-                <Card key={key} aria-label={label}>
-                  <CardContent className="grid gap-2 p-4">
-                    <p className="text-sm text-ink-secondary">{label}</p>
-                    <p
-                      className={`text-xl font-semibold ${number !== null && number < 0 ? "text-red-700 dark:text-red-300" : ""}`}
-                    >
-                      {rendered}
+            {report.data.meta.freshness === "stale" ? "· rapport à actualiser" : ""}
+          </>
+        )}
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(([key, label, format]) => {
+          const estimate = value?.reportId ? value.estimates?.[key] : undefined;
+          const number = estimate?.value == null ? null : Number(estimate.value);
+          const rendered =
+            number == null
+              ? "Indisponible"
+              : new Intl.NumberFormat("fr-FR", {
+                  maximumFractionDigits: 2,
+                  ...(format === "money"
+                    ? { style: "currency", currency: value?.currency ?? "EUR" }
+                    : format === "percent"
+                      ? { style: "percent" }
+                      : {}),
+                }).format(number);
+          return (
+            <Card key={key} aria-label={label}>
+              <CardContent className="grid content-start gap-2 p-4">
+                <p className="min-h-10 text-sm leading-5 text-ink-secondary">{label}</p>
+                {report.isPending ? (
+                  <RemoteSkeleton height="1.75rem" width="65%" />
+                ) : (
+                  <p
+                    className={`text-xl leading-7 font-semibold ${number !== null && number < 0 ? "text-red-700 dark:text-red-300" : ""}`}
+                  >
+                    {rendered}
+                  </p>
+                )}
+                <div className="min-h-8 text-xs leading-4 text-ink-secondary">
+                  {report.isPending ? (
+                    <RemoteSkeleton width="45%" />
+                  ) : estimate ? (
+                    <p>
+                      n = {estimate.sampleSize}
+                      {estimate.unavailableReason ? " · échantillon ou preuve insuffisant" : ""}
                     </p>
-                    <p className="text-xs text-ink-secondary">
-                      n = {estimate?.sampleSize ?? 0}
-                      {estimate?.unavailableReason ? " · échantillon ou preuve insuffisant" : ""}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-          <p className="text-xs leading-5 text-ink-secondary">
-            Le CLV est un proxy des prix observés. L’intervalle utilise des blocs de jours UTC ; les
-            réévaluations d’entrée ne sont pas des événements indépendants. Les rapports antérieurs
-            restent conservés après correction.
-          </p>
+                  ) : (
+                    <p>Échantillon indisponible</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+      <p className="text-xs leading-5 text-ink-secondary">
+        Le CLV est un proxy des prix observés. L’intervalle utilise des blocs de jours UTC ; les
+        réévaluations d’entrée ne sont pas des événements indépendants. Les rapports antérieurs
+        restent conservés après correction.
+      </p>
+      <div className="min-h-10 text-sm leading-5 sm:min-h-5">
+        {value?.reportId ? (
           <a
-            className="w-fit text-sm font-semibold underline"
+            className="font-semibold underline"
             href={`/api/backend/api/v1/paper-reports/${value.reportId}`}
           >
             Télécharger le rapport complet et son audit
           </a>
-        </>
-      )}
+        ) : (
+          <span className="text-ink-secondary">
+            Le téléchargement sera disponible après le calcul d’un rapport.
+          </span>
+        )}
+      </div>
     </section>
   );
 }

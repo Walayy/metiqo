@@ -443,9 +443,10 @@ export function DataHealthDashboard() {
           />
         ) : (
           <RemoteDataBoundary
+            className="min-h-[42rem] sm:min-h-[28rem] xl:min-h-[24rem]"
             isLoading={sources.isPending}
             isRefetching={sources.isFetching && !sources.isPending}
-            loadingFallback={<RemoteLoadingState minHeight="14rem" rows={4} />}
+            loadingFallback={<RemoteLoadingState minHeight="inherit" rows={8} />}
           >
             {sources.data?.data[0] ? (
               <SourceCatalogue source={sources.data.data[0]} />
