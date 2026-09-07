@@ -76,18 +76,18 @@ typecheck:
 
 test:
 	pnpm run test:components
-	uv run --frozen pytest
+	uv run --frozen python -m pytest
 
 test-leakage:
-	uv run --frozen pytest tests/leakage tests/model/test_rating_features.py tests/model/test_champion_meta_features.py tests/model/test_prior_missingness_features.py -vv
+	uv run --frozen python -m pytest tests/leakage tests/model/test_rating_features.py tests/model/test_champion_meta_features.py tests/model/test_prior_missingness_features.py -vv
 
 test-migrations:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour les tests de migration))
-	uv run --frozen pytest tests/integration -vv
+	uv run --frozen python -m pytest tests/integration -vv
 
 test-ingestion:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate ingestion))
-	uv run --frozen pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
+	uv run --frozen python -m pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
 
 .PHONY: test-value value-evaluate test-paper paper-settle paper-report paper-gate
 .PHONY: backup
@@ -133,7 +133,7 @@ paper-settle:
 
 test-value:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate value))
-	uv run --frozen pytest tests/pricing tests/integration/test_value_pipeline.py tests/integration/test_signal_persistence.py tests/integration/test_migrations.py -vv
+	uv run --frozen python -m pytest tests/pricing tests/integration/test_value_pipeline.py tests/integration/test_signal_persistence.py tests/integration/test_migrations.py -vv
 
 value-evaluate:
 	$(if $(strip $(ODDS_SNAPSHOT)),,$(error ODDS_SNAPSHOT est requis))
