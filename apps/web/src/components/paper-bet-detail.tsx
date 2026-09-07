@@ -15,6 +15,7 @@ import Link from "next/link";
 
 import { formatDateTime } from "./opportunity-presenters";
 import { PaperStatusBadge, ProfitLoss } from "./paper-trading-dashboard";
+import { RealPaperSettlement } from "./real-paper-settlement";
 
 async function getPaperBet(paperBetId: string, signal: AbortSignal) {
   const response = await fetch(`/api/backend/api/v1/paper-bets/${encodeURIComponent(paperBetId)}`, {
@@ -29,6 +30,7 @@ export function PaperBetDetail({ paperBetId }: Readonly<{ paperBetId: string }>)
   const paperBet = useQuery({
     queryFn: ({ signal }) => getPaperBet(paperBetId, signal),
     queryKey: ["paper-bet", paperBetId],
+    refetchInterval: 30_000,
   });
 
   if (paperBet.isError) {
@@ -116,6 +118,17 @@ export function PaperBetDetail({ paperBetId }: Readonly<{ paperBetId: string }>)
                     {paperBet.data.data.settlementRulesVersion}
                   </dd>
                 </div>
+                <div>
+                  <dt className="text-xs text-ink-secondary">CLV · proxy de prix</dt>
+                  <dd className="mt-1 font-semibold">
+                    {paperBet.data.data.clv == null
+                      ? "Indisponible"
+                      : new Intl.NumberFormat("fr-FR", {
+                          style: "percent",
+                          maximumFractionDigits: 2,
+                        }).format(Number(paperBet.data.data.clv))}
+                  </dd>
+                </div>
               </dl>
               <div className="grid gap-2 rounded-lg bg-surface-muted p-4 text-sm">
                 <p>
@@ -136,6 +149,9 @@ export function PaperBetDetail({ paperBetId }: Readonly<{ paperBetId: string }>)
               </Button>
             </CardContent>
           </Card>
+          {paperBet.data.meta.dataMode === "real" ? (
+            <RealPaperSettlement bet={paperBet.data.data} />
+          ) : null}
         </div>
       ) : null}
     </RemoteDataBoundary>

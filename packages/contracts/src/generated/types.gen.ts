@@ -278,6 +278,10 @@ export type CreateAliasRequest = {
  */
 export type CreatePaperBetRequest = {
     /**
+     * Actor
+     */
+    actor?: string;
+    /**
      * Currency
      */
     currency?: string;
@@ -403,6 +407,24 @@ export type Event = {
  * État annoncé d'un événement.
  */
 export type EventStatus = 'scheduled' | 'live' | 'finished' | 'cancelled';
+
+/**
+ * FinancialEstimateDto
+ */
+export type FinancialEstimateDto = {
+    /**
+     * Samplesize
+     */
+    sampleSize: number;
+    /**
+     * Unavailablereason
+     */
+    unavailableReason?: string | null;
+    /**
+     * Value
+     */
+    value: string | null;
+};
 
 /**
  * FreshnessStatus
@@ -582,6 +604,14 @@ export type ItemResponseOpportunity = {
  */
 export type ItemResponsePaperBet = {
     data: PaperBet;
+    meta: ContractMetadata;
+};
+
+/**
+ * ItemResponse[PaperMetricsDto]
+ */
+export type ItemResponsePaperMetricsDto = {
+    data: PaperMetricsDto;
     meta: ContractMetadata;
 };
 
@@ -1198,6 +1228,14 @@ export type PaperBet = {
      */
     closingOddsSnapshotId?: string | null;
     /**
+     * Clv
+     */
+    clv?: string | null;
+    /**
+     * Clvisproxy
+     */
+    clvIsProxy?: boolean;
+    /**
      * Currency
      */
     currency: string;
@@ -1254,6 +1292,58 @@ export type PaperBet = {
  * Cycle de règlement d'un pari fictif.
  */
 export type PaperBetStatus = 'open' | 'won' | 'lost' | 'push' | 'void' | 'pending_review';
+
+/**
+ * PaperMetricsDto
+ */
+export type PaperMetricsDto = {
+    /**
+     * Bets
+     */
+    bets?: number;
+    /**
+     * Computedat
+     */
+    computedAt?: string | null;
+    /**
+     * Currency
+     */
+    currency: string;
+    /**
+     * Estimates
+     */
+    estimates?: {
+        [key: string]: FinancialEstimateDto;
+    };
+    /**
+     * Methodversion
+     */
+    methodVersion: string;
+    /**
+     * Open
+     */
+    open?: number;
+    /**
+     * Pendingreview
+     */
+    pendingReview?: number;
+    /**
+     * Reportfingerprint
+     */
+    reportFingerprint?: string | null;
+    /**
+     * Reportid
+     */
+    reportId?: string | null;
+    /**
+     * Settled
+     */
+    settled?: number;
+    /**
+     * Signals
+     */
+    signals?: number;
+};
 
 /**
  * Prediction
@@ -1577,18 +1667,26 @@ export type SelectionType = 'TEAM_A' | 'TEAM_B' | 'DRAW' | 'OVER' | 'UNDER';
  */
 export type SettlePaperBetRequest = {
     /**
+     * Actor
+     */
+    actor?: string;
+    /**
+     * Correctionreason
+     */
+    correctionReason?: string | null;
+    /**
      * Paperbetid
      */
     paperBetId: string;
     /**
      * Profitloss
      */
-    profitLoss: number | string;
+    profitLoss?: number | string | null;
     /**
      * Reason
      */
     reason: string;
-    status: PaperBetStatus;
+    status?: PaperBetStatus | null;
 };
 
 /**
@@ -2713,6 +2811,36 @@ export type CreatePaperBetApiV1PaperBetsPostResponses = {
 
 export type CreatePaperBetApiV1PaperBetsPostResponse = CreatePaperBetApiV1PaperBetsPostResponses[keyof CreatePaperBetApiV1PaperBetsPostResponses];
 
+export type MetricsApiV1PaperBetsMetricsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Currency
+         */
+        currency?: string;
+    };
+    url: '/api/v1/paper-bets/metrics';
+};
+
+export type MetricsApiV1PaperBetsMetricsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MetricsApiV1PaperBetsMetricsGetError = MetricsApiV1PaperBetsMetricsGetErrors[keyof MetricsApiV1PaperBetsMetricsGetErrors];
+
+export type MetricsApiV1PaperBetsMetricsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ItemResponsePaperMetricsDto;
+};
+
+export type MetricsApiV1PaperBetsMetricsGetResponse = MetricsApiV1PaperBetsMetricsGetResponses[keyof MetricsApiV1PaperBetsMetricsGetResponses];
+
 export type GetPaperBetApiV1PaperBetsPaperBetIdGetData = {
     body?: never;
     path: {
@@ -2742,6 +2870,34 @@ export type GetPaperBetApiV1PaperBetsPaperBetIdGetResponses = {
 };
 
 export type GetPaperBetApiV1PaperBetsPaperBetIdGetResponse = GetPaperBetApiV1PaperBetsPaperBetIdGetResponses[keyof GetPaperBetApiV1PaperBetsPaperBetIdGetResponses];
+
+export type DownloadReportApiV1PaperReportsReportIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Report Id
+         */
+        report_id: string;
+    };
+    query?: never;
+    url: '/api/v1/paper-reports/{report_id}';
+};
+
+export type DownloadReportApiV1PaperReportsReportIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DownloadReportApiV1PaperReportsReportIdGetError = DownloadReportApiV1PaperReportsReportIdGetErrors[keyof DownloadReportApiV1PaperReportsReportIdGetErrors];
+
+export type DownloadReportApiV1PaperReportsReportIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type SystemStatusApiV1SystemStatusGetData = {
     body?: never;

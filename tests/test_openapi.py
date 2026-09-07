@@ -75,6 +75,8 @@ def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> 
         "/api/v1/backtests",
         "/api/v1/backtests/{backtest_id}",
         "/api/v1/paper-bets",
+        "/api/v1/paper-bets/metrics",
+        "/api/v1/paper-reports/{report_id}",
         "/api/v1/paper-bets/{paper_bet_id}",
         "/api/v1/admin/data-sources",
         "/api/v1/admin/ingestion-runs",

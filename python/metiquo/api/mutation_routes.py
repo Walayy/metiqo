@@ -27,6 +27,7 @@ from metiquo.contracts import (
     PaperBet,
 )
 from metiquo.contracts.enums import DataMode, FreshnessStatus, MappingReviewStatus
+from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock
 from metiquo.services import MockMutationService
 
@@ -115,6 +116,10 @@ def build_mutation_router(service: MockMutationService, clock: Clock) -> APIRout
         request: SettlePaperBetRequest,
         idempotency_key: IdempotencyKey,
     ) -> ItemResponse[PaperBet]:
+        if request.status is None or request.profit_loss is None:
+            raise BusinessError(
+                ErrorCode.INVALID_INPUT, "La simulation mock exige son résultat fictif"
+            )
         return ItemResponse(
             data=service.settle_paper_bet(
                 idempotency_key,

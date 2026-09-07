@@ -497,6 +497,13 @@
       "CreatePaperBetRequest": {
         "additionalProperties": false,
         "properties": {
+          "actor": {
+            "default": "admin-local",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
           "currency": {
             "default": "EUR",
             "pattern": "^[A-Z]{3}$",
@@ -719,6 +726,45 @@
         ],
         "title": "EventStatus",
         "type": "string"
+      },
+      "FinancialEstimateDto": {
+        "additionalProperties": false,
+        "properties": {
+          "sampleSize": {
+            "minimum": 0.0,
+            "title": "Samplesize",
+            "type": "integer"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "sampleSize"
+        ],
+        "title": "FinancialEstimateDto",
+        "type": "object"
       },
       "FreshnessStatus": {
         "description": "Fraîcheur normative d'une source ou d'un résultat.",
@@ -1089,6 +1135,23 @@
           "meta"
         ],
         "title": "ItemResponse[PaperBet]",
+        "type": "object"
+      },
+      "ItemResponse_PaperMetricsDto_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PaperMetricsDto"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[PaperMetricsDto]",
         "type": "object"
       },
       "JobSummary": {
@@ -2284,6 +2347,23 @@
             ],
             "title": "Closingoddssnapshotid"
           },
+          "clv": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clv"
+          },
+          "clvIsProxy": {
+            "default": true,
+            "title": "Clvisproxy",
+            "type": "boolean"
+          },
           "currency": {
             "pattern": "^[A-Z]{3}$",
             "title": "Currency",
@@ -2398,6 +2478,97 @@
         ],
         "title": "PaperBetStatus",
         "type": "string"
+      },
+      "PaperMetricsDto": {
+        "additionalProperties": false,
+        "properties": {
+          "bets": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Bets",
+            "type": "integer"
+          },
+          "computedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Computedat"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "estimates": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FinancialEstimateDto"
+            },
+            "title": "Estimates",
+            "type": "object"
+          },
+          "methodVersion": {
+            "title": "Methodversion",
+            "type": "string"
+          },
+          "open": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Open",
+            "type": "integer"
+          },
+          "pendingReview": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Pendingreview",
+            "type": "integer"
+          },
+          "reportFingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportfingerprint"
+          },
+          "reportId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportid"
+          },
+          "settled": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Settled",
+            "type": "integer"
+          },
+          "signals": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Signals",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "methodVersion"
+        ],
+        "title": "PaperMetricsDto",
+        "type": "object"
       },
       "Prediction": {
         "additionalProperties": false,
@@ -2981,6 +3152,26 @@
       "SettlePaperBetRequest": {
         "additionalProperties": false,
         "properties": {
+          "actor": {
+            "default": "admin-local",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
+          "correctionReason": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correctionreason"
+          },
           "paperBetId": {
             "format": "uuid",
             "title": "Paperbetid",
@@ -2994,6 +3185,9 @@
               {
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ],
             "title": "Profitloss"
@@ -3005,13 +3199,18 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/PaperBetStatus"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaperBetStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "paperBetId",
-          "status",
-          "profitLoss",
           "reason"
         ],
         "title": "SettlePaperBetRequest",
@@ -5103,6 +5302,50 @@
         ]
       }
     },
+    "/api/v1/paper-bets/metrics": {
+      "get": {
+        "operationId": "metrics_api_v1_paper_bets_metrics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "currency",
+            "required": false,
+            "schema": {
+              "default": "EUR",
+              "pattern": "^[A-Z]{3}$",
+              "title": "Currency",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_PaperMetricsDto_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Metrics",
+        "tags": [
+          "paper-reports"
+        ]
+      }
+    },
     "/api/v1/paper-bets/{paper_bet_id}": {
       "get": {
         "operationId": "get_paper_bet_api_v1_paper_bets__paper_bet_id__get",
@@ -5143,6 +5386,42 @@
         "summary": "Get Paper Bet",
         "tags": [
           "reads"
+        ]
+      }
+    },
+    "/api/v1/paper-reports/{report_id}": {
+      "get": {
+        "operationId": "download_report_api_v1_paper_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Report",
+        "tags": [
+          "paper-reports"
         ]
       }
     },

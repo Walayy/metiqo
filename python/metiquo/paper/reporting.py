@@ -207,10 +207,18 @@ class PostgresFinancialReportingService:
         with Session(self.engine) as session:
             row = session.scalar(
                 select(FinancialReportRecord)
-                .where(FinancialReportRecord.currency == currency)
+                .where(
+                    FinancialReportRecord.currency == currency,
+                    FinancialReportRecord.computed_at <= self.clock.now().value,
+                )
                 .order_by(FinancialReportRecord.computed_at.desc(), FinancialReportRecord.id)
                 .limit(1)
             )
+            return _stored(row) if row is not None else None
+
+    def get(self, report_id: UUID) -> StoredFinancialReport | None:
+        with Session(self.engine) as session:
+            row = session.get(FinancialReportRecord, report_id)
             return _stored(row) if row is not None else None
 
 

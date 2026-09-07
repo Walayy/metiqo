@@ -70,6 +70,7 @@ class PostgresPaperSettlementService:
         key: str | None = None,
         actor: str = "oe-settlement-job",
         correction_reason: str | None = None,
+        request_reason: str | None = None,
     ) -> PaperBet:
         if (
             not actor.strip()
@@ -81,9 +82,16 @@ class PostgresPaperSettlementService:
             not correction_reason.strip() or len(correction_reason) > 400
         ):
             raise BusinessError(ErrorCode.INVALID_INPUT, "Une correction exige un motif explicite")
+        if request_reason is not None and (not request_reason.strip() or len(request_reason) > 400):
+            raise BusinessError(ErrorCode.INVALID_INPUT, "Motif de vérification invalide")
         now = self.clock.now().value
         request_hash = fingerprint(
-            {"paperBetId": str(paper_bet_id), "actor": actor, "correctionReason": correction_reason}
+            {
+                "paperBetId": str(paper_bet_id),
+                "actor": actor,
+                "correctionReason": correction_reason,
+                **({"requestReason": request_reason} if request_reason is not None else {}),
+            }
         )
         identity = fingerprint({"action": "paper.settle", "key": key}) if key is not None else None
         with self.engine.begin() as connection, Session(bind=connection) as session:
@@ -167,6 +175,7 @@ class PostgresPaperSettlementService:
                     "outcomeReason": outcome.reason,
                     "outcomeFingerprint": outcome.fingerprint,
                     "correctionReason": correction_reason,
+                    "requestReason": request_reason,
                     "settlementDelaySeconds": int(self.settlement_delay.total_seconds()),
                 },
                 idempotency_fingerprint=identity,

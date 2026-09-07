@@ -24,6 +24,7 @@ from metiquo.api.messages import (
     NOT_FOUND_TITLE,
 )
 from metiquo.api.mutation_routes import build_mutation_router
+from metiquo.api.paper_routes import build_paper_metrics_router, build_real_paper_router
 from metiquo.api.read_routes import build_read_router
 from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, ReadinessProbe
 from metiquo.api.real_admin_routes import build_real_admin_router
@@ -35,6 +36,7 @@ from metiquo.contracts.enums import DataMode
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
+from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
 from metiquo.repositories.postgres_mapping import PostgresMappingRepository
@@ -142,6 +144,7 @@ def create_app(
     app = FastAPI(title="Metiquo API", version=version("metiquo"))
     app.include_router(_router(resolved_settings, resolved_probe, resolved_clock))
     if resolved_settings.app_data_mode is DataMode.MOCK:
+        app.include_router(build_paper_metrics_router(None, resolved_clock))
         catalog = build_mock_scenario_catalog(resolved_settings.mock_seed, resolved_clock)
         resolved_service = read_service or build_mock_read_service(catalog)
         app.include_router(build_read_router(resolved_service, resolved_clock))
@@ -178,6 +181,17 @@ def create_app(
             clock=resolved_clock,
         )
         app.state.real_admin_engine = real_engine
+        app.include_router(
+            build_paper_metrics_router(
+                PostgresFinancialReportingService(
+                    real_engine,
+                    clock=resolved_clock,
+                    closing_max_age_seconds=resolved_settings.paper_closing_max_age_seconds,
+                ),
+                resolved_clock,
+            )
+        )
+        app.include_router(build_real_paper_router(real_engine, resolved_settings, resolved_clock))
         app.include_router(
             build_real_historical_router(
                 PostgresCanonicalRepository(real_engine, resolved_clock),

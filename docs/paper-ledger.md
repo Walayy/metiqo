@@ -14,7 +14,7 @@ Après configuration du mode réel et de PostgreSQL, l'opération manuelle est d
 uv run --frozen oe paper-create --signal <uuid> --stake 10 --currency EUR --idempotency-key entree-001 --actor operateur --json
 ```
 
-Le montant reste entièrement saisi par l'opérateur. L'auto-paper et la suggestion Kelly ne sont pas activés. Les API et écrans réels arrivent dans PAP-009.
+Le montant reste entièrement saisi par l'opérateur. L'auto-paper et la suggestion Kelly ne sont pas activés. Les API et écrans réels sont raccordés depuis PAP-009.
 
 `signals.settlements` conserve les tentatives et corrections successives. L'absence de règlement représente `open`. Un résultat ambigu est `pending_review` sans P&L. Un règlement définitif exige un snapshot OE validé connu à l'instant du règlement ; le plugin doit encore valider son contenu et ses règles dans PAP-003 à PAP-005.
 
@@ -42,3 +42,15 @@ Un règlement définitif reste figé lors des passages automatiques. Une correct
 Le CLV est un **proxy de prix observé**, calculé par `PostgresClosingLineRepository` après le début de l'événement : `entry_odds / closing_odds − 1`. La méthode `observed-price-ratio-v1` prend la dernière cote ouverte du même marché, de la même sélection et ligne, capturée **et enregistrée** strictement avant l'horaire figé à l'entrée. Elle ne reconstruit pas une cote manquante et ne retire pas la marge bookmaker. Par exemple, une entrée à `8` et un proxy de clôture à `4` donnent `1`, soit `100 %` de CLV de prix.
 
 Une capture tardive ou un import rétrospectif est exclu même si son champ `captured_at` précède le match. Les cotes suspendues ou sans timestamp fiable sont exclues. Le proxy exige par défaut une observation dans les 90 secondes précédant le début ; une observation plus ancienne reste traçable comme candidate, mais le CLV demeure indisponible. Ce seuil est un paramètre explicite de la méthode. La projection fournit les références, timestamps, motif d'indisponibilité et empreinte de preuve ; sa requête groupée calcule plusieurs paris sans N+1 et ne modifie aucune décision historique.
+
+## API et écrans réels
+
+`GET /api/v1/paper-bets` pagine le ledger en SQL avec `offset`, `limit` (100 maximum) et un filtre `status`. La fiche `GET /api/v1/paper-bets/{paper_bet_id}` expose le même `PaperBet` que le mock, enrichi du CLV disponible, de son caractère de proxy et de sa capture de clôture. Les statuts en revue gardent un P&L non réalisé.
+
+`POST /api/v1/paper-bets` reçoit `signalId`, `stakeAmount`, `currency` et un `actor` optionnel, `admin-local` par défaut pour cette application personnelle. L'en-tête `Idempotency-Key` est obligatoire. La création conserve sa réponse d'origine lors d'un replay ; les nouvelles informations de clôture se lisent sur la fiche.
+
+`POST /api/v1/admin/paper-bets/settle` reçoit `paperBetId`, `reason`, `actor` et éventuellement `correctionReason`, avec la même exigence d'idempotence. Le mode réel refuse `status` et `profitLoss` : le résultat provient d'OE. Le motif de vérification est conservé dans la preuve. Une correction ajoute une révision après recalcul. Le mode mock accepte les champs de résultat fictif pour ses scénarios isolés ; il ne publie aucune mesure financière observée. Le contrat HTTP des deux modes reste commun.
+
+Le dashboard réel lit `GET /api/v1/paper-bets/metrics?currency=EUR`, sans recalculer les agrégats dans la requête web. Il affiche les effectifs et les indisponibilités, le P&L négatif, le CLV comme proxy et l'heure du rapport. Un rapport de plus de cinq minutes est signalé comme à actualiser ; `make paper-report CURRENCY=EUR JSON=1` publie une nouvelle version lorsque les preuves changent. `GET /api/v1/paper-reports/{report_id}` télécharge le rapport complet avec segments, exposition, corrélations et audit.
+
+La création et la vérification dans le navigateur conservent leur clé d'idempotence lors d'un retry du même formulaire. La fiche réelle propose uniquement la vérification OE ou une correction motivée. Aucun contrôle ne permet de saisir un résultat gagnant ou un P&L réel. Les historiques se paginent sans transformer la somme d'une page en bilan financier global. Les scénarios Playwright de transport réel sont synthétiques ; le test PostgreSQL `test_real_paper_api.py` vérifie séparément les services derrière ces DTO.
