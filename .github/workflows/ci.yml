@@ -136,3 +136,51 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Construire les images
         run: make docker-build
+
+  security:
+    name: Gate sécurité
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Récupérer toutes les références pour le scan des secrets
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+      - name: Installer pnpm
+        uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
+        with:
+          run_install: false
+      - name: Installer Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Installer uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: 0.11.23
+      - name: Installer les dépendances verrouillées
+        run: |
+          uv python install 3.13.14
+          uv sync --frozen
+          pnpm install --frozen-lockfile
+      - name: Vérifier le refus des rapports critiques et incomplets
+        run: uv run --frozen pytest tests/test_security_policy.py -q
+      - name: Construire toutes les images du MVP
+        run: make docker-build
+      - name: Auditer dépendances, images et secrets
+        run: make scan-security
+      - name: Vérifier les frontières des images de production
+        env:
+          TEST_SECURITY_IMAGE: metiquo-api:local
+          TEST_SECURITY_WEB_IMAGE: metiquo-web:local
+          TEST_SECURITY_GATEWAY_IMAGE: metiquo-gateway:local
+        run: uv run --frozen pytest tests/integration/test_secret_containers.py tests/integration/test_security_gateway.py -q
+      - name: Conserver les preuves, y compris en cas de refus
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: security-reports
+          path: data/security
+          retention-days: 14
+          if-no-files-found: error

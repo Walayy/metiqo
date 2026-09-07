@@ -64,7 +64,10 @@ x-app-environment: &app-environment
 
 services:
   postgres:
-    image: postgres:18@sha256:4aabea78cf39b90e834caf3af7d602a18565f6fe2508705c8d01aa63245c2e20
+    image: metiquo-postgres:local
+    build:
+      context: .
+      dockerfile: infra/compose/postgres.Dockerfile
     environment:
       POSTGRES_DB: metiquo
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -233,7 +236,10 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    image: metiquo-gateway:local
+    build:
+      context: .
+      dockerfile: infra/compose/gateway.Dockerfile
     profiles: ["production", "object-store"]
     user: "1000:1000"
     read_only: true

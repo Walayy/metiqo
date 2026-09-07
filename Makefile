@@ -48,7 +48,7 @@ db-migrate:
 
 docker-build:
 	docker compose config --quiet
-	docker compose --profile mock build
+	docker compose --profile mock --profile production build
 
 mock-seed:
 	uv run --frozen python infra/scripts/seed_mock_demo.py --check
@@ -93,6 +93,10 @@ test-ingestion:
 .PHONY: test-value value-evaluate test-paper paper-settle paper-report paper-gate
 .PHONY: backup
 .PHONY: scan-secrets
+.PHONY: scan-security
+scan-security:
+	uv run --frozen python -m infra.scripts.scan_security
+
 scan-secrets:
 	uv run --frozen python infra/scripts/scan_secrets.py
 
