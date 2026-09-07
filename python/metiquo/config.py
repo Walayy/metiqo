@@ -28,6 +28,7 @@ from metiquo.foundation.network_boundary import (
     origin_host,
     private_networks,
 )
+from metiquo.foundation.release_compliance import GateStatus, ReleaseAudience, verify_release
 
 type PositiveSeconds = Annotated[int, Field(gt=0)]
 
@@ -73,6 +74,10 @@ class Settings(BaseSettings):
 
     app_env: AppEnvironment
     app_data_mode: DataMode
+    release_audience: ReleaseAudience = "personal"
+    oe_commercial_gate: GateStatus = "NO-GO"
+    riot_product_gate: GateStatus = "NO-GO"
+    release_evidence_file: Path | None = Field(default=None, repr=False, exclude=True)
     app_code_commit: str | None = Field(default=None, pattern=r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
     database_url: SecretStr
     database_url_file: Path | None = Field(default=None, repr=False, exclude=True)
@@ -330,6 +335,15 @@ class Settings(BaseSettings):
         """Fuseau appliqué exclusivement lors du rendu."""
 
         return ZoneInfo(self.display_timezone)
+
+    @model_validator(mode="after")
+    def validate_release_compliance(self) -> Self:
+        verify_release(self.release_audience, self.release_gates, self.release_evidence_file)
+        return self
+
+    @property
+    def release_gates(self) -> dict[str, GateStatus]:
+        return {"OE-COMMERCIAL": self.oe_commercial_gate, "RIOT-PRODUCT": self.riot_product_gate}
 
     @property
     def internal_tzinfo(self) -> tzinfo:

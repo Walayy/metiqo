@@ -199,6 +199,18 @@ export function AppShell({ children, dataMode }: AppShellProperties) {
         >
           {children}
         </main>
+        <footer className="mx-auto w-full max-w-[96rem] px-4 pb-8 text-xs leading-5 text-ink-secondary sm:px-6 lg:px-10">
+          <div className="border-t border-border-subtle pt-5">
+            <p>Metiquo ne garantit aucun gain.</p>
+            <p>Analyse et paper trading uniquement. Aucun pari réel n’est exécuté.</p>
+            <Link
+              href="/settings"
+              className="underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              Consulter les portes de publication
+            </Link>
+          </div>
+        </footer>
       </div>
     </div>
   );

@@ -35,6 +35,7 @@ help:
 	@echo "  make features-rebuild FROM=2025-01-01 [CODE_COMMIT=<hash>]"
 	@echo "  make model-train MARKET=game_winner [DATASET=<uuid>] [CODE_COMMIT=<hash>]"
 	@echo "  make backup JSON=1  Sauvegarde DB, raw, modèles et quarantaine en mode réel"
+	@echo "  make release-check AUDIENCE=personal|public|commercial Vérifie les portes de publication"
 
 up: docker-build
 	docker compose --profile mock run --rm --no-deps mock-mode-check
@@ -95,6 +96,11 @@ test-ingestion:
 .PHONY: scan-security
 .PHONY: test-ops
 .PHONY: benchmark-reads
+.PHONY: release-check
+release-check:
+	$(if $(strip $(AUDIENCE)),,$(error AUDIENCE=personal|public|commercial est requis))
+	uv run --frozen python -m infra.scripts.check_release --audience $(AUDIENCE)
+
 benchmark-reads:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour créer la base de benchmark jetable))
 	uv run --frozen python -m infra.scripts.benchmark_reads

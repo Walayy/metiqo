@@ -499,6 +499,8 @@ export type FreshnessStatus = 'fresh' | 'stale' | 'degraded' | 'failed' | 'quara
  */
 export type GameTitle = 'lol';
 
+export type GateStatus = 'NO-GO' | 'GO';
+
 /**
  * HTTPValidationError
  */
@@ -1881,6 +1883,29 @@ export type ReadyResponse = {
     status: 'ready' | 'not_ready';
 };
 
+export type ReleaseAudience = 'personal' | 'public' | 'commercial';
+
+/**
+ * ReleaseCompliance
+ */
+export type ReleaseCompliance = {
+    audience: ReleaseAudience;
+    /**
+     * Gates
+     */
+    gates: {
+        [key: string]: GateStatus;
+    };
+    /**
+     * Publicreleaseallowed
+     */
+    publicReleaseAllowed: boolean;
+    /**
+     * Stakeproviderenabled
+     */
+    stakeProviderEnabled?: false;
+};
+
 /**
  * SelectionType
  *
@@ -3261,6 +3286,35 @@ export type DownloadReportApiV1PaperReportsReportIdGetResponses = {
      */
     200: unknown;
 };
+
+export type ReleaseComplianceApiV1SystemComplianceGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/system/compliance';
+};
+
+export type ReleaseComplianceApiV1SystemComplianceGetErrors = {
+    /**
+     * Ressource introuvable
+     */
+    404: ProblemDetails;
+    /**
+     * Requête invalide
+     */
+    422: ProblemDetails;
+};
+
+export type ReleaseComplianceApiV1SystemComplianceGetError = ReleaseComplianceApiV1SystemComplianceGetErrors[keyof ReleaseComplianceApiV1SystemComplianceGetErrors];
+
+export type ReleaseComplianceApiV1SystemComplianceGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ReleaseCompliance;
+};
+
+export type ReleaseComplianceApiV1SystemComplianceGetResponse = ReleaseComplianceApiV1SystemComplianceGetResponses[keyof ReleaseComplianceApiV1SystemComplianceGetResponses];
 
 export type SystemStatusApiV1SystemStatusGetData = {
     body?: never;

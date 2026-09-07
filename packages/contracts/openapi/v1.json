@@ -914,6 +914,13 @@
         "title": "GameTitle",
         "type": "string"
       },
+      "GateStatus": {
+        "enum": [
+          "NO-GO",
+          "GO"
+        ],
+        "type": "string"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3636,6 +3643,46 @@
         "title": "ReadyResponse",
         "type": "object"
       },
+      "ReleaseAudience": {
+        "enum": [
+          "personal",
+          "public",
+          "commercial"
+        ],
+        "type": "string"
+      },
+      "ReleaseCompliance": {
+        "additionalProperties": false,
+        "properties": {
+          "audience": {
+            "$ref": "#/components/schemas/ReleaseAudience"
+          },
+          "gates": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GateStatus"
+            },
+            "title": "Gates",
+            "type": "object"
+          },
+          "publicReleaseAllowed": {
+            "title": "Publicreleaseallowed",
+            "type": "boolean"
+          },
+          "stakeProviderEnabled": {
+            "const": false,
+            "default": false,
+            "title": "Stakeproviderenabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "audience",
+          "gates",
+          "publicReleaseAllowed"
+        ],
+        "title": "ReleaseCompliance",
+        "type": "object"
+      },
       "SelectionType": {
         "description": "Issue normalisée indépendamment du libellé fournisseur.",
         "enum": [
@@ -6144,6 +6191,49 @@
         "summary": "Download Report",
         "tags": [
           "paper-reports"
+        ]
+      }
+    },
+    "/api/v1/system/compliance": {
+      "get": {
+        "operationId": "release_compliance_api_v1_system_compliance_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseCompliance"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {}
+            },
+            "description": "Ressource introuvable"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {}
+            },
+            "description": "Requête invalide"
+          }
+        },
+        "summary": "Release Compliance",
+        "tags": [
+          "system"
         ]
       }
     },

@@ -12,6 +12,11 @@ SOURCE_NAMES = {"Dockerfile", "Caddyfile"}
 IGNORED_PARTS = {".git", ".next", ".venv", "__pycache__", "generated", "node_modules"}
 
 FORBIDDEN_PATTERNS = {
+    "promesse de gain": re.compile(
+        r"\b(?:gains?\s+garantis?|victoire\s+garantie|pari\s+sûr|"
+        r"guaranteed\s+(?:win|profit)|sure\s+win|lock\s+of\s+the\s+day)\b",
+        re.IGNORECASE,
+    ),
     "endpoint Stake": re.compile(r"https?://[^\s\"']*stake\.com", re.IGNORECASE),
     "solveur CAPTCHA": re.compile(
         r"(?:2captcha|anti-?captcha|capsolver|captcha[_-]?(?:solver|bypass))",

@@ -9,6 +9,9 @@ x-python-build: &python-build
 x-app-environment: &app-environment
   APP_ENV: ${APP_ENV:-development}
   APP_DATA_MODE: ${APP_DATA_MODE:-mock}
+  RELEASE_AUDIENCE: ${RELEASE_AUDIENCE:-personal}
+  OE_COMMERCIAL_GATE: ${OE_COMMERCIAL_GATE:-NO-GO}
+  RIOT_PRODUCT_GATE: ${RIOT_PRODUCT_GATE:-NO-GO}
   AUTH_MODE: ${AUTH_MODE:-disabled}
   APP_PUBLISH_HOST: ${APP_PUBLISH_HOST:-127.0.0.1}
   APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:-http://localhost:3000}

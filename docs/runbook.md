@@ -4,6 +4,12 @@ Ce runbook utilise Docker Compose et le stockage filesystem. Les commandes
 PowerShell se lancent à la racine du dépôt. Employer un projet Compose dédié à
 chaque environnement ; une base mock ne devient jamais une base réelle.
 
+Le profil de production ne lève aucune porte juridique. L'audience reste
+personnelle et les portes Oracle's Elixir et Riot à `NO-GO` par défaut.
+Avant une ouverture à des tiers, suivre la [checklist de conformité](release-compliance.md)
+et exécuter `make release-check AUDIENCE=public` ou `AUDIENCE=commercial`.
+Une preuve absente ou invalide bloque le démarrage de ces modes et la commande.
+
 ## Démarrage
 
 1. Vérifier le commit, les verrous et les preuves de release. Exécuter

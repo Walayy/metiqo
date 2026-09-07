@@ -46,12 +46,14 @@ from metiquo.auth.rate_limit import HttpRateLimiter
 from metiquo.auth.service import AuthError, OwnerAuthService
 from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.config import AuthMode, Settings, load_settings
+from metiquo.contracts.compliance import ReleaseCompliance
 from metiquo.contracts.enums import DataMode, FreshnessStatus
 from metiquo.foundation.audit import audit_context
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.identifiers import TraceId
 from metiquo.foundation.metrics import ApiMetrics
 from metiquo.foundation.observability import bind_log_context, configure_json_logging
+from metiquo.foundation.release_compliance import verify_release
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.mock import build_mock_scenario_catalog
 from metiquo.paper.reporting import PostgresFinancialReportingService
@@ -151,6 +153,24 @@ def _router(settings: Settings, readiness_probe: ReadinessProbe, clock: Clock) -
             generated_at=clock.now().value,
             dependencies={"database": database},
             operations=operations,
+        )
+
+    @router.get("/api/v1/system/compliance", response_model=ReleaseCompliance, tags=["system"])
+    def release_compliance() -> ReleaseCompliance:
+        try:
+            verify_release("public", settings.release_gates, settings.release_evidence_file)
+            allowed = True
+        except ValueError:
+            allowed = False
+        gates = settings.release_gates
+        try:
+            verify_release("personal", gates, settings.release_evidence_file)
+        except ValueError:
+            gates = {name: "NO-GO" for name in gates}
+        return ReleaseCompliance(
+            audience=settings.release_audience,
+            gates=gates,
+            public_release_allowed=allowed,
         )
 
     return router

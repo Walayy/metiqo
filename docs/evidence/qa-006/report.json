@@ -1,0 +1,146 @@
+{
+  "ticket": "QA-006",
+  "status": "passed",
+  "baseCommit": "467a4aa3a5d187fa877663ed69781995120caea7",
+  "versions": {
+    "node": "24.20.0",
+    "pnpm": "11.25.0",
+    "python": "3.13.14",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34"
+  },
+  "python": {
+    "path": "data/ci/qa006-python-final.xml",
+    "sha256": "d967abe047cf01703ea71938c56b6be0b7aad324ab5cd94e6b3352191dfe67a4",
+    "passed": 36,
+    "skipped": 0,
+    "failed": 0
+  },
+  "browser": {
+    "path": "data/ci/qa006-playwright-final.json",
+    "sha256": "ad85a06d14d970e8890b9ed5707aa29a1aefbd39daac137a8ed0fd32de8a29cc",
+    "stats": {
+      "startTime": "2026-09-07T16:27:03.745Z",
+      "duration": 238521.629,
+      "expected": 106,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "releaseCommands": {
+    "command": "make release-check AUDIENCE=<audience>",
+    "exitCodes": {
+      "personal": 0,
+      "public": 2,
+      "commercial": 2
+    },
+    "logs": [
+      {
+        "path": "data/security/qa006-personal-release.log",
+        "sha256": "c81c37cd7898c39087d792f842037e80e45343782c314d42e91eb8cc56d94021"
+      },
+      {
+        "path": "data/security/qa006-public-release.log",
+        "sha256": "d7ba8364171090ac41682eeb2bde8ebbf74d38d24581056c6b70f0e3708fc67a"
+      },
+      {
+        "path": "data/security/qa006-commercial-release.log",
+        "sha256": "19e7844f6c994f83e5d17281e97e5c15f8627ae02d53e001c0e66bd0be2031d5"
+      }
+    ]
+  },
+  "manualReview": {
+    "reviewer": "Codex, visual inspection of rendered PNGs",
+    "reviewedAt": "2026-09-07T16:35:43.418545+00:00",
+    "scope": "Desktop and mobile settings: readable NO-GO gates, explicit publication refusal, disabled Stake, no promised gain, non-affiliation, no overlap. Footer remains outside the initial viewport while the page loads.",
+    "captures": [
+      {
+        "path": "docs/evidence/qa-006/compliance-desktop.png",
+        "sha256": "d7d390d041875fefa8a95b5c47907fb58721eb8253140b5f1f0ed05a26b9fa93"
+      },
+      {
+        "path": "docs/evidence/qa-006/compliance-mobile.png",
+        "sha256": "cf2689d0e52c60ce676241de4f5ef3ca05eb770e899b9710a3a78c2c9c3cb9e2"
+      }
+    ],
+    "sourceHashes": [
+      {
+        "path": "apps/web/src/components/app-shell.tsx",
+        "sha256": "12e6c7ae93077195ea167d1468344924b9c89dd291322acb9f189dd0959ce705"
+      },
+      {
+        "path": "apps/web/src/components/release-compliance-panel.tsx",
+        "sha256": "86cbd223c64aa3eb477a300179fab2fffa0a591335ab0de0d774bbfb117a80cc"
+      },
+      {
+        "path": "apps/web/src/app/settings/page.tsx",
+        "sha256": "25f4cd955bdc9da69482d56d813fcb4b95f82e15ed2724e58edf0c85a2384091"
+      }
+    ]
+  },
+  "sourceHashes": [
+    {
+      "path": "apps/web/src/components/app-shell.tsx",
+      "sha256": "12e6c7ae93077195ea167d1468344924b9c89dd291322acb9f189dd0959ce705"
+    },
+    {
+      "path": "apps/web/src/components/release-compliance-panel.tsx",
+      "sha256": "86cbd223c64aa3eb477a300179fab2fffa0a591335ab0de0d774bbfb117a80cc"
+    },
+    {
+      "path": "apps/web/src/app/settings/page.tsx",
+      "sha256": "25f4cd955bdc9da69482d56d813fcb4b95f82e15ed2724e58edf0c85a2384091"
+    },
+    {
+      "path": "python/metiquo/foundation/release_compliance.py",
+      "sha256": "bd93ea6175c925562aa52b1c346c1c48e1d3df1183fcb499173eb2e75a82efe2"
+    },
+    {
+      "path": "python/metiquo/config.py",
+      "sha256": "b9eafe7afbfca71f4973154f5497f2285395321e6407e9385bca1da0159ee135"
+    },
+    {
+      "path": "python/metiquo/contracts/compliance.py",
+      "sha256": "86f83a48e499cf54988bbd319f61cf69b1caadb113802fbcea29ae8d471d38c3"
+    },
+    {
+      "path": "python/metiquo/api/app.py",
+      "sha256": "bdeb96ea86a7df72a564d257148b4e47e5484ce5e3cd573edbed899dc3272f24"
+    },
+    {
+      "path": "infra/scripts/check_release.py",
+      "sha256": "11fb39e72a031b0042347334d4fb5aeb0346ef8d6443ca982739520dcfb475bc"
+    },
+    {
+      "path": "infra/scripts/check_provider_compliance.py",
+      "sha256": "0c4bd39f026491019edc511ee34346d6b6dd2e018540eb68fa24b1f784c81d4e"
+    }
+  ],
+  "checks": [
+    {
+      "path": "data/security/qa006-types.log",
+      "sha256": "fca24537fd3f635d76cae2e326a3fa9ebadafbe2b843c5ec2d7662bad3465dca"
+    },
+    {
+      "path": "data/security/qa006-mypy.log",
+      "sha256": "5cf82374e969f1389bb1fe90663a2106663708023acffe58f1bb30dc0db7f053"
+    },
+    {
+      "path": "data/security/qa006-lint-final.log",
+      "sha256": "bff73ea6c8a6ed30538a1ebaa9c81f5150c75d0f4babee8cf10ca8fc76939f2f"
+    },
+    {
+      "path": "data/security/qa006-contracts-final.log",
+      "sha256": "be35ed469e387028247897d67006eff6084761fef8ec38c3149762a1e582852f"
+    }
+  ],
+  "scope": "Personal build and server configuration with NO-GO defaults. Synthetic manual-review fixtures only. No external approval, financial evidence, public launch or real betting execution is claimed.",
+  "externalSources": {
+    "reviewedOn": "2026-09-07",
+    "checklist": "docs/release-compliance.md",
+    "oracleElixirRevalidation": "HTTP 403; not revalidated",
+    "oeCommercialGate": "NO-GO",
+    "riotProductGate": "NO-GO"
+  }
+}

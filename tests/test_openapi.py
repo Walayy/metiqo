@@ -66,6 +66,7 @@ def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> 
         "/api/v1/auth/login",
         "/api/v1/auth/logout",
         "/api/v1/system/status",
+        "/api/v1/system/compliance",
         "/api/v1/opportunities",
         "/api/v1/opportunities/{signal_id}",
         "/api/v1/opportunities/{signal_id}/explanation",
