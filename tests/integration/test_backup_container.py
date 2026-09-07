@@ -12,6 +12,7 @@ from sqlalchemy import create_engine
 
 from metiquo.ingestion.freshness import FreshnessPolicy
 from metiquo.ingestion.sync import OracleElixirYearSync
+from tests.integration.container_storage import prepare_storage, storage_matches
 from tests.integration.test_backfill import _seed_catalogs
 from tests.integration.test_migrations import alembic_config
 from tests.integration.test_postgres_canonical_api import _settings
@@ -19,7 +20,7 @@ from tests.integration.test_postgres_canonical_api import _settings
 
 @pytest.mark.integration
 def test_packaged_backup_and_restore_with_read_only_root(
-    postgresql_url: str, tmp_path: Path
+    postgresql_url: str, tmp_path: Path, request: pytest.FixtureRequest
 ) -> None:
     image, container = os.environ.get("TEST_BACKUP_IMAGE"), os.environ.get("TEST_PG_CONTAINER")
     if not image or not container:
@@ -68,6 +69,9 @@ def test_packaged_backup_and_restore_with_read_only_root(
         folder = tmp_path / name
         folder.mkdir(exist_ok=True)
         arguments.extend(["--mount", f"type=bind,source={folder},target=/data/{name}"])
+    restored_parent = tmp_path / "restore-area"
+    restored_parent.mkdir()
+    prepare_storage(image, tmp_path, request)
     arguments.extend([image, "oe", "backup", "--json"])
     for expected_copy in (True, False):
         result = subprocess.run(
@@ -76,9 +80,7 @@ def test_packaged_backup_and_restore_with_read_only_root(
         assert result.returncode == 0, result.stdout + result.stderr
         response = json.loads(result.stdout)
         assert (response["copiedObjects"] > 0) is expected_copy
-        assert (tmp_path / "backups/runs" / response["backupId"] / "index.json").is_file()
-    restored_parent = tmp_path / "restore-area"
-    restored_parent.mkdir()
+        assert storage_matches(image, tmp_path, f"backups/runs/{response['backupId']}/index.json")
     target_name = "metiquo_restore_" + uuid4().hex
     admin = create_engine(engine.url.set(database="postgres"), isolation_level="AUTOCOMMIT")
     try:
@@ -107,7 +109,7 @@ def test_packaged_backup_and_restore_with_read_only_root(
         )
         assert restored.returncode == 0, restored.stdout + restored.stderr
         assert json.loads(restored.stdout)["objectsVerified"] > 0
-        assert list((restored_parent / "objects/raw").glob("**/source.csv"))
+        assert storage_matches(image, tmp_path, "restore-area/objects/raw/**/source.csv")
     finally:
         with admin.connect() as connection:
             connection.exec_driver_sql(f'DROP DATABASE IF EXISTS "{target_name}" WITH (FORCE)')

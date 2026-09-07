@@ -41,12 +41,14 @@ async function observe(page: Page) {
         const shift = entry as PerformanceEntry & {
           hadRecentInput: boolean;
           value: number;
-          sources: { node?: Element }[];
+          sources: { node?: Node | null }[];
         };
         if (!shift.hadRecentInput) {
           metrics.shifts.push({
             value: shift.value,
-            sources: shift.sources.map(({ node }) => node?.outerHTML.slice(0, 250) ?? ""),
+            sources: shift.sources.map(({ node }) =>
+              (node instanceof Element ? node.outerHTML : (node?.textContent ?? "")).slice(0, 250),
+            ),
           });
         }
       }

@@ -13,6 +13,7 @@ from sqlalchemy import create_engine
 
 from metiquo.api.app import create_app
 from metiquo.worker.queue import PostgresJobQueue
+from tests.integration.container_storage import prepare_storage, storage_matches
 from tests.integration.test_backfill import _seed_catalogs
 from tests.integration.test_migrations import alembic_config
 from tests.integration.test_real_admin_api import ReadyProbe, _request, _settings
@@ -21,7 +22,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.integration
-def test_packaged_worker_sync_and_signal_shutdown(postgresql_url: str, tmp_path: Path) -> None:
+def test_packaged_worker_sync_and_signal_shutdown(
+    postgresql_url: str, tmp_path: Path, request: pytest.FixtureRequest
+) -> None:
     image = os.environ.get("TEST_OPS_IMAGE")
     postgres = os.environ.get("TEST_PG_CONTAINER")
     if not image or not postgres:
@@ -81,6 +84,7 @@ def test_packaged_worker_sync_and_signal_shutdown(postgresql_url: str, tmp_path:
             f"type=bind,source={ROOT / 'tests/fixtures/oracles_elixir'},target=/fixtures,readonly",
         ]
     )
+    prepare_storage(image, tmp_path, request)
     script = """
 import json
 from pathlib import Path
@@ -118,8 +122,8 @@ print(json.dumps({'readonlyRootSync': True}))
     assert json.loads(result.stdout)["readonlyRootSync"]
     queue = PostgresJobQueue(engine)
     assert queue.get(job_id).status == "succeeded"
-    assert list((tmp_path / "raw").glob("**/source.csv"))
-    assert not list((tmp_path / "work").iterdir())
+    assert storage_matches(image, tmp_path, "raw/**/source.csv")
+    assert not storage_matches(image, tmp_path, "work/*")
     stop_job = queue.enqueue("test.shutdown", {}, key="container-shutdown", scope="test:shutdown")
     signal_script = """
 from pathlib import Path
