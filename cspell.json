@@ -33,6 +33,7 @@
     "Metiquo",
     "cffi",
     "nosniff",
+    "tmpfs",
     "bookmaker",
     "bookmakers",
     "backtest",

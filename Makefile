@@ -92,6 +92,10 @@ test-ingestion:
 
 .PHONY: test-value value-evaluate test-paper paper-settle paper-report paper-gate
 .PHONY: backup
+.PHONY: scan-secrets
+scan-secrets:
+	uv run --frozen python infra/scripts/scan_secrets.py
+
 backup:
 	uv run --frozen oe backup $(OE_JSON_FLAG)
 

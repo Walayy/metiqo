@@ -1,0 +1,16 @@
+title = "Metiquo - default rules and exact reviewed fixture identifiers"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "PAP-010 deterministic competition/model UUIDs, not credentials"
+condition = "AND"
+paths = ['''(?:^|[/\\])docs[/\\]examples[/\\]paper-gate-fixture\.json$''']
+regexTarget = "secret"
+regexes = [
+  '''^0f7509a1-ecf4-5526-be37-5bd3e03b84fc$''',
+  '''^ff86d1c2-e6b0-54d6-95bf-32b464a8a40f$''',
+]

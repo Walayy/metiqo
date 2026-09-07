@@ -138,3 +138,65 @@ Le rendu dynamique et l'application du nonce suivent la
 [documentation CSP de Next.js](https://nextjs.org/docs/app/guides/content-security-policy).
 Les tests Chromium vérifient les nonces, le thème, la navigation et les mutations
 permises/refusées, sans erreur console ou d'hydratation dans ce parcours.
+
+## Secrets et conteneurs
+
+`DATABASE_URL_FILE` et `OE_GOOGLE_DRIVE_BEARER_FILE` chargent une valeur UTF-8 depuis
+un fichier serveur absolu, lisible, non vide et limité à 16 Kio. Chaque variable
+est mutuellement exclusive avec sa variante contenant directement la valeur.
+Les valeurs chargées deviennent des SecretStr et n'apparaissent ni dans le JSON
+de configuration ni dans les erreurs de validation. La convention est compatible
+avec les fichiers montés par Docker secrets ou un gestionnaire de secrets.
+
+La surcharge `docker-compose.production.yml` utilise deux fichiers privés :
+
+- `POSTGRES_PASSWORD_SECRET_FILE` : mot de passe PostgreSQL.
+- `DATABASE_URL_SECRET_FILE` : DSN complet utilisant ce même mot de passe et le
+  hostname interne `postgres`.
+
+Ces variables contiennent des **chemins**, jamais les valeurs. Placer les fichiers
+hors dépôt ou dans `.secrets/` avec les droits de lecture du seul opérateur et des
+services concernés. Les secrets Compose sont des fichiers montés par service,
+pas un coffre chiffré sur l'hôte ; protéger aussi le disque et les sauvegardes.
+Voir le [modèle Docker Compose](https://docs.docker.com/compose/how-tos/use-secrets/).
+Le worker peut recevoir le fichier OAuth optionnel par un montage distinct ; le
+web et le gateway ne reçoivent aucun secret backend. Aucun credential bookmaker
+n'est demandé ou chargé par le MVP.
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.production.yml config --quiet
+```
+
+La surcharge impose Owner, transmet les DSN par fichier, enlève le mode PostgreSQL
+trust et configure SCRAM pour une base neuve. Seul le gateway publie un port ;
+API, web et PostgreSQL restent internes. Définir `APP_PUBLIC_ORIGIN` en HTTPS et
+adapter le certificat du gateway à cette origine. Sur une base déjà initialisée,
+les options initdb ne modifient pas automatiquement le mot de passe ni pg_hba :
+l'opérateur doit appliquer leur migration contrôlée avant de la déclarer prête.
+
+API et worker s'exécutent avec l'UID 10001, le web avec 1000 et PostgreSQL avec son
+utilisateur postgres. Les services persistants de production n'ont aucune
+capacité Linux supplémentaire et utilisent no-new-privileges. Leurs racines sont
+readonly ; les écritures vont aux volumes de données et tmpfs requis. L'init
+éphémère des volumes reste root, sans réseau, pour attribuer leurs propriétaires.
+L'API lit raw/modèles/quarantaine en readonly ; seul le worker les écrit.
+Les fichiers `.env`, `.secrets`, clés privées et journaux sont exclus du contexte
+de construction Docker. Les corps raw Oracle's Elixir sont publics ; les secrets
+et cookies ne sont pas ajoutés aux payloads métier. Les sauvegardes externes
+incluant les données privées sont chiffrées selon `docs/backups.md`.
+
+Le test d'image vérifie l'UID, CapEff nul, no-new-privileges, le montage du secret
+en lecture seule et le refus des écritures dans l'application/raw. Une instance
+PostgreSQL éphémère issue de la surcharge démarre sans root, refuse une connexion
+TCP sans mot de passe et accepte le secret monté ; ses volumes de test sont supprimés.
+Le vrai bundle Next est construit avec deux secrets serveur sentinelles ; les
+chunks publics et les logs de build sont contrôlés pour leur absence.
+
+`make scan-secrets` utilise Gitleaks 8.30.1 (`GITLEAKS_BINARY` si absent du PATH).
+Il scanne une copie des fichiers suivis et des sources non ignorées présentes,
+puis tout l'historique Git local. Les rapports sont intégralement expurgés dans
+`data/security/`. Un secret synthétique prouve que le scanner retourne un échec.
+Deux UUID déterministes du fichier `docs/examples/paper-gate-fixture.json` sont
+les seuls faux positifs exclus : valeur exacte **et** chemin exact, pour la seule
+règle generic-api-key. Aucun dossier de code ni commit n'est exclu du scan.
+L'installation reproductible et l'exécution CI de ces scans relèvent de SEC-005.

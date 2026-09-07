@@ -1,0 +1,57 @@
+# Superposer explicitement : docker compose -f docker-compose.yml -f docker-compose.production.yml
+services:
+  postgres:
+    user: "postgres"
+    read_only: true
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: !reset null
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets:
+      - postgres_password
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /var/run/postgresql:size=16m,mode=0777
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  api:
+    environment:
+      APP_ENV: production
+      AUTH_MODE: owner
+      APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:?Définir APP_PUBLIC_ORIGIN en HTTPS}
+      DATABASE_URL: !reset null
+      DATABASE_URL_FILE: /run/secrets/database_url
+    secrets:
+      - database_url
+    ports: !reset []
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  worker:
+    environment:
+      APP_ENV: production
+      AUTH_MODE: owner
+      APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:?Définir APP_PUBLIC_ORIGIN en HTTPS}
+      DATABASE_URL: !reset null
+      DATABASE_URL_FILE: /run/secrets/database_url
+    secrets:
+      - database_url
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  web:
+    ports: !reset []
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  gateway:
+    profiles: !reset []
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+secrets:
+  postgres_password:
+    file: ${POSTGRES_PASSWORD_SECRET_FILE:?Fichier privé requis}
+  database_url:
+    file: ${DATABASE_URL_SECRET_FILE:?Fichier privé requis}

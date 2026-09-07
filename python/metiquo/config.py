@@ -68,11 +68,14 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="forbid",
         frozen=True,
+        hide_input_in_errors=True,
     )
 
     app_env: AppEnvironment
     app_data_mode: DataMode
     database_url: SecretStr
+    database_url_file: Path | None = Field(default=None, repr=False, exclude=True)
+    oe_google_drive_bearer_file: Path | None = Field(default=None, repr=False, exclude=True)
     auth_mode: AuthMode = AuthMode.DISABLED
     app_publish_host: str = "127.0.0.1"
     app_public_origin: str = "http://localhost:3000"
@@ -154,6 +157,35 @@ class Settings(BaseSettings):
     paper_settlement_delay_seconds: int = Field(default=300, ge=0)
     paper_settlement_max_attempts: int = Field(default=3, ge=1, le=5)
     paper_closing_max_age_seconds: int = Field(default=90, gt=0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def read_server_secret_files(cls, value: object) -> object:
+        if not isinstance(value, dict):
+            return value
+        values = dict(value)
+        for name in ("database_url", "oe_google_drive_bearer"):
+            file_name = f"{name}_file"
+            file_value = values.get(file_name)
+            if not file_value:
+                continue
+            if values.get(name):
+                raise ValueError(
+                    f"{name.upper()} et {file_name.upper()} sont mutuellement exclusifs"
+                )
+            try:
+                path = Path(file_value)
+                if not path.is_absolute() or not path.is_file() or path.stat().st_size > 16384:
+                    raise OSError
+                content = path.read_text(encoding="utf-8").removesuffix("\n").removesuffix("\r")
+                if not content or len(content.encode()) > 16384:
+                    raise OSError
+            except (OSError, ValueError, TypeError):
+                raise ValueError(
+                    f"{file_name.upper()} exige un fichier serveur lisible et borné"
+                ) from None
+            values[name] = SecretStr(content)
+        return values
 
     @field_validator("database_url")
     @classmethod
