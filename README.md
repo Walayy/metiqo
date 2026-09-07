@@ -6,6 +6,8 @@ Metiquo est un projet personnel Dockerisé de pricing et de détection de value 
 
 La spécification normative se trouve dans [`docs/specs/00_SFG_METIQUO.md`](docs/specs/00_SFG_METIQUO.md). Le plan d’exécution et le backlog se trouvent dans le même dossier. L’avancement vérifié est consigné dans [`docs/progress.md`](docs/progress.md).
 
+La [recette QA-007 du MVP personnel](docs/acceptance.md) est terminée sur `5eec0ea` : 22 critères validés, 634 tests Python et 106 parcours navigateur sans exclusion. Les preuves sont archivées avec leurs empreintes. La publication publique ou commerciale reste bloquée par les portes de conformité ; P10 et P11 restent hors périmètre.
+
 ## Outillage
 
 - Node.js `24.20.0` et pnpm `11.25.0` ;
@@ -131,7 +133,7 @@ En mode mock, l’API expose les collections et détails versionnés sous `/api/
 
 Le contrat complet et reproductible est versionné dans `packages/contracts/openapi/v1.json`.
 
-En `APP_DATA_MODE=real`, les mêmes DTO `/api/v1/models` et `/api/v1/backtests` sont projetés depuis le registre PostgreSQL et ses rapports walk-forward. Les routes `/api/v1/opportunities`, détail et explication projettent les signaux append-only publiables par EV prudente décroissante ; `NO_EDGE` et `BLOCKED` ne sont visibles que par filtre diagnostic explicite. Les mutations `/api/v1/admin/models/train`, `/{modelVersionId}/promote` et `/{modelVersionId}/retire` exigent aussi `Idempotency-Key`, créent un job observable et alimentent le journal append-only `/api/v1/admin/audit-log`. Une promotion reste refusée tant que le benchmark enregistré ne bat pas les trois baselines requises sur le gate multi-métrique. Le workflow d’entraînement concret utilisé par `model-train` implémente aussi la frontière `RealModelTrainingWorkflow` de l’API ; sans injection dans le processus API, la demande réelle échoue explicitement en `DEPENDENCY_UNAVAILABLE` et le job conserve cet échec.
+En `APP_DATA_MODE=real`, les mêmes DTO `/api/v1/models` et `/api/v1/backtests` sont projetés depuis le registre PostgreSQL et ses rapports walk-forward. Les routes `/api/v1/opportunities`, détail et explication projettent les signaux append-only publiables par EV prudente décroissante ; `NO_EDGE` et `BLOCKED` ne sont visibles que par filtre diagnostic explicite. Les mutations `/api/v1/admin/models/train`, `/{modelVersionId}/promote` et `/{modelVersionId}/retire` exigent aussi `Idempotency-Key`, créent un job observable et alimentent le journal append-only `/api/v1/admin/audit-log`. Une promotion reste refusée tant que le benchmark enregistré ne bat pas les trois baselines requises sur le gate multi-métrique. En production, une demande d’entraînement crée un job PostgreSQL `model.train` et retourne son reçu avec le statut HTTP 202. Le worker exécute le workflow réel et enregistre la version produite ; l’interface suit son état sans promotion automatique. La demande reste refusée si la révision Git du code n’est pas configurée.
 
 Le package `@metiquo/contracts` génère depuis ce fichier les DTO, le client Fetch et les options TanStack Query. `make openapi` régénère le contrat backend puis le client ; `make openapi-check` échoue si l’un des deux n’est plus synchronisé. Aucun DTO API n’est recopié à la main dans le frontend.
 

@@ -1,5 +1,16 @@
 # Recette du MVP personnel
 
+La release `5eec0ea753ce940dfc6a6bed8c8397b728d91392` passe les **22 critères sur 22**
+le 7 septembre 2026 : 634 tests Python et 106 parcours navigateur, sans exclusion.
+Le [rapport de recette](evidence/qa-007/5eec0ea/report.md), son
+[détail vérifiable](evidence/qa-007/5eec0ea/report.json) et l'
+[index des preuves archivées](evidence/qa-007/5eec0ea/archive.json) conservent les
+résultats du [run vert](https://github.com/Walayy/metiqo/actions/runs/34146337077)
+et du [refus critique attendu](https://github.com/Walayy/metiqo/actions/runs/34146257438).
+Cette clôture concerne le MVP personnel ; les deux portes publiques et commerciales
+restent à NO-GO. Le commit documentaire qui archive ces résultats référence le
+commit testé, sans s'attribuer une nouvelle exécution de CI.
+
 La recette relie les 22 critères de la SFG §31 aux cas exécutés dans une CI complète
 sur le commit exact de release. Elle ne transforme pas une compilation, une liste
 de tests ou un ancien rapport en preuve d'exécution. Les correspondances sont

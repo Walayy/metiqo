@@ -1,0 +1,274 @@
+<testsuites id="" name="" tests="106" failures="0" skipped="0" errors="0" time="294.140433">
+<testsuite name="accessibility.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="6" failures="0" skipped="0" time="22.153" errors="0">
+<testcase name="has no WCAG A/AA axe violations or hydration errors on key pages" classname="accessibility.spec.ts" time="12.003">
+</testcase>
+<testcase name="keeps cumulative layout shift below 0.05 on key dashboards" classname="accessibility.spec.ts" time="4.776">
+</testcase>
+<testcase name="supports keyboard mapping review and always exposes visible focus" classname="accessibility.spec.ts" time="0.932">
+</testcase>
+<testcase name="keeps critical mobile controls at least 44 CSS pixels tall" classname="accessibility.spec.ts" time="0.525">
+</testcase>
+<testcase name="disables meaningful animation when reduced motion is requested" classname="accessibility.spec.ts" time="0.512">
+</testcase>
+<testcase name="captures stable desktop, tablet and mobile visual baselines" classname="accessibility.spec.ts" time="3.405">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../../test-results/accessibility-captures-sta-e2274-and-mobile-visual-baselines/attachments/opportunities-desktop-e781509aa8d95e136dc098e87f7c9be8e55de972.png]]
+
+[[ATTACHMENT|../../test-results/accessibility-captures-sta-e2274-and-mobile-visual-baselines/attachments/admin-tablet-6d53e5f56861e3eb024c008b6a6eafa6920ed8f5.png]]
+
+[[ATTACHMENT|../../test-results/accessibility-captures-sta-e2274-and-mobile-visual-baselines/attachments/paper-mobile-f74880ed4ae52e4d2dddb98fb54cc1aacb906e78.png]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="admin-data.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="5" failures="0" skipped="0" time="7.605" errors="0">
+<testcase name="shows source degradation, snapshots, schema gaps and blocking anomalies" classname="admin-data.spec.ts" time="0.655">
+</testcase>
+<testcase name="runs one controlled sync and exposes its audited result" classname="admin-data.spec.ts" time="0.685">
+</testcase>
+<testcase name="keeps a queued sync distinct from completion and reuses its key after a lost response" classname="admin-data.spec.ts" time="3.123">
+</testcase>
+<testcase name="shows measured operations with readable data during a source failure" classname="admin-data.spec.ts" time="1.313">
+</testcase>
+<testcase name="offers independent recovery for temporary catalogue and quality errors" classname="admin-data.spec.ts" time="1.829">
+</testcase>
+</testsuite>
+<testsuite name="event-detail.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="2" failures="0" skipped="0" time="1.43" errors="0">
+<testcase name="opens a complete event sheet with an accessible odds summary" classname="event-detail.spec.ts" time="0.854">
+</testcase>
+<testcase name="keeps the event sheet readable on mobile" classname="event-detail.spec.ts" time="0.576">
+</testcase>
+</testsuite>
+<testsuite name="http-security.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="1" failures="0" skipped="0" time="1.208" errors="0">
+<testcase name="enforces CSP without blocking navigation, theme or admin mutations" classname="http-security.spec.ts" time="1.208">
+</testcase>
+</testsuite>
+<testsuite name="keyboard-accessibility.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="12" failures="0" skipped="0" time="81.767" errors="0">
+<testcase name="completes the desktop signal and paper workflow entirely by keyboard" classname="keyboard-accessibility.spec.ts" time="2.614">
+</testcase>
+<testcase name="reviews mapping and starts a model through desktop keyboard controls" classname="keyboard-accessibility.spec.ts" time="6.846">
+</testcase>
+<testcase name="has accessible semantics and AA contrast on every desktop light critical page" classname="keyboard-accessibility.spec.ts" time="14.927">
+</testcase>
+<testcase name="has accessible semantics and AA contrast on every desktop dark critical page" classname="keyboard-accessibility.spec.ts" time="15.666">
+</testcase>
+<testcase name="completes the mobile signal and paper workflow entirely by keyboard" classname="keyboard-accessibility.spec.ts" time="2.608">
+</testcase>
+<testcase name="reviews mapping and starts a model through mobile keyboard controls" classname="keyboard-accessibility.spec.ts" time="5.919">
+</testcase>
+<testcase name="has accessible semantics and AA contrast on every mobile light critical page" classname="keyboard-accessibility.spec.ts" time="14.691">
+</testcase>
+<testcase name="has accessible semantics and AA contrast on every mobile dark critical page" classname="keyboard-accessibility.spec.ts" time="14.092">
+</testcase>
+<testcase name="keeps the mobile navigation focus contained and restores its trigger" classname="keyboard-accessibility.spec.ts" time="1.468">
+</testcase>
+<testcase name="changes appearance with menu keys and returns focus to its trigger" classname="keyboard-accessibility.spec.ts" time="1.026">
+</testcase>
+<testcase name="restores filter fields when clearing and revisiting a shared URL" classname="keyboard-accessibility.spec.ts" time="1.073">
+</testcase>
+<testcase name="announces new odds politely while preserving the original signal price" classname="keyboard-accessibility.spec.ts" time="0.837">
+</testcase>
+</testsuite>
+<testsuite name="mapping-review.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="2" failures="0" skipped="0" time="1.57" errors="0">
+<testcase name="keeps an ambiguous raw event blocked and previews each candidate" classname="mapping-review.spec.ts" time="0.62">
+</testcase>
+<testcase name="creates a dated alias and records an explicit approval" classname="mapping-review.spec.ts" time="0.95">
+</testcase>
+</testsuite>
+<testsuite name="models.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="2" failures="0" skipped="0" time="1.104" errors="0">
+<testcase name="shows model versions, baselines and walk-forward evidence" classname="models.spec.ts" time="0.632">
+</testcase>
+<testcase name="contains the models dashboard on mobile without hiding the backtest table" classname="models.spec.ts" time="0.472">
+</testcase>
+</testsuite>
+<testsuite name="network-resilience.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="16" failures="0" skipped="0" time="52.466" errors="0">
+<testcase name="retains the synthetic real operations evidence during a temporary service failure" classname="network-resilience.spec.ts" time="2.116">
+</testcase>
+<testcase name="retains the synthetic real finance evidence during a temporary service failure" classname="network-resilience.spec.ts" time="0.708">
+</testcase>
+<testcase name="preserves the last readable / after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.495">
+</testcase>
+<testcase name="preserves the last readable /events after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.503">
+</testcase>
+<testcase name="preserves the last readable /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.458">
+</testcase>
+<testcase name="preserves the last readable /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.391">
+</testcase>
+<testcase name="preserves the last readable /models after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.458">
+</testcase>
+<testcase name="preserves the last readable /data after a failed refresh and recovers" classname="network-resilience.spec.ts" time="2.021">
+</testcase>
+<testcase name="preserves the last readable /admin after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.972">
+</testcase>
+<testcase name="preserves the last readable /paper-trading after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.399">
+</testcase>
+<testcase name="preserves the last readable /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba after a failed refresh and recovers" classname="network-resilience.spec.ts" time="1.289">
+</testcase>
+<testcase name="distinguishes a temporary paper read failure from a missing decision" classname="network-resilience.spec.ts" time="1.817">
+</testcase>
+<testcase name="bounds a transport that never answers and permits recovery" classname="network-resilience.spec.ts" time="31.683">
+</testcase>
+<testcase name="removes private cached content when the session is explicitly no longer authorized" classname="network-resilience.spec.ts" time="0.855">
+</testcase>
+<testcase name="keeps an already loaded private-mode-disabled page visible while the network is offline" classname="network-resilience.spec.ts" time="0.645">
+</testcase>
+<testcase name="ends an initial unavailable session check with an explicit retry" classname="network-resilience.spec.ts" time="0.656">
+</testcase>
+</testsuite>
+<testsuite name="opportunities.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="7" failures="0" skipped="0" time="4.56" errors="0">
+<testcase name="shows admissible opportunities sorted by conservative EV" classname="opportunities.spec.ts" time="0.616">
+</testcase>
+<testcase name="keeps the existing signal row mounted while polling for fresh odds" classname="opportunities.spec.ts" time="0.807">
+</testcase>
+<testcase name="keeps filters and display choices shareable in the URL" classname="opportunities.spec.ts" time="0.865">
+</testcase>
+<testcase name="renders an explicit no-opportunity state" classname="opportunities.spec.ts" time="0.529">
+</testcase>
+<testcase name="keeps a stale snapshot visible but clearly blocks the decision" classname="opportunities.spec.ts" time="0.581">
+</testcase>
+<testcase name="keeps the card dashboard within a mobile viewport" classname="opportunities.spec.ts" time="0.566">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../../test-results/opportunities-keeps-the-ca-bf1dc-rd-within-a-mobile-viewport/attachments/opportunities-mobile-af720ddd5b0d7bb3c858761de69ba70a0d95e653.png]]
+]]>
+</system-out>
+</testcase>
+<testcase name="contains the wide table at an intermediate desktop width" classname="opportunities.spec.ts" time="0.596">
+</testcase>
+</testsuite>
+<testsuite name="paper-trading.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="3" failures="0" skipped="0" time="1.949" errors="0">
+<testcase name="creates and settles a paper bet from an admissible signal" classname="paper-trading.spec.ts" time="0.804">
+</testcase>
+<testcase name="shows a versioned paper-bet detail without any real execution" classname="paper-trading.spec.ts" time="0.54">
+</testcase>
+<testcase name="renders losses as prominently as gains in the P&amp;L summary" classname="paper-trading.spec.ts" time="0.605">
+</testcase>
+</testsuite>
+<testsuite name="real-data-health.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="1" failures="0" skipped="0" time="0.616" errors="0">
+<testcase name="renders real fixture provenance without replacing the mock UI" classname="real-data-health.spec.ts" time="0.616">
+</testcase>
+</testsuite>
+<testsuite name="real-events.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="1" failures="0" skipped="0" time="0.51" errors="0">
+<testcase name="renders the real canonical event contract with the unchanged explorer" classname="real-events.spec.ts" time="0.51">
+</testcase>
+</testsuite>
+<testsuite name="real-models.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="7" failures="0" skipped="0" time="19.415" errors="0">
+<testcase name="exposes a blocked registered version without offering promotion" classname="real-models.spec.ts" time="0.728">
+</testcase>
+<testcase name="reuses the training request identity after losing its acknowledgement" classname="real-models.spec.ts" time="0.83">
+</testcase>
+<testcase name="observes queued training until succeeded without claiming a model was promoted" classname="real-models.spec.ts" time="4.919">
+</testcase>
+<testcase name="observes queued training until failed without claiming a model was promoted" classname="real-models.spec.ts" time="4.745">
+</testcase>
+<testcase name="observes queued training until cancelled without claiming a model was promoted" classname="real-models.spec.ts" time="4.735">
+</testcase>
+<testcase name="hides a training status after a permission refusal and restores it only after a successful read" classname="real-models.spec.ts" time="2.818">
+</testcase>
+<testcase name="promotes a real candidate and keeps the exact prediction version visible" classname="real-models.spec.ts" time="0.64">
+</testcase>
+</testsuite>
+<testsuite name="real-paper.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="2" failures="0" skipped="0" time="1.286" errors="0">
+<testcase name="real paper shows observed loss, samples, CLV and complete report link" classname="real-paper.spec.ts" time="0.663">
+</testcase>
+<testcase name="real settlement requests OE evidence without choosing status or P&amp;L" classname="real-paper.spec.ts" time="0.623">
+</testcase>
+</testsuite>
+<testsuite name="release-compliance.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="2" failures="0" skipped="0" time="2.404" errors="0">
+<testcase name="shows release refusals and no guaranteed gain at 1440px" classname="release-compliance.spec.ts" time="1.32">
+</testcase>
+<testcase name="shows release refusals and no guaranteed gain at 390px" classname="release-compliance.spec.ts" time="1.084">
+</testcase>
+</testsuite>
+<testsuite name="shell.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="6" failures="0" skipped="0" time="3.98" errors="0">
+<testcase name="renders the light theme before hydration without console warnings" classname="shell.spec.ts" time="0.75">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../../test-results/shell-renders-the-light-th-bf4c8-on-without-console-warnings/attachments/shell-light-a113cca77831cc483e405ed8f216f6b99b5de618.png]]
+]]>
+</system-out>
+</testcase>
+<testcase name="renders the dark theme before hydration without console warnings" classname="shell.spec.ts" time="0.677">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../../test-results/shell-renders-the-dark-the-a5377-on-without-console-warnings/attachments/shell-dark-5369ae6d31c081afa1284f11f02604720e636439.png]]
+]]>
+</system-out>
+</testcase>
+<testcase name="follows the operating system theme on first visit" classname="shell.spec.ts" time="0.486">
+</testcase>
+<testcase name="keeps desktop navigation complete and keyboard reachable" classname="shell.spec.ts" time="0.713">
+</testcase>
+<testcase name="opens the mobile navigation and changes routes without a full page shell loss" classname="shell.spec.ts" time="0.68">
+</testcase>
+<testcase name="changes the theme from the accessible appearance menu" classname="shell.spec.ts" time="0.674">
+</testcase>
+</testsuite>
+<testsuite name="signal-detail.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="4" failures="0" skipped="0" time="3.047" errors="0">
+<testcase name="explains an admissible signal without causal or guaranteed language" classname="signal-detail.spec.ts" time="0.829">
+</testcase>
+<testcase name="shows abstention reasons and blocks paper trading for a stale signal" classname="signal-detail.spec.ts" time="0.746">
+</testcase>
+<testcase name="keeps an opened signal on its original snapshot when the odds change" classname="signal-detail.spec.ts" time="0.8">
+</testcase>
+<testcase name="keeps signal evidence readable on mobile" classname="signal-detail.spec.ts" time="0.672">
+</testcase>
+</testsuite>
+<testsuite name="visual-stability.spec.ts" timestamp="2026-09-07T17:09:44.524Z" hostname="" tests="27" failures="0" skipped="0" time="59.166" errors="0">
+<testcase name="slow response keeps desktop / stable" classname="visual-stability.spec.ts" time="3.272">
+</testcase>
+<testcase name="slow response keeps desktop /events stable" classname="visual-stability.spec.ts" time="2.567">
+</testcase>
+<testcase name="slow response keeps desktop /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable" classname="visual-stability.spec.ts" time="2.574">
+</testcase>
+<testcase name="slow response keeps desktop /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable" classname="visual-stability.spec.ts" time="3.199">
+</testcase>
+<testcase name="slow response keeps desktop /models stable" classname="visual-stability.spec.ts" time="2.49">
+</testcase>
+<testcase name="slow response keeps desktop /data stable" classname="visual-stability.spec.ts" time="2.471">
+</testcase>
+<testcase name="slow response keeps desktop /admin stable" classname="visual-stability.spec.ts" time="2.503">
+</testcase>
+<testcase name="slow response keeps desktop /paper-trading stable" classname="visual-stability.spec.ts" time="2.477">
+</testcase>
+<testcase name="slow response keeps desktop /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable" classname="visual-stability.spec.ts" time="2.481">
+</testcase>
+<testcase name="reserves desktop operations dimensions until the real response arrives" classname="visual-stability.spec.ts" time="1.559">
+</testcase>
+<testcase name="reserves desktop finance dimensions until the real response arrives" classname="visual-stability.spec.ts" time="1.607">
+</testcase>
+<testcase name="keeps the desktop odds graph mounted and sized during a slow refresh" classname="visual-stability.spec.ts" time="1.381">
+</testcase>
+<testcase name="slow response keeps mobile / stable" classname="visual-stability.spec.ts" time="3.175">
+</testcase>
+<testcase name="slow response keeps mobile /events stable" classname="visual-stability.spec.ts" time="2.458">
+</testcase>
+<testcase name="slow response keeps mobile /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 stable" classname="visual-stability.spec.ts" time="2.403">
+</testcase>
+<testcase name="slow response keeps mobile /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b stable" classname="visual-stability.spec.ts" time="3.162">
+</testcase>
+<testcase name="slow response keeps mobile /models stable" classname="visual-stability.spec.ts" time="2.448">
+</testcase>
+<testcase name="slow response keeps mobile /data stable" classname="visual-stability.spec.ts" time="2.488">
+</testcase>
+<testcase name="slow response keeps mobile /admin stable" classname="visual-stability.spec.ts" time="2.489">
+</testcase>
+<testcase name="slow response keeps mobile /paper-trading stable" classname="visual-stability.spec.ts" time="2.491">
+</testcase>
+<testcase name="slow response keeps mobile /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba stable" classname="visual-stability.spec.ts" time="2.404">
+</testcase>
+<testcase name="reserves mobile operations dimensions until the real response arrives" classname="visual-stability.spec.ts" time="1.458">
+</testcase>
+<testcase name="reserves mobile finance dimensions until the real response arrives" classname="visual-stability.spec.ts" time="1.54">
+</testcase>
+<testcase name="keeps the mobile odds graph mounted and sized during a slow refresh" classname="visual-stability.spec.ts" time="1.254">
+</testcase>
+<testcase name="cancels loading animation immediately when reduced motion changes" classname="visual-stability.spec.ts" time="0.67">
+</testcase>
+<testcase name="paints only the stored dark theme despite an opposite system preference" classname="visual-stability.spec.ts" time="1.071">
+</testcase>
+<testcase name="paints only the stored light theme despite an opposite system preference" classname="visual-stability.spec.ts" time="1.074">
+</testcase>
+</testsuite>
+</testsuites>

@@ -24,3 +24,13 @@ regexes = [
   '''^d4cf2c5f140e53218a3fb853b606f0877faa2d8570e85c49ec987af1788e1900$''',
   '''^7105d252854b1049a30a182013f915ca7b81267b14c13d5520cc110b8ef87279$''',
 ]
+
+[[rules.allowlists]]
+description = "QA-007 verified SHA256 of the archived secret scan and API image audit"
+condition = "AND"
+paths = ['''(?:^|[/\\])docs[/\\]evidence[/\\]qa-007[/\\]5eec0ea[/\\]proofs[/\\]security\.json$''']
+regexTarget = "secret"
+regexes = [
+  '''^59427894f5cd2b7e2e9dcad375e37a712a5bf476a6cc2d82bb4c7b2bde8b4cc8$''',
+  '''^ba500f4fad735ebda4823599ed7a9175a252a2db4240b8ae1c41afeb9f633978$''',
+]

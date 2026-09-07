@@ -1,0 +1,72 @@
+{
+  "commit": "5eec0ea753ce940dfc6a6bed8c8397b728d91392",
+  "project": "metiquo-acceptance-23c12b71d523",
+  "command": [
+    "make",
+    "mock-demo"
+  ],
+  "passed": true,
+  "startedAt": "2026-09-07T17:12:46.185191+00:00",
+  "startedWithNoResources": true,
+  "services": {
+    "api": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "postgres": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "web": {
+      "state": "running",
+      "health": "healthy"
+    },
+    "worker": {
+      "state": "running",
+      "health": "healthy"
+    }
+  },
+  "readiness": {
+    "status": "ready",
+    "dependencies": {
+      "database": {
+        "status": "available",
+        "reasonCode": null
+      }
+    }
+  },
+  "compliance": {
+    "audience": "personal",
+    "gates": {
+      "OE-COMMERCIAL": "NO-GO",
+      "RIOT-PRODUCT": "NO-GO"
+    },
+    "publicReleaseAllowed": false,
+    "stakeProviderEnabled": false
+  },
+  "pages": {
+    "/": 200,
+    "/events": 200,
+    "/models": 200,
+    "/data": 200,
+    "/admin": 200,
+    "/paper-trading": 200,
+    "/settings": 200
+  },
+  "images": {
+    "api": "sha256:a18d511fbbc09a29d5799012a891d2e757c8237902c0ec74f42ef11e8a66e5af",
+    "worker": "sha256:a18d511fbbc09a29d5799012a891d2e757c8237902c0ec74f42ef11e8a66e5af",
+    "web": "sha256:834c056d3c609c3f64c338d8d2c0df7f9217961bcb6088bad635df3a1155bf24",
+    "postgres": "sha256:7a414d2758214af21c87321d7b1a194dd10c5c0d839253b895b85d5c0812ff8e",
+    "gateway": "sha256:6509931d0cd44a1cba9c0eb46b75779b74693a7621576928398f0ef34e61843d"
+  },
+  "versions": {
+    "compose": "2.38.2",
+    "python": "Python 3.13.14",
+    "postgres": "postgres (PostgreSQL) 18.4",
+    "node": "v24.20.0"
+  },
+  "cleanupConfirmed": true,
+  "sourceUnchanged": true,
+  "completedAt": "2026-09-07T17:13:23.454740+00:00"
+}

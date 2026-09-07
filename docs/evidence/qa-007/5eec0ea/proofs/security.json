@@ -1,0 +1,3306 @@
+{
+  "passed": true,
+  "blocking": [],
+  "reported": [
+    {
+      "ecosystem": "image",
+      "id": "CVE-2011-3374",
+      "package": "apt",
+      "version": "3.0.3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0841856-B18BAF",
+      "package": "bash",
+      "version": "5.2.37-2+b9",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2017-18018",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-5278",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-56391",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-56392",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-53910",
+      "package": "diffutils",
+      "version": "1:3.10-4",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-41992",
+      "package": "gzip",
+      "version": "1.13-1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-41991",
+      "package": "gzip",
+      "version": "1.13-1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54369",
+      "package": "libacl1",
+      "version": "2.3.2-2+b1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54370",
+      "package": "libacl1",
+      "version": "2.3.2-2+b1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2011-3374",
+      "package": "libapt-pkg7.0",
+      "version": "3.0.3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54371",
+      "package": "libattr1",
+      "version": "1:2.5.2-3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-42250",
+      "package": "libbz2-1.0",
+      "version": "1.0.8-6",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18374",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19499",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19542",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5435",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5450",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5928",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6238",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6368",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6791",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-77117",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-80489",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2010-4756",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-20796",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010022",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010023",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010024",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010025",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-9192",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18374",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19499",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19542",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5435",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5450",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5928",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6238",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6368",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6791",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-77117",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-80489",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2010-4756",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-20796",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010022",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010023",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010024",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010025",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-9192",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2015-3276",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2017-14159",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2017-17740",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2020-15719",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-22185",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "libncursesw6",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "libncursesw6",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam-modules",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam-modules-bin",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam-runtime",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam0g",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-86145",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-21C4F8",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-8188AC",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-A5518C",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-B05303",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11822",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11824",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-39113",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-50812",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-50813",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2021-45346",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-70873",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-16742",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-15059",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2013-4392",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31437",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31438",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31439",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-40228",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "libtinfo6",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "libtinfo6",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-16742",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-15059",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2013-4392",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31437",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31438",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31439",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-40228",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2007-5686",
+      "package": "login.defs",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-56433",
+      "package": "login.defs",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0628843-DBAD28",
+      "package": "login.defs",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "ncurses-base",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "ncurses-base",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "ncurses-bin",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "ncurses-bin",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2007-5686",
+      "package": "passwd",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-56433",
+      "package": "passwd",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0628843-DBAD28",
+      "package": "passwd",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0517018-A83CE6",
+      "package": "sysvinit-utils",
+      "version": "3.14-4",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18477",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18508",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5704",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2005-2541",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0290435-0B57B5",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-27171",
+      "package": "zlib1g",
+      "version": "1:1.3.dfsg+really1.3.1-1+b1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-85091",
+      "package": "zlib1g",
+      "version": "1:1.3.dfsg+really1.3.1-1+b1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-api:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-13346",
+      "package": "pip",
+      "version": "26.1.2",
+      "severity": "MEDIUM",
+      "fixed_version": "26.2.0",
+      "target": "Python"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2011-3374",
+      "package": "apt",
+      "version": "3.0.3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0841856-B18BAF",
+      "package": "bash",
+      "version": "5.2.37-2+b9",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2017-18018",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-5278",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-56391",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-56392",
+      "package": "coreutils",
+      "version": "9.7-3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-53910",
+      "package": "diffutils",
+      "version": "1:3.10-4",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-41992",
+      "package": "gzip",
+      "version": "1.13-1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-41991",
+      "package": "gzip",
+      "version": "1.13-1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54369",
+      "package": "libacl1",
+      "version": "2.3.2-2+b1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54370",
+      "package": "libacl1",
+      "version": "2.3.2-2+b1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2011-3374",
+      "package": "libapt-pkg7.0",
+      "version": "3.0.3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54371",
+      "package": "libattr1",
+      "version": "1:2.5.2-3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libblkid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-42250",
+      "package": "libbz2-1.0",
+      "version": "1.0.8-6",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18374",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19499",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19542",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5435",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5450",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5928",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6238",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6368",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6791",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-77117",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-80489",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2010-4756",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-20796",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010022",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010023",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010024",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010025",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-9192",
+      "package": "libc-bin",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18374",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19499",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-19542",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5435",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5450",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5928",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6238",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6368",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-6791",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-77117",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-80489",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2010-4756",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-20796",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010022",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010023",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010024",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-1010025",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2019-9192",
+      "package": "libc6",
+      "version": "2.41-12+deb13u3",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libgssapi-krb5-2",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libk5crypto3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libkrb5-3",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2018-5709",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26458",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-26461",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11850",
+      "package": "libkrb5support0",
+      "version": "1.21.3-5+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2015-3276",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2017-14159",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2017-17740",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2020-15719",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-22185",
+      "package": "libldap2",
+      "version": "2.6.10+dfsg-1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libmount1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "libncursesw6",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "libncursesw6",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam-modules",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam-modules-bin",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam-runtime",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-54411",
+      "package": "libpam0g",
+      "version": "1.7.0-5",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-86145",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-21C4F8",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-8188AC",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-A5518C",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0000000-B05303",
+      "package": "libpcre2-8-0",
+      "version": "10.46-1~deb13u1",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11822",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-11824",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-39113",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-50812",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-50813",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2021-45346",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-70873",
+      "package": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-16742",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-15059",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2013-4392",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31437",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31438",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31439",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-40228",
+      "package": "libsystemd0",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "libtinfo6",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "libtinfo6",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-16742",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-15059",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2013-4392",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31437",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31438",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2023-31439",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-40228",
+      "package": "libudev1",
+      "version": "257.13-1~deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "libuuid1",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2007-5686",
+      "package": "login.defs",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-56433",
+      "package": "login.defs",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0628843-DBAD28",
+      "package": "login.defs",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "mount",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "ncurses-base",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "ncurses-base",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-69720",
+      "package": "ncurses-bin",
+      "version": "6.5+20250216-2",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2025-6141",
+      "package": "ncurses-bin",
+      "version": "6.5+20250216-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2007-5686",
+      "package": "passwd",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2024-56433",
+      "package": "passwd",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0628843-DBAD28",
+      "package": "passwd",
+      "version": "1:4.17.4-2",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0517018-A83CE6",
+      "package": "sysvinit-utils",
+      "version": "3.14-4",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18477",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-18508",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-5704",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2005-2541",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "TEMP-0290435-0B57B5",
+      "package": "tar",
+      "version": "1.35+dfsg-3.1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-76642",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78408",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78409",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78410",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "HIGH",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-3184",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2022-0563",
+      "package": "util-linux",
+      "version": "2.41.5-0+deb13u1",
+      "severity": "LOW",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-27171",
+      "package": "zlib1g",
+      "version": "1:1.3.dfsg+really1.3.1-1+b1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-85091",
+      "package": "zlib1g",
+      "version": "1:1.3.dfsg+really1.3.1-1+b1",
+      "severity": "MEDIUM",
+      "fixed_version": "",
+      "target": "metiquo-worker:local (debian 13.6)"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-13346",
+      "package": "pip",
+      "version": "26.1.2",
+      "severity": "MEDIUM",
+      "fixed_version": "26.2.0",
+      "target": "Python"
+    },
+    {
+      "ecosystem": "image",
+      "id": "GHSA-gcjh-h69q-9w9g",
+      "package": "github.com/google/cel-go",
+      "version": "v0.28.1",
+      "severity": "MEDIUM",
+      "fixed_version": "0.29.0",
+      "target": "usr/bin/caddy"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-56855",
+      "package": "golang.org/x/crypto",
+      "version": "v0.55.0",
+      "severity": "UNKNOWN",
+      "fixed_version": "0.56.0",
+      "target": "usr/bin/caddy"
+    },
+    {
+      "ecosystem": "image",
+      "id": "CVE-2026-78662",
+      "package": "golang.org/x/crypto",
+      "version": "v0.55.0",
+      "severity": "UNKNOWN",
+      "fixed_version": "0.56.0",
+      "target": "usr/bin/caddy"
+    },
+    {
+      "ecosystem": "image",
+      "id": "GO-2026-5932",
+      "package": "golang.org/x/crypto",
+      "version": "v0.55.0",
+      "severity": "UNKNOWN",
+      "fixed_version": "",
+      "target": "usr/bin/caddy"
+    }
+  ],
+  "accepted": [],
+  "startedAt": "2026-09-07T17:22:34.075326+00:00",
+  "completedAt": "2026-09-07T17:23:00.178285+00:00",
+  "commit": "5eec0ea753ce940dfc6a6bed8c8397b728d91392",
+  "sourceSha256": "9b8b4606dc05ec0a50cea35ced7859811e73331b183e53578945184e8d263226",
+  "images": {
+    "api": {
+      "name": "metiquo-api:local",
+      "id": "sha256:a18d511fbbc09a29d5799012a891d2e757c8237902c0ec74f42ef11e8a66e5af"
+    },
+    "worker": {
+      "name": "metiquo-worker:local",
+      "id": "sha256:a18d511fbbc09a29d5799012a891d2e757c8237902c0ec74f42ef11e8a66e5af"
+    },
+    "web": {
+      "name": "metiquo-web:local",
+      "id": "sha256:834c056d3c609c3f64c338d8d2c0df7f9217961bcb6088bad635df3a1155bf24"
+    },
+    "postgres": {
+      "name": "metiquo-postgres:local",
+      "id": "sha256:7a414d2758214af21c87321d7b1a194dd10c5c0d839253b895b85d5c0812ff8e"
+    },
+    "gateway": {
+      "name": "metiquo-gateway:local",
+      "id": "sha256:6509931d0cd44a1cba9c0eb46b75779b74693a7621576928398f0ef34e61843d"
+    }
+  },
+  "secretScan": {
+    "scanner": "gitleaks",
+    "version": "8.30.1",
+    "sourceFiles": 699,
+    "findings": {
+      "working": 0,
+      "history": 0
+    },
+    "passed": true
+  },
+  "trivy": {
+    "Version": "0.74.0",
+    "VulnerabilityDB": {
+      "Version": 2,
+      "NextUpdate": "2026-09-08T13:12:52.575474439Z",
+      "UpdatedAt": "2026-09-07T13:12:52.575474699Z",
+      "DownloadedAt": "2026-09-07T17:22:45.811880161Z"
+    }
+  },
+  "pipAudit": "pip-audit 2.10.1",
+  "pnpm": "11.25.0",
+  "reports": {
+    "python.json": "503b7788d0f14c0a875605756317b654029b49f6f1687af80a770b45eabaccee",
+    "secret-scan-summary.json": "59427894f5cd2b7e2e9dcad375e37a712a5bf476a6cc2d82bb4c7b2bde8b4cc8",
+    "gitleaks-history.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "gitleaks-working.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "image-api.json": "ba500f4fad735ebda4823599ed7a9175a252a2db4240b8ae1c41afeb9f633978",
+    "image-web.json": "3c53de6ab5bc573ac9c5167fd4a6c955ad84379082dba82449a7fca149ff3f92",
+    "image-postgres.json": "1163f4de98fcb741bbe898f40e1284ccd5b255887437556074ca75fd6f9219fe",
+    "image-gateway.json": "caa57ff366217cdab7020a0d6c42bedee0a959da273179493de295876d6709cc",
+    "image-worker.json": "eaaac8b754aa023028b07676ce08c1ac83d741a3acda37284ef2924fdc601bdb",
+    "frontend.json": "2e13d1fb241d3e507b059bfc1f6fb5b3172e1fef1e22738afec93f2f3328b088"
+  }
+}
