@@ -59,3 +59,18 @@ def test_compose_applies_least_privilege_boundaries() -> None:
     assert services["volume-init"]["network_mode"] == "none"
     assert services["mock-mode-check"]["network_mode"] == "none"
     assert services["minio-volume-init"]["network_mode"] == "none"
+
+
+@pytest.mark.integration
+def test_compose_binds_the_validated_publication_address(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_PUBLISH_HOST", "192.168.10.4")
+    monkeypatch.setenv("APP_PUBLIC_ORIGIN", "http://192.168.10.4:3000")
+    monkeypatch.setenv("AUTH_PRIVATE_NETWORKS", '["192.168.10.0/24"]')
+    services = cast(dict[str, dict[str, object]], compose_configuration()["services"])
+    for name in ("api", "web", "gateway"):
+        ports = cast(list[dict[str, object]], services[name]["ports"])
+        assert all(port["host_ip"] == "192.168.10.4" for port in ports)
+    for name in ("api", "worker"):
+        environment = cast(dict[str, str], services[name]["environment"])
+        assert environment["APP_PUBLISH_HOST"] == "192.168.10.4"
+        assert environment["AUTH_PRIVATE_NETWORKS"] == '["192.168.10.0/24"]'

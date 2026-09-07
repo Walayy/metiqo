@@ -37,7 +37,7 @@ from metiquo.api.real_admin_routes import build_real_admin_router
 from metiquo.api.real_historical_routes import build_real_historical_router
 from metiquo.api.real_model_routes import build_real_model_router
 from metiquo.canonical.capabilities import CapabilityRegistry
-from metiquo.config import Settings, load_settings
+from metiquo.config import AuthMode, ConfigurationError, Settings, load_settings
 from metiquo.contracts.enums import DataMode, FreshnessStatus
 from metiquo.foundation.audit import audit_context
 from metiquo.foundation.errors import BusinessError, ErrorCode
@@ -161,6 +161,11 @@ def create_app(
     """Construire l'API après validation de la configuration."""
 
     resolved_settings = settings or load_settings()
+    resolved_settings.check_auth_boundary()
+    if resolved_settings.auth_mode is AuthMode.OWNER:
+        raise ConfigurationError(
+            "AUTH_OWNER_UNAVAILABLE : les sessions Owner doivent être installées avant exposition"
+        )
     if settings is None:
         configure_json_logging(
             secrets=tuple(

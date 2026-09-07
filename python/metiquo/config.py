@@ -22,6 +22,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from metiquo.contracts.enums import DataMode as DataMode
 from metiquo.contracts.enums import MarketType, OddsPhase
+from metiquo.foundation.network_boundary import (
+    allowed_without_auth,
+    literal_address,
+    origin_host,
+    private_networks,
+)
 
 type PositiveSeconds = Annotated[int, Field(gt=0)]
 
@@ -32,6 +38,11 @@ class AppEnvironment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
     PRODUCTION = "production"
+
+
+class AuthMode(StrEnum):
+    DISABLED = "disabled"
+    OWNER = "owner"
 
 
 class ObjectStoreBackend(StrEnum):
@@ -62,6 +73,10 @@ class Settings(BaseSettings):
     app_env: AppEnvironment
     app_data_mode: DataMode
     database_url: SecretStr
+    auth_mode: AuthMode = AuthMode.DISABLED
+    app_publish_host: str = "127.0.0.1"
+    app_public_origin: str = "http://localhost:3000"
+    auth_private_networks: tuple[str, ...] = ()
 
     object_store_backend: ObjectStoreBackend = ObjectStoreBackend.FILESYSTEM
     object_store_root: Path = Path("/data")
@@ -147,6 +162,32 @@ class Settings(BaseSettings):
         if parsed.hostname is None or parsed.path in {"", "/"}:
             raise ValueError("DATABASE_URL doit préciser un hôte et une base")
         return value
+
+    @field_validator("auth_private_networks", mode="before")
+    @classmethod
+    def parse_private_networks(cls, value: object) -> object:
+        return json.loads(value) if isinstance(value, str) else value
+
+    @model_validator(mode="after")
+    def validate_auth_boundary(self) -> Self:
+        self.check_auth_boundary()
+        return self
+
+    def check_auth_boundary(self) -> None:
+        networks = private_networks(self.auth_private_networks)
+        literal_address(self.app_publish_host)
+        host = origin_host(self.app_public_origin)
+        if self.auth_mode is AuthMode.DISABLED:
+            if not allowed_without_auth(self.app_publish_host, networks):
+                raise ValueError(
+                    "AUTH_MODE=disabled interdit APP_PUBLISH_HOST "
+                    "hors loopback ou réseau privé explicite"
+                )
+            if not allowed_without_auth(host, networks):
+                raise ValueError(
+                    "AUTH_MODE=disabled interdit APP_PUBLIC_ORIGIN "
+                    "hors loopback ou réseau privé explicite"
+                )
 
     @field_validator("worker_retry_delays_seconds", mode="before")
     @classmethod
