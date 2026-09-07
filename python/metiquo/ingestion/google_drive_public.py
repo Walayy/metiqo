@@ -15,6 +15,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+from metiquo.foundation.cancellation import checkpoint
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.source_errors import (
     SourceNotFound,
@@ -160,6 +161,7 @@ class GoogleDrivePublicHttpTransport:
             created = True
             with output:
                 for chunk in chain((first_chunk,), iterator):
+                    checkpoint()
                     if not isinstance(chunk, bytes):
                         raise TypeError("fragment HTTP public non binaire")
                     byte_size += len(chunk)

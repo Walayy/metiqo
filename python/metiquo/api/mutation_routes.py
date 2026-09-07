@@ -22,11 +22,13 @@ from metiquo.contracts import (
     AuditEntry,
     ContractMetadata,
     IngestionRunSummary,
+    JobSummary,
     MappingReview,
     ModelSummary,
     PaperBet,
 )
 from metiquo.contracts.enums import DataMode, FreshnessStatus, MappingReviewStatus
+from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock
 from metiquo.services import MockMutationService
 
@@ -53,11 +55,18 @@ def build_mutation_router(service: MockMutationService, clock: Clock) -> APIRout
     @router.post(
         "/admin/oracles-elixir/sync",
         response_model=ItemResponse[IngestionRunSummary],
+        responses={
+            202: {"model": ItemResponse[JobSummary], "description": "Synchronisation en file"}
+        },
     )
     def sync(idempotency_key: IdempotencyKey) -> ItemResponse[IngestionRunSummary]:
         return ItemResponse(data=service.sync(idempotency_key), meta=_meta(clock))
 
-    @router.post("/admin/models/train", response_model=ItemResponse[ModelSummary])
+    @router.post(
+        "/admin/models/train",
+        response_model=ItemResponse[ModelSummary],
+        responses={202: {"model": ItemResponse[JobSummary], "description": "Entraînement en file"}},
+    )
     def train(
         request: TrainModelRequest,
         idempotency_key: IdempotencyKey,
@@ -115,6 +124,10 @@ def build_mutation_router(service: MockMutationService, clock: Clock) -> APIRout
         request: SettlePaperBetRequest,
         idempotency_key: IdempotencyKey,
     ) -> ItemResponse[PaperBet]:
+        if request.status is None or request.profit_loss is None:
+            raise BusinessError(
+                ErrorCode.INVALID_INPUT, "La simulation mock exige son résultat fictif"
+            )
         return ItemResponse(
             data=service.settle_paper_bet(
                 idempotency_key,

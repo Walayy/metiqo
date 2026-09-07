@@ -1,0 +1,344 @@
+{
+  "ticket": "QA-005",
+  "status": "local-evidence-remote-ci-pending",
+  "baseCommit": "89a6f4a8b5eff454e3ae0839362540cd1a641679",
+  "versions": {
+    "node": "24.20.0",
+    "pnpm": "11.25.0",
+    "python": "3.13.14",
+    "postgresql": "18.4",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34"
+  },
+  "backendFullRun": {
+    "path": "data/ci/qa005-backend.xml",
+    "sha256": "1b55b1f2a150817fbb1a17995fdc9c2811ffc333bdf22ed7794d6fbdd5378bf7",
+    "total": 616,
+    "failed": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "backendCorrection": {
+    "reason": "The complete run had one obsolete expected OpenAPI route list; the new job route and response contracts are now asserted. The complete run is not represented as green.",
+    "targetedRun": {
+      "path": "data/ci/qa005-openapi.xml",
+      "sha256": "6bec6011a37e78c8a93c8981bd31454a437895fae2bfade8461fb3c23c9a92dc",
+      "total": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "browserFullRun": {
+    "path": "data/ci/qa005-playwright.json",
+    "sha256": "b7454495f3ee9f91945130d18f6dfc26bdd8bd42f92e3de3bf8d0e547747269c",
+    "stats": {
+      "startTime": "2026-09-07T15:48:15.658Z",
+      "duration": 292807.566,
+      "expected": 103,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "scope": "All selected non-Owner browser tests before the final permission-denied training cache correction. Owner browser cases passed separately inside the backend run."
+  },
+  "browserTrainingFinal": {
+    "path": "data/security/qa005-models-final.log",
+    "sha256": "5edd41f664f7a0355dba14b48360d787913a60e4472ab78a23ba8cb803b68e49",
+    "stats": {
+      "startTime": "2026-09-07T15:56:10.897Z",
+      "duration": 32797.776999999995,
+      "expected": 7,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "scope": "Includes the added permission refusal and explicit retry case."
+  },
+  "componentTestsPassed": 31,
+  "mypySourcesPassed": 427,
+  "security": {
+    "path": "data/security/20260907T153432Z-2256f27b/summary.json",
+    "sha256": "847de25b4d9ddd33517ea2ed05153f10636a61a3b2073266eeea18551e835db1",
+    "passed": true,
+    "blockingCount": 0,
+    "nonBlockingCount": 360,
+    "images": {
+      "api": {
+        "name": "metiquo-api:local",
+        "id": "sha256:d595220f263ebd2018d7e9d4b1da795f836beea0b1cd242bf71b297d0c89ed68"
+      },
+      "worker": {
+        "name": "metiquo-worker:local",
+        "id": "sha256:720cf7f1eb83e86a2c3a7e07ff3ca52d81d34306864806326e7f098864eaf6d5"
+      },
+      "web": {
+        "name": "metiquo-web:local",
+        "id": "sha256:032eabf1700597f7ba21991411f7c8c94456a01fc2406d263e89b2754ab74086"
+      },
+      "postgres": {
+        "name": "metiquo-postgres:local",
+        "id": "sha256:829720574c45ac3fc9da285bba5dafa48704b9046f860317afbc7cc41119a5f8"
+      },
+      "gateway": {
+        "name": "metiquo-gateway:local",
+        "id": "sha256:cd5c7cd697c0df4e51958b2210bc3b23e7614ea1b4e1af521d07b5cb3c2866bb"
+      }
+    },
+    "scope": "Dirty checkout; image metadata deliberately contains no commit provenance. Scan preceded the final frontend permission correction. Clean remote build and scan remain required."
+  },
+  "inspectedCaptures": [
+    {
+      "path": "docs/evidence/qa-005/blocked-model.png",
+      "sha256": "ebbba9baa3ed03c5b2591b85fba50a8cf29ade123fce13a58662a444e8568396"
+    },
+    {
+      "path": "docs/evidence/qa-005/training-succeeded.png",
+      "sha256": "750a865f0d522d8272a170536efac9da3da95406d49956b06a000553445e376b"
+    }
+  ],
+  "validationLogs": [
+    {
+      "path": "data/security/qa005-worker-training-green.log",
+      "sha256": "69d97ed528ad8c9cd49daa7e69745f6db82d40468741da1f1ece930e6104a717"
+    },
+    {
+      "path": "data/security/qa005-paper-identity-green.log",
+      "sha256": "214db161e7032db60dd2c93d0b8a4a150bbe9d2c349cfbec9e4a4e37f91336c9"
+    },
+    {
+      "path": "data/security/qa005-event-filter-green.log",
+      "sha256": "45d27eb641c04bed47e058fbe2c9a567c728cb8adc657baff44b25b14760a842"
+    },
+    {
+      "path": "data/security/qa005-gateway-port-green.log",
+      "sha256": "017106f9c965a0a081db207f3e08eb60d0605fdb9e39d806a4aef6855614e106"
+    },
+    {
+      "path": "data/security/qa005-ci-policy-green-final.log",
+      "sha256": "53e3361896f9d6cb5179235d50ecb905f05df13e8e15a195144b9492c855bc50"
+    },
+    {
+      "path": "data/security/qa005-components.log",
+      "sha256": "8666b552eb313bdd695f8c59b021643dc58c3a7f1f5a822ea5a833df1d09d934"
+    },
+    {
+      "path": "data/security/qa005-types-last.log",
+      "sha256": "fca24537fd3f635d76cae2e326a3fa9ebadafbe2b843c5ec2d7662bad3465dca"
+    },
+    {
+      "path": "data/security/qa005-lint-last.log",
+      "sha256": "0a6bd475b95f4fe58ff498412f99c103fa6720cb64dfe7f0f6ef02b14561b65b"
+    },
+    {
+      "path": "data/security/qa005-docker-build-final.log",
+      "sha256": "e3178e6fc86dba2d50f4c60a7cbdad7cff495d036fe00f7ab0ad3fb8d7692420"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "path": ".github/actions/setup/action.yml",
+      "sha256": "8ce320758b5c57ba367f67a9e0bafc86373350c6a3b3ba0854b800d1f9c650e5"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "cc8a1ac8b5468981f8d1352942b36910b9511eddf527711d7f223dae1ebd0451"
+    },
+    {
+      "path": ".github/workflows/restore-drill.yml",
+      "sha256": "2f002100a4803b962210209865abc785bc22aa337603c2e4d197d6a49561442f"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "043eca29f2eab458cf82599e90fd875abbded78ac0b6e12428a9913f981591c4"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "d54a2a49eb88251ce21b45fcb51312207328798d8da0c4ad31df51aa66c8567f"
+    },
+    {
+      "path": "apps/web/src/components/event-detail.tsx",
+      "sha256": "5b6a9d44fbd02ec60e8bfff292a508271c86485ebde2d6ddd8e2cfc8702a64e0"
+    },
+    {
+      "path": "apps/web/src/components/models-dashboard.tsx",
+      "sha256": "68f10aceb0904e2137ef5401078459bc6194e16eae52cc4efe19e0f3c029aee5"
+    },
+    {
+      "path": "apps/web/src/components/opportunities-dashboard.tsx",
+      "sha256": "a856dd3c33d06e786a6177fdab0cb9ef8baadf5b949c598ce764350447ced362"
+    },
+    {
+      "path": "apps/web/src/components/opportunity-presenters.test.ts",
+      "sha256": "373e4c0325e6cb10bb8a3ae0ccf80f450f87a9a1b82ed56373df4a4d4e4892ba"
+    },
+    {
+      "path": "apps/web/src/components/opportunity-presenters.ts",
+      "sha256": "e487ccc39bbf15b154aaadedc2d6c03437ad97ff84da9d1f578007a310702705"
+    },
+    {
+      "path": "apps/web/src/components/signal-detail.tsx",
+      "sha256": "4c7b7a51c3de237050fef39038a850a920053cf179538d19f17b4ff4e50ce025"
+    },
+    {
+      "path": "docker-compose.yml",
+      "sha256": "56ec9e61894ef891038e2cf88b026c819cac509ead0874186bb1619cb5f801ba"
+    },
+    {
+      "path": "docs/continuous-integration.md",
+      "sha256": "b7068865a39ef68797b5aab39cdfbc3ed9dd2223ca0c7ef2cbff628802fe74e3"
+    },
+    {
+      "path": "docs/runbook.md",
+      "sha256": "c8f6fcf21666c8f0c5697a116c609e725c77e40734b2f16231ff58effe6b7e20"
+    },
+    {
+      "path": "infra/compose/gateway.Dockerfile",
+      "sha256": "392819a5988f25a35ced9d58f4fdee19e94197b2f9f3d19f28fad7c07d4ae97e"
+    },
+    {
+      "path": "infra/compose/python.Dockerfile",
+      "sha256": "69fbd3defcf3072cdb4b17941f60e586009c86d5934b53f7608b553d1e7ee1d4"
+    },
+    {
+      "path": "infra/gateway/Caddyfile",
+      "sha256": "958ac747adb48ac3496d748b30381b9ba8cc72a8dfc8c3e5964ed89965873dca"
+    },
+    {
+      "path": "infra/gateway/build/main.go",
+      "sha256": "e60f233c3f2491841852616edf90888cc431f51f5348d8be0d95916918ea53c2"
+    },
+    {
+      "path": "infra/gateway/build/main_test.go",
+      "sha256": "4f073eb6b3f720881abfce1eaad41402915a2494799aba87d73380f6c6144ffc"
+    },
+    {
+      "path": "infra/scripts/build_images.py",
+      "sha256": "22b4aa03fd634c728fddbea620b69301817fea6d8f29428928c91fa647b11533"
+    },
+    {
+      "path": "infra/scripts/inject_critical_fault.py",
+      "sha256": "4e6e167b3d6f3642440f654ded95d74a77a340a57f7bf3fc5f6860ae81d4de1f"
+    },
+    {
+      "path": "infra/scripts/verify_release_evidence.py",
+      "sha256": "40fa56c2d1dc52ead4927378f9de9f191fe12c46815f12a255a8b4672e668c82"
+    },
+    {
+      "path": "packages/contracts/openapi/v1.json",
+      "sha256": "794ed4997ddc5a86b0c4628622370bbfd0362af0f2e381f6029260550f756bee"
+    },
+    {
+      "path": "packages/contracts/src/generated/@tanstack/react-query.gen.ts",
+      "sha256": "1adcb67a448c854cb36e420e5e7b45c0243a078a20aedde3a89ae4912af9ce32"
+    },
+    {
+      "path": "packages/contracts/src/generated/index.ts",
+      "sha256": "86edbee0d8f0a3994066969d05dbdc2c9200b0970502f13839ace2d5d70bd0f8"
+    },
+    {
+      "path": "packages/contracts/src/generated/sdk.gen.ts",
+      "sha256": "b90922d0b04e33bf8abed21893a7cd473f4d5e8daa43d8aa1cbb07589778b8c4"
+    },
+    {
+      "path": "packages/contracts/src/generated/types.gen.ts",
+      "sha256": "dbfaab3ee9a3a05d1c8d7056153de2430d0d547a80397becb5e4b29f08dd8316"
+    },
+    {
+      "path": "python/metiquo/api/mutation_routes.py",
+      "sha256": "72d3486885e04b7140877a764225835c7977d11746fb4d09033a7a656bd78b4e"
+    },
+    {
+      "path": "python/metiquo/api/read_routes.py",
+      "sha256": "9d9d3b0a80135d7c9332a121a92a791c20707562f5893740dd0b889501e97c88"
+    },
+    {
+      "path": "python/metiquo/api/real_admin_routes.py",
+      "sha256": "14ec3636386c23cc040b0493809283b9e56908d9e3c949331f07c219d2c0d9cf"
+    },
+    {
+      "path": "python/metiquo/api/real_historical_routes.py",
+      "sha256": "ed1c6ed4d0c41960893d3cea1263e6c6c35526ac528450503926b4f981546f87"
+    },
+    {
+      "path": "python/metiquo/config.py",
+      "sha256": "3d4d0bc5794fbab8e5e2dba12be7f300617f5aa9323325ef816f7891a8652c92"
+    },
+    {
+      "path": "python/metiquo/contracts/operations.py",
+      "sha256": "b2369959a7be4d0c73e525dc30b547a8a39a70a0e592825712c4e059118a5cfa"
+    },
+    {
+      "path": "python/metiquo/models/training.py",
+      "sha256": "15d0ef383c55e01f762dcf17f891b2237b75d6bb06303a566dc5c14337a1616f"
+    },
+    {
+      "path": "python/metiquo/paper/creation.py",
+      "sha256": "7f43f2245a8c6d1f54f1778104c8fac9b75070e4c0ab73a05a0dbf5afaff1d1f"
+    },
+    {
+      "path": "python/metiquo/repositories/postgres_operations.py",
+      "sha256": "f00f6b382a94120e1e94c4d66b1deb6092f38338e4cc347a9dd282631bf22703"
+    },
+    {
+      "path": "python/metiquo/repositories/postgres_opportunities.py",
+      "sha256": "8ddb0b2096cab5a997f3d6c762bc5435d3eaf1b9b772017cd7873cb748e1ea36"
+    },
+    {
+      "path": "python/metiquo/services/real_admin.py",
+      "sha256": "25b4799e93614f4e339bf9d62995e4fd356544683cadd309d4ef343bb4ca2d1f"
+    },
+    {
+      "path": "python/metiquo/worker/handlers.py",
+      "sha256": "1d7938575c775bb0c8e2b12d6123574ed5c54a5a05e397569dfd2eaafc3995a2"
+    },
+    {
+      "path": "tests/api/test_opportunity_filter.py",
+      "sha256": "1e49baf4da54a1efa2a84b6398bad4a66b3cf87a57992fc4afec23eb34e8cbf9"
+    },
+    {
+      "path": "tests/e2e/event-detail.spec.ts",
+      "sha256": "720d2784f5b3f8f0d87baaa445efa234f4c1c5c9994ed2effe0c4cf7f10061f5"
+    },
+    {
+      "path": "tests/e2e/real-models.spec.ts",
+      "sha256": "5ecf52067d57c0bbbc2b7d0597bfd20f890038b2153897428f93e58ebb61cb8c"
+    },
+    {
+      "path": "tests/integration/test_model_job_dispatch.py",
+      "sha256": "dae508829d37879cb84015810c72bb11b171262aeff5a60673820d37c1f21dbc"
+    },
+    {
+      "path": "tests/integration/test_paper_creation.py",
+      "sha256": "2996a86f502cb429b3d08df631d20c8b7765ac726481880480ef327c2ee6b9eb"
+    },
+    {
+      "path": "tests/integration/test_read_performance.py",
+      "sha256": "a187b65e1b45b996c02cf4f5f8c1eb575da2b6b6febd92cd4070bca5167b2136"
+    },
+    {
+      "path": "tests/integration/test_secret_scanner.py",
+      "sha256": "892495dc5cf9b8c395e7f9e789f49d7702ef2f3b2639cfbdf2bd9196dd8ee505"
+    },
+    {
+      "path": "tests/integration/test_security_gateway.py",
+      "sha256": "0b79995bccb3f92a8e89d865f34c1fbe2c763d4410ec0aff4375123e8a84f082"
+    },
+    {
+      "path": "tests/test_build_provenance.py",
+      "sha256": "5a21943dd3f7d967fe5227294a53ec03853028f83fa1fb5057e2ce1f5c39507c"
+    },
+    {
+      "path": "tests/test_ci_gate.py",
+      "sha256": "ee4b8f35ba7d11749c28ba0ba3fba3b9e85be0de1c08788bded343768cac983b"
+    },
+    {
+      "path": "tests/test_openapi.py",
+      "sha256": "ff48314b3d955563055771e19581baccf98f9433dd68c8553478f961094e7774"
+    }
+  ],
+  "limitations": [
+    "Remote green and forced critical failure runs remain required for QA-005 completion.",
+    "Synthetic datasets and transport fixtures are not financial or commercial authorization evidence."
+  ]
+}

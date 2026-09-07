@@ -34,6 +34,8 @@ class PaperBet(ContractModel):
     prediction_id: UUID = Field(alias="predictionId")
     odds_snapshot_id: UUID = Field(alias="oddsSnapshotId")
     closing_odds_snapshot_id: UUID | None = Field(default=None, alias="closingOddsSnapshotId")
+    clv: FiniteDecimal | None = None
+    clv_is_proxy: bool = Field(default=True, alias="clvIsProxy")
     entry_odds: DecimalOddsValue = Field(alias="entryOdds")
     stake_amount: PositiveDecimal = Field(alias="stakeAmount")
     currency: str = Field(pattern=r"^[A-Z]{3}$")

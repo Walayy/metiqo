@@ -1,0 +1,175 @@
+{
+  "ticket": "QA-003",
+  "baseCommit": "c6141a6",
+  "status": "passed",
+  "versions": {
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34",
+    "axe": "4.13.0",
+    "next": "16.3.4",
+    "node": "24.2.0",
+    "pnpm": "11.25.0"
+  },
+  "browserRun": {
+    "source": "data/qa003-windows-final.json",
+    "sha256": "c66c3aab1adc23502de26c3c7bf23242269324e124c299ef7b3612a774c712a6",
+    "stats": {
+      "startTime": "2026-09-07T13:55:27.778Z",
+      "duration": 241653.99599999998,
+      "expected": 82,
+      "skipped": 2,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "keyboardTests": [
+      {
+        "title": "completes the desktop signal and paper workflow entirely by keyboard",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2801
+          }
+        ]
+      },
+      {
+        "title": "reviews mapping and starts a model through desktop keyboard controls",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 7916
+          }
+        ]
+      },
+      {
+        "title": "has accessible semantics and AA contrast on every desktop light critical page",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 17052
+          }
+        ]
+      },
+      {
+        "title": "has accessible semantics and AA contrast on every desktop dark critical page",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 17754
+          }
+        ]
+      },
+      {
+        "title": "completes the mobile signal and paper workflow entirely by keyboard",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3491
+          }
+        ]
+      },
+      {
+        "title": "reviews mapping and starts a model through mobile keyboard controls",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 8649
+          }
+        ]
+      },
+      {
+        "title": "has accessible semantics and AA contrast on every mobile light critical page",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 16721
+          }
+        ]
+      },
+      {
+        "title": "has accessible semantics and AA contrast on every mobile dark critical page",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 14736
+          }
+        ]
+      },
+      {
+        "title": "keeps the mobile navigation focus contained and restores its trigger",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1753
+          }
+        ]
+      },
+      {
+        "title": "changes appearance with menu keys and returns focus to its trigger",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1159
+          }
+        ]
+      },
+      {
+        "title": "restores filter fields when clearing and revisiting a shared URL",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1558
+          }
+        ]
+      },
+      {
+        "title": "announces new odds politely while preserving the original signal price",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 977
+          }
+        ]
+      }
+    ]
+  },
+  "ownerRun": {
+    "command": "RUN_OWNER_BROWSER=1 uv run --frozen python -m pytest tests/integration/test_owner_browser.py -q",
+    "source": "data/security/qa003-owner-browser.log",
+    "sha256": "d4756ccf1959d9fc799d65f232ec420e3a8028e190242322668b03c38c4fb830",
+    "pytestPassed": 1,
+    "durationSeconds": 57.52,
+    "browserCases": 2,
+    "scope": "CLI bootstrap and real PostgreSQL session; keyboard login, wrong password, forged logout rejection and logout on desktop/mobile. Business catalogue remains mock."
+  },
+  "automatedAxePageScans": 36,
+  "additionalDarkModelActionScans": 4,
+  "manualChecklist": "docs/accessibility.md",
+  "manualScope": "In-app Chromium: desktop skip link/filter focus, mobile dialog tab containment/Escape return, event navigation, chart text and non-colour signal information. No external spoken screen reader used.",
+  "regressionsFound": [
+    "Filter URL navigation lost focused field",
+    "Odds changes lacked an announced region",
+    "Dark model success message contrast was 3.56:1",
+    "Native form reset kept the initial select grade after clearing the URL"
+  ],
+  "sourceHashes": {
+    "apps/web/src/components/opportunities-dashboard.tsx": "9b1a4ce9a8fd662629b210330ba67e11d06bb1989aca8f7d7966eccd92c47c93",
+    "apps/web/src/components/models-dashboard.tsx": "35a97d116f3461c038370ddcb36b4c481d2c479e9e945988b75f74bd4d4200d5",
+    "tests/e2e/keyboard-accessibility.spec.ts": "ffd5d7ff75784f68a9004c48d5227db21c444855a0c950ece4f57097de77033c",
+    "tests/e2e/helpers/keyboard.ts": "2422afda60de34581d34991c42d8fbac06d7c535d80b01d464180739b0b973bf",
+    "tests/e2e/owner-session.spec.ts": "9ea1194c60408cfa76c0d9012ff3ed04aa8b96bb02ed2d20c31c45d50fdb935f",
+    "tests/integration/test_owner_browser.py": "84c3594a74ea165d380119d4c160f9138fbc7971cc91607f324260d4d9ec9389",
+    "docs/accessibility.md": "68926af5ef1b35b36491207b1541cfa4d44e1537fa536226ec31d7ec242f595c"
+  }
+}

@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend } from "../lib/backend";
+
 import type { Event, EventStatus, PageResponseEvent } from "@metiquo/contracts/types";
 import {
   Badge,
@@ -25,7 +29,7 @@ const statusLabels = {
 } satisfies Record<EventStatus, string>;
 
 async function fetchEvents(signal: AbortSignal) {
-  const response = await fetch("/api/backend/api/v1/events?offset=0&limit=100", {
+  const response = await readBackend("/api/backend/api/v1/events?offset=0&limit=100", {
     headers: { accept: "application/json" },
     signal,
   });
@@ -99,7 +103,8 @@ export function EventsExplorer() {
         isRefetching={eventsQuery.isFetching && !eventsQuery.isPending}
         loadingFallback={<RemoteLoadingState label="Chargement des événements" rows={8} />}
       >
-        {eventsQuery.isError ? (
+        <QueryRecovery queries={[eventsQuery]} />
+        {eventsQuery.isError && !canReadPrevious(eventsQuery) ? (
           <RemoteRecoverableErrorState
             description="Le calendrier ne répond pas pour le moment."
             onRetry={() => void eventsQuery.refetch()}

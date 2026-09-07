@@ -5,10 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import Engine, RowMapping, Table, exists, func, or_, select
+from sqlalchemy.sql import Select
 
 from metiquo.contracts import Event, Market, OddsSnapshot
 from metiquo.contracts.enums import EventStatus, MarketStatus, ProviderStatus, SelectionType
@@ -23,6 +24,12 @@ from metiquo.db.odds_models import (
     ProviderOddsSelection,
 )
 from metiquo.foundation.time import Clock, SystemClock
+from metiquo.repositories.canonical_events_sql import (
+    event_from_row,
+    event_projection,
+    filter_events,
+)
+from metiquo.repositories.pagination import ReadPage, page_rows
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,19 +197,49 @@ class PostgresCanonicalRepository:
         )
 
     def list(self) -> tuple[Event, ...]:
-        series = self.list_series()
-        games = self.list_games()
-        values = [self._series_event(item) for item in series]
-        values.extend(
-            event
-            for item in games
-            if item.series_id is None
-            if (event := self._game_event(item)) is not None
-        )
-        return tuple(sorted(values, key=lambda item: (item.starts_at, item.event_id), reverse=True))
+        events = event_projection()
+        with self.engine.connect() as connection:
+            rows = connection.execute(
+                select(events).order_by(events.c.starts_at.desc(), events.c.event_id.desc())
+            ).mappings()
+            return tuple(event_from_row(row) for row in rows)
+
+    def page(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 20,
+        competition: str | None = None,
+        team: str | None = None,
+        status: EventStatus | None = None,
+        starts_from: datetime | None = None,
+        starts_to: datetime | None = None,
+    ) -> ReadPage[Event]:
+        events = event_projection()
+        statement = filter_events(
+            select(events),
+            events,
+            competition=competition,
+            team=team,
+            status=status,
+            starts_from=starts_from,
+            starts_to=starts_to,
+        ).order_by(events.c.starts_at.desc(), events.c.event_id.desc())
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            page = page_rows(connection, statement, offset=offset, limit=limit)
+        return ReadPage(tuple(event_from_row(row) for row in page.items), page.total)
 
     def get(self, event_id: UUID) -> Event | None:
-        return next((event for event in self.list() if event.event_id == event_id), None)
+        events = event_projection()
+        with self.engine.connect() as connection:
+            row = (
+                connection.execute(select(events).where(events.c.event_id == event_id))
+                .mappings()
+                .one_or_none()
+            )
+        return event_from_row(row) if row is not None else None
 
     @staticmethod
     def list_markets(event_id: UUID) -> tuple[Market, ...]:
@@ -210,6 +247,31 @@ class PostgresCanonicalRepository:
         return ()
 
     def odds_history(self, event_id: UUID) -> tuple[OddsSnapshot, ...]:
+        with self.engine.connect() as connection:
+            rows = tuple(connection.execute(self._odds_statement(event_id)).mappings())
+        now = self.clock.now().value
+        return tuple(self._odds_snapshot(row, now, event_id) for row in rows)
+
+    def odds_history_page(
+        self, event_id: UUID, *, offset: int = 0, limit: int = 20
+    ) -> ReadPage[OddsSnapshot]:
+        # The most recent captures appear first; the chart orders its bounded slice by time.
+        statement = (
+            self._odds_statement(event_id)
+            .order_by(None)
+            .order_by(OddsSnapshotRecord.captured_at.desc(), OddsSnapshotRecord.id.desc())
+        )
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            page = page_rows(connection, statement, offset=offset, limit=limit)
+        now = self.clock.now().value
+        return ReadPage(
+            tuple(self._odds_snapshot(row, now, event_id) for row in page.items), page.total
+        )
+
+    @staticmethod
+    def _odds_statement(event_id: UUID) -> Select[tuple[Any, ...]]:
         snapshots = cast(Table, OddsSnapshotRecord.__table__)
         providers = cast(Table, OddsProviderRecord.__table__)
         selections = cast(Table, ProviderOddsSelection.__table__)
@@ -241,48 +303,41 @@ class PostgresCanonicalRepository:
             .limit(1)
             .scalar_subquery()
         )
-        with self.engine.connect() as connection:
-            rows = (
-                connection.execute(
-                    select(
-                        snapshots,
-                        providers.c.code.label("provider_code"),
-                        selections.c.selection_type,
-                        func.coalesce(mapped_inversion, approved_inversion, False).label(
-                            "selections_inverted"
-                        ),
-                    )
-                    .join(providers, providers.c.id == snapshots.c.provider_id)
-                    .join(selections, selections.c.id == snapshots.c.selection_id)
-                    .where(
-                        or_(
-                            snapshots.c.event_id == event_id,
-                            exists(
-                                select(attempts.c.id).where(
-                                    attempts.c.provider_event_id == snapshots.c.event_id,
-                                    attempts.c.selected_event_id == event_id,
-                                    attempts.c.result_status == "auto_matched",
-                                )
-                            ),
-                            exists(
-                                select(reviews.c.id)
-                                .join(attempts, attempts.c.id == reviews.c.attempt_id)
-                                .where(
-                                    attempts.c.provider_event_id == snapshots.c.event_id,
-                                    reviews.c.selected_event_id == event_id,
-                                    reviews.c.status == "approved",
-                                )
-                            ),
-                        ),
-                        snapshots.c.captured_at.is_not(None),
-                    )
-                    .order_by(snapshots.c.captured_at, snapshots.c.id)
-                )
-                .mappings()
-                .all()
+        return (
+            select(
+                snapshots,
+                providers.c.code.label("provider_code"),
+                selections.c.selection_type,
+                func.coalesce(mapped_inversion, approved_inversion, False).label(
+                    "selections_inverted"
+                ),
             )
-        now = self.clock.now().value
-        return tuple(self._odds_snapshot(row, now, event_id) for row in rows)
+            .join(providers, providers.c.id == snapshots.c.provider_id)
+            .join(selections, selections.c.id == snapshots.c.selection_id)
+            .where(
+                or_(
+                    snapshots.c.event_id == event_id,
+                    exists(
+                        select(attempts.c.id).where(
+                            attempts.c.provider_event_id == snapshots.c.event_id,
+                            attempts.c.selected_event_id == event_id,
+                            attempts.c.result_status == "auto_matched",
+                        )
+                    ),
+                    exists(
+                        select(reviews.c.id)
+                        .join(attempts, attempts.c.id == reviews.c.attempt_id)
+                        .where(
+                            attempts.c.provider_event_id == snapshots.c.event_id,
+                            reviews.c.selected_event_id == event_id,
+                            reviews.c.status == "approved",
+                        )
+                    ),
+                ),
+                snapshots.c.captured_at.is_not(None),
+            )
+            .order_by(snapshots.c.captured_at, snapshots.c.id)
+        )
 
     @staticmethod
     def _odds_snapshot(row: RowMapping, now: datetime, canonical_event_id: UUID) -> OddsSnapshot:

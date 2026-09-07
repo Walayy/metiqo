@@ -76,6 +76,45 @@
         "title": "AliasRecord",
         "type": "object"
       },
+      "ApiProcessMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "failureCount": {
+            "minimum": 0.0,
+            "title": "Failurecount",
+            "type": "integer"
+          },
+          "meanLatencyMs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meanlatencyms"
+          },
+          "requestCount": {
+            "minimum": 0.0,
+            "title": "Requestcount",
+            "type": "integer"
+          },
+          "scope": {
+            "const": "current_api_process",
+            "default": "current_api_process",
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestCount",
+          "failureCount"
+        ],
+        "title": "ApiProcessMetrics",
+        "type": "object"
+      },
       "AuditEntry": {
         "additionalProperties": false,
         "description": "Trace immutable d'une mutation applicative.",
@@ -164,6 +203,39 @@
           "dataMode"
         ],
         "title": "AuditEntry",
+        "type": "object"
+      },
+      "AuthStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "authenticated": {
+            "title": "Authenticated",
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "disabled",
+              "owner"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OwnerIdentity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "authenticated"
+        ],
+        "title": "AuthStatus",
         "type": "object"
       },
       "BacktestKind": {
@@ -271,6 +343,62 @@
           "completedAt"
         ],
         "title": "BacktestSummary",
+        "type": "object"
+      },
+      "BackupOperationalHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "lastFailureAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastfailureat"
+          },
+          "lastSuccessAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastsuccessat"
+          },
+          "status": {
+            "enum": [
+              "not_configured",
+              "missing",
+              "fresh",
+              "stale",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "BackupOperationalHealth",
         "type": "object"
       },
       "CapabilityEvaluationDto": {
@@ -497,6 +625,13 @@
       "CreatePaperBetRequest": {
         "additionalProperties": false,
         "properties": {
+          "actor": {
+            "default": "admin-local",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
           "currency": {
             "default": "EUR",
             "pattern": "^[A-Z]{3}$",
@@ -720,6 +855,45 @@
         "title": "EventStatus",
         "type": "string"
       },
+      "FinancialEstimateDto": {
+        "additionalProperties": false,
+        "properties": {
+          "sampleSize": {
+            "minimum": 0.0,
+            "title": "Samplesize",
+            "type": "integer"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "sampleSize"
+        ],
+        "title": "FinancialEstimateDto",
+        "type": "object"
+      },
       "FreshnessStatus": {
         "description": "Fraîcheur normative d'une source ou d'un résultat.",
         "enum": [
@@ -738,6 +912,13 @@
           "lol"
         ],
         "title": "GameTitle",
+        "type": "string"
+      },
+      "GateStatus": {
+        "enum": [
+          "NO-GO",
+          "GO"
+        ],
         "type": "string"
       },
       "HTTPValidationError": {
@@ -1006,6 +1187,23 @@
         "title": "ItemResponse[IngestionRunSummary]",
         "type": "object"
       },
+      "ItemResponse_JobSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobSummary"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[JobSummary]",
+        "type": "object"
+      },
       "ItemResponse_MappingReview_": {
         "additionalProperties": false,
         "properties": {
@@ -1091,12 +1289,69 @@
         "title": "ItemResponse[PaperBet]",
         "type": "object"
       },
+      "ItemResponse_PaperMetricsDto_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PaperMetricsDto"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[PaperMetricsDto]",
+        "type": "object"
+      },
       "JobSummary": {
         "additionalProperties": false,
         "description": "État public minimal d'un job orchestré.",
         "properties": {
+          "attempt": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt"
+          },
+          "cancelRequested": {
+            "default": false,
+            "title": "Cancelrequested",
+            "type": "boolean"
+          },
           "dataMode": {
             "$ref": "#/components/schemas/DataMode"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "heartbeatAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeatat"
           },
           "jobId": {
             "format": "uuid",
@@ -1115,21 +1370,109 @@
             ],
             "title": "Lastrunat"
           },
+          "leaseExpiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leaseexpiresat"
+          },
+          "maxAttempts": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxattempts"
+          },
+          "modelVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelversionid"
+          },
           "name": {
             "maxLength": 255,
             "minLength": 1,
             "title": "Name",
             "type": "string"
           },
+          "runId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runid"
+          },
+          "scheduledAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduledat"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
           "status": {
             "enum": [
               "idle",
+              "queued",
               "succeeded",
               "failed",
-              "running"
+              "running",
+              "cancelled",
+              "dead"
             ],
             "title": "Status",
             "type": "string"
+          },
+          "traceId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Traceid"
           }
         },
         "required": [
@@ -1526,6 +1869,74 @@
         "title": "ModelDecisionRequest",
         "type": "object"
       },
+      "ModelOperationalHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "ageSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ageseconds"
+          },
+          "modelVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelversionid"
+          },
+          "status": {
+            "enum": [
+              "fresh",
+              "stale",
+              "missing",
+              "invalid"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trainedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trainedat"
+          },
+          "trainingCutoff": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trainingcutoff"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ModelOperationalHealth",
+        "type": "object"
+      },
       "ModelStatus": {
         "description": "Cycle de vie d'une version de modèle.",
         "enum": [
@@ -1794,6 +2205,119 @@
         "title": "OddsSnapshot",
         "type": "object"
       },
+      "OperationalMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "anomalies": {
+            "minimum": 0.0,
+            "title": "Anomalies",
+            "type": "integer"
+          },
+          "api": {
+            "$ref": "#/components/schemas/ApiProcessMetrics"
+          },
+          "blockingAnomalies": {
+            "minimum": 0.0,
+            "title": "Blockinganomalies",
+            "type": "integer"
+          },
+          "databaseScope": {
+            "const": "retained_history",
+            "default": "retained_history",
+            "title": "Databasescope",
+            "type": "string"
+          },
+          "jobFailures": {
+            "minimum": 0.0,
+            "title": "Jobfailures",
+            "type": "integer"
+          },
+          "meanJobDurationSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meanjobdurationseconds"
+          },
+          "measuredJobCount": {
+            "minimum": 0.0,
+            "title": "Measuredjobcount",
+            "type": "integer"
+          },
+          "processedRows": {
+            "minimum": 0.0,
+            "title": "Processedrows",
+            "type": "integer"
+          },
+          "signals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Signals",
+            "type": "object"
+          }
+        },
+        "required": [
+          "measuredJobCount",
+          "jobFailures",
+          "processedRows",
+          "anomalies",
+          "blockingAnomalies",
+          "signals",
+          "api"
+        ],
+        "title": "OperationalMetrics",
+        "type": "object"
+      },
+      "OperationalStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "backups": {
+            "$ref": "#/components/schemas/BackupOperationalHealth"
+          },
+          "jobCounts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Jobcounts",
+            "type": "object"
+          },
+          "mappingBacklog": {
+            "minimum": 0.0,
+            "title": "Mappingbacklog",
+            "type": "integer"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/OperationalMetrics"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelOperationalHealth"
+          },
+          "readsAvailable": {
+            "title": "Readsavailable",
+            "type": "boolean"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceOperationalHealth"
+          }
+        },
+        "required": [
+          "readsAvailable",
+          "source",
+          "model",
+          "mappingBacklog",
+          "jobCounts",
+          "backups",
+          "metrics"
+        ],
+        "title": "OperationalStatus",
+        "type": "object"
+      },
       "Opportunity": {
         "additionalProperties": false,
         "description": "Signal complet partageable entre implémentations mock et réelle.",
@@ -1887,6 +2411,51 @@
           "reasons"
         ],
         "title": "OpportunityExplanation",
+        "type": "object"
+      },
+      "OwnerIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "OwnerIdentity",
+        "type": "object"
+      },
+      "OwnerLoginRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "format": "password",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "username": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "OwnerLoginRequest",
         "type": "object"
       },
       "PageInfo": {
@@ -2284,6 +2853,23 @@
             ],
             "title": "Closingoddssnapshotid"
           },
+          "clv": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clv"
+          },
+          "clvIsProxy": {
+            "default": true,
+            "title": "Clvisproxy",
+            "type": "boolean"
+          },
           "currency": {
             "pattern": "^[A-Z]{3}$",
             "title": "Currency",
@@ -2398,6 +2984,97 @@
         ],
         "title": "PaperBetStatus",
         "type": "string"
+      },
+      "PaperMetricsDto": {
+        "additionalProperties": false,
+        "properties": {
+          "bets": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Bets",
+            "type": "integer"
+          },
+          "computedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Computedat"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "estimates": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FinancialEstimateDto"
+            },
+            "title": "Estimates",
+            "type": "object"
+          },
+          "methodVersion": {
+            "title": "Methodversion",
+            "type": "string"
+          },
+          "open": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Open",
+            "type": "integer"
+          },
+          "pendingReview": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Pendingreview",
+            "type": "integer"
+          },
+          "reportFingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportfingerprint"
+          },
+          "reportId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportid"
+          },
+          "settled": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Settled",
+            "type": "integer"
+          },
+          "signals": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Signals",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "methodVersion"
+        ],
+        "title": "PaperMetricsDto",
+        "type": "object"
       },
       "Prediction": {
         "additionalProperties": false,
@@ -2966,6 +3643,46 @@
         "title": "ReadyResponse",
         "type": "object"
       },
+      "ReleaseAudience": {
+        "enum": [
+          "personal",
+          "public",
+          "commercial"
+        ],
+        "type": "string"
+      },
+      "ReleaseCompliance": {
+        "additionalProperties": false,
+        "properties": {
+          "audience": {
+            "$ref": "#/components/schemas/ReleaseAudience"
+          },
+          "gates": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GateStatus"
+            },
+            "title": "Gates",
+            "type": "object"
+          },
+          "publicReleaseAllowed": {
+            "title": "Publicreleaseallowed",
+            "type": "boolean"
+          },
+          "stakeProviderEnabled": {
+            "const": false,
+            "default": false,
+            "title": "Stakeproviderenabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "audience",
+          "gates",
+          "publicReleaseAllowed"
+        ],
+        "title": "ReleaseCompliance",
+        "type": "object"
+      },
       "SelectionType": {
         "description": "Issue normalisée indépendamment du libellé fournisseur.",
         "enum": [
@@ -2981,6 +3698,26 @@
       "SettlePaperBetRequest": {
         "additionalProperties": false,
         "properties": {
+          "actor": {
+            "default": "admin-local",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
+          "correctionReason": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correctionreason"
+          },
           "paperBetId": {
             "format": "uuid",
             "title": "Paperbetid",
@@ -2994,6 +3731,9 @@
               {
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ],
             "title": "Profitloss"
@@ -3005,16 +3745,75 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/PaperBetStatus"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaperBetStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "paperBetId",
-          "status",
-          "profitLoss",
           "reason"
         ],
         "title": "SettlePaperBetRequest",
+        "type": "object"
+      },
+      "SourceOperationalHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "ageSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ageseconds"
+          },
+          "asOf": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "reasonCode": {
+            "title": "Reasoncode",
+            "type": "string"
+          },
+          "snapshotId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshotid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FreshnessStatus"
+          }
+        },
+        "required": [
+          "status",
+          "reasonCode"
+        ],
+        "title": "SourceOperationalHealth",
         "type": "object"
       },
       "SystemStatusResponse": {
@@ -3039,6 +3838,16 @@
             "format": "date-time",
             "title": "Generatedat",
             "type": "string"
+          },
+          "operations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationalStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "status": {
             "enum": [
@@ -3513,9 +4322,12 @@
                 {
                   "enum": [
                     "idle",
+                    "queued",
                     "succeeded",
                     "failed",
-                    "running"
+                    "running",
+                    "cancelled",
+                    "dead"
                   ],
                   "type": "string"
                 },
@@ -3550,6 +4362,49 @@
           }
         },
         "summary": "List Jobs",
+        "tags": [
+          "reads"
+        ]
+      }
+    },
+    "/api/v1/admin/jobs/{job_id}": {
+      "get": {
+        "operationId": "get_job_api_v1_admin_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_JobSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Job",
         "tags": [
           "reads"
         ]
@@ -3776,6 +4631,16 @@
             },
             "description": "Successful Response"
           },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_JobSummary_"
+                }
+              }
+            },
+            "description": "Entraînement en file"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -3948,6 +4813,16 @@
             },
             "description": "Successful Response"
           },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_JobSummary_"
+                }
+              }
+            },
+            "description": "Synchronisation en file"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -4112,6 +4987,82 @@
         "summary": "List Quality Issues",
         "tags": [
           "reads"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "operationId": "current_session_api_v1_auth_session_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Current Session",
+        "tags": [
+          "auth"
         ]
       }
     },
@@ -4687,6 +5638,23 @@
           },
           {
             "in": "query",
+            "name": "eventId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Eventid"
+            }
+          },
+          {
+            "in": "query",
             "name": "competition",
             "required": false,
             "schema": {
@@ -5103,6 +6071,50 @@
         ]
       }
     },
+    "/api/v1/paper-bets/metrics": {
+      "get": {
+        "operationId": "metrics_api_v1_paper_bets_metrics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "currency",
+            "required": false,
+            "schema": {
+              "default": "EUR",
+              "pattern": "^[A-Z]{3}$",
+              "title": "Currency",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_PaperMetricsDto_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Metrics",
+        "tags": [
+          "paper-reports"
+        ]
+      }
+    },
     "/api/v1/paper-bets/{paper_bet_id}": {
       "get": {
         "operationId": "get_paper_bet_api_v1_paper_bets__paper_bet_id__get",
@@ -5143,6 +6155,85 @@
         "summary": "Get Paper Bet",
         "tags": [
           "reads"
+        ]
+      }
+    },
+    "/api/v1/paper-reports/{report_id}": {
+      "get": {
+        "operationId": "download_report_api_v1_paper_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Report",
+        "tags": [
+          "paper-reports"
+        ]
+      }
+    },
+    "/api/v1/system/compliance": {
+      "get": {
+        "operationId": "release_compliance_api_v1_system_compliance_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseCompliance"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {}
+            },
+            "description": "Ressource introuvable"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {}
+            },
+            "description": "Requête invalide"
+          }
+        },
+        "summary": "Release Compliance",
+        "tags": [
+          "system"
         ]
       }
     },

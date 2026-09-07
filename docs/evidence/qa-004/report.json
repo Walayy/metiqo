@@ -1,0 +1,255 @@
+{
+  "ticket": "QA-004",
+  "baseCommit": "342212f",
+  "status": "passed",
+  "versions": {
+    "node": "24.2.0",
+    "pnpm": "11.25.0",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34",
+    "python": "3.13.14",
+    "postgresql": "18.4"
+  },
+  "browserRun": {
+    "source": "data/qa004-windows-final.json",
+    "sha256": "2006c571822bbac123b2a3abf8252b833c19257484092975e1e6a3012081a637",
+    "stats": {
+      "startTime": "2026-09-07T14:33:36.004Z",
+      "duration": 242564.73500000002,
+      "expected": 98,
+      "skipped": 2,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "networkTests": [
+      {
+        "title": "retains the synthetic real operations evidence during a temporary service failure",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1875
+          }
+        ]
+      },
+      {
+        "title": "retains the synthetic real finance evidence during a temporary service failure",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 574
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable / after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1368
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /events after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1293
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1322
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1165
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /models after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1297
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /data after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1712
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /admin after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1882
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /paper-trading after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1443
+          }
+        ]
+      },
+      {
+        "title": "preserves the last readable /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba after a failed refresh and recovers",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1146
+          }
+        ]
+      },
+      {
+        "title": "distinguishes a temporary paper read failure from a missing decision",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1730
+          }
+        ]
+      },
+      {
+        "title": "bounds a transport that never answers and permits recovery",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 31520
+          }
+        ]
+      },
+      {
+        "title": "removes private cached content when the session is explicitly no longer authorized",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 622
+          }
+        ]
+      },
+      {
+        "title": "keeps an already loaded private-mode-disabled page visible while the network is offline",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 522
+          }
+        ]
+      },
+      {
+        "title": "ends an initial unavailable session check with an explicit retry",
+        "ok": true,
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 557
+          }
+        ]
+      }
+    ]
+  },
+  "runs": [
+    {
+      "label": "Python/API/PostgreSQL/ingestion",
+      "source": "data/security/qa004-python-final.log",
+      "sha256": "ed6e294b954f2946e1d9e1e2816b5a1c4debeaf9f08fb62c062b5168f7e12665",
+      "passed": 62,
+      "durationSeconds": 149.62
+    },
+    {
+      "label": "Owner bootstrap and two keyboard browser cases",
+      "source": "data/security/qa004-owner-browser.log",
+      "sha256": "738d87df72c889188d4cd9fb15ee90bf4d20401ab29ed14250e890a950e5b4c5",
+      "passed": 1,
+      "durationSeconds": 40.51
+    }
+  ],
+  "componentTestsPassed": 27,
+  "mypySourceFiles": 420,
+  "scope": "Windows production Next build and mock API, synthetic real transport contracts, real PostgreSQL statement cancellation/idle connection termination, validated CSV bytes in the object store with an injected public-client timeout. Owner sessions are persisted separately. No live financial or commercial-source evidence is inferred.",
+  "limits": {
+    "browserRequestMs": 15000,
+    "automaticReadRetries": 1,
+    "automaticWriteRetries": 0,
+    "apiConnectSeconds": 2,
+    "apiPoolWaitSeconds": 2,
+    "apiStatementSeconds": 8,
+    "apiLockSeconds": 3
+  },
+  "validationLogs": {
+    "data/security/qa004-components.log": "f4bd637b385315fb59c9b7f79eed140c26d1680db60700301790ec00f6d0c0c4",
+    "data/security/qa004-lint-final.log": "68a6dff785ab8779d0fe080a9f8e6e652a74c24e25a74fd91f5544fa56ce8085",
+    "data/security/qa004-types-final.log": "fca24537fd3f635d76cae2e326a3fa9ebadafbe2b843c5ec2d7662bad3465dca",
+    "data/security/qa004-python-types.log": "31be7a6b8317651d4759295ad2da88d8b921f6dd8f370b81906cc1e4b3b60362",
+    "data/security/qa004-openapi.log": "d4cf2c5f140e53218a3fb853b606f0877faa2d8570e85c49ec987af1788e1900"
+  },
+  "inspectedOfflineCaptures": {
+    "docs/evidence/qa-004/network-desktop-offline.png": "0616c05866a73ab7ed0067ebfd170bd31c84c47401ef3fb86e778b9505b9a0d1",
+    "docs/evidence/qa-004/network-mobile-offline.png": "cdc1c7dff5814f8b012a102c924fa77c231a4bffb03a31cc9e4a475eb3dfaeba"
+  },
+  "sourceHashes": {
+    "apps/web/src/app/providers.tsx": "a8924c0eb7107c7c79af471d672bbb0e129c50914e5b25bc3a4c66fd81886d45",
+    "apps/web/src/components/app-shell.tsx": "80a025e432b9051c068df4a7c3e13628a0dc2b5d05dfc1d1ac6d994d0bf68a2f",
+    "apps/web/src/components/data-health-dashboard.tsx": "df37dff8d12daabc8201609c6676bda40d1e3098fa454570e9e6720038c8e777",
+    "apps/web/src/components/event-detail.tsx": "734fc94067540da00fedcff3fece4e3aaf11e6d82a8aa210f82b148d11e2ea61",
+    "apps/web/src/components/events-explorer.tsx": "013bd813f60579fc609cbe3d248c9e4b2b8fc355a19947fa3892a377647bf7de",
+    "apps/web/src/components/mapping-review-queue.tsx": "c2c7cf9f409bd62a9e28f37fd02061cabd64fc22543ff51ba78ad26ea40ebe67",
+    "apps/web/src/components/models-dashboard.tsx": "7223b337b0fce52b474c4a1ba9aeaa3d816577d4747974e255ea04b080a84f3b",
+    "apps/web/src/components/operational-status-panel.tsx": "290e71f8dd15b44ad5450c66ffe21389316ac3848c5383071baf5fda5f1501ce",
+    "apps/web/src/components/opportunities-dashboard.tsx": "1bb5bd2ea290c8cb087befcc4f004dc70c38ed2addfe9cc4d751ea67fa96897d",
+    "apps/web/src/components/owner-access.tsx": "7105d252854b1049a30a182013f915ca7b81267b14c13d5520cc110b8ef87279",
+    "apps/web/src/components/paper-bet-detail.tsx": "683d8c0da7de4e8210aa6a35b5ceaaefa73b8bd2de0defd3e165921d0bb6f062",
+    "apps/web/src/components/paper-financial-report.tsx": "cf15b2d1bafda8844e586f167f75c7e34c21e6c5bb76e0b99357f0b2d937414a",
+    "apps/web/src/components/paper-trading-dashboard.tsx": "8d8b5c45dee5fcfbc4116f0ece14a0d305b7cdabcf4a4a8f80bfc5316c8b3b33",
+    "apps/web/src/components/query-recovery.tsx": "be79d90a6fd6dc03eb47b3ad650677c55cf39371e20e8449acbd12431dc0f976",
+    "apps/web/src/components/real-paper-settlement.tsx": "8af903f1909381f02b847dbc50551bfc10cb19404d66b7b1a0e85d9847de2100",
+    "apps/web/src/components/signal-detail.tsx": "6ed4a44fb9727bc6c1e7825628fd794797df1184ed3f76d2f6526432a252091d",
+    "apps/web/src/lib/backend.test.ts": "eb5faf0d0168b6be4991e8cc0cec90e68b6b8a664bb6f5277e7ca9758fe59536",
+    "apps/web/src/lib/backend.ts": "1985de337192b51cfc9228f71e7192736b6b0249ac4913245fc08509b440073f",
+    "apps/web/src/lib/connectivity.ts": "7b97c66de40e1e210e7cb1d1b992afbebe583c9306123c424a810f89fda3af0f",
+    "docs/network-resilience.md": "b5ef2c443738281d92d63c992fa2ed87d412624667ed3088dcc98d8166ce16c6",
+    "python/metiquo/api/app.py": "57645ae4ed8102a100bd94575adb9e09e192bb69e720059f83973208af6d8682",
+    "tests/e2e/admin-data.spec.ts": "12fd49b7907be0bee9f3b4d847a6198600efc7d1602b489f9774449d3c08bf6d",
+    "tests/e2e/helpers/transport-fixtures.ts": "810e204417749742aba9312a043b0279ea9a947ec6fdc3a400d23790dba4e9fa",
+    "tests/e2e/network-resilience.spec.ts": "8eb626e562c8a5ce25b31dec9c28f8739d7ad1686ce8896cccf454dc66cab2c6",
+    "tests/e2e/real-models.spec.ts": "e537d2332a161e57917e14af28917a9f9045327edd003def6bf0e22761bb50e5",
+    "tests/e2e/visual-stability.spec.ts": "cc90a48bec3777ddaf8b75288cb32f476a18050323b2e6bf3574bd6d337f5b31",
+    "tests/integration/test_network_resilience.py": "b2cdf548ac7c4fe09e926f8c55759048f72f364779ad0c4bf6224e5a89546b79"
+  }
+}

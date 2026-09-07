@@ -8,10 +8,11 @@ from datetime import datetime
 from typing import Protocol, cast
 from uuid import UUID, uuid4
 
-from sqlalchemy import Connection, Engine, Table, func, select, text, update
+from sqlalchemy import Connection, Engine, Table, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from metiquo.db.raw_models import BackfillJob, BackfillYear
+from metiquo.foundation.locks import ResourceBusy, oe_scope, resource_lock
 from metiquo.foundation.time import Clock, SystemClock
 
 
@@ -173,18 +174,11 @@ class BackfillOrchestrator:
         dataset: str,
         year: int,
     ) -> None:
-        lock_key = _advisory_lock_key(provider, year)
-        with self._engine.connect() as connection:
-            acquired = bool(
-                connection.execute(
-                    text("SELECT pg_try_advisory_lock(:lock_key)"),
-                    {"lock_key": lock_key},
-                ).scalar_one()
-            )
-            connection.commit()
-            if not acquired:
-                return
-            try:
+        try:
+            with (
+                resource_lock(self._engine, oe_scope(provider, year)),
+                self._engine.connect() as connection,
+            ):
                 attempt = self._mark_running(connection, job_id, year)
                 try:
                     result = self._processor.sync_year(
@@ -198,14 +192,8 @@ class BackfillOrchestrator:
                     self._mark_failed(connection, job_id, year, error)
                 else:
                     self._mark_succeeded(connection, job_id, year, result)
-            finally:
-                if connection.in_transaction():
-                    connection.rollback()
-                connection.execute(
-                    text("SELECT pg_advisory_unlock(:lock_key)"),
-                    {"lock_key": lock_key},
-                )
-                connection.commit()
+        except ResourceBusy:
+            return
 
     def _mark_running(self, connection: Connection, job_id: UUID, year: int) -> int:
         now = self._clock.now().value
@@ -335,8 +323,3 @@ class BackfillOrchestrator:
             status=str(job["status"]),
             years=self._year_states(job_id),
         )
-
-
-def _advisory_lock_key(provider: str, year: int) -> int:
-    digest = hashlib.sha256(f"{provider}\0{year}".encode()).digest()
-    return int.from_bytes(digest[:8], byteorder="big", signed=True)

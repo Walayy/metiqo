@@ -1,0 +1,36 @@
+{
+  "testedCommit": "5eec0ea753ce940dfc6a6bed8c8397b728d91392",
+  "proofs": [
+    {
+      "originalPath": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/ci/backend.xml",
+      "archivedPath": "docs/evidence/qa-007/5eec0ea/proofs/backend.xml",
+      "sha256": "64aca1378d9f4143629b6ceb271998a9502e7fdd06c1f52a4c85d4e5c35a56f1"
+    },
+    {
+      "originalPath": "data/acceptance/20260907T172350Z-7bc794e9/browser-evidence/data/ci/playwright.xml",
+      "archivedPath": "docs/evidence/qa-007/5eec0ea/proofs/browser.xml",
+      "sha256": "4e58a795a16df5dd50add252cbddc6473158aa68c300de532c9fcde10708612f"
+    },
+    {
+      "originalPath": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/security/20260907T172234Z-dab2582e/summary.json",
+      "archivedPath": "docs/evidence/qa-007/5eec0ea/proofs/security.json",
+      "sha256": "4e86ba4920c448e72405fa1a6cb7cc04d1fc492c980baf7ebd891a0867adff31"
+    },
+    {
+      "originalPath": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/performance/20260907T172153Z-b10c28dc/report.json",
+      "archivedPath": "docs/evidence/qa-007/5eec0ea/proofs/performance.json",
+      "sha256": "fcf4e39f9dc4f269d6ce00da55453760ba2667fd5027dadb7dbbfbd278a402b5"
+    },
+    {
+      "originalPath": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/acceptance/startup-23c12b71d523/report.json",
+      "archivedPath": "docs/evidence/qa-007/5eec0ea/proofs/startup.json",
+      "sha256": "3a81f1efe1ef457e715456f214d6df00c4ab223d0ba67ce04e7dcc26d5b1ec79"
+    },
+    {
+      "source": "https://github.com/Walayy/metiqo/actions/runs/34146257438",
+      "archivedPath": "docs/evidence/qa-007/5eec0ea/negative-ci.txt",
+      "sha256": "8e50774c73e0b0dd6300271a05938bc712c3dcf71e827cd0770d5fb8d8363a91"
+    }
+  ],
+  "note": "Exact bytes copied from the verified GitHub artifacts. This documentary archive references the tested code commit."
+}

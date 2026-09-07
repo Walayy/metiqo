@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Query
+from fastapi.responses import JSONResponse
 
 from metiquo.api.dto import (
     CapabilityEvaluationDto,
@@ -37,10 +38,13 @@ from metiquo.contracts.enums import (
     MappingReviewStatus,
     ProviderStatus,
 )
+from metiquo.foundation.audit import mutation_actor
+from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_mapping import PostgresMappingRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
+from metiquo.repositories.postgres_operations import PostgresOperationsRepository
 from metiquo.services.real_admin import RealAdminMutationService
 from metiquo.services.real_mapping import RealMappingMutationService
 
@@ -123,12 +127,12 @@ def build_real_admin_router(
         limit: Limit = 20,
         status: Literal["succeeded", "failed"] | None = None,
     ) -> PageResponse[IngestionRunSummary]:
-        values = tuple(
-            item
-            for item in repository.list_ingestion_runs()
-            if status is None or item.status == status
+        page = repository.ingestion_runs_page(offset=offset, limit=limit, status=status)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
         )
-        return _page(values, offset, limit, repository, clock)
 
     @router.get("/quality-issues", response_model=PageResponse[DataQualityIssue])
     def list_quality_issues(
@@ -137,44 +141,58 @@ def build_real_admin_router(
         severity: Literal["warning", "blocking"] | None = None,
         status: Literal["open", "quarantined"] | None = None,
     ) -> PageResponse[DataQualityIssue]:
-        values = tuple(
-            item
-            for item in repository.list_quality_issues()
-            if (severity is None or item.severity == severity)
-            and (status is None or item.status == status)
+        page = repository.quality_issues_page(
+            offset=offset, limit=limit, severity=severity, status=status
         )
-        return _page(values, offset, limit, repository, clock)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
+        )
 
     @router.get("/jobs", response_model=PageResponse[JobSummary])
     def list_jobs(
         offset: Offset = 0,
         limit: Limit = 20,
-        status: Literal["idle", "succeeded", "failed", "running"] | None = None,
+        status: Literal["idle", "queued", "succeeded", "failed", "running", "cancelled", "dead"]
+        | None = None,
     ) -> PageResponse[JobSummary]:
-        values = tuple(
-            item
-            for item in (*model_repository.list_jobs(), *repository.list_jobs())
-            if status is None or item.status == status
+        page = PostgresOperationsRepository(repository.engine).jobs(
+            offset=offset, limit=limit, status=status
         )
-        return _page(values, offset, limit, repository, clock)
+        return PageResponse[JobSummary](
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
+        )
+
+    @router.get("/jobs/{job_id}", response_model=ItemResponse[JobSummary])
+    def get_job(job_id: UUID) -> ItemResponse[JobSummary]:
+        job = PostgresOperationsRepository(repository.engine).job(job_id)
+        if job is None:
+            raise BusinessError(ErrorCode.NOT_FOUND, "Job introuvable")
+        return ItemResponse(data=job, meta=_meta(repository, clock))
 
     @router.get("/audit-log", response_model=PageResponse[AuditEntry])
     def list_audit(offset: Offset = 0, limit: Limit = 20) -> PageResponse[AuditEntry]:
-        values = tuple(
-            sorted(
-                (*model_repository.list_audit(), *mapping_repository.list_audit()),
-                key=lambda item: (item.occurred_at, item.audit_id),
-                reverse=True,
-            )
+        page = PostgresOperationsRepository(repository.engine).audits(offset=offset, limit=limit)
+        return PageResponse[AuditEntry](
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
         )
-        return _page(values, offset, limit, repository, clock)
 
     @router.get("/mappings/pending", response_model=PageResponse[MappingReview])
     def list_pending_mappings(
         offset: Offset = 0,
         limit: Limit = 20,
     ) -> PageResponse[MappingReview]:
-        return _page(mapping_repository.list_pending(), offset, limit, repository, clock)
+        page = mapping_repository.pending_page(offset=offset, limit=limit)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(repository, clock),
+        )
 
     def mapping_decision(
         mapping_review_id: UUID,
@@ -187,7 +205,7 @@ def build_real_admin_router(
                 idempotency_key,
                 mapping_review_id,
                 status,
-                request.reviewer,
+                mutation_actor(request.reviewer),
                 request.reason,
                 request.candidate_event_id,
             ),
@@ -238,7 +256,7 @@ def build_real_admin_router(
                 request.alias,
                 request.canonical_id,
                 request.entity_type,
-                request.reviewer,
+                mutation_actor(request.reviewer),
                 request.reason,
             ),
             meta=_meta(repository, clock),
@@ -262,29 +280,47 @@ def build_real_admin_router(
     @router.post(
         "/oracles-elixir/sync",
         response_model=ItemResponse[IngestionRunSummary],
+        responses={
+            202: {"model": ItemResponse[JobSummary], "description": "Synchronisation en file"}
+        },
     )
     def sync(
         idempotency_key: IdempotencyKey,
         year: Annotated[int | None, Query(ge=2014, le=2200)] = None,
-    ) -> ItemResponse[IngestionRunSummary]:
+    ) -> ItemResponse[IngestionRunSummary] | JSONResponse:
+        result = mutation_service.sync(idempotency_key, year)
+        if isinstance(result, JobSummary):
+            return JSONResponse(
+                status_code=202,
+                content=ItemResponse(data=result, meta=_meta(repository, clock)).model_dump(
+                    mode="json",
+                    by_alias=True,
+                ),
+            )
         return ItemResponse(
-            data=mutation_service.sync(idempotency_key, year),
+            data=result,
             meta=_meta(repository, clock),
         )
 
-    @router.post("/models/train", response_model=ItemResponse[ModelSummary])
+    @router.post(
+        "/models/train",
+        response_model=ItemResponse[ModelSummary],
+        responses={202: {"model": ItemResponse[JobSummary], "description": "Entraînement en file"}},
+    )
     def train(
         request: TrainModelRequest,
         idempotency_key: IdempotencyKey,
-    ) -> ItemResponse[ModelSummary]:
-        return ItemResponse(
-            data=mutation_service.train(
-                idempotency_key,
-                request.game_title,
-                request.market_type,
-            ),
-            meta=_meta(repository, clock),
-        )
+    ) -> ItemResponse[ModelSummary] | JSONResponse:
+        result = mutation_service.train(idempotency_key, request.game_title, request.market_type)
+        if isinstance(result, JobSummary):
+            return JSONResponse(
+                status_code=202,
+                content=ItemResponse(data=result, meta=_meta(repository, clock)).model_dump(
+                    mode="json",
+                    by_alias=True,
+                ),
+            )
+        return ItemResponse(data=result, meta=_meta(repository, clock))
 
     @router.post(
         "/models/{model_version_id}/promote",

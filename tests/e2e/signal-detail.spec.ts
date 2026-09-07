@@ -29,7 +29,12 @@ test("explains an admissible signal without causal or guaranteed language", asyn
     "lol-match-winner-v1",
   );
   await expect(page.getByRole("link", { name: "Créer un paper bet" })).toBeVisible();
-  await expect(page.getByText(/garanti|\block\b|\bsûr\b/i)).toHaveCount(0);
+  await expect(
+    page.getByText(/garanti|\block\b|\bsûr\b/i).filter({
+      hasNotText: /^Metiquo ne garantit aucun gain\.$/,
+    }),
+  ).toHaveCount(0);
+  await expect(page.getByText("Metiquo ne garantit aucun gain.", { exact: true })).toBeVisible();
 });
 
 test("shows abstention reasons and blocks paper trading for a stale signal", async ({ page }) => {

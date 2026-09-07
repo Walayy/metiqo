@@ -37,7 +37,7 @@ def _alembic_config(url: str) -> Config:
     return config
 
 
-def _settings(database_url: str, mode: str) -> Settings:
+def _settings(database_url: str, mode: str, *, year: int = 2026) -> Settings:
     return Settings.model_validate(
         {
             "app_env": "test",
@@ -46,6 +46,7 @@ def _settings(database_url: str, mode: str) -> Settings:
             "object_store_root": str(_ROOT / ".unused-canonical-api-store"),
             "odds_provider": "disabled" if mode == "real" else "mock",
             "mock_seed": "canonical-api-contract",
+            "oe_current_year": year,
         }
     )
 
@@ -97,9 +98,10 @@ def test_real_canonical_repositories_and_event_api_match_mock_contract(
     assert repository.list_markets(events[0].event_id) == ()
     assert repository.odds_history(events[0].event_id) == ()
 
-    clock = FixedClock(UtcInstant(datetime(2026, 9, 6, 7, 0, tzinfo=UTC)))
+    # The fixture was validated at 08:00 and belongs to the synthetic year 2194.
+    clock = FixedClock(UtcInstant(datetime(2026, 9, 6, 9, 0, tzinfo=UTC)))
     real_app = create_app(
-        settings=_settings(postgresql_url, "real"),
+        settings=_settings(postgresql_url, "real", year=2194),
         readiness_probe=_ReadyProbe(),
         clock=clock,
     )
@@ -115,7 +117,8 @@ def test_real_canonical_repositories_and_event_api_match_mock_contract(
     assert payload["page"] == {"offset": 0, "limit": 2, "total": 4}
     assert payload["meta"]["dataMode"] == "real"
     assert payload["meta"]["freshness"] == "fresh"
-    assert payload["meta"]["computedAt"] == payload["meta"]["asOf"]
+    assert payload["meta"]["computedAt"] == "2026-09-06T09:00:00Z"
+    assert payload["meta"]["asOf"] == "2026-09-06T08:00:00Z"
     assert len(payload["data"]) == 2
     competition = _request(real_app, f"/api/v1/events?competition={suffix}&status=finished")
     dated = _request(real_app, f"/api/v1/events?team={suffix}&startsFrom=2026-08-03T00:00:00Z")

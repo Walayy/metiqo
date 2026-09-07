@@ -2,6 +2,7 @@ import type { AbstentionReason, OddsSnapshot, Opportunity } from "@metiquo/contr
 import { describe, expect, it } from "vitest";
 
 import {
+  describeOpportunity,
   formatSignedPercent,
   formatAbstentionReasons,
   formatTimeUntil,
@@ -10,6 +11,34 @@ import {
   newerOddsSnapshot,
   sortOpportunities,
 } from "./opportunity-presenters";
+
+it.each(["finished", "cancelled", "live"] as const)(
+  "explains why a %s event cannot be selected",
+  (status) => {
+    const value = opportunity({
+      conservativeExpectedValue: "0.2",
+      signalId: "signal",
+      startsAt: "2026-09-04T13:00:00Z",
+    });
+    value.event.status = status;
+    expect(describeOpportunity(value, "2026-09-04T12:00:00Z")).not.toContain("Signal admissible");
+  },
+);
+
+it("explains the same cutoff, freshness and market checks as the paper button", () => {
+  const value = opportunity({
+    conservativeExpectedValue: "0.2",
+    signalId: "signal",
+    startsAt: "2026-09-04T12:00:00Z",
+  });
+  expect(describeOpportunity(value, "2026-09-04T12:00:00Z")).toContain("Match déjà commencé");
+  value.event.startsAt = "2026-09-04T13:00:00Z";
+  value.meta.freshness = "stale";
+  expect(describeOpportunity(value, "2026-09-04T12:00:00Z")).not.toContain("Signal admissible");
+  value.meta.freshness = "fresh";
+  value.market.status = "suspended";
+  expect(describeOpportunity(value, "2026-09-04T12:00:00Z")).not.toContain("Signal admissible");
+});
 
 function opportunity(overrides: {
   conservativeExpectedValue: string;

@@ -19,7 +19,10 @@ export default defineConfig({
       env: {
         APP_DATA_MODE: "mock",
         APP_ENV: "test",
-        DATABASE_URL: "postgresql+psycopg://metiquo@127.0.0.1:5432/metiquo",
+        DATABASE_URL:
+          process.env.E2E_DATABASE_URL ?? "postgresql+psycopg://metiquo@127.0.0.1:5432/metiquo",
+        AUTH_MODE: process.env.E2E_AUTH_MODE ?? "disabled",
+        APP_PUBLIC_ORIGIN: baseUrl,
         ODDS_PROVIDER: "mock",
       },
       reuseExistingServer: process.env.CI !== "true",

@@ -1,0 +1,52 @@
+{
+  "scope": "Exact path and two recomputed checksums of verified CI artifacts; no vulnerability exception.",
+  "evidence": [
+    {
+      "path": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/security/20260907T172234Z-dab2582e/secret-scan-summary.json",
+      "sha256": "59427894f5cd2b7e2e9dcad375e37a712a5bf476a6cc2d82bb4c7b2bde8b4cc8"
+    },
+    {
+      "path": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/security/20260907T172234Z-dab2582e/image-api.json",
+      "sha256": "ba500f4fad735ebda4823599ed7a9175a252a2db4240b8ae1c41afeb9f633978"
+    }
+  ],
+  "checks": [
+    {
+      "file": "secret-scan-summary.json",
+      "scenario": "reviewed checksum at exact path",
+      "expectedExit": 0,
+      "actualExit": 0
+    },
+    {
+      "file": "secret-scan-summary.json",
+      "scenario": "same checksum at another path",
+      "expectedExit": 1,
+      "actualExit": 1
+    },
+    {
+      "file": "secret-scan-summary.json",
+      "scenario": "another checksum at reviewed path",
+      "expectedExit": 1,
+      "actualExit": 1
+    },
+    {
+      "file": "image-api.json",
+      "scenario": "reviewed checksum at exact path",
+      "expectedExit": 0,
+      "actualExit": 0
+    },
+    {
+      "file": "image-api.json",
+      "scenario": "same checksum at another path",
+      "expectedExit": 1,
+      "actualExit": 1
+    },
+    {
+      "file": "image-api.json",
+      "scenario": "another checksum at reviewed path",
+      "expectedExit": 1,
+      "actualExit": 1
+    }
+  ],
+  "passed": true
+}

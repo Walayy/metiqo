@@ -3,10 +3,23 @@ name: metiquo
 x-python-build: &python-build
   context: .
   dockerfile: infra/compose/python.Dockerfile
+  args:
+    APP_CODE_COMMIT: ${BUILD_CODE_COMMIT:-}
 
 x-app-environment: &app-environment
   APP_ENV: ${APP_ENV:-development}
   APP_DATA_MODE: ${APP_DATA_MODE:-mock}
+  RELEASE_AUDIENCE: ${RELEASE_AUDIENCE:-personal}
+  OE_COMMERCIAL_GATE: ${OE_COMMERCIAL_GATE:-NO-GO}
+  RIOT_PRODUCT_GATE: ${RIOT_PRODUCT_GATE:-NO-GO}
+  AUTH_MODE: ${AUTH_MODE:-disabled}
+  APP_PUBLISH_HOST: ${APP_PUBLISH_HOST:-127.0.0.1}
+  APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:-http://localhost:3000}
+  AUTH_PRIVATE_NETWORKS: ${AUTH_PRIVATE_NETWORKS:-[]}
+  AUTH_SESSION_IDLE_SECONDS: ${AUTH_SESSION_IDLE_SECONDS:-1800}
+  AUTH_SESSION_ABSOLUTE_SECONDS: ${AUTH_SESSION_ABSOLUTE_SECONDS:-43200}
+  AUTH_SESSION_ROTATION_SECONDS: ${AUTH_SESSION_ROTATION_SECONDS:-900}
+  AUTH_SESSION_GRACE_SECONDS: ${AUTH_SESSION_GRACE_SECONDS:-10}
   DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://metiquo@postgres:5432/metiquo}
   OBJECT_STORE_BACKEND: ${OBJECT_STORE_BACKEND:-filesystem}
   OBJECT_STORE_ROOT: ${OBJECT_STORE_ROOT:-/data}
@@ -15,6 +28,27 @@ x-app-environment: &app-environment
   OE_REQUIRE_FRESH: ${OE_REQUIRE_FRESH:-false}
   OE_CURRENT_YEAR: ${OE_CURRENT_YEAR:-2026}
   OE_FRESHNESS_SLA_SECONDS: ${OE_FRESHNESS_SLA_SECONDS:-10800}
+  MODEL_FRESHNESS_SLA_SECONDS: ${MODEL_FRESHNESS_SLA_SECONDS:-2592000}
+  WORKER_SCHEDULER_ENABLED: ${WORKER_SCHEDULER_ENABLED:-true}
+  WORKER_SCHEDULER_TICK_SECONDS: ${WORKER_SCHEDULER_TICK_SECONDS:-15}
+  WORKER_RETRY_DELAYS_SECONDS: ${WORKER_RETRY_DELAYS_SECONDS:-[600,1800,7200]}
+  WORKER_RETRY_JITTER_FRACTION: ${WORKER_RETRY_JITTER_FRACTION:-0.1}
+  OE_SYNC_INTERVAL_SECONDS: ${OE_SYNC_INTERVAL_SECONDS:-10800}
+  OE_CLOSED_AUDIT_MONTHS: ${OE_CLOSED_AUDIT_MONTHS:-1}
+  OE_DEEP_CHECK_INTERVAL_SECONDS: ${OE_DEEP_CHECK_INTERVAL_SECONDS:-86400}
+  PAPER_SETTLEMENT_INTERVAL_SECONDS: ${PAPER_SETTLEMENT_INTERVAL_SECONDS:-300}
+  PAPER_REPORT_INTERVAL_SECONDS: ${PAPER_REPORT_INTERVAL_SECONDS:-300}
+  ALERT_INTERVAL_SECONDS: ${ALERT_INTERVAL_SECONDS:-300}
+  ALERT_COOLDOWN_SECONDS: ${ALERT_COOLDOWN_SECONDS:-21600}
+  ALERT_MAPPING_BACKLOG_LIMIT: ${ALERT_MAPPING_BACKLOG_LIMIT:-10}
+  BACKUP_ENABLED: ${BACKUP_ENABLED:-true}
+  BACKUP_ROOT: ${BACKUP_ROOT:-/data/backups}
+  BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+  BACKUP_FRESHNESS_SLA_SECONDS: ${BACKUP_FRESHNESS_SLA_SECONDS:-129600}
+  BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-7}
+  BACKUP_TIMEOUT_SECONDS: ${BACKUP_TIMEOUT_SECONDS:-3600}
+  BACKUP_EXTERNAL: ${BACKUP_EXTERNAL:-false}
+  BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}
   OE_SOURCE_CATALOG_PATH: ${OE_SOURCE_CATALOG_PATH:-/app/config/oracles_elixir_sources.yml}
   OE_CONNECT_TIMEOUT_SECONDS: ${OE_CONNECT_TIMEOUT_SECONDS:-10}
   OE_READ_TIMEOUT_SECONDS: ${OE_READ_TIMEOUT_SECONDS:-60}
@@ -35,7 +69,10 @@ x-app-environment: &app-environment
 
 services:
   postgres:
-    image: postgres:18@sha256:4aabea78cf39b90e834caf3af7d602a18565f6fe2508705c8d01aa63245c2e20
+    image: metiquo-postgres:local
+    build:
+      context: .
+      dockerfile: infra/compose/postgres.Dockerfile
     environment:
       POSTGRES_DB: metiquo
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -63,11 +100,14 @@ services:
     command:
       - /bin/sh
       - -ec
-      - chown -R 10001:10001 /data/raw /data/models /data/backups
+      - chown -R 10001:10001 /data/raw /data/models /data/backups /data/quarantine /data/work && chown -R 1000:1000 /data/gateway
     volumes:
       - raw_snapshots:/data/raw
       - model_artifacts:/data/models
       - backups:/data/backups
+      - quarantine_snapshots:/data/quarantine
+      - ingestion_work:/data/work
+      - gateway_data:/data/gateway
     network_mode: none
     restart: "no"
 
@@ -98,9 +138,20 @@ services:
     image: metiquo-api:local
     build: *python-build
     init: true
+    stop_grace_period: 30s
     read_only: true
     command:
-      ["uvicorn", "metiquo.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+      [
+        "uvicorn",
+        "metiquo.api.app:create_app",
+        "--factory",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--timeout-graceful-shutdown",
+        "25",
+      ]
     environment: *app-environment
     depends_on:
       postgres:
@@ -120,11 +171,14 @@ services:
       retries: 15
       start_period: 3s
     ports:
-      - "127.0.0.1:8000:8000"
+      - target: 8000
+        published: "8000"
+        host_ip: ${APP_PUBLISH_HOST:-127.0.0.1}
     tmpfs:
       - /tmp:size=16m,mode=1777
     volumes:
       - raw_snapshots:/data/raw:ro
+      - quarantine_snapshots:/data/quarantine:ro
       - model_artifacts:/data/models:ro
     networks:
       - backend
@@ -135,6 +189,7 @@ services:
     image: metiquo-worker:local
     build: *python-build
     init: true
+    stop_grace_period: 90s
     read_only: true
     command: ["python", "-m", "metiquo.worker"]
     environment: *app-environment
@@ -153,10 +208,13 @@ services:
       - /tmp:size=16m,mode=1777
     volumes:
       - raw_snapshots:/data/raw
+      - quarantine_snapshots:/data/quarantine
       - model_artifacts:/data/models
       - backups:/data/backups
+      - ingestion_work:/data/work
     networks:
       - backend
+      - ingestion_egress
     restart: unless-stopped
 
   web:
@@ -170,6 +228,7 @@ services:
     read_only: true
     command: ["node", "apps/web/server.js"]
     environment:
+      APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:-http://localhost:3000}
       APP_DATA_MODE: ${APP_DATA_MODE:-mock}
       API_BASE_URL: http://api:8000
     depends_on:
@@ -188,7 +247,9 @@ services:
       retries: 15
       start_period: 3s
     ports:
-      - "127.0.0.1:3000:3000"
+      - target: 3000
+        published: "3000"
+        host_ip: ${APP_PUBLISH_HOST:-127.0.0.1}
     tmpfs:
       - /tmp:size=16m,mode=1777
     networks:
@@ -196,23 +257,32 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    image: metiquo-gateway:local
+    build:
+      context: .
+      dockerfile: infra/compose/gateway.Dockerfile
     profiles: ["production", "object-store"]
     user: "1000:1000"
     read_only: true
+    environment:
+      APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:-https://localhost:8443}
     depends_on:
+      volume-init:
+        condition: service_completed_successfully
       api:
         condition: service_healthy
       web:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8443:8443"
+      - target: 8443
+        published: ${GATEWAY_HTTPS_PORT:-8443}
+        host_ip: ${APP_PUBLISH_HOST:-127.0.0.1}
     tmpfs:
       - /config:size=8m,mode=0700,uid=1000,gid=1000
-      - /data:size=32m,mode=0700,uid=1000,gid=1000
       - /tmp:size=8m,mode=1777
     volumes:
       - ./infra/gateway/Caddyfile:/etc/caddy/Caddyfile:ro
+      - gateway_data:/data
     networks:
       - frontend
     restart: unless-stopped
@@ -246,10 +316,14 @@ networks:
   backend:
     internal: true
   frontend:
+  ingestion_egress:
 
 volumes:
   postgres_data:
   raw_snapshots:
   model_artifacts:
   backups:
+  quarantine_snapshots:
+  ingestion_work:
+  gateway_data:
   minio_data:

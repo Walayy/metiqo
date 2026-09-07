@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from decimal import Decimal
 from importlib.metadata import version
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import Engine, RowMapping, Table, select
+from sqlalchemy import Engine, RowMapping, Table, false, func, select
 from sqlalchemy.sql import Select
 
 from metiquo.contracts import (
@@ -30,6 +32,7 @@ from metiquo.contracts.enums import (
     SelectionType,
     ValueGrade,
 )
+from metiquo.db.core_models import Team
 from metiquo.db.ml_models import ModelVersion, PrematchPrediction
 from metiquo.db.odds_models import (
     OddsProviderRecord,
@@ -38,7 +41,12 @@ from metiquo.db.odds_models import (
 )
 from metiquo.db.pricing_models import SignalRecord
 from metiquo.foundation.time import Clock, SystemClock
-from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
+from metiquo.repositories.canonical_events_sql import (
+    event_from_row,
+    event_projection,
+    filter_events,
+)
+from metiquo.repositories.pagination import ReadPage, page_rows
 from metiquo.repositories.postgres_models import PostgresModelRepository
 
 _OPPORTUNITY_GRADES = frozenset(
@@ -52,7 +60,6 @@ class PostgresOpportunityRepository:
     def __init__(self, engine: Engine, clock: Clock | None = None) -> None:
         self.engine = engine
         self.clock = clock or SystemClock()
-        self._events = PostgresCanonicalRepository(engine, self.clock)
 
     def list(self, *, include_diagnostics: bool = False) -> tuple[Opportunity, ...]:
         statement = self._statement().order_by(
@@ -79,6 +86,65 @@ class PostgresOpportunityRepository:
             )
         return None if row is None else self._opportunity(row)
 
+    def page(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 20,
+        event_id: UUID | None = None,
+        competition: str | None = None,
+        team: str | None = None,
+        market: MarketType | None = None,
+        grade: ValueGrade | None = None,
+        min_edge: Decimal | None = None,
+        min_ev: Decimal | None = None,
+        min_confidence: Decimal | None = None,
+        freshness: FreshnessStatus | None = None,
+        starts_from: datetime | None = None,
+        starts_to: datetime | None = None,
+    ) -> ReadPage[Opportunity]:
+        entries = self._statement().subquery("opportunity_rows")
+        statement = filter_events(
+            select(entries),
+            entries,
+            competition=competition,
+            team=team,
+            starts_from=starts_from,
+            starts_to=starts_to,
+            prefix="canonical_",
+        )
+        statement = (
+            statement.where(entries.c.grade == grade.value)
+            if grade is not None
+            else statement.where(entries.c.grade.in_(_OPPORTUNITY_GRADES))
+        )
+        if event_id is not None:
+            statement = statement.where(entries.c.canonical_event_id == event_id)
+        if market is not None and market is not MarketType.MATCH_WINNER:
+            statement = statement.where(false())
+        for column, minimum in (
+            (entries.c.edge, min_edge),
+            (entries.c.expected_value, min_ev),
+            (entries.c.confidence, min_confidence),
+        ):
+            if minimum is not None:
+                statement = statement.where(column >= minimum)
+        if freshness is not None:
+            statement = statement.where(entries.c.source_freshness == freshness.value)
+        statement = statement.order_by(
+            entries.c.conservative_expected_value.desc(),
+            entries.c.computed_at.desc(),
+            entries.c.signal_id,
+        )
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            page = page_rows(connection, statement, offset=offset, limit=limit)
+        return ReadPage(
+            tuple(item for row in page.items if (item := self._opportunity(row)) is not None),
+            page.total,
+        )
+
     @staticmethod
     def _statement() -> Select[tuple[Any, ...]]:
         signals = cast(Table, SignalRecord.__table__)
@@ -87,11 +153,13 @@ class PostgresOpportunityRepository:
         markets = cast(Table, ProviderOddsMarket.__table__)
         predictions = cast(Table, PrematchPrediction.__table__)
         models = cast(Table, ModelVersion.__table__)
+        events = event_projection()
         return (
             select(
                 signals.c.id.label("signal_id"),
                 signals.c.odds_snapshot_id,
                 signals.c.selection_type,
+                func.coalesce(Team.display_name, Team.normalized_name).label("selected_team_name"),
                 signals.c.policy_version,
                 signals.c.offered_odds,
                 signals.c.raw_implied_probability,
@@ -131,6 +199,7 @@ class PostgresOpportunityRepository:
                 predictions.c.out_of_distribution_distance,
                 predictions.c.reason_codes,
                 models.c.status.label("model_status"),
+                *(column.label(f"canonical_{column.name}") for column in events.c),
             )
             .select_from(
                 signals.join(snapshots, snapshots.c.id == signals.c.odds_snapshot_id)
@@ -138,6 +207,8 @@ class PostgresOpportunityRepository:
                 .join(markets, markets.c.id == snapshots.c.market_id)
                 .join(predictions, predictions.c.id == signals.c.prediction_id)
                 .join(models, models.c.id == predictions.c.model_version_id)
+                .join(Team, Team.id == signals.c.selected_team_id)
+                .join(events, events.c.event_id == predictions.c.event_id)
             )
             .where(
                 signals.c.value_computed.is_(True),
@@ -149,11 +220,9 @@ class PostgresOpportunityRepository:
         )
 
     def _opportunity(self, row: RowMapping) -> Opportunity | None:
-        event = self._events.get(cast(UUID, row["event_id"]))
-        if event is None:
-            return None
+        event = event_from_row(row, "canonical_")
         selection = SelectionType(str(row["selection_type"]))
-        selection_label = event.team_a if selection is SelectionType.TEAM_A else event.team_b
+        selection_label = str(row["selected_team_name"])
         market_id = cast(UUID, row["market_id"])
         captured_at = row["captured_at"]
         computed_at = row["computed_at"]

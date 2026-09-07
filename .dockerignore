@@ -2,6 +2,10 @@
 .github
 .env
 .env.*
+.secrets
+**/*.pem
+**/*.key
+*.log
 .venv
 **/node_modules
 **/.next

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import gzip
 import hashlib
 import io
@@ -13,7 +14,8 @@ import tempfile
 import zipfile
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from decimal import Decimal
 from enum import IntEnum
 from pathlib import Path
 from typing import cast
@@ -21,24 +23,21 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Engine, Table, create_engine, func, insert, select
 
+from metiquo.auth.service import AuthError, OwnerAuthService
+from metiquo.canonical.rosters import CanonicalRosterBuilder
+from metiquo.canonical.series import CanonicalSeriesBuilder
 from metiquo.config import ConfigurationError, ObjectStoreBackend, Settings, load_settings
 from metiquo.contracts.enums import DataMode
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
 from metiquo.features.dataset import FeatureDatasetBuilder
+from metiquo.foundation.audit import audit_context
+from metiquo.foundation.errors import BusinessError
 from metiquo.foundation.time import SystemClock
 from metiquo.ingestion.backfill import BackfillOrchestrator, YearSyncResult
-from metiquo.ingestion.catalog import (
-    LandingPageFetcher,
-    SourceCatalogRepository,
-    reconcile_catalog,
-)
-from metiquo.ingestion.fallback_catalog import (
-    CatalogDiscoveryService,
-    VersionedFallbackCatalog,
-)
 from metiquo.ingestion.freshness import FreshDataRequired, FreshnessPolicy
 from metiquo.ingestion.invalidation import RevisionInvalidationService
 from metiquo.ingestion.object_store import FilesystemObjectStore
+from metiquo.ingestion.operations import refresh_catalog
 from metiquo.ingestion.raw_loader import RawTabularLoader
 from metiquo.ingestion.sync import OracleElixirYearSync, SyncFailed
 from metiquo.models import (
@@ -46,6 +45,15 @@ from metiquo.models import (
     ModelArtifactStore,
     WalkForwardConfig,
 )
+from metiquo.operations.backup import BackupService
+from metiquo.operations.backup_tools import BackupError
+from metiquo.operations.migration_drill import MigrationDrill
+from metiquo.operations.restore import RestoreRequest, RestoreService
+from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
+from metiquo.paper.reporting import PostgresFinancialReportingService
+from metiquo.paper.settlement_job import PostgresPaperSettlementService
+from metiquo.services.value_pipeline import PostgresValuePipeline, ValueEvaluationRequest
+from metiquo.worker.queue import PostgresJobQueue
 
 _PROVIDER = "oracles_elixir"
 _DATASET = "league_of_legends_match_data"
@@ -130,6 +138,69 @@ def build_parser() -> argparse.ArgumentParser:
     model_train.add_argument("--validation-periods", type=int, default=10)
     model_train.add_argument("--final-test-periods", type=int, default=10)
     _machine_output(model_train)
+    value = commands.add_parser(
+        "value-evaluate", help="évaluer et persister un signal depuis ses preuves"
+    )
+    value.add_argument("--odds-snapshot", type=UUID, required=True)
+    value.add_argument("--event-mapping", type=UUID, required=True)
+    value.add_argument("--market-mapping", type=UUID, required=True)
+    value.add_argument("--policy", required=True)
+    value.add_argument("--prediction", type=UUID)
+    _machine_output(value)
+    paper = commands.add_parser("paper-create", help="enregistrer une décision fictive manuelle")
+    paper.add_argument("--signal", type=UUID, required=True)
+    paper.add_argument("--stake", type=Decimal, required=True)
+    paper.add_argument("--currency", required=True)
+    paper.add_argument("--idempotency-key", required=True)
+    paper.add_argument("--actor", required=True)
+    _machine_output(paper)
+    settle = commands.add_parser(
+        "paper-settle", help="régler le ledger depuis les résultats OE validés"
+    )
+    settle.add_argument("--paper-bet", type=UUID)
+    settle.add_argument("--idempotency-key")
+    settle.add_argument("--actor", default="oe-settlement-job")
+    settle.add_argument("--correction-reason")
+    settle.add_argument("--limit", type=int, default=100)
+    _machine_output(settle)
+    report = commands.add_parser(
+        "paper-report", help="matérialiser les métriques du ledger observé"
+    )
+    report.add_argument("--currency", required=True)
+    _machine_output(report)
+    jobs = commands.add_parser("jobs", help="consulter, annuler ou relancer les jobs")
+    backup = commands.add_parser("backup", help="sauvegarder la base et les objets immuables")
+    _machine_output(backup)
+    restore = commands.add_parser(
+        "restore", help="restaurer dans une base et un dossier de test neufs"
+    )
+    restore.add_argument("--backup-id", type=UUID, required=True)
+    restore.add_argument("--index-sha256", required=True)
+    restore.add_argument("--target-database", required=True)
+    restore.add_argument("--target-objects", type=Path, required=True)
+    restore.add_argument("--identity", type=Path)
+    restore.add_argument(
+        "--migration-dry-run",
+        action="store_true",
+        help="vérifier aussi les migrations courantes sur la copie restaurée",
+    )
+    _machine_output(restore)
+    auth = commands.add_parser("auth", help="préparer ou renouveler les identifiants Owner")
+    auth_commands = auth.add_subparsers(dest="auth_action", required=True)
+    for action in ("bootstrap-owner", "reset-password"):
+        operation = auth_commands.add_parser(action)
+        operation.add_argument("--username", required=True)
+        operation.add_argument("--password-file", type=Path)
+        _machine_output(operation)
+    job_commands = jobs.add_subparsers(dest="job_action", required=True)
+    for action in ("show", "cancel", "rerun"):
+        operation = job_commands.add_parser(action)
+        operation.add_argument("job_id", type=UUID)
+        if action == "rerun":
+            operation.add_argument("--key", required=True)
+            operation.add_argument("--actor", required=True)
+            operation.add_argument("--reason", required=True)
+        _machine_output(operation)
     return parser
 
 
@@ -141,7 +212,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         settings = load_settings()
         engine = _engine(settings)
         try:
-            document, exit_code = _dispatch(arguments, settings, engine)
+            with audit_context(actor=getattr(arguments, "actor", "cli-local"), trace_id=uuid4()):
+                document, exit_code = _dispatch(arguments, settings, engine)
         finally:
             engine.dispose()
     except FreshDataRequired as error:
@@ -160,18 +232,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             "runId": str(error.run_id),
         }
         exit_code = ExitCode.SOURCE_FAILURE
-    except (CliError, ConfigurationError, ValueError) as error:
+    except (
+        CliError,
+        ConfigurationError,
+        ValueError,
+        BusinessError,
+        BackupError,
+        AuthError,
+    ) as error:
         document = {
             "ok": False,
             "errorCode": getattr(error, "code", "INVALID_CONFIGURATION"),
             "message": str(error),
         }
         exit_code = getattr(error, "exit_code", ExitCode.USAGE_OR_CONFIGURATION)
-    except Exception as error:
+    except Exception:
         document = {
             "ok": False,
             "errorCode": "UNEXPECTED_FAILURE",
-            "message": str(error),
+            "message": "Échec interne ; consulter le code structuré",
         }
         exit_code = ExitCode.SOURCE_FAILURE
     _emit(document, machine_readable=machine_readable, failed=exit_code != ExitCode.SUCCESS)
@@ -183,6 +262,204 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "auth":
+        if arguments.password_file is not None:
+            if (
+                not arguments.password_file.is_file()
+                or arguments.password_file.stat().st_size > 4096
+            ):
+                raise AuthError("AUTH_PASSWORD_FILE_INVALID", 400)
+            password = (
+                arguments.password_file.read_text(encoding="utf-8")
+                .removesuffix("\n")
+                .removesuffix("\r")
+            )
+        else:
+            if not sys.stdin.isatty():
+                raise AuthError("AUTH_PASSWORD_INPUT_REQUIRED", 400)
+            password = getpass.getpass("Mot de passe Owner : ")
+            if password != getpass.getpass("Confirmer le mot de passe : "):
+                raise AuthError("AUTH_PASSWORD_CONFIRMATION_MISMATCH", 400)
+        auth_service = OwnerAuthService(engine, settings)
+        owner_id = (
+            auth_service.bootstrap(arguments.username, password)
+            if arguments.auth_action == "bootstrap-owner"
+            else auth_service.reset_password(arguments.username, password)
+        )
+        return {
+            "command": "auth",
+            "action": arguments.auth_action,
+            "ownerId": str(owner_id),
+        }, ExitCode.SUCCESS
+    if arguments.command == "restore":
+        request = RestoreRequest(
+            arguments.backup_id,
+            arguments.index_sha256,
+            arguments.target_database,
+            arguments.target_objects,
+            arguments.identity,
+        )
+        if arguments.migration_dry_run:
+            drill = MigrationDrill(engine, settings).run(request)
+            return {"command": "migration-dry-run", **drill.document()}, ExitCode.SUCCESS
+        restored = RestoreService(engine, settings).run(request)
+        return {
+            "command": "restore",
+            "backupId": str(restored.backup_id),
+            "database": restored.database,
+            "objectRoot": str(restored.object_root),
+            "objectsVerified": restored.objects_verified,
+            "migrationRevision": restored.migration_revision,
+        }, ExitCode.SUCCESS
+    if arguments.command == "backup":
+        backup_result = BackupService(engine, settings).run()
+        return {
+            "command": "backup",
+            "backupId": str(backup_result.backup_id),
+            "path": str(backup_result.path),
+            "copiedObjects": backup_result.copied_objects,
+            "indexSha256": backup_result.index_sha256,
+            "warnings": list(backup_result.warnings),
+        }, ExitCode.SUCCESS
+    if arguments.command == "jobs":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "jobs exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        queue = PostgresJobQueue(engine)
+        if arguments.job_action == "cancel":
+            job = queue.request_cancel(arguments.job_id)
+        elif arguments.job_action == "rerun":
+            job = queue.rerun(
+                arguments.job_id, key=arguments.key, actor=arguments.actor, reason=arguments.reason
+            )
+        else:
+            job = queue.get(arguments.job_id)
+        return {
+            "command": "jobs",
+            "job": {
+                "id": str(job.job_id),
+                "type": job.job_type,
+                "scope": job.scope,
+                "status": job.status,
+                "attempt": job.attempt,
+                "maxAttempts": job.max_attempts,
+                "scheduledAt": job.scheduled_at.isoformat(),
+                "cancelRequested": job.cancel_requested,
+                "errorCode": job.error_code,
+                "traceId": str(job.trace_id),
+                "rerunOf": str(job.rerun_of) if job.rerun_of else None,
+            },
+        }, ExitCode.SUCCESS
+    if arguments.command == "paper-report":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "paper-report exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        financial_report = PostgresFinancialReportingService(
+            engine, closing_max_age_seconds=settings.paper_closing_max_age_seconds
+        ).build(currency=arguments.currency)
+        return {
+            "command": "paper-report",
+            "reportId": str(financial_report.report_id),
+            "computedAt": financial_report.computed_at.isoformat(),
+            "fingerprint": financial_report.report_fingerprint,
+            "report": financial_report.document,
+        }, ExitCode.SUCCESS
+    if arguments.command == "paper-settle":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "paper-settle exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        service = PostgresPaperSettlementService(
+            engine,
+            source_sla=timedelta(seconds=settings.oe_freshness_sla_seconds),
+            settlement_delay=timedelta(seconds=settings.paper_settlement_delay_seconds),
+        )
+        if arguments.paper_bet is not None:
+            bet = service.settle(
+                arguments.paper_bet,
+                key=arguments.idempotency_key,
+                actor=arguments.actor,
+                correction_reason=arguments.correction_reason,
+            )
+            return {
+                "command": "paper-settle",
+                "paperBet": bet.model_dump(mode="json", by_alias=True),
+            }, ExitCode.SUCCESS
+        if arguments.correction_reason or arguments.idempotency_key:
+            raise ValueError("Une correction ou une clé explicite exige --paper-bet")
+        report = service.run_pending(
+            limit=arguments.limit, max_attempts=settings.paper_settlement_max_attempts
+        )
+        return {
+            "command": "paper-settle",
+            "processed": report.processed,
+            "settled": report.settled,
+            "pending": report.pending,
+            "failed": [str(identity) for identity in report.failed],
+        }, ExitCode.SOURCE_FAILURE if report.failed else ExitCode.SUCCESS
+    if arguments.command == "paper-create":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "paper-create exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        bet = PostgresPaperService(
+            engine,
+            bankroll=PaperBankrollPolicy(
+                settings.paper_bankroll_policy_version,
+                settings.paper_bankroll_currency,
+                settings.paper_bankroll_initial,
+                settings.paper_max_open_exposure,
+            ),
+            source_sla=timedelta(seconds=settings.oe_freshness_sla_seconds),
+        ).create(
+            arguments.idempotency_key,
+            arguments.signal,
+            arguments.stake,
+            arguments.currency,
+            actor=arguments.actor,
+        )
+        return {
+            "command": "paper-create",
+            "paperBet": bet.model_dump(mode="json", by_alias=True),
+        }, ExitCode.SUCCESS
+    if arguments.command == "value-evaluate":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "value-evaluate exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        result = PostgresValuePipeline(
+            engine,
+            source_sla=timedelta(seconds=settings.oe_freshness_sla_seconds),
+        ).evaluate(
+            ValueEvaluationRequest(
+                odds_snapshot_id=arguments.odds_snapshot,
+                event_mapping_attempt_id=arguments.event_mapping,
+                market_mapping_attempt_id=arguments.market_mapping,
+                policy_version=arguments.policy,
+                prediction_id=arguments.prediction,
+            )
+        )
+        return {
+            "command": "value-evaluate",
+            "evaluationId": str(result.evaluation_id),
+            "signalId": str(result.signal.signal_id) if result.signal else None,
+            "grade": result.grade.value,
+            "abstentionReasons": [reason.value for reason in result.reasons],
+            "computedAt": result.computed_at.isoformat(),
+            "fingerprint": result.fingerprint,
+        }, ExitCode.SUCCESS
     if arguments.command == "catalog":
         return _catalog_refresh(settings, engine), ExitCode.SUCCESS
     if arguments.command == "sync":
@@ -227,43 +504,7 @@ def _dispatch(
 
 
 def _catalog_refresh(settings: Settings, engine: Engine) -> dict[str, object]:
-    clock = SystemClock()
-    fallback = VersionedFallbackCatalog.load(settings.oe_source_catalog_path)
-    outage_reason: str | None
-    if settings.app_data_mode is DataMode.MOCK:
-        discovery = fallback.as_discovery(clock)
-        used_fallback = True
-        outage_reason = "mock mode: external discovery disabled"
-    else:
-        resolution = CatalogDiscoveryService(
-            LandingPageFetcher(clock=clock), fallback, clock=clock
-        ).resolve()
-        discovery = resolution.discovery
-        used_fallback = resolution.used_fallback
-        outage_reason = resolution.outage_reason
-    with engine.begin() as connection:
-        repository = SourceCatalogRepository(connection)
-        reconciliation = reconcile_catalog(discovery, repository.active_records())
-        repository.apply(reconciliation)
-    return {
-        "ok": True,
-        "command": "catalog.refresh",
-        "origin": discovery.origin,
-        "usedFallback": used_fallback,
-        "outageReason": outage_reason,
-        "decisions": [
-            {
-                "year": decision.year,
-                "status": decision.status,
-                "candidateIds": [candidate.drive_file_id for candidate in decision.candidates],
-            }
-            for decision in reconciliation.decisions
-        ],
-        "alerts": [
-            {"kind": alert.kind, "year": alert.year, "message": alert.message}
-            for alert in reconciliation.alerts
-        ],
-    }
+    return refresh_catalog(settings, engine)
 
 
 def _sync(
@@ -468,6 +709,8 @@ def _rebuild(engine: Engine, settings: Settings, from_date: date) -> dict[str, o
             continue
         with store.open_source(year=int(row["year"]), sha256=str(row["sha256"])) as stream:
             payload = stream.read()
+        if hashlib.sha256(payload).hexdigest() != row["sha256"] or len(payload) != row["byte_size"]:
+            raise BackupError("REBUILD_RAW_CHECKSUM_INVALID")
         compression = str(manifest.get("compression", "none"))
         payload = _decompress_source(payload, compression)
         with tempfile.TemporaryDirectory(prefix="metiquo-rebuild-") as directory:
@@ -507,6 +750,8 @@ def _rebuild(engine: Engine, settings: Settings, from_date: date) -> dict[str, o
                 "load": loaded.statistics.to_dict(),
             }
         )
+    rosters = CanonicalRosterBuilder(engine=engine).build(provider=_PROVIDER, dataset=_DATASET)
+    series = CanonicalSeriesBuilder(engine=engine).build(provider=_PROVIDER, dataset=_DATASET)
     canonical = cast(Table, CanonicalRow.__table__)
     with engine.connect() as connection:
         row_count = int(
@@ -526,6 +771,9 @@ def _rebuild(engine: Engine, settings: Settings, from_date: date) -> dict[str, o
         "from": from_date.isoformat(),
         "snapshotsReplayed": rebuilt,
         "canonicalRowsFromDate": row_count,
+        "coreGames": series.source_games,
+        "coreSeries": series.series,
+        "rosterObservations": rosters.observations,
     }
 
 

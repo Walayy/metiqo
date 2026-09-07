@@ -28,6 +28,8 @@ from metiquo.features import (
     TrainOnlyPreprocessor,
     TransformedFeatureRow,
 )
+from metiquo.foundation.cancellation import checkpoint
+from metiquo.foundation.locks import resource_lock
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.models.baselines import BaselineEvaluator, BaselineRun, BaselineRunRepository
 from metiquo.models.benchmark import (
@@ -66,6 +68,8 @@ from metiquo.models.rating import (
 )
 from metiquo.models.registry import (
     CANDIDATE,
+    MODEL_GAME,
+    MODEL_MARKET,
     ModelArtifactStore,
     ModelRegistration,
     ModelRegistry,
@@ -206,6 +210,11 @@ class GameWinnerTrainingWorkflow:
         return self.run().model_version_id
 
     def run(self) -> TrainingGateResult:
+        with resource_lock(self._engine, f"model:{MODEL_GAME}:{MODEL_MARKET}"):
+            return self._run_locked()
+
+    def _run_locked(self) -> TrainingGateResult:
+        checkpoint()
         dataset = self._load_dataset()
         examples = TrainingExampleRepository(engine=self._engine).load(dataset)
         plan = WalkForwardSplitter(self._walk_forward).split(examples)
@@ -218,6 +227,7 @@ class GameWinnerTrainingWorkflow:
             code_commit=self._code_commit,
             clock=self._clock,
         ).train(plan, dataset_id=dataset.dataset_id)
+        checkpoint()
         rating_repository = RatingArtifactRepository(engine=self._engine)
         rating_repository.record(rating.artifact)
         baseline_repository = BaselineRunRepository(engine=self._engine)
@@ -231,6 +241,7 @@ class GameWinnerTrainingWorkflow:
             parameters=TabularBenchmarkParameters(),
             clock=self._clock,
         ).benchmark(plan, dataset_id=dataset.dataset_id, baseline_runs=baselines)
+        checkpoint()
         benchmark = TabularBenchmarkRepository(engine=self._engine).record(benchmark)
         ensemble = EnsembleCandidateEvaluator(
             code_commit=self._code_commit,
@@ -242,6 +253,7 @@ class GameWinnerTrainingWorkflow:
             search=CalibrationSearchParameters(),
             clock=self._clock,
         ).train(plan, benchmark=benchmark, ensemble=ensemble)
+        checkpoint()
         calibrator = CalibratorArtifactRepository(engine=self._engine).record(calibrator)
         uncertainty = UncertaintyArtifactBuilder(
             code_commit=self._code_commit,
@@ -277,6 +289,7 @@ class GameWinnerTrainingWorkflow:
             artifacts=self._artifacts,
             clock=self._clock,
         )
+        checkpoint()
         version = registry.register(
             ModelRegistration(
                 algorithm=algorithm,

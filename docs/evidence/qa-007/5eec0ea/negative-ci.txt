@@ -1,0 +1,156 @@
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	﻿2026-09-07T17:07:46.1867452Z ##[group]Run make test-leakage
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.1868567Z ^[[36;1mmake test-leakage^[[0m
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.1914334Z shell: /usr/bin/bash -e {0}
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.1914679Z env:
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.1915004Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.1915523Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.1916021Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.1916396Z ##[endgroup]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:46.4422544Z uv run --frozen python -m pytest tests/leakage tests/model/test_rating_features.py tests/model/test_champion_meta_features.py tests/model/test_prior_missingness_features.py -vv
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:47.1944942Z ============================= test session starts ==============================
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:47.1946029Z platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0 -- /home/runner/work/metiqo/metiqo/.venv/bin/python3
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:47.1946735Z cachedir: .pytest_cache
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:47.1947148Z rootdir: /home/runner/work/metiqo/metiqo
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:47.1947663Z configfile: pyproject.toml
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:47.1948187Z plugins: anyio-4.15.0
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3198161Z collecting ... collected 9 items
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3198517Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3472069Z tests/leakage/test_anti_leakage_guards.py::test_property_every_nonnegative_event_offset_is_rejected FAILED [ 11%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3500402Z tests/leakage/test_anti_leakage_guards.py::test_future_game_and_late_revision_fail_before_aggregate FAILED [ 22%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3508022Z tests/model/test_rating_features.py::test_one_game_elo_is_hand_checkable_and_uses_only_pregame_state PASSED [ 33%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3514453Z tests/model/test_rating_features.py::test_simultaneous_games_do_not_leak_one_result_into_the_other PASSED [ 44%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3552854Z tests/model/test_rating_features.py::test_rating_parameters_are_versioned_and_future_input_is_blocked FAILED [ 55%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3563356Z tests/model/test_champion_meta_features.py::test_champion_pool_patch_adaptation_and_compositions_are_historical PASSED [ 66%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3576807Z tests/model/test_champion_meta_features.py::test_unknown_patch_is_explicit_and_target_draft_is_rejected PASSED [ 77%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.3587019Z tests/model/test_prior_missingness_features.py::test_hierarchical_shrinkage_recency_cold_start_and_ood_are_explicit PASSED [ 88%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4578907Z tests/model/test_prior_missingness_features.py::test_scaler_and_encoder_fit_before_cutoff_and_preserve_missing_values PASSED [100%]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4579577Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4579886Z =================================== FAILURES ===================================
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4580984Z ___________ test_property_every_nonnegative_event_offset_is_rejected ___________
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4581354Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4581703Z     def test_property_every_nonnegative_event_offset_is_rejected() -> None:
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4582250Z         cutoff = FeatureCutoff(_CUTOFF)
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4582665Z         for microseconds in range(-64, 65):
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4583117Z             instant = _CUTOFF + timedelta(microseconds=microseconds)
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4583541Z             if microseconds < 0:
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4583965Z                 assert cutoff.audit([instant]).max_input_time == instant
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4584361Z             else:
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4585192Z >               with pytest.raises(CutoffViolationError, match="strictement antérieur"):
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4585760Z                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4586262Z E               Failed: DID NOT RAISE CutoffViolationError
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4586562Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4586815Z tests/leakage/test_anti_leakage_guards.py:35: Failed
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4587473Z ___________ test_future_game_and_late_revision_fail_before_aggregate ___________
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4588166Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4588481Z     def test_future_game_and_late_revision_fail_before_aggregate() -> None:
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4589059Z         valid = _game(
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4589306Z             event_time=_CUTOFF - timedelta(days=1),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4589597Z             processed_at=_CUTOFF - timedelta(hours=1),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4589830Z         )
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4589998Z         future = _game(
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4590198Z             event_time=_CUTOFF,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4590454Z             processed_at=_CUTOFF - timedelta(hours=1),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4590694Z         )
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4590890Z         late_revision = _game(
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4591138Z             event_time=_CUTOFF - timedelta(days=2),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4591450Z             processed_at=_CUTOFF + timedelta(microseconds=1),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4591710Z         )
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4591900Z         empty_audit = AsOfInputAudit(
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4592139Z             cutoff_at=_CUTOFF,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4592373Z             max_input_time=None,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4592600Z             max_knowledge_time=None,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4592825Z             input_count=0,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4593017Z         )
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4593169Z     
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4593383Z         valid_result = EloRatingCalculator().calculate(
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4593792Z             AsOfGameBatch((valid,), FeatureCutoff(_CUTOFF).audit([valid.event_time]), (), ()),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4594149Z             team_a_id=_TEAM_A,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4594356Z             team_b_id=_TEAM_B,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4594539Z         )
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4594773Z         assert valid_result.max_input_time == valid.event_time
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4595022Z     
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4595439Z >       with pytest.raises(CutoffViolationError, match="strictement antérieur"):
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4595820Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4596134Z E       Failed: DID NOT RAISE CutoffViolationError
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4596309Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4596466Z tests/leakage/test_anti_leakage_guards.py:66: Failed
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4596882Z _______ test_rating_parameters_are_versioned_and_future_input_is_blocked _______
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4597113Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4597326Z     def test_rating_parameters_are_versioned_and_future_input_is_blocked() -> None:
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4597885Z         parameters = EloParameters(competition_priors={_COMPETITION: Decimal("1600")})
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4598287Z         definitions = rating_feature_definitions(parameters)
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4598553Z         empty = _batch(())
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4598816Z         result = EloRatingCalculator(parameters).calculate(
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4599065Z             empty,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4599377Z             team_a_id=_TEAM_A,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4599582Z             team_b_id=_TEAM_B,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4599822Z             target_competition_id=_COMPETITION,
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4600046Z         )
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4600193Z     
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4600410Z         assert result.team_a.rating == Decimal("1600")
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4600699Z         assert result.team_b.rating == Decimal("1600")
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4601017Z         assert [definition.name for definition in definitions] == [
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4601304Z             "rating.team_a",
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4601505Z             "rating.team_b",
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4601718Z             "rating.difference",
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4601935Z             "rating.games_a",
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4602133Z             "rating.games_b",
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4602312Z         ]
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4602661Z         assert all(definition.definition_version == parameters.version for definition in definitions)
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4603198Z         assert definitions[0].parameters["competition_priors"] == {str(_COMPETITION): "1600"}
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4603526Z     
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4603735Z         target_game = _game(_CUTOFF, team_a_wins=False)
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4604010Z         tampered = AsOfGameBatch(
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4604242Z             games=(target_game,),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4604609Z             audit=FeatureCutoff(_CUTOFF).audit([]),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4604889Z             source_revision_ids=(),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4605119Z             source_snapshot_ids=(),
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4605312Z         )
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4605696Z >       with pytest.raises(CutoffViolationError, match="strictement antérieur"):
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4606071Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4606382Z E       Failed: DID NOT RAISE CutoffViolationError
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4606561Z 
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4606713Z tests/model/test_rating_features.py:108: Failed
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4607062Z =========================== short test summary info ============================
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4607750Z FAILED tests/leakage/test_anti_leakage_guards.py::test_property_every_nonnegative_event_offset_is_rejected - Failed: DID NOT RAISE CutoffViolationError
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4608744Z FAILED tests/leakage/test_anti_leakage_guards.py::test_future_game_and_late_revision_fail_before_aggregate - Failed: DID NOT RAISE CutoffViolationError
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4609633Z FAILED tests/model/test_rating_features.py::test_rating_parameters_are_versioned_and_future_input_is_blocked - Failed: DID NOT RAISE CutoffViolationError
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.4610240Z ========================= 3 failed, 6 passed in 1.19s ==========================
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.6561223Z make: *** [Makefile:83: test-leakage] Error 1
+Qualité	Vérifier le cutoff critique avant tout autre contrôle	2026-09-07T17:07:48.6574916Z ##[error]Process completed with exit code 2.
+Build Docker	Confirmer les builds, les scans et les essais des images dans runtime	﻿2026-09-07T17:07:18.7479318Z ##[group]Run test "$RUNTIME_RESULT" = success
+Build Docker	Confirmer les builds, les scans et les essais des images dans runtime	2026-09-07T17:07:18.7480339Z ^[[36;1mtest "$RUNTIME_RESULT" = success^[[0m
+Build Docker	Confirmer les builds, les scans et les essais des images dans runtime	2026-09-07T17:07:18.8084896Z shell: /usr/bin/bash -e {0}
+Build Docker	Confirmer les builds, les scans et les essais des images dans runtime	2026-09-07T17:07:18.8086086Z env:
+Build Docker	Confirmer les builds, les scans et les essais des images dans runtime	2026-09-07T17:07:18.8086730Z   RUNTIME_RESULT: skipped
+Build Docker	Confirmer les builds, les scans et les essais des images dans runtime	2026-09-07T17:07:18.8087558Z ##[endgroup]
+Build Docker	Confirmer les builds, les scans et les essais des images dans runtime	2026-09-07T17:07:18.8311611Z ##[error]Process completed with exit code 1.
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	﻿2026-09-07T17:07:57.1932119Z ##[group]Run python3 infra/scripts/verify_release_evidence.py jobs
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.1934046Z ^[[36;1mpython3 infra/scripts/verify_release_evidence.py jobs^[[0m
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.1975403Z shell: /usr/bin/bash -e {0}
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.1976244Z env:
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.1978269Z   NEEDS_JSON: {
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	  "quality": {
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	    "result": "failure",
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	    "outputs": {}
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	  },
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	  "runtime": {
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	    "result": "skipped",
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	    "outputs": {}
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	  },
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	  "e2e": {
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	    "result": "skipped",
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	    "outputs": {}
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	  }
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	}
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.1980669Z ##[endgroup]
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3542390Z Traceback (most recent call last):
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3544006Z   File "/home/runner/work/metiqo/metiqo/infra/scripts/verify_release_evidence.py", line 44, in <module>
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3545250Z     raise SystemExit(main())
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3545847Z                      ^^^^^^
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3546818Z   File "/home/runner/work/metiqo/metiqo/infra/scripts/verify_release_evidence.py", line 34, in main
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3548103Z     verify_jobs(json.loads(os.environ["NEEDS_JSON"]))
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3549404Z   File "/home/runner/work/metiqo/metiqo/infra/scripts/verify_release_evidence.py", line 15, in verify_jobs
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3551316Z     raise ValueError("Release refusée : un job obligatoire a échoué ou n'a pas été exécuté")
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3552907Z ValueError: Release refusée : un job obligatoire a échoué ou n'a pas été exécuté
+Gate MVP	Refuser toute dépendance échouée, annulée ou sautée	2026-09-07T17:07:57.3697890Z ##[error]Process completed with exit code 1.

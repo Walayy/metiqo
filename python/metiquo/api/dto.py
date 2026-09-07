@@ -10,6 +10,7 @@ from metiquo.config import DataMode
 from metiquo.contracts import ContractMetadata
 from metiquo.contracts.base import ContractModel, FiniteDecimal, NonEmptyText, PositiveDecimal
 from metiquo.contracts.enums import GameTitle, MarketType, PaperBetStatus
+from metiquo.contracts.system import OperationalStatus
 
 
 class ApiModel(ContractModel):
@@ -50,6 +51,7 @@ class SystemStatusResponse(ApiModel):
     data_mode: DataMode = Field(alias="dataMode")
     generated_at: datetime = Field(alias="generatedAt")
     dependencies: dict[str, DependencyStatus]
+    operations: OperationalStatus | None = None
 
 
 class ProblemDetails(ApiModel):
@@ -129,13 +131,36 @@ class CreatePaperBetRequest(ApiRequestModel):
     signal_id: UUID = Field(alias="signalId")
     stake_amount: PositiveDecimal = Field(alias="stakeAmount")
     currency: str = Field(default="EUR", pattern=r"^[A-Z]{3}$")
+    actor: NonEmptyText = "admin-local"
 
 
 class SettlePaperBetRequest(ApiRequestModel):
     paper_bet_id: UUID = Field(alias="paperBetId")
-    status: PaperBetStatus
-    profit_loss: FiniteDecimal = Field(alias="profitLoss")
+    status: PaperBetStatus | None = None
+    profit_loss: FiniteDecimal | None = Field(default=None, alias="profitLoss")
     reason: NonEmptyText
+    actor: NonEmptyText = "admin-local"
+    correction_reason: NonEmptyText | None = Field(default=None, alias="correctionReason")
+
+
+class FinancialEstimateDto(ApiModel):
+    value: FiniteDecimal | None
+    sample_size: int = Field(ge=0, alias="sampleSize")
+    unavailable_reason: str | None = Field(default=None, alias="unavailableReason")
+
+
+class PaperMetricsDto(ApiModel):
+    report_id: UUID | None = Field(default=None, alias="reportId")
+    currency: str
+    computed_at: datetime | None = Field(default=None, alias="computedAt")
+    method_version: str = Field(alias="methodVersion")
+    report_fingerprint: str | None = Field(default=None, alias="reportFingerprint")
+    estimates: dict[str, FinancialEstimateDto] = Field(default_factory=dict)
+    signals: int = Field(default=0, ge=0)
+    bets: int = Field(default=0, ge=0)
+    settled: int = Field(default=0, ge=0)
+    open: int = Field(default=0, ge=0)
+    pending_review: int = Field(default=0, ge=0, alias="pendingReview")
 
 
 class MappingDecisionRequest(ApiRequestModel):

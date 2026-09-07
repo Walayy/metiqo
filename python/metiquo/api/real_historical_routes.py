@@ -52,16 +52,20 @@ def build_real_historical_router(
         starts_to: Annotated[datetime | None, Query(alias="startsTo")] = None,
     ) -> PageResponse[Event]:
         _validate_period(starts_from, starts_to)
-        values = tuple(
-            event
-            for event in repository.list()
-            if _matches(event.competition, competition)
-            and (team is None or _matches(event.team_a, team) or _matches(event.team_b, team))
-            and (status is None or event.status is status)
-            and (starts_from is None or event.starts_at >= starts_from)
-            and (starts_to is None or event.starts_at <= starts_to)
+        page = repository.page(
+            offset=offset,
+            limit=limit,
+            competition=competition,
+            team=team,
+            status=status,
+            starts_from=starts_from,
+            starts_to=starts_to,
         )
-        return _page(values, offset, limit, admin_repository, clock)
+        return PageResponse(
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_meta(admin_repository, clock),
+        )
 
     @router.get("/events/{event_id}", response_model=ItemResponse[Event])
     def get_event(event_id: UUID) -> ItemResponse[Event]:
@@ -93,17 +97,18 @@ def build_real_historical_router(
         limit: Limit = 20,
     ) -> PageResponse[OddsSnapshot]:
         _require_event(repository, event_id)
-        values = repository.odds_history(event_id)
+        page = repository.odds_history_page(event_id, offset=offset, limit=limit)
         return PageResponse(
-            data=values[offset : offset + limit],
-            page=PageInfo(offset=offset, limit=limit, total=len(values)),
-            meta=_odds_meta(values, admin_repository, clock),
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_odds_meta(page.items, admin_repository, clock),
         )
 
     @router.get("/opportunities", response_model=PageResponse[Opportunity])
     def list_opportunities(
         offset: Offset = 0,
         limit: Limit = 20,
+        event_id: Annotated[UUID | None, Query(alias="eventId")] = None,
         competition: str | None = None,
         team: str | None = None,
         market: MarketType | None = None,
@@ -119,31 +124,25 @@ def build_real_historical_router(
         starts_to: Annotated[datetime | None, Query(alias="startsTo")] = None,
     ) -> PageResponse[Opportunity]:
         _validate_period(starts_from, starts_to)
-        include_diagnostics = grade in {ValueGrade.NO_EDGE, ValueGrade.BLOCKED}
-        values = tuple(
-            item
-            for item in opportunity_repository.list(
-                include_diagnostics=include_diagnostics,
-            )
-            if _matches(item.event.competition, competition)
-            and (
-                team is None
-                or _matches(item.event.team_a, team)
-                or _matches(item.event.team_b, team)
-            )
-            and (market is None or item.market.type is market)
-            and (grade is None or item.value.grade is grade)
-            and (min_edge is None or item.value.edge >= min_edge)
-            and (min_ev is None or item.value.expected_value >= min_ev)
-            and (min_confidence is None or item.model.confidence >= min_confidence)
-            and (freshness is None or item.meta.freshness is freshness)
-            and (starts_from is None or item.event.starts_at >= starts_from)
-            and (starts_to is None or item.event.starts_at <= starts_to)
+        page = opportunity_repository.page(
+            offset=offset,
+            limit=limit,
+            event_id=event_id,
+            competition=competition,
+            team=team,
+            market=market,
+            grade=grade,
+            min_edge=min_edge,
+            min_ev=min_ev,
+            min_confidence=min_confidence,
+            freshness=freshness,
+            starts_from=starts_from,
+            starts_to=starts_to,
         )
         return PageResponse(
-            data=values[offset : offset + limit],
-            page=PageInfo(offset=offset, limit=limit, total=len(values)),
-            meta=_opportunity_meta(values, admin_repository, clock),
+            data=page.items,
+            page=PageInfo(offset=offset, limit=limit, total=page.total),
+            meta=_opportunity_meta(page.items, admin_repository, clock),
         )
 
     @router.get("/opportunities/{signal_id}", response_model=ItemResponse[Opportunity])
@@ -202,10 +201,6 @@ def _require_event(repository: PostgresCanonicalRepository, event_id: UUID) -> E
     return event
 
 
-def _matches(value: str, query: str | None) -> bool:
-    return query is None or query.casefold() in value.casefold()
-
-
 def _validate_period(starts_from: datetime | None, starts_to: datetime | None) -> None:
     for name, value in (("startsFrom", starts_from), ("startsTo", starts_to)):
         if value is not None and (value.tzinfo is None or value.utcoffset() is None):
@@ -217,22 +212,13 @@ def _validate_period(starts_from: datetime | None, starts_to: datetime | None) -
         )
 
 
-def _freshness(repository: PostgresAdminRepository) -> FreshnessStatus:
-    return {
-        ProviderStatus.OPERATIONAL: FreshnessStatus.FRESH,
-        ProviderStatus.DEGRADED: FreshnessStatus.DEGRADED,
-        ProviderStatus.UNAVAILABLE: FreshnessStatus.FAILED,
-        ProviderStatus.DISABLED: FreshnessStatus.FAILED,
-    }[repository.list_data_sources()[0].status]
-
-
 def _meta(repository: PostgresAdminRepository, clock: Clock) -> ContractMetadata:
     now = clock.now().value
     health = repository.list_data_sources()[0]
     as_of = health.last_success_at or now
     return ContractMetadata(
         data_mode=DataMode.REAL,
-        freshness=_freshness(repository),
+        freshness=health.freshness or FreshnessStatus.FAILED,
         as_of=as_of,
         computed_at=max(now, as_of),
         app_version=version("metiquo"),

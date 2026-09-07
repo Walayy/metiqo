@@ -62,7 +62,11 @@ def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> 
     assert {
         "/health",
         "/ready",
+        "/api/v1/auth/session",
+        "/api/v1/auth/login",
+        "/api/v1/auth/logout",
         "/api/v1/system/status",
+        "/api/v1/system/compliance",
         "/api/v1/opportunities",
         "/api/v1/opportunities/{signal_id}",
         "/api/v1/opportunities/{signal_id}/explanation",
@@ -75,11 +79,14 @@ def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> 
         "/api/v1/backtests",
         "/api/v1/backtests/{backtest_id}",
         "/api/v1/paper-bets",
+        "/api/v1/paper-bets/metrics",
+        "/api/v1/paper-reports/{report_id}",
         "/api/v1/paper-bets/{paper_bet_id}",
         "/api/v1/admin/data-sources",
         "/api/v1/admin/ingestion-runs",
         "/api/v1/admin/quality-issues",
         "/api/v1/admin/jobs",
+        "/api/v1/admin/jobs/{job_id}",
         "/api/v1/admin/capabilities",
         "/api/v1/admin/mappings/pending",
         "/api/v1/admin/audit-log",
@@ -92,6 +99,9 @@ def test_openapi_contract_publishes_domain_components_and_mock_read_routes() -> 
         "/api/v1/admin/mappings/{mapping_review_id}/reject",
         "/api/v1/admin/aliases",
     } == set(document["paths"])
+    training = document["paths"]["/api/v1/admin/models/train"]["post"]["responses"]
+    assert {"200", "202"} <= set(training)
+    assert "modelVersionId" in schemas["JobSummary"]["properties"]
 
 
 def test_all_openapi_component_references_resolve() -> None:

@@ -459,13 +459,24 @@ def test_real_mapping_review_api_approves_rejects_and_creates_dated_alias(
     approved_audit = next(
         item for item in audit.json()["data"] if item["action"] == "mapping.approved"
     )
-    assert approved_audit["actor"] == "reviewer-map-004"
-    assert approved_audit["impact"] == {
+    assert approved_audit["actor"] == "api-local"
+    impact = approved_audit["impact"]
+    assert {
+        key: impact[key]
+        for key in (
+            "affectedSnapshotCount",
+            "historicalSignalsRewritten",
+            "selectedEventId",
+            "selectionsInverted",
+        )
+    } == {
         "affectedSnapshotCount": 1,
         "historicalSignalsRewritten": 0,
         "selectedEventId": str(event.event_id),
         "selectionsInverted": False,
     }
+    assert impact["traceId"] is not None
+    assert impact["targetType"] == "odds.mapping_audits"
     assert set(stored_reviews) == {("approved", event.event_id), ("rejected", None)}
     assert len(audit_count) == 3
     assert len(snapshot_count) == 2

@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend } from "../lib/backend";
+
 import type {
   FreshnessStatus,
   ListOpportunitiesApiV1OpportunitiesGetData,
@@ -37,7 +41,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode, SubmitEventHandler } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import {
   describeOpportunity,
@@ -64,7 +68,7 @@ type DisplayMode = "table" | "cards";
 type OpportunityQuery = NonNullable<ListOpportunitiesApiV1OpportunitiesGetData["query"]>;
 
 async function fetchContract<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_PROXY_BASE_URL}${path}`, {
+  const response = await readBackend(`${API_PROXY_BASE_URL}${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -294,7 +298,13 @@ function OddsCell({
   const movement = oddsMovement(opportunity, history);
 
   return (
-    <div className="grid gap-1">
+    <div
+      aria-label={`Cote observée pour ${opportunity.event.teamA} contre ${opportunity.event.teamB}`}
+      aria-live="polite"
+      aria-atomic="true"
+      role="status"
+      className="grid gap-1"
+    >
       <span className="font-semibold tabular-nums">
         {formatDecimal(opportunity.book.decimalOdds)}
       </span>
@@ -303,13 +313,18 @@ function OddsCell({
   );
 }
 
-function Explanation({ opportunity }: Readonly<{ opportunity: Opportunity }>) {
+function Explanation({
+  opportunity,
+  referenceTime,
+}: Readonly<{ opportunity: Opportunity; referenceTime: string }>) {
   return (
     <details className="group max-w-64 text-xs">
       <summary className="cursor-pointer rounded font-semibold text-accent-strong outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
         Explication
       </summary>
-      <p className="mt-2 leading-5 text-ink-secondary">{describeOpportunity(opportunity)}</p>
+      <p className="mt-2 leading-5 text-ink-secondary">
+        {describeOpportunity(opportunity, referenceTime)}
+      </p>
     </details>
   );
 }
@@ -426,7 +441,7 @@ function OpportunityTable({
                       Ouvrir le signal
                     </Link>
                   </Button>
-                  <Explanation opportunity={opportunity} />
+                  <Explanation opportunity={opportunity} referenceTime={referenceTime} />
                 </div>
               </td>
             </tr>
@@ -521,7 +536,7 @@ function OpportunityCards({
                     Ouvrir le signal
                   </Link>
                 </Button>
-                <Explanation opportunity={opportunity} />
+                <Explanation opportunity={opportunity} referenceTime={referenceTime} />
               </div>
             </div>
           </CardContent>
@@ -545,6 +560,7 @@ function DashboardLoadingState() {
 }
 
 export function OpportunitiesDashboard() {
+  const filterForm = useRef<HTMLFormElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const searchParameters = useSearchParams();
@@ -630,6 +646,16 @@ export function OpportunitiesDashboard() {
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   };
 
+  useEffect(() => {
+    // Follow shared URLs and browser history without unmounting the focused control.
+    for (const name of ["competition", "team", "grade", "freshness"]) {
+      const control = filterForm.current?.elements.namedItem(name);
+      if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement) {
+        control.value = currentSearchParameters.get(name) ?? "";
+      }
+    }
+  }, [currentSearchParameters]);
+
   return (
     <div className="grid min-w-0 gap-7">
       <header className="flex flex-wrap items-end justify-between gap-5">
@@ -685,7 +711,7 @@ export function OpportunitiesDashboard() {
 
           <form
             className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_0.9fr_0.9fr_auto_auto] xl:items-end"
-            key={searchParameters.toString()}
+            ref={filterForm}
             onSubmit={applyFilters}
           >
             <label className="grid gap-1.5 text-xs font-semibold" htmlFor="competition-filter">
@@ -761,7 +787,8 @@ export function OpportunitiesDashboard() {
         }
         loadingFallback={<DashboardLoadingState />}
       >
-        {opportunitiesQuery.isError ? (
+        <QueryRecovery queries={[opportunitiesQuery]} />
+        {opportunitiesQuery.isError && !canReadPrevious(opportunitiesQuery) ? (
           <RemoteRecoverableErrorState
             description="Les opportunités n’ont pas pu être chargées. Aucun détail technique sensible n’est affiché."
             onRetry={() => {
@@ -819,7 +846,13 @@ export function OpportunitiesDashboard() {
                   <h2 className="text-xl font-semibold tracking-tight" id="results-title">
                     {eligibility === "admissible" ? "Opportunités admissibles" : "Tous les signaux"}
                   </h2>
-                  <p className="mt-1 text-xs text-ink-secondary">
+                  <p
+                    className="mt-1 text-xs text-ink-secondary"
+                    role="status"
+                    aria-label="Résultats des filtres"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
                     {`${visibleOpportunities.length.toString()} résultat${visibleOpportunities.length === 1 ? "" : "s"}`}
                   </p>
                 </div>

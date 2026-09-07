@@ -12,3 +12,5 @@ docs/specs/
 packages/contracts/openapi/*.json
 packages/contracts/src/generated/
 config/oracles_elixir_sources.yml
+# Raw CI evidence is archived byte-for-byte and verified by SHA-256.
+docs/evidence/qa-007/*/proofs/

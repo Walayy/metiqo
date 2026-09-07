@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
+from metiquo.foundation.cancellation import checkpoint
 from metiquo.ingestion.source_errors import (
     AtomicPromotionFailed,
     ChecksumMismatch,
@@ -271,5 +272,6 @@ def _hash_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         while chunk := stream.read(_HASH_CHUNK_SIZE):
+            checkpoint()
             digest.update(chunk)
     return digest.hexdigest()

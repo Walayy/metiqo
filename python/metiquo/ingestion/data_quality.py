@@ -10,6 +10,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Literal
 
+from metiquo.foundation.cancellation import checkpoint
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.source_errors import DataQualityFailed
 
@@ -138,6 +139,7 @@ class DataQualityValidator:
         latest_plausible = self._clock.now().value.date() + timedelta(days=366)
 
         for row_number, row in enumerate(rows, start=2):
+            checkpoint()
             game_id = row.get("gameid", "").strip()
             participant_id = row.get("participantid", "").strip()
             natural_key = f"{game_id}:{participant_id}" if game_id and participant_id else None
@@ -222,6 +224,7 @@ class DataQualityValidator:
                 )
 
         for game_id, game_rows in games.items():
+            checkpoint()
             issues.extend(_game_issues(game_id, game_rows))
 
         if (

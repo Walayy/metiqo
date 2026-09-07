@@ -1,11 +1,16 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
+
 import type {
   AuditEntry,
   CapabilityEvaluationDto,
   DataQualityIssue,
   IngestionRunSummary,
   ItemResponseIngestionRunSummary,
+  ItemResponseJobSummary,
   JobSummary,
   PageResponseAuditEntry,
   PageResponseCapabilityEvaluationDto,
@@ -20,7 +25,6 @@ import {
   Button,
   Card,
   CardContent,
-  RemoteBlockingErrorState,
   RemoteDataBoundary,
   RemoteEmptyState,
   RemoteLoadingState,
@@ -42,15 +46,16 @@ import {
   Rows3,
   ShieldAlert,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { formatDateTime } from "./opportunity-presenters";
 import { MappingReviewQueue } from "./mapping-review-queue";
+import { OperationalStatusPanel } from "./operational-status-panel";
 
 const API_BASE = "/api/backend/api/v1/admin";
 
 async function readResource<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await readBackend(`${API_BASE}${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -58,11 +63,14 @@ async function readResource<T>(path: string, signal: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function startSync(): Promise<ItemResponseIngestionRunSummary> {
-  const response = await fetch(`${API_BASE}/oracles-elixir/sync`, {
+async function startSync(
+  key: string,
+): Promise<ItemResponseIngestionRunSummary | ItemResponseJobSummary> {
+  const response = await requestBackend(`${API_BASE}/oracles-elixir/sync`, {
     headers: {
       accept: "application/json",
-      "Idempotency-Key": crypto.randomUUID(),
+      "Idempotency-Key": key,
+      "X-Metiquo-CSRF": "1",
     },
     method: "POST",
   });
@@ -70,7 +78,7 @@ async function startSync(): Promise<ItemResponseIngestionRunSummary> {
     const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(problem?.detail ?? "La synchronisation n’a pas pu démarrer");
   }
-  return (await response.json()) as ItemResponseIngestionRunSummary;
+  return (await response.json()) as ItemResponseIngestionRunSummary | ItemResponseJobSummary;
 }
 
 function Panel({
@@ -431,16 +439,20 @@ export function DataHealthDashboard() {
       />
 
       <Panel icon={<Database className="size-5" />} title="Catalogue des sources">
-        {sources.isError ? (
-          <RemoteBlockingErrorState
-            description="Le catalogue primaire est indisponible : aucun état de source fiable ne peut être affiché."
+        <QueryRecovery queries={[sources]} />
+        {sources.isError && !canReadPrevious(sources) ? (
+          <RemoteRecoverableErrorState
+            description="Le catalogue primaire ne répond pas. Réessayez pour lire le dernier état validé."
             title="Catalogue indisponible"
+            onRetry={() => void sources.refetch()}
+            retryDisabled={sources.isFetching}
           />
         ) : (
           <RemoteDataBoundary
+            className="min-h-[42rem] sm:min-h-[28rem] xl:min-h-[24rem]"
             isLoading={sources.isPending}
             isRefetching={sources.isFetching && !sources.isPending}
-            loadingFallback={<RemoteLoadingState minHeight="14rem" rows={4} />}
+            loadingFallback={<RemoteLoadingState minHeight="inherit" rows={8} />}
           >
             {sources.data?.data[0] ? (
               <SourceCatalogue source={sources.data.data[0]} />
@@ -452,7 +464,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<Fingerprint className="size-5" />} title="Snapshot et couverture">
-        {runs.isError ? (
+        <QueryRecovery queries={[runs]} />
+        {runs.isError && !canReadPrevious(runs) ? (
           <RemoteRecoverableErrorState
             onRetry={() => void runs.refetch()}
             title="Historique indisponible"
@@ -468,7 +481,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<FileClock className="size-5" />} title="Tentatives d’ingestion">
-        {runs.isError ? (
+        <QueryRecovery queries={[runs]} />
+        {runs.isError && !canReadPrevious(runs) ? (
           <RemoteRecoverableErrorState onRetry={() => void runs.refetch()} />
         ) : runs.data?.data.length ? (
           <IngestionHistory runs={runs.data.data} />
@@ -478,7 +492,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<ListChecks className="size-5" />} title="Capacités par snapshot">
-        {capabilities.isError ? (
+        <QueryRecovery queries={[capabilities]} />
+        {capabilities.isError && !canReadPrevious(capabilities) ? (
           <RemoteRecoverableErrorState
             description="Les capacités restent fermées tant que leur dernière évaluation n’est pas disponible."
             onRetry={() => void capabilities.refetch()}
@@ -492,7 +507,8 @@ export function DataHealthDashboard() {
       </Panel>
 
       <Panel icon={<ShieldAlert className="size-5" />} title="Anomalies bloquantes">
-        {issues.isError ? (
+        <QueryRecovery queries={[issues]} />
+        {issues.isError && !canReadPrevious(issues) ? (
           <RemoteRecoverableErrorState
             description="Les snapshots valides restent consultables ; la liste d’anomalies peut être rechargée séparément."
             onRetry={() => void issues.refetch()}
@@ -527,6 +543,25 @@ function JobList({ jobs }: Readonly<{ jobs: readonly JobSummary[] }>) {
           <p className="text-xs leading-5 text-ink-secondary">
             Dernière exécution : {job.lastRunAt ? formatDateTime(job.lastRunAt) : "jamais"}
           </p>
+          {job.attempt !== null && job.attempt !== undefined ? (
+            <p className="text-xs text-ink-secondary">
+              Tentative {job.attempt} / {job.maxAttempts} · {job.scope}
+            </p>
+          ) : null}
+          {job.scheduledAt && job.status === "queued" ? (
+            <p className="text-xs text-ink-secondary">
+              Planifié le {formatDateTime(job.scheduledAt)}
+            </p>
+          ) : null}
+          {job.errorCode ? (
+            <p className="break-all text-xs text-ink-secondary">Erreur : {job.errorCode}</p>
+          ) : null}
+          {job.cancelRequested ? (
+            <p className="text-xs text-ink-secondary">Annulation demandée</p>
+          ) : null}
+          {job.traceId ? (
+            <p className="break-all text-xs text-ink-secondary">Trace : {job.traceId}</p>
+          ) : null}
         </article>
       ))}
     </div>
@@ -546,7 +581,7 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
             {formatDateTime(entry.occurredAt)} · ressource {entry.resourceId ?? "—"}
           </p>
           <p className="break-all text-xs text-ink-secondary">
-            Empreinte d’idempotence : {entry.idempotencyFingerprint}
+            Empreinte : {entry.idempotencyFingerprint}
           </p>
           {entry.actor ? (
             <p className="text-xs text-ink-secondary">
@@ -554,7 +589,14 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
             </p>
           ) : null}
           {entry.impact ? (
-            <p className="text-xs text-ink-secondary">Impact : {JSON.stringify(entry.impact)}</p>
+            <details className="min-w-0 text-xs text-ink-secondary">
+              <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4">
+                Références et trace
+              </summary>
+              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">
+                {JSON.stringify(entry.impact, null, 2)}
+              </pre>
+            </details>
           ) : null}
         </li>
       ))}
@@ -564,10 +606,17 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
 
 export function AdminOperationsDashboard() {
   const queryClient = useQueryClient();
+  const [submittedJob, setSubmittedJob] = useState<JobSummary | null>(null);
   const jobs = useQuery({
     queryFn: ({ signal }) =>
       readResource<PageResponseJobSummary>("/jobs?offset=0&limit=100", signal),
     queryKey: ["admin", "jobs"],
+    refetchInterval: (query) => {
+      if (!submittedJob) return false;
+      const current =
+        query.state.data?.data.find((job) => job.jobId === submittedJob.jobId) ?? submittedJob;
+      return ["queued", "running"].includes(current.status) ? 2000 : false;
+    },
   });
   const audit = useQuery({
     queryFn: ({ signal }) =>
@@ -576,7 +625,8 @@ export function AdminOperationsDashboard() {
   });
   const sync = useMutation({
     mutationFn: startSync,
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      setSubmittedJob("jobId" in response.data ? response.data : null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "data-sources"] }),
@@ -587,11 +637,13 @@ export function AdminOperationsDashboard() {
     },
   });
   const dataMode = jobs.data?.meta.dataMode ?? "mock";
+  const activeJob =
+    jobs.data?.data.find((job) => job.jobId === submittedJob?.jobId) ?? submittedJob;
 
   return (
     <div className="grid gap-6 sm:gap-8">
       <PageHeader
-        description="Commandes idempotentes, résultats immédiats et journal audité. Une action déclenche une seule actualisation ciblée, sans polling."
+        description="Commandes idempotentes et journal audité. Les synchronisations en file sont suivies jusqu’à leur résultat."
         eyebrow="Opérations contrôlées"
         title="Administration"
       />
@@ -601,7 +653,7 @@ export function AdminOperationsDashboard() {
           <Button
             disabled={sync.isPending}
             onClick={() => {
-              sync.mutate();
+              sync.mutate(crypto.randomUUID());
             }}
           >
             {sync.isPending ? (
@@ -627,12 +679,12 @@ export function AdminOperationsDashboard() {
           <RemoteRecoverableErrorState
             description={sync.error.message}
             onRetry={() => {
-              sync.mutate();
+              sync.mutate(sync.variables);
             }}
             title="Synchronisation échouée"
           />
         ) : null}
-        {sync.data ? (
+        {sync.data && "rowCount" in sync.data.data && !submittedJob ? (
           <div
             aria-live="polite"
             className="grid gap-3 rounded-lg border border-emerald-300 bg-emerald-50/80 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/30"
@@ -649,10 +701,34 @@ export function AdminOperationsDashboard() {
             <p className="break-all text-xs text-ink-secondary">Run {sync.data.data.runId}</p>
           </div>
         ) : null}
+        {activeJob ? (
+          <div
+            aria-live="polite"
+            className="grid gap-2 rounded-lg border border-divider bg-surface-muted p-4 text-sm"
+            role="status"
+          >
+            <p className="font-semibold">
+              {activeJob.status === "queued"
+                ? "Synchronisation en file"
+                : activeJob.status === "running"
+                  ? "Synchronisation en cours"
+                  : activeJob.status === "succeeded"
+                    ? "Synchronisation terminée"
+                    : "Synchronisation interrompue"}
+            </p>
+            <p className="break-all text-xs text-ink-secondary">Job {activeJob.jobId}</p>
+            {activeJob.runId ? (
+              <p className="break-all text-xs text-ink-secondary">Run {activeJob.runId}</p>
+            ) : null}
+            {activeJob.errorCode ? <p>{activeJob.errorCode}</p> : null}
+            <p>Le dernier snapshot validé reste actif jusqu’à la validation du suivant.</p>
+          </div>
+        ) : null}
       </Panel>
 
       <Panel icon={<Activity className="size-5" />} title="Jobs">
-        {jobs.isError ? (
+        <QueryRecovery queries={[jobs]} />
+        {jobs.isError && !canReadPrevious(jobs) ? (
           <RemoteRecoverableErrorState onRetry={() => void jobs.refetch()} />
         ) : jobs.data?.data.length ? (
           <JobList jobs={jobs.data.data} />
@@ -665,15 +741,18 @@ export function AdminOperationsDashboard() {
 
       <MappingReviewQueue />
 
+      <OperationalStatusPanel />
+
       <Panel icon={<ListChecks className="size-5" />} title="Journal d’audit">
-        {audit.isError ? (
+        <QueryRecovery queries={[audit]} />
+        {audit.isError && !canReadPrevious(audit) ? (
           <RemoteRecoverableErrorState onRetry={() => void audit.refetch()} />
         ) : audit.data?.data.length ? (
           <AuditList entries={audit.data.data} />
         ) : audit.isPending ? (
           <RemoteLoadingState minHeight="12rem" />
         ) : (
-          <RemoteEmptyState description="Aucune action auditée dans cette session mock." />
+          <RemoteEmptyState description="Aucune action auditée dans cet historique." />
         )}
       </Panel>
 

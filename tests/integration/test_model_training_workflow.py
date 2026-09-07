@@ -10,13 +10,14 @@ from uuid import UUID, uuid4, uuid5
 
 import pytest
 from alembic import command
-from sqlalchemy import Engine, Table, create_engine, insert, select
+from sqlalchemy import Engine, Table, create_engine, insert, select, text
 
 from metiquo.canonical.rosters import CanonicalRosterBuilder
 from metiquo.db.core_models import CanonicalEntityRevision, Game
 from metiquo.db.feature_models import FeatureSnapshot
 from metiquo.db.ml_models import TrainingDataset, TrainingDatasetExample
 from metiquo.features import FeatureDatasetBuilder
+from metiquo.foundation.locks import ResourceBusy, resource_lock_key
 from metiquo.foundation.time import FixedClock, UtcInstant
 from metiquo.ingestion.object_store import FilesystemObjectStore
 from metiquo.models import (
@@ -65,6 +66,13 @@ def test_training_workflow_publishes_candidate_then_allows_gated_promotion(
         clock=FixedClock(UtcInstant(_CREATED_AT)),
     )
 
+    with engine.begin() as competing:
+        competing.execute(
+            text("SELECT pg_advisory_xact_lock(:lock)"),
+            {"lock": resource_lock_key("model:lol:game_winner")},
+        )
+        with pytest.raises(ResourceBusy):
+            workflow.run()
     result = workflow.run()
     registry = ModelRegistry(engine=engine, artifacts=artifacts)
     version = registry.get(result.model_version_id)
@@ -89,10 +97,23 @@ def test_training_workflow_publishes_candidate_then_allows_gated_promotion(
         metric_basis=("log_loss", "calibration_ece"),
         manual_approval_reference="integration-review-ml-017",
     )
-    promoted = ModelLifecycle(
+    lifecycle = ModelLifecycle(
         engine=engine,
         clock=FixedClock(UtcInstant(_CREATED_AT + timedelta(minutes=1))),
-    ).promote(
+    )
+    with engine.begin() as competing:
+        competing.execute(
+            text("SELECT pg_advisory_xact_lock(:lock)"),
+            {"lock": resource_lock_key("model:lol:game_winner")},
+        )
+        with pytest.raises(ResourceBusy):
+            lifecycle.promote(
+                result.model_version_id,
+                actor="ml-reviewer",
+                reason="gate P4 vérifié",
+                evidence=evidence,
+            )
+    promoted = lifecycle.promote(
         result.model_version_id,
         actor="ml-reviewer",
         reason="gate P4 vérifié",

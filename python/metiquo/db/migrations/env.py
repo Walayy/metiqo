@@ -6,11 +6,14 @@ from alembic import context
 from sqlalchemy import Connection, create_engine, pool
 
 from metiquo.config import load_settings
+from metiquo.db import auth_models as _auth_models  # noqa: F401
 from metiquo.db import core_models as _core_models  # noqa: F401
 from metiquo.db import feature_models as _feature_models  # noqa: F401
 from metiquo.db import mapping_models as _mapping_models  # noqa: F401
 from metiquo.db import ml_models as _ml_models  # noqa: F401
 from metiquo.db import odds_models as _odds_models  # noqa: F401
+from metiquo.db import ops_models as _ops_models  # noqa: F401
+from metiquo.db import paper_models as _paper_models  # noqa: F401
 from metiquo.db import pricing_models as _pricing_models  # noqa: F401
 from metiquo.db import raw_models as _raw_models  # noqa: F401
 from metiquo.db.base import Base
@@ -18,7 +21,7 @@ from metiquo.db.base import Base
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 

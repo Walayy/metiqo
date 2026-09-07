@@ -9,8 +9,9 @@ function collectBrowserMessages(page: Page) {
   const messages: BrowserMessage[] = [];
 
   page.on("console", (message) => {
-    if (message.type() === "error" || message.type() === "warning") {
-      messages.push({ text: message.text(), type: message.type() });
+    const type = message.type();
+    if (type === "error" || type === "warning") {
+      messages.push({ text: message.text(), type });
     }
   });
   page.on("pageerror", (error) => {

@@ -1,0 +1,1536 @@
+{
+  "ticket": "QA-007",
+  "commit": "5eec0ea753ce940dfc6a6bed8c8397b728d91392",
+  "passed": true,
+  "criteria": [
+    {
+      "number": 1,
+      "title": "Démarrage Compose en une commande",
+      "backend": [],
+      "browser": [],
+      "startup": true,
+      "manual": false,
+      "status": "PASS",
+      "tests": [],
+      "missing": []
+    },
+    {
+      "number": 2,
+      "title": "Écrans et scénarios mock critiques",
+      "backend": [
+        "tests.mock.test_scenarios::test_catalog_contains_and_addresses_each_normative_scenario"
+      ],
+      "browser": [
+        "opportunities.spec.ts::",
+        "models.spec.ts::",
+        "paper-trading.spec.ts::",
+        "mapping-review.spec.ts::"
+      ],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.mock.test_scenarios::test_catalog_contains_and_addresses_each_normative_scenario"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::contains the wide table at an intermediate desktop width"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps a stale snapshot visible but clearly blocks the decision"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps filters and display choices shareable in the URL"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps the card dashboard within a mobile viewport"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps the existing signal row mounted while polling for fresh odds"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::renders an explicit no-opportunity state"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::shows admissible opportunities sorted by conservative EV"
+        },
+        {
+          "suite": "browser",
+          "test": "models.spec.ts::contains the models dashboard on mobile without hiding the backtest table"
+        },
+        {
+          "suite": "browser",
+          "test": "models.spec.ts::shows model versions, baselines and walk-forward evidence"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::creates and settles a paper bet from an admissible signal"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::renders losses as prominently as gains in the P&L summary"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::shows a versioned paper-bet detail without any real execution"
+        },
+        {
+          "suite": "browser",
+          "test": "mapping-review.spec.ts::creates a dated alias and records an explicit approval"
+        },
+        {
+          "suite": "browser",
+          "test": "mapping-review.spec.ts::keeps an ambiguous raw event blocked and previews each candidate"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 3,
+      "title": "Backfill idempotent et reprenable",
+      "backend": [
+        "tests.integration.test_ingestion_gate::test_ingestion_gate_demo_rebuilds_from_empty_database",
+        "tests.integration.test_backfill::test_interrupted_backfill_resumes_without_replaying_completed_years"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_ingestion_gate::test_ingestion_gate_demo_rebuilds_from_empty_database"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_backfill::test_interrupted_backfill_resumes_without_replaying_completed_years"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 4,
+      "title": "Année courante validée, hash et manifeste",
+      "backend": [
+        "tests.integration.test_ingestion_gate::test_ingestion_gate_demo_rebuilds_from_empty_database"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_ingestion_gate::test_ingestion_gate_demo_rebuilds_from_empty_database"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 5,
+      "title": "Quota : dernier snapshot valide préservé",
+      "backend": [
+        "tests.integration.test_ingestion_gate::test_ingestion_gate_demo_rebuilds_from_empty_database"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_ingestion_gate::test_ingestion_gate_demo_rebuilds_from_empty_database"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 6,
+      "title": "Reconstruction canonique des séries et games",
+      "backend": [
+        "tests.integration.test_canonical_games::test_games_keep_quality_flags_provenance_and_explicit_missingness",
+        "tests.integration.test_canonical_series::test_series_prefer_oe_support_bo2_draw_and_leave_ambiguity_unresolved"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_canonical_games::test_games_keep_quality_flags_provenance_and_explicit_missingness"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_canonical_series::test_series_prefer_oe_support_bo2_draw_and_leave_ambiguity_unresolved"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 7,
+      "title": "Cutoff automatiquement vérifié",
+      "backend": [
+        "tests.leakage.",
+        "tests.integration.test_temporal_features::test_as_of_repository_excludes_game_at_cutoff_and_records_max_input_time"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.leakage.test_anti_leakage_guards::test_future_game_and_late_revision_fail_before_aggregate"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.leakage.test_anti_leakage_guards::test_property_every_nonnegative_event_offset_is_rejected"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_temporal_features::test_as_of_repository_excludes_game_at_cutoff_and_records_max_input_time"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 8,
+      "title": "Baseline rating et game winner calibré enregistrés",
+      "backend": [
+        "tests.integration.test_baseline_runs::test_baseline_runs_roundtrip_are_comparable_and_append_only",
+        "tests.integration.test_model_training_workflow::test_training_workflow_publishes_candidate_then_allows_gated_promotion"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_baseline_runs::test_baseline_runs_roundtrip_are_comparable_and_append_only"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_model_training_workflow::test_training_workflow_publishes_candidate_then_allows_gated_promotion"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 9,
+      "title": "Probabilités des formats de série supportés",
+      "backend": [
+        "tests.markets.test_series_pricing::test_analytical_bo1_bo3_bo5_and_bo2_draw_probabilities",
+        "tests.markets.test_series_pricing::test_every_supported_format_is_normalized_over_full_probability_domain"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.markets.test_series_pricing::test_analytical_bo1_bo3_bo5_and_bo2_draw_probabilities"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.markets.test_series_pricing::test_every_supported_format_is_normalized_over_full_probability_domain"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 10,
+      "title": "Contrat commun mock et import manuel",
+      "backend": [
+        "tests.providers.test_mock_odds_provider::test_mock_passes_the_exact_reusable_provider_contract",
+        "tests.providers.test_manual_import_provider::test_valid_csv_is_committed_atomically_and_passes_provider_contract",
+        "tests.providers.test_manual_import_provider::test_valid_json_uses_the_same_normalized_contract"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.providers.test_mock_odds_provider::test_mock_passes_the_exact_reusable_provider_contract"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.providers.test_manual_import_provider::test_valid_csv_is_committed_atomically_and_passes_provider_contract"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.providers.test_manual_import_provider::test_valid_json_uses_the_same_normalized_contract"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 11,
+      "title": "Mapping ambigu bloquant",
+      "backend": [
+        "tests.integration.test_resolved_odds_gate::test_ambiguous_event_with_resolved_market_never_reaches_pricing"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_resolved_odds_gate::test_ambiguous_event_with_resolved_market_never_reaches_pricing"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 12,
+      "title": "Probabilités, marge, cote juste, edge et EV prudente",
+      "backend": [
+        "tests.pricing.test_value::test_sfg_odds_four_example_reproduces_every_value_metric",
+        "tests.pricing.test_no_vig::test_hand_calculated_two_way_market_removes_overround"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.pricing.test_value::test_sfg_odds_four_example_reproduces_every_value_metric"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.pricing.test_no_vig::test_hand_calculated_two_way_market_removes_overround"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 13,
+      "title": "Abstention structurée persistée",
+      "backend": [
+        "tests.integration.test_value_pipeline::test_value_gate_refusals_are_persisted[stale]",
+        "tests.integration.test_value_pipeline::test_value_gate_refusals_are_persisted[ambiguous]",
+        "tests.integration.test_value_pipeline::test_value_gate_refusals_are_persisted[no_edge]"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_value_pipeline::test_value_gate_refusals_are_persisted[stale]"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_value_pipeline::test_value_gate_refusals_are_persisted[ambiguous]"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_value_pipeline::test_value_gate_refusals_are_persisted[no_edge]"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 14,
+      "title": "Prédictions et cotes immuables",
+      "backend": [
+        "tests.integration.test_prematch_predictions::test_repeated_prematch_prediction_keeps_reproducible_inference_and_history",
+        "tests.integration.test_odds_schema::test_odds_snapshot_requires_reliable_time_or_informational_status_and_is_immutable"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_prematch_predictions::test_repeated_prematch_prediction_keeps_reproducible_inference_and_history"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_odds_schema::test_odds_snapshot_requires_reliable_time_or_informational_status_and_is_immutable"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 15,
+      "title": "Enregistrement et règlement paper",
+      "backend": [
+        "tests.integration.test_paper_gate::test_paper_gate_emits_an_auditable_fixture_report"
+      ],
+      "browser": ["paper-trading.spec.ts::"],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_paper_gate::test_paper_gate_emits_an_auditable_fixture_report"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::creates and settles a paper bet from an admissible signal"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::renders losses as prominently as gains in the P&L summary"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::shows a versioned paper-bet detail without any real execution"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 16,
+      "title": "Fraîcheur, modèle et qualité visibles",
+      "backend": [
+        "tests.integration.test_system_observability::test_status_distinguishes_source_failure_reads_and_measured_job_metrics"
+      ],
+      "browser": ["admin-data.spec.ts::", "real-models.spec.ts::"],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_system_observability::test_status_distinguishes_source_failure_reads_and_measured_job_metrics"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::keeps a queued sync distinct from completion and reuses its key after a lost response"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::offers independent recovery for temporary catalogue and quality errors"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::runs one controlled sync and exposes its audited result"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::shows measured operations with readable data during a source failure"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::shows source degradation, snapshots, schema gaps and blocking anomalies"
+        },
+        {
+          "suite": "browser",
+          "test": "real-models.spec.ts::exposes a blocked registered version without offering promotion"
+        },
+        {
+          "suite": "browser",
+          "test": "real-models.spec.ts::hides a training status after a permission refusal and restores it only after a successful read"
+        },
+        {
+          "suite": "browser",
+          "test": "real-models.spec.ts::observes queued training until cancelled without claiming a model was promoted"
+        },
+        {
+          "suite": "browser",
+          "test": "real-models.spec.ts::observes queued training until failed without claiming a model was promoted"
+        },
+        {
+          "suite": "browser",
+          "test": "real-models.spec.ts::observes queued training until succeeded without claiming a model was promoted"
+        },
+        {
+          "suite": "browser",
+          "test": "real-models.spec.ts::promotes a real candidate and keeps the exact prediction version visible"
+        },
+        {
+          "suite": "browser",
+          "test": "real-models.spec.ts::reuses the training request identity after losing its acknowledgement"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 17,
+      "title": "Stabilité, console et hydratation",
+      "backend": [],
+      "browser": [
+        "visual-stability.spec.ts::slow response keeps desktop /admin stable",
+        "accessibility.spec.ts::keeps cumulative layout shift below 0.05 on key dashboards",
+        "accessibility.spec.ts::has no WCAG A/AA axe violations or hydration errors on key pages"
+      ],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "browser",
+          "test": "visual-stability.spec.ts::slow response keeps desktop /admin stable"
+        },
+        {
+          "suite": "browser",
+          "test": "accessibility.spec.ts::keeps cumulative layout shift below 0.05 on key dashboards"
+        },
+        {
+          "suite": "browser",
+          "test": "accessibility.spec.ts::has no WCAG A/AA axe violations or hydration errors on key pages"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 18,
+      "title": "Parcours critiques Playwright mock",
+      "backend": [],
+      "browser": [
+        "opportunities.spec.ts::",
+        "event-detail.spec.ts::",
+        "signal-detail.spec.ts::",
+        "models.spec.ts::",
+        "paper-trading.spec.ts::",
+        "mapping-review.spec.ts::",
+        "admin-data.spec.ts::",
+        "network-resilience.spec.ts::",
+        "keyboard-accessibility.spec.ts::"
+      ],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::contains the wide table at an intermediate desktop width"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps a stale snapshot visible but clearly blocks the decision"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps filters and display choices shareable in the URL"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps the card dashboard within a mobile viewport"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::keeps the existing signal row mounted while polling for fresh odds"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::renders an explicit no-opportunity state"
+        },
+        {
+          "suite": "browser",
+          "test": "opportunities.spec.ts::shows admissible opportunities sorted by conservative EV"
+        },
+        {
+          "suite": "browser",
+          "test": "event-detail.spec.ts::keeps the event sheet readable on mobile"
+        },
+        {
+          "suite": "browser",
+          "test": "event-detail.spec.ts::opens a complete event sheet with an accessible odds summary"
+        },
+        {
+          "suite": "browser",
+          "test": "signal-detail.spec.ts::explains an admissible signal without causal or guaranteed language"
+        },
+        {
+          "suite": "browser",
+          "test": "signal-detail.spec.ts::keeps an opened signal on its original snapshot when the odds change"
+        },
+        {
+          "suite": "browser",
+          "test": "signal-detail.spec.ts::keeps signal evidence readable on mobile"
+        },
+        {
+          "suite": "browser",
+          "test": "signal-detail.spec.ts::shows abstention reasons and blocks paper trading for a stale signal"
+        },
+        {
+          "suite": "browser",
+          "test": "models.spec.ts::contains the models dashboard on mobile without hiding the backtest table"
+        },
+        {
+          "suite": "browser",
+          "test": "models.spec.ts::shows model versions, baselines and walk-forward evidence"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::creates and settles a paper bet from an admissible signal"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::renders losses as prominently as gains in the P&L summary"
+        },
+        {
+          "suite": "browser",
+          "test": "paper-trading.spec.ts::shows a versioned paper-bet detail without any real execution"
+        },
+        {
+          "suite": "browser",
+          "test": "mapping-review.spec.ts::creates a dated alias and records an explicit approval"
+        },
+        {
+          "suite": "browser",
+          "test": "mapping-review.spec.ts::keeps an ambiguous raw event blocked and previews each candidate"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::keeps a queued sync distinct from completion and reuses its key after a lost response"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::offers independent recovery for temporary catalogue and quality errors"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::runs one controlled sync and exposes its audited result"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::shows measured operations with readable data during a source failure"
+        },
+        {
+          "suite": "browser",
+          "test": "admin-data.spec.ts::shows source degradation, snapshots, schema gaps and blocking anomalies"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::bounds a transport that never answers and permits recovery"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::distinguishes a temporary paper read failure from a missing decision"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::ends an initial unavailable session check with an explicit retry"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::keeps an already loaded private-mode-disabled page visible while the network is offline"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable / after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /admin after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /data after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /events after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49 after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /models after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /paper-trading after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::preserves the last readable /paper-trading/cef9c5cf-d14f-51dc-a417-91909b3088ba after a failed refresh and recovers"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::removes private cached content when the session is explicitly no longer authorized"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::retains the synthetic real finance evidence during a temporary service failure"
+        },
+        {
+          "suite": "browser",
+          "test": "network-resilience.spec.ts::retains the synthetic real operations evidence during a temporary service failure"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::announces new odds politely while preserving the original signal price"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::changes appearance with menu keys and returns focus to its trigger"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::completes the desktop signal and paper workflow entirely by keyboard"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::completes the mobile signal and paper workflow entirely by keyboard"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::has accessible semantics and AA contrast on every desktop dark critical page"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::has accessible semantics and AA contrast on every desktop light critical page"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::has accessible semantics and AA contrast on every mobile dark critical page"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::has accessible semantics and AA contrast on every mobile light critical page"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::keeps the mobile navigation focus contained and restores its trigger"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::restores filter fields when clearing and revisiting a shared URL"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::reviews mapping and starts a model through desktop keyboard controls"
+        },
+        {
+          "suite": "browser",
+          "test": "keyboard-accessibility.spec.ts::reviews mapping and starts a model through mobile keyboard controls"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 19,
+      "title": "Sauvegarde et restauration réelles",
+      "backend": [
+        "tests.integration.test_backup_container::test_packaged_backup_and_restore_with_read_only_root",
+        "tests.integration.test_restore::"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_backup_container::test_packaged_backup_and_restore_with_read_only_root"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_restore::test_restore_drill_rebuilds_raw_and_preserves_source[False]"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.integration.test_restore::test_restore_drill_rebuilds_raw_and_preserves_source[True]"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 20,
+      "title": "Stake, contournements et mise automatique inactifs",
+      "backend": [
+        "tests.providers.test_stake_provider_disabled::test_startup_still_rejects_enablement_without_an_authorized_implementation",
+        "tests.providers.test_stake_provider_disabled::test_repository_compliance_scan_is_clean_and_wired_into_ci"
+      ],
+      "browser": [],
+      "startup": false,
+      "manual": false,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.providers.test_stake_provider_disabled::test_startup_still_rejects_enablement_without_an_authorized_implementation"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.providers.test_stake_provider_disabled::test_repository_compliance_scan_is_clean_and_wired_into_ci"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 21,
+      "title": "Absence de gain garanti affichée",
+      "backend": [
+        "tests.test_release_compliance::test_marketing_promises_block_the_compliance_scan"
+      ],
+      "browser": [
+        "release-compliance.spec.ts::shows release refusals and no guaranteed gain at 1440px",
+        "release-compliance.spec.ts::shows release refusals and no guaranteed gain at 390px"
+      ],
+      "startup": false,
+      "manual": true,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.test_release_compliance::test_marketing_promises_block_the_compliance_scan"
+        },
+        {
+          "suite": "browser",
+          "test": "release-compliance.spec.ts::shows release refusals and no guaranteed gain at 1440px"
+        },
+        {
+          "suite": "browser",
+          "test": "release-compliance.spec.ts::shows release refusals and no guaranteed gain at 390px"
+        }
+      ],
+      "missing": []
+    },
+    {
+      "number": 22,
+      "title": "Portes juridiques visibles et publication bloquée",
+      "backend": [
+        "tests.test_release_compliance::test_public_release_fails_without_manual_evidence[public]",
+        "tests.test_release_compliance::test_public_release_fails_without_manual_evidence[commercial]",
+        "tests.test_release_compliance::test_go_requires_complete_scoped_current_untampered_evidence"
+      ],
+      "browser": ["release-compliance.spec.ts::"],
+      "startup": false,
+      "manual": true,
+      "status": "PASS",
+      "tests": [
+        {
+          "suite": "backend",
+          "test": "tests.test_release_compliance::test_public_release_fails_without_manual_evidence[public]"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.test_release_compliance::test_public_release_fails_without_manual_evidence[commercial]"
+        },
+        {
+          "suite": "backend",
+          "test": "tests.test_release_compliance::test_go_requires_complete_scoped_current_untampered_evidence"
+        },
+        {
+          "suite": "browser",
+          "test": "release-compliance.spec.ts::shows release refusals and no guaranteed gain at 1440px"
+        },
+        {
+          "suite": "browser",
+          "test": "release-compliance.spec.ts::shows release refusals and no guaranteed gain at 390px"
+        }
+      ],
+      "missing": []
+    }
+  ],
+  "generatedAt": "2026-09-07T17:23:57.870369+00:00",
+  "positiveRun": {
+    "conclusion": "success",
+    "headSha": "5eec0ea753ce940dfc6a6bed8c8397b728d91392",
+    "jobs": [
+      {
+        "completedAt": "2026-09-07T17:10:33Z",
+        "conclusion": "success",
+        "databaseId": 101819078668,
+        "name": "Qualité",
+        "startedAt": "2026-09-07T17:08:25Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:08:26Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:08:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:08:27Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T17:08:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:08:53Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T17:08:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:08:53Z",
+            "conclusion": "skipped",
+            "name": "Injecter la faute temporelle uniquement pour l'exercice demandé",
+            "number": 4,
+            "startedAt": "2026-09-07T17:08:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:08:56Z",
+            "conclusion": "success",
+            "name": "Vérifier le cutoff critique avant tout autre contrôle",
+            "number": 5,
+            "startedAt": "2026-09-07T17:08:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:10:31Z",
+            "conclusion": "success",
+            "name": "Vérifier formats, types, contrats et tests",
+            "number": 6,
+            "startedAt": "2026-09-07T17:08:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:10:31Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 11,
+            "startedAt": "2026-09-07T17:10:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:10:32Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 12,
+            "startedAt": "2026-09-07T17:10:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:10:32Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-07T17:10:32Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146337077/job/101819078668"
+      },
+      {
+        "completedAt": "2026-09-07T17:14:18Z",
+        "conclusion": "success",
+        "databaseId": 101819078869,
+        "name": "Interface Playwright",
+        "startedAt": "2026-09-07T17:08:25Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:08:27Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:08:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:08:29Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T17:08:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:09:17Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T17:08:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:14:13Z",
+            "conclusion": "success",
+            "name": "Exécuter les parcours mock, visuels, clavier et réseau",
+            "number": 4,
+            "startedAt": "2026-09-07T17:09:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:14:13Z",
+            "conclusion": "success",
+            "name": "Vérifier tous les parcours sélectionnés ; Owner est exécuté dans runtime",
+            "number": 5,
+            "startedAt": "2026-09-07T17:14:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:14:15Z",
+            "conclusion": "success",
+            "name": "Conserver les preuves navigateur",
+            "number": 6,
+            "startedAt": "2026-09-07T17:14:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:14:15Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 11,
+            "startedAt": "2026-09-07T17:14:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:14:15Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 12,
+            "startedAt": "2026-09-07T17:14:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:14:15Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-07T17:14:15Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146337077/job/101819078869"
+      },
+      {
+        "completedAt": "2026-09-07T17:23:07Z",
+        "conclusion": "success",
+        "databaseId": 101819078928,
+        "name": "Migrations PostgreSQL",
+        "startedAt": "2026-09-07T17:08:25Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:08:27Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:08:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:08:29Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T17:08:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:09:29Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T17:08:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:09:33Z",
+            "conclusion": "success",
+            "name": "Installer le chiffrement natif des sauvegardes",
+            "number": 4,
+            "startedAt": "2026-09-07T17:09:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:12:46Z",
+            "conclusion": "success",
+            "name": "Construire toutes les images depuis le commit propre",
+            "number": 5,
+            "startedAt": "2026-09-07T17:09:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:13:23Z",
+            "conclusion": "success",
+            "name": "Démarrer la démo complète sur un projet Compose neuf puis le supprimer",
+            "number": 6,
+            "startedAt": "2026-09-07T17:12:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:13:26Z",
+            "conclusion": "success",
+            "name": "Préparer PostgreSQL réel et le scanner vérifié",
+            "number": 7,
+            "startedAt": "2026-09-07T17:13:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:21:51Z",
+            "conclusion": "success",
+            "name": "Exécuter toute la suite Python, y compris Owner, bundle, reprise et atomicité",
+            "number": 8,
+            "startedAt": "2026-09-07T17:13:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:21:51Z",
+            "conclusion": "success",
+            "name": "Refuser les tests sautés ou les preuves incomplètes",
+            "number": 9,
+            "startedAt": "2026-09-07T17:21:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:22:33Z",
+            "conclusion": "success",
+            "name": "Mesurer les lectures réelles sans charge concurrente",
+            "number": 10,
+            "startedAt": "2026-09-07T17:21:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:01Z",
+            "conclusion": "success",
+            "name": "Auditer les dépendances, l'historique et les images du dernier build exercé",
+            "number": 11,
+            "startedAt": "2026-09-07T17:22:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:03Z",
+            "conclusion": "success",
+            "name": "Conserver les preuves même en cas d'échec",
+            "number": 12,
+            "startedAt": "2026-09-07T17:23:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:03Z",
+            "conclusion": "success",
+            "name": "Arrêter uniquement la base de cet exercice",
+            "number": 13,
+            "startedAt": "2026-09-07T17:23:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:03Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 25,
+            "startedAt": "2026-09-07T17:23:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:04Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 26,
+            "startedAt": "2026-09-07T17:23:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:04Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 27,
+            "startedAt": "2026-09-07T17:23:04Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146337077/job/101819078928"
+      },
+      {
+        "completedAt": "2026-09-07T17:23:13Z",
+        "conclusion": "success",
+        "databaseId": 101822216998,
+        "name": "Build Docker",
+        "startedAt": "2026-09-07T17:23:09Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:23:10Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:23:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:10Z",
+            "conclusion": "success",
+            "name": "Confirmer les builds, les scans et les essais des images dans runtime",
+            "number": 2,
+            "startedAt": "2026-09-07T17:23:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:10Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 3,
+            "startedAt": "2026-09-07T17:23:10Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146337077/job/101822216998"
+      },
+      {
+        "completedAt": "2026-09-07T17:23:17Z",
+        "conclusion": "success",
+        "databaseId": 101822217061,
+        "name": "Gate MVP",
+        "startedAt": "2026-09-07T17:23:10Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:23:12Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:23:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:14Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T17:23:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:14Z",
+            "conclusion": "success",
+            "name": "Refuser toute dépendance échouée, annulée ou sautée",
+            "number": 3,
+            "startedAt": "2026-09-07T17:23:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:14Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 6,
+            "startedAt": "2026-09-07T17:23:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:23:14Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 7,
+            "startedAt": "2026-09-07T17:23:14Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146337077/job/101822217061"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/Walayy/metiqo/actions/runs/34146337077"
+  },
+  "negativeRun": {
+    "conclusion": "failure",
+    "headSha": "5eec0ea753ce940dfc6a6bed8c8397b728d91392",
+    "jobs": [
+      {
+        "completedAt": "2026-09-07T17:07:51Z",
+        "conclusion": "failure",
+        "databaseId": 101818833328,
+        "name": "Qualité",
+        "startedAt": "2026-09-07T17:07:17Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:07:18Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:07:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:20Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T17:07:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:45Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T17:07:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:46Z",
+            "conclusion": "success",
+            "name": "Injecter la faute temporelle uniquement pour l'exercice demandé",
+            "number": 4,
+            "startedAt": "2026-09-07T17:07:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:48Z",
+            "conclusion": "failure",
+            "name": "Vérifier le cutoff critique avant tout autre contrôle",
+            "number": 5,
+            "startedAt": "2026-09-07T17:07:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:48Z",
+            "conclusion": "skipped",
+            "name": "Vérifier formats, types, contrats et tests",
+            "number": 6,
+            "startedAt": "2026-09-07T17:07:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:48Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 11,
+            "startedAt": "2026-09-07T17:07:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:49Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 12,
+            "startedAt": "2026-09-07T17:07:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:49Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-07T17:07:49Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146257438/job/101818833328"
+      },
+      {
+        "completedAt": "2026-09-07T17:07:21Z",
+        "conclusion": "failure",
+        "databaseId": 101818833762,
+        "name": "Build Docker",
+        "startedAt": "2026-09-07T17:07:17Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:07:18Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:07:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:18Z",
+            "conclusion": "failure",
+            "name": "Confirmer les builds, les scans et les essais des images dans runtime",
+            "number": 2,
+            "startedAt": "2026-09-07T17:07:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:18Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 3,
+            "startedAt": "2026-09-07T17:07:18Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146257438/job/101818833762"
+      },
+      {
+        "completedAt": "2026-09-07T17:07:15Z",
+        "conclusion": "skipped",
+        "databaseId": 101818834300,
+        "name": "Interface Playwright",
+        "startedAt": "2026-09-07T17:07:15Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146257438/job/101818834300"
+      },
+      {
+        "completedAt": "2026-09-07T17:07:15Z",
+        "conclusion": "skipped",
+        "databaseId": 101818834344,
+        "name": "Migrations PostgreSQL",
+        "startedAt": "2026-09-07T17:07:15Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146257438/job/101818834344"
+      },
+      {
+        "completedAt": "2026-09-07T17:07:59Z",
+        "conclusion": "failure",
+        "databaseId": 101818963664,
+        "name": "Gate MVP",
+        "startedAt": "2026-09-07T17:07:54Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T17:07:55Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T17:07:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:57Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T17:07:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:57Z",
+            "conclusion": "failure",
+            "name": "Refuser toute dépendance échouée, annulée ou sautée",
+            "number": 3,
+            "startedAt": "2026-09-07T17:07:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:57Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 6,
+            "startedAt": "2026-09-07T17:07:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T17:07:57Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 7,
+            "startedAt": "2026-09-07T17:07:57Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34146257438/job/101818963664"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/Walayy/metiqo/actions/runs/34146257438"
+  },
+  "artifacts": [
+    {
+      "id": 10028130707,
+      "name": "runtime-evidence",
+      "digest": "sha256:228d0d23f1e6e8695aa2da3a91b7e8ef0d0e3b28d7bbcf98fe8a70447777bc6d",
+      "size_in_bytes": 552309
+    },
+    {
+      "id": 10027918783,
+      "name": "browser-evidence",
+      "digest": "sha256:1044957fa6d92bbb65ca8abf506d6ba7dbdd14551726c339cf3a9c19d46f612a",
+      "size_in_bytes": 2636876
+    }
+  ],
+  "tests": {
+    "backend": 634,
+    "browser": 106,
+    "skipped": 0
+  },
+  "proofs": [
+    {
+      "path": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/ci/backend.xml",
+      "sha256": "64aca1378d9f4143629b6ceb271998a9502e7fdd06c1f52a4c85d4e5c35a56f1"
+    },
+    {
+      "path": "data/acceptance/20260907T172350Z-7bc794e9/browser-evidence/data/ci/playwright.xml",
+      "sha256": "4e58a795a16df5dd50add252cbddc6473158aa68c300de532c9fcde10708612f"
+    },
+    {
+      "path": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/security/20260907T172234Z-dab2582e/summary.json",
+      "sha256": "4e86ba4920c448e72405fa1a6cb7cc04d1fc492c980baf7ebd891a0867adff31"
+    },
+    {
+      "path": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/performance/20260907T172153Z-b10c28dc/report.json",
+      "sha256": "fcf4e39f9dc4f269d6ce00da55453760ba2667fd5027dadb7dbbfbd278a402b5"
+    },
+    {
+      "path": "data/acceptance/20260907T172350Z-7bc794e9/runtime-evidence/data/acceptance/startup-23c12b71d523/report.json",
+      "sha256": "3a81f1efe1ef457e715456f214d6df00c4ab223d0ba67ce04e7dcc26d5b1ec79"
+    }
+  ],
+  "manualReview": {
+    "reviewer": "Codex, visual inspection of rendered PNGs",
+    "reviewedAt": "2026-09-07T16:35:43.418545+00:00",
+    "scope": "Desktop and mobile settings: readable NO-GO gates, explicit publication refusal, disabled Stake, no promised gain, non-affiliation, no overlap. Footer remains outside the initial viewport while the page loads.",
+    "captures": [
+      {
+        "path": "docs/evidence/qa-006/compliance-desktop.png",
+        "sha256": "d7d390d041875fefa8a95b5c47907fb58721eb8253140b5f1f0ed05a26b9fa93"
+      },
+      {
+        "path": "docs/evidence/qa-006/compliance-mobile.png",
+        "sha256": "cf2689d0e52c60ce676241de4f5ef3ca05eb770e899b9710a3a78c2c9c3cb9e2"
+      }
+    ],
+    "sourceHashes": [
+      {
+        "path": "apps/web/src/components/app-shell.tsx",
+        "sha256": "12e6c7ae93077195ea167d1468344924b9c89dd291322acb9f189dd0959ce705"
+      },
+      {
+        "path": "apps/web/src/components/release-compliance-panel.tsx",
+        "sha256": "86cbd223c64aa3eb477a300179fab2fffa0a591335ab0de0d774bbfb117a80cc"
+      },
+      {
+        "path": "apps/web/src/app/settings/page.tsx",
+        "sha256": "25f4cd955bdc9da69482d56d813fcb4b95f82e15ed2724e58edf0c85a2384091"
+      }
+    ]
+  },
+  "versions": {
+    "startup": {
+      "compose": "2.38.2",
+      "python": "Python 3.13.14",
+      "postgres": "postgres (PostgreSQL) 18.4",
+      "node": "v24.20.0"
+    },
+    "benchmark": {
+      "fastapi": "0.141.1",
+      "sqlalchemy": "2.0.52",
+      "psycopg": "3.3.5",
+      "httpx2": "2.12.0"
+    }
+  },
+  "commands": [
+    "gh run view 34146337077",
+    "gh run view 34146257438",
+    "make mock-demo",
+    "uv run --frozen python -m pytest",
+    "pnpm exec playwright test --grep-invert 'authenticates the Owner'",
+    "make scan-security",
+    "make check"
+  ],
+  "scope": "MVP personnel sur fixtures identifiées et services réels. Aucune validation financière, autorisation de source, ouverture publique ou fonctionnalité P10/P11 n'est déduite."
+}

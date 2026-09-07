@@ -69,9 +69,20 @@ class JobSummary(ContractModel):
 
     job_id: UUID = Field(alias="jobId")
     name: NonEmptyText
-    status: Literal["idle", "succeeded", "failed", "running"]
+    status: Literal["idle", "queued", "succeeded", "failed", "running", "cancelled", "dead"]
     last_run_at: UtcDateTime | None = Field(default=None, alias="lastRunAt")
     data_mode: DataMode = Field(alias="dataMode")
+    scope: NonEmptyText | None = None
+    attempt: int | None = Field(default=None, ge=0)
+    max_attempts: int | None = Field(default=None, alias="maxAttempts", ge=1)
+    scheduled_at: UtcDateTime | None = Field(default=None, alias="scheduledAt")
+    heartbeat_at: UtcDateTime | None = Field(default=None, alias="heartbeatAt")
+    lease_expires_at: UtcDateTime | None = Field(default=None, alias="leaseExpiresAt")
+    error_code: str | None = Field(default=None, alias="errorCode")
+    cancel_requested: bool = Field(default=False, alias="cancelRequested")
+    trace_id: UUID | None = Field(default=None, alias="traceId")
+    run_id: UUID | None = Field(default=None, alias="runId")
+    model_version_id: UUID | None = Field(default=None, alias="modelVersionId")
 
 
 class AuditEntry(ContractModel):

@@ -1,0 +1,5 @@
+/* Isolate a tall panel capture from fixed shell chrome; never used for CLS. */
+header.sticky,
+a[href="#main-content"] {
+  visibility: hidden !important;
+}

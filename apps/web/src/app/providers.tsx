@@ -5,26 +5,38 @@ import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { BackendReadError } from "../lib/backend";
+
 type ProvidersProperties = Readonly<{
   children: ReactNode;
+  nonce?: string;
 }>;
 
-export function Providers({ children }: ProvidersProperties) {
+export function Providers({ children, nonce }: ProvidersProperties) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
+            networkMode: "always",
+            refetchOnReconnect: true,
             refetchOnWindowFocus: false,
-            retry: 1,
+            retry: (failures, error) =>
+              failures < 1 &&
+              !(
+                error instanceof BackendReadError &&
+                [400, 401, 403, 404, 410].includes(error.status)
+              ),
             staleTime: 30_000,
           },
+          mutations: { networkMode: "always", retry: false },
         },
       }),
   );
 
   return (
     <ThemeProvider
+      {...(nonce ? { nonce } : {})}
       attribute="data-theme"
       defaultTheme="system"
       disableTransitionOnChange

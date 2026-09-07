@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import csv
 import gzip
+import logging
 import tempfile
 import zipfile
 from dataclasses import dataclass
 from datetime import UTC, datetime, time
 from functools import partial
 from pathlib import Path
+from time import perf_counter
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -26,6 +28,10 @@ from metiquo.db.raw_models import (
 from metiquo.db.raw_models import (
     QualityIssue as PersistedQualityIssue,
 )
+from metiquo.foundation.cancellation import OperationCancelled, checkpoint
+from metiquo.foundation.identifiers import SnapshotId
+from metiquo.foundation.locks import oe_scope, resource_lock
+from metiquo.foundation.observability import bind_log_context
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.data_quality import (
     DataQualityValidator,
@@ -49,6 +55,7 @@ from metiquo.ingestion.local_transports import (
 )
 from metiquo.ingestion.manifest import build_snapshot_manifest, store_snapshot
 from metiquo.ingestion.object_store import FilesystemObjectStore
+from metiquo.ingestion.operations import verify_snapshot
 from metiquo.ingestion.physical_validation import PhysicalValidationReport, PhysicalValidator
 from metiquo.ingestion.promotion import SnapshotPromotionService
 from metiquo.ingestion.quarantine import QuarantineService
@@ -140,6 +147,8 @@ class OracleElixirYearSync:
         self._settings = settings
         self._clock = clock or SystemClock()
         settings.object_store_root.mkdir(parents=True, exist_ok=True)
+        self._work_root = settings.object_store_root / "work"
+        self._work_root.mkdir(parents=True, exist_ok=True)
         self._store = FilesystemObjectStore(settings.object_store_root / "raw" / "oracles_elixir")
         self._quarantine_store = FilesystemObjectStore(
             settings.object_store_root / "quarantine" / "oracles_elixir"
@@ -158,6 +167,36 @@ class OracleElixirYearSync:
         fixture_path: Path | None = None,
         run_kind: str = "sync",
         request_key_hash: str | None = None,
+        check_unchanged: bool = False,
+    ) -> YearSyncReport:
+        started = perf_counter()
+        with resource_lock(self._engine, oe_scope("oracles_elixir", year)):
+            report = self._sync_year_locked(
+                year=year,
+                policy=policy,
+                fixture_path=fixture_path,
+                run_kind=run_kind,
+                request_key_hash=request_key_hash,
+                check_unchanged=check_unchanged,
+            )
+        with bind_log_context(
+            snapshot_id=SnapshotId(report.snapshot_id) if report.snapshot_id else None
+        ):
+            logging.getLogger("metiquo.ingestion").info(
+                "ingestion.sync_checked",
+                extra={"duration_ms": round((perf_counter() - started) * 1000, 3)},
+            )
+        return report
+
+    def _sync_year_locked(
+        self,
+        *,
+        year: int,
+        policy: FreshnessPolicy,
+        fixture_path: Path | None = None,
+        run_kind: str = "sync",
+        request_key_hash: str | None = None,
+        check_unchanged: bool = False,
     ) -> YearSyncReport:
         catalog = self._catalog_record(year)
         if catalog is None:
@@ -181,16 +220,22 @@ class OracleElixirYearSync:
         try:
             with tempfile.TemporaryDirectory(
                 prefix=f"metiquo-oe-{year}-",
-                dir=self._settings.object_store_root,
+                dir=self._work_root,
             ) as directory:
                 working = Path(directory)
                 metadata, download = self._download(
                     source=source,
                     destination=working / "source.download",
                     fixture_path=fixture_path,
+                    reuse_run_id=run_id if check_unchanged else None,
                 )
                 transport_name = metadata.transport
                 self._set_transport(run_id, transport_name)
+                if download is None:
+                    decision = self._freshness(catalog_id, policy)
+                    return YearSyncReport(
+                        run_id, None, decision.snapshot_id, transport_name, decision, None
+                    )
                 try:
                     physical = PhysicalValidator().validate(
                         download,
@@ -242,6 +287,7 @@ class OracleElixirYearSync:
                     },
                     ingestion_code_version="metiquo-0.1.0",
                 )
+                checkpoint()
                 stored = store_snapshot(
                     object_store=self._store,
                     download=download,
@@ -274,6 +320,15 @@ class OracleElixirYearSync:
                     engine=self._engine,
                     clock=self._clock,
                 ).emit_for_run(load_run_id)
+                if transport_name != "validated-private-mirror":
+                    self._confirm_content(
+                        run_id, promoted.snapshot_id, metadata, metadata_verified=False
+                    )
+        except OperationCancelled:
+            self._fail_run(run_id, "CANCELLED")
+            if load_run_id is not None:
+                self._fail_run(load_run_id, "CANCELLED")
+            raise
         except Exception as error:
             error_code = _error_code(error)
             self._fail_run(run_id, error_code)
@@ -310,15 +365,19 @@ class OracleElixirYearSync:
         source: SourceRef,
         destination: Path,
         fixture_path: Path | None,
-    ) -> tuple[SourceMetadata, SafeDownloadResult]:
+        reuse_run_id: UUID | None = None,
+    ) -> tuple[SourceMetadata, SafeDownloadResult | None]:
         transports = self._transports(source, fixture_path)
         last_error: Exception | None = None
         for transport in transports:
+            checkpoint()
             try:
                 metadata = RetryExecutor().execute(
                     partial(transport.probe, source),
                     policy=transport.policy.retry,
                 )
+                if reuse_run_id is not None and self._reuse_confirmed(metadata, reuse_run_id):
+                    return metadata, None
                 download = RetryExecutor().execute(
                     partial(
                         SafeDownloader().download,
@@ -373,6 +432,68 @@ class OracleElixirYearSync:
                 mirror=mirror,
             )
         return tuple(result)
+
+    def _reuse_confirmed(self, metadata: SourceMetadata, run_id: UUID) -> bool:
+        if metadata.transport == "validated-private-mirror" or metadata.checksum_sha256 is None:
+            return False
+        with self._engine.connect() as connection:
+            row = connection.execute(
+                select(Snapshot.id, Snapshot.byte_size)
+                .join(SourceCatalog, SourceCatalog.current_snapshot_id == Snapshot.id)
+                .where(
+                    SourceCatalog.provider == metadata.source.provider,
+                    SourceCatalog.season_year == metadata.source.year,
+                    SourceCatalog.drive_file_id == metadata.source.source_id,
+                    SourceCatalog.dataset == "league_of_legends_match_data",
+                    Snapshot.status == "validated",
+                    Snapshot.sha256 == metadata.checksum_sha256,
+                    select(IngestionRun.id)
+                    .where(
+                        IngestionRun.snapshot_id == Snapshot.id,
+                        IngestionRun.run_kind == "load",
+                        IngestionRun.status == "succeeded",
+                    )
+                    .exists(),
+                )
+            ).one_or_none()
+        if row is None or (
+            metadata.content_length is not None and metadata.content_length != row.byte_size
+        ):
+            return False
+        verify_snapshot(self._engine, self._settings, row.id)
+        self._set_transport(run_id, metadata.transport)
+        self._confirm_content(run_id, row.id, metadata, metadata_verified=True)
+        return True
+
+    def _confirm_content(
+        self, run_id: UUID, snapshot_id: UUID, metadata: SourceMetadata, *, metadata_verified: bool
+    ) -> None:
+        with self._engine.begin() as connection:
+            counters = dict(
+                connection.execute(
+                    select(self._runs.c.counters).where(self._runs.c.id == run_id)
+                ).scalar_one()
+            )
+            counters.update(contentVerified=True, metadataVerified=metadata_verified)
+            counters["sourceProbe"] = {
+                "transport": metadata.transport,
+                "probedAt": metadata.probed_at.isoformat(),
+                "sha256": metadata.checksum_sha256,
+                "byteSize": metadata.content_length,
+                "sourceId": metadata.source.source_id,
+            }
+            connection.execute(
+                update(self._runs)
+                .where(self._runs.c.id == run_id)
+                .values(
+                    snapshot_id=snapshot_id,
+                    status="succeeded",
+                    finished_at=self._clock.now().value,
+                    counters=counters,
+                    error_code=None,
+                    error_detail=None,
+                )
+            )
 
     def _catalog_record(self, year: int) -> dict[str, object] | None:
         with self._engine.connect() as connection:
@@ -441,7 +562,7 @@ class OracleElixirYearSync:
         with self._engine.begin() as connection:
             connection.execute(
                 update(self._runs)
-                .where(self._runs.c.id == run_id, self._runs.c.status == "running")
+                .where(self._runs.c.id == run_id, self._runs.c.status.in_(("running", "succeeded")))
                 .values(
                     status="failed",
                     finished_at=now,
@@ -606,19 +727,25 @@ def _materialize_csv(
     if physical.compression == "gzip":
         with gzip.open(download.final_path, "rb") as source, target.open("xb") as output:
             while chunk := source.read(1024 * 1024):
+                checkpoint()
                 output.write(chunk)
         return target
     with zipfile.ZipFile(download.final_path) as archive:
         members = [member for member in archive.infolist() if not member.is_dir()]
         with archive.open(members[0]) as source, target.open("xb") as output:
             while chunk := source.read(1024 * 1024):
+                checkpoint()
                 output.write(chunk)
     return target
 
 
 def _read_rows(path: Path, physical: PhysicalValidationReport) -> list[dict[str, str]]:
     with path.open("r", encoding=physical.encoding, newline="") as stream:
-        return list(csv.DictReader(stream, delimiter=physical.delimiter))
+        rows = []
+        for row in csv.DictReader(stream, delimiter=physical.delimiter):
+            checkpoint()
+            rows.append(row)
+        return rows
 
 
 def _manifest_date(value: str | None) -> datetime | None:

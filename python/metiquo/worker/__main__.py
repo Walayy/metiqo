@@ -1,19 +1,61 @@
 """Point d'entrée du processus worker."""
 
+import os
 import signal
 from types import FrameType
+from uuid import uuid4
+
+from sqlalchemy import create_engine
 
 from metiquo.config import load_settings
+from metiquo.contracts.enums import DataMode
 from metiquo.foundation.observability import configure_json_logging
+from metiquo.services.operational_audit import record_runtime_configuration
+from metiquo.worker.handlers import default_handlers
+from metiquo.worker.queue import PostgresJobQueue
+from metiquo.worker.retry import RetryPolicy
+from metiquo.worker.runner import PostgresJobRunner
 from metiquo.worker.runtime import WorkerRuntime
+from metiquo.worker.scheduler import PostgresScheduler, SchedulePolicy
 
 
 def main() -> int:
     """Valider la configuration et exécuter le cycle de vie sans job."""
 
-    load_settings()
-    configure_json_logging()
-    runtime = WorkerRuntime()
+    settings = load_settings()
+    configure_json_logging(
+        secrets=tuple(
+            value.get_secret_value()
+            for value in (settings.database_url, settings.oe_google_drive_bearer)
+            if value is not None
+        )
+    )
+    engine = (
+        create_engine(settings.database_url.get_secret_value(), pool_pre_ping=True)
+        if settings.app_data_mode is DataMode.REAL
+        else None
+    )
+    runner = (
+        PostgresJobRunner(
+            PostgresJobQueue(
+                engine,
+                retry_policy=RetryPolicy(
+                    settings.worker_retry_delays_seconds, settings.worker_retry_jitter_fraction
+                ),
+            ),
+            default_handlers(engine, settings),
+            owner=f"worker-{os.getpid()}-{uuid4().hex[:8]}",
+        )
+        if engine is not None
+        else None
+    )
+    runtime = WorkerRuntime(
+        runner=runner,
+        scheduler=PostgresScheduler(runner.queue, SchedulePolicy.from_settings(settings))
+        if runner is not None and settings.worker_scheduler_enabled
+        else None,
+        schedule_seconds=settings.worker_scheduler_tick_seconds,
+    )
 
     def request_stop(signum: int, frame: FrameType | None) -> None:
         del signum, frame
@@ -21,7 +63,13 @@ def main() -> int:
 
     signal.signal(signal.SIGINT, request_stop)
     signal.signal(signal.SIGTERM, request_stop)
-    return runtime.run()
+    try:
+        if engine is not None:
+            record_runtime_configuration(engine, settings, service="worker")
+        return runtime.run()
+    finally:
+        if engine is not None:
+            engine.dispose()
 
 
 if __name__ == "__main__":

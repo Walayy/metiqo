@@ -41,6 +41,28 @@ export type AliasRecord = {
 };
 
 /**
+ * ApiProcessMetrics
+ */
+export type ApiProcessMetrics = {
+    /**
+     * Failurecount
+     */
+    failureCount: number;
+    /**
+     * Meanlatencyms
+     */
+    meanLatencyMs?: number | null;
+    /**
+     * Requestcount
+     */
+    requestCount: number;
+    /**
+     * Scope
+     */
+    scope?: 'current_api_process';
+};
+
+/**
  * AuditEntry
  *
  * Trace immutable d'une mutation applicative.
@@ -81,6 +103,21 @@ export type AuditEntry = {
      * Resourceid
      */
     resourceId?: string | null;
+};
+
+/**
+ * AuthStatus
+ */
+export type AuthStatus = {
+    /**
+     * Authenticated
+     */
+    authenticated: boolean;
+    /**
+     * Mode
+     */
+    mode: 'disabled' | 'owner';
+    owner?: OwnerIdentity | null;
 };
 
 /**
@@ -149,6 +186,28 @@ export type BacktestSummary = {
      * Validationscheme
      */
     validationScheme?: 'walk_forward';
+};
+
+/**
+ * BackupOperationalHealth
+ */
+export type BackupOperationalHealth = {
+    /**
+     * Errorcode
+     */
+    errorCode?: string | null;
+    /**
+     * Lastfailureat
+     */
+    lastFailureAt?: string | null;
+    /**
+     * Lastsuccessat
+     */
+    lastSuccessAt?: string | null;
+    /**
+     * Status
+     */
+    status: 'not_configured' | 'missing' | 'fresh' | 'stale' | 'failed';
 };
 
 /**
@@ -278,6 +337,10 @@ export type CreateAliasRequest = {
  */
 export type CreatePaperBetRequest = {
     /**
+     * Actor
+     */
+    actor?: string;
+    /**
      * Currency
      */
     currency?: string;
@@ -405,6 +468,24 @@ export type Event = {
 export type EventStatus = 'scheduled' | 'live' | 'finished' | 'cancelled';
 
 /**
+ * FinancialEstimateDto
+ */
+export type FinancialEstimateDto = {
+    /**
+     * Samplesize
+     */
+    sampleSize: number;
+    /**
+     * Unavailablereason
+     */
+    unavailableReason?: string | null;
+    /**
+     * Value
+     */
+    value: string | null;
+};
+
+/**
  * FreshnessStatus
  *
  * Fraîcheur normative d'une source ou d'un résultat.
@@ -417,6 +498,8 @@ export type FreshnessStatus = 'fresh' | 'stale' | 'degraded' | 'failed' | 'quara
  * Jeux activés dans le périmètre courant.
  */
 export type GameTitle = 'lol';
+
+export type GateStatus = 'NO-GO' | 'GO';
 
 /**
  * HTTPValidationError
@@ -546,6 +629,14 @@ export type ItemResponseIngestionRunSummary = {
 };
 
 /**
+ * ItemResponse[JobSummary]
+ */
+export type ItemResponseJobSummary = {
+    data: JobSummary;
+    meta: ContractMetadata;
+};
+
+/**
  * ItemResponse[MappingReview]
  */
 export type ItemResponseMappingReview = {
@@ -586,12 +677,36 @@ export type ItemResponsePaperBet = {
 };
 
 /**
+ * ItemResponse[PaperMetricsDto]
+ */
+export type ItemResponsePaperMetricsDto = {
+    data: PaperMetricsDto;
+    meta: ContractMetadata;
+};
+
+/**
  * JobSummary
  *
  * État public minimal d'un job orchestré.
  */
 export type JobSummary = {
+    /**
+     * Attempt
+     */
+    attempt?: number | null;
+    /**
+     * Cancelrequested
+     */
+    cancelRequested?: boolean;
     dataMode: DataMode;
+    /**
+     * Errorcode
+     */
+    errorCode?: string | null;
+    /**
+     * Heartbeatat
+     */
+    heartbeatAt?: string | null;
     /**
      * Jobid
      */
@@ -601,13 +716,41 @@ export type JobSummary = {
      */
     lastRunAt?: string | null;
     /**
+     * Leaseexpiresat
+     */
+    leaseExpiresAt?: string | null;
+    /**
+     * Maxattempts
+     */
+    maxAttempts?: number | null;
+    /**
+     * Modelversionid
+     */
+    modelVersionId?: string | null;
+    /**
      * Name
      */
     name: string;
     /**
+     * Runid
+     */
+    runId?: string | null;
+    /**
+     * Scheduledat
+     */
+    scheduledAt?: string | null;
+    /**
+     * Scope
+     */
+    scope?: string | null;
+    /**
      * Status
      */
-    status: 'idle' | 'succeeded' | 'failed' | 'running';
+    status: 'idle' | 'queued' | 'succeeded' | 'failed' | 'running' | 'cancelled' | 'dead';
+    /**
+     * Traceid
+     */
+    traceId?: string | null;
 };
 
 /**
@@ -804,6 +947,32 @@ export type ModelDecisionRequest = {
 };
 
 /**
+ * ModelOperationalHealth
+ */
+export type ModelOperationalHealth = {
+    /**
+     * Ageseconds
+     */
+    ageSeconds?: number | null;
+    /**
+     * Modelversionid
+     */
+    modelVersionId?: string | null;
+    /**
+     * Status
+     */
+    status: 'fresh' | 'stale' | 'missing' | 'invalid';
+    /**
+     * Trainedat
+     */
+    trainedAt?: string | null;
+    /**
+     * Trainingcutoff
+     */
+    trainingCutoff?: string | null;
+};
+
+/**
  * ModelStatus
  *
  * Cycle de vie d'une version de modèle.
@@ -953,6 +1122,71 @@ export type OddsSnapshot = {
 };
 
 /**
+ * OperationalMetrics
+ */
+export type OperationalMetrics = {
+    /**
+     * Anomalies
+     */
+    anomalies: number;
+    api: ApiProcessMetrics;
+    /**
+     * Blockinganomalies
+     */
+    blockingAnomalies: number;
+    /**
+     * Databasescope
+     */
+    databaseScope?: 'retained_history';
+    /**
+     * Jobfailures
+     */
+    jobFailures: number;
+    /**
+     * Meanjobdurationseconds
+     */
+    meanJobDurationSeconds?: number | null;
+    /**
+     * Measuredjobcount
+     */
+    measuredJobCount: number;
+    /**
+     * Processedrows
+     */
+    processedRows: number;
+    /**
+     * Signals
+     */
+    signals: {
+        [key: string]: number;
+    };
+};
+
+/**
+ * OperationalStatus
+ */
+export type OperationalStatus = {
+    backups: BackupOperationalHealth;
+    /**
+     * Jobcounts
+     */
+    jobCounts: {
+        [key: string]: number;
+    };
+    /**
+     * Mappingbacklog
+     */
+    mappingBacklog: number;
+    metrics: OperationalMetrics;
+    model: ModelOperationalHealth;
+    /**
+     * Readsavailable
+     */
+    readsAvailable: boolean;
+    source: SourceOperationalHealth;
+};
+
+/**
  * Opportunity
  *
  * Signal complet partageable entre implémentations mock et réelle.
@@ -997,6 +1231,30 @@ export type OpportunityExplanation = {
      * Signalid
      */
     signalId: string;
+};
+
+/**
+ * OwnerIdentity
+ */
+export type OwnerIdentity = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Username
+     */
+    username: string;
+};
+
+/**
+ * OwnerLoginRequest
+ */
+export type OwnerLoginRequest = {
+    /**
+     * Username
+     */
+    username: string;
 };
 
 /**
@@ -1198,6 +1456,14 @@ export type PaperBet = {
      */
     closingOddsSnapshotId?: string | null;
     /**
+     * Clv
+     */
+    clv?: string | null;
+    /**
+     * Clvisproxy
+     */
+    clvIsProxy?: boolean;
+    /**
      * Currency
      */
     currency: string;
@@ -1254,6 +1520,58 @@ export type PaperBet = {
  * Cycle de règlement d'un pari fictif.
  */
 export type PaperBetStatus = 'open' | 'won' | 'lost' | 'push' | 'void' | 'pending_review';
+
+/**
+ * PaperMetricsDto
+ */
+export type PaperMetricsDto = {
+    /**
+     * Bets
+     */
+    bets?: number;
+    /**
+     * Computedat
+     */
+    computedAt?: string | null;
+    /**
+     * Currency
+     */
+    currency: string;
+    /**
+     * Estimates
+     */
+    estimates?: {
+        [key: string]: FinancialEstimateDto;
+    };
+    /**
+     * Methodversion
+     */
+    methodVersion: string;
+    /**
+     * Open
+     */
+    open?: number;
+    /**
+     * Pendingreview
+     */
+    pendingReview?: number;
+    /**
+     * Reportfingerprint
+     */
+    reportFingerprint?: string | null;
+    /**
+     * Reportid
+     */
+    reportId?: string | null;
+    /**
+     * Settled
+     */
+    settled?: number;
+    /**
+     * Signals
+     */
+    signals?: number;
+};
 
 /**
  * Prediction
@@ -1565,6 +1883,29 @@ export type ReadyResponse = {
     status: 'ready' | 'not_ready';
 };
 
+export type ReleaseAudience = 'personal' | 'public' | 'commercial';
+
+/**
+ * ReleaseCompliance
+ */
+export type ReleaseCompliance = {
+    audience: ReleaseAudience;
+    /**
+     * Gates
+     */
+    gates: {
+        [key: string]: GateStatus;
+    };
+    /**
+     * Publicreleaseallowed
+     */
+    publicReleaseAllowed: boolean;
+    /**
+     * Stakeproviderenabled
+     */
+    stakeProviderEnabled?: false;
+};
+
 /**
  * SelectionType
  *
@@ -1577,18 +1918,49 @@ export type SelectionType = 'TEAM_A' | 'TEAM_B' | 'DRAW' | 'OVER' | 'UNDER';
  */
 export type SettlePaperBetRequest = {
     /**
+     * Actor
+     */
+    actor?: string;
+    /**
+     * Correctionreason
+     */
+    correctionReason?: string | null;
+    /**
      * Paperbetid
      */
     paperBetId: string;
     /**
      * Profitloss
      */
-    profitLoss: number | string;
+    profitLoss?: number | string | null;
     /**
      * Reason
      */
     reason: string;
-    status: PaperBetStatus;
+    status?: PaperBetStatus | null;
+};
+
+/**
+ * SourceOperationalHealth
+ */
+export type SourceOperationalHealth = {
+    /**
+     * Ageseconds
+     */
+    ageSeconds?: number | null;
+    /**
+     * Asof
+     */
+    asOf?: string | null;
+    /**
+     * Reasoncode
+     */
+    reasonCode: string;
+    /**
+     * Snapshotid
+     */
+    snapshotId?: string | null;
+    status: FreshnessStatus;
 };
 
 /**
@@ -1612,6 +1984,7 @@ export type SystemStatusResponse = {
      * Generatedat
      */
     generatedAt: string;
+    operations?: OperationalStatus | null;
     /**
      * Status
      */
@@ -1689,6 +2062,20 @@ export type Value = {
  * Classement non promotionnel d'un écart de prix.
  */
 export type ValueGrade = 'STRONG_VALUE' | 'VALUE' | 'WATCH' | 'NO_EDGE' | 'BLOCKED';
+
+/**
+ * OwnerLoginRequest
+ */
+export type OwnerLoginRequestWritable = {
+    /**
+     * Password
+     */
+    password: string;
+    /**
+     * Username
+     */
+    username: string;
+};
 
 export type CreateAliasApiV1AdminAliasesPostData = {
     body: CreateAliasRequest;
@@ -1876,7 +2263,7 @@ export type ListJobsApiV1AdminJobsGetData = {
         /**
          * Status
          */
-        status?: 'idle' | 'succeeded' | 'failed' | 'running' | null;
+        status?: 'idle' | 'queued' | 'succeeded' | 'failed' | 'running' | 'cancelled' | 'dead' | null;
     };
     url: '/api/v1/admin/jobs';
 };
@@ -1898,6 +2285,36 @@ export type ListJobsApiV1AdminJobsGetResponses = {
 };
 
 export type ListJobsApiV1AdminJobsGetResponse = ListJobsApiV1AdminJobsGetResponses[keyof ListJobsApiV1AdminJobsGetResponses];
+
+export type GetJobApiV1AdminJobsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/jobs/{job_id}';
+};
+
+export type GetJobApiV1AdminJobsJobIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetJobApiV1AdminJobsJobIdGetError = GetJobApiV1AdminJobsJobIdGetErrors[keyof GetJobApiV1AdminJobsJobIdGetErrors];
+
+export type GetJobApiV1AdminJobsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ItemResponseJobSummary;
+};
+
+export type GetJobApiV1AdminJobsJobIdGetResponse = GetJobApiV1AdminJobsJobIdGetResponses[keyof GetJobApiV1AdminJobsJobIdGetResponses];
 
 export type ListPendingMappingsApiV1AdminMappingsPendingGetData = {
     body?: never;
@@ -2032,6 +2449,10 @@ export type TrainApiV1AdminModelsTrainPostResponses = {
      * Successful Response
      */
     200: ItemResponseModelSummary;
+    /**
+     * Entraînement en file
+     */
+    202: ItemResponseJobSummary;
 };
 
 export type TrainApiV1AdminModelsTrainPostResponse = TrainApiV1AdminModelsTrainPostResponses[keyof TrainApiV1AdminModelsTrainPostResponses];
@@ -2135,6 +2556,10 @@ export type SyncApiV1AdminOraclesElixirSyncPostResponses = {
      * Successful Response
      */
     200: ItemResponseIngestionRunSummary;
+    /**
+     * Synchronisation en file
+     */
+    202: ItemResponseJobSummary;
 };
 
 export type SyncApiV1AdminOraclesElixirSyncPostResponse = SyncApiV1AdminOraclesElixirSyncPostResponses[keyof SyncApiV1AdminOraclesElixirSyncPostResponses];
@@ -2211,6 +2636,63 @@ export type ListQualityIssuesApiV1AdminQualityIssuesGetResponses = {
 };
 
 export type ListQualityIssuesApiV1AdminQualityIssuesGetResponse = ListQualityIssuesApiV1AdminQualityIssuesGetResponses[keyof ListQualityIssuesApiV1AdminQualityIssuesGetResponses];
+
+export type LoginApiV1AuthLoginPostData = {
+    body: OwnerLoginRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/login';
+};
+
+export type LoginApiV1AuthLoginPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LoginApiV1AuthLoginPostError = LoginApiV1AuthLoginPostErrors[keyof LoginApiV1AuthLoginPostErrors];
+
+export type LoginApiV1AuthLoginPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: AuthStatus;
+};
+
+export type LoginApiV1AuthLoginPostResponse = LoginApiV1AuthLoginPostResponses[keyof LoginApiV1AuthLoginPostResponses];
+
+export type LogoutApiV1AuthLogoutPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/logout';
+};
+
+export type LogoutApiV1AuthLogoutPostResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type LogoutApiV1AuthLogoutPostResponse = LogoutApiV1AuthLogoutPostResponses[keyof LogoutApiV1AuthLogoutPostResponses];
+
+export type CurrentSessionApiV1AuthSessionGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/session';
+};
+
+export type CurrentSessionApiV1AuthSessionGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AuthStatus;
+};
+
+export type CurrentSessionApiV1AuthSessionGetResponse = CurrentSessionApiV1AuthSessionGetResponses[keyof CurrentSessionApiV1AuthSessionGetResponses];
 
 export type ListBacktestsApiV1BacktestsGetData = {
     body?: never;
@@ -2523,6 +3005,10 @@ export type ListOpportunitiesApiV1OpportunitiesGetData = {
          */
         limit?: number;
         /**
+         * Eventid
+         */
+        eventId?: string | null;
+        /**
          * Competition
          */
         competition?: string | null;
@@ -2713,6 +3199,36 @@ export type CreatePaperBetApiV1PaperBetsPostResponses = {
 
 export type CreatePaperBetApiV1PaperBetsPostResponse = CreatePaperBetApiV1PaperBetsPostResponses[keyof CreatePaperBetApiV1PaperBetsPostResponses];
 
+export type MetricsApiV1PaperBetsMetricsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Currency
+         */
+        currency?: string;
+    };
+    url: '/api/v1/paper-bets/metrics';
+};
+
+export type MetricsApiV1PaperBetsMetricsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MetricsApiV1PaperBetsMetricsGetError = MetricsApiV1PaperBetsMetricsGetErrors[keyof MetricsApiV1PaperBetsMetricsGetErrors];
+
+export type MetricsApiV1PaperBetsMetricsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ItemResponsePaperMetricsDto;
+};
+
+export type MetricsApiV1PaperBetsMetricsGetResponse = MetricsApiV1PaperBetsMetricsGetResponses[keyof MetricsApiV1PaperBetsMetricsGetResponses];
+
 export type GetPaperBetApiV1PaperBetsPaperBetIdGetData = {
     body?: never;
     path: {
@@ -2742,6 +3258,63 @@ export type GetPaperBetApiV1PaperBetsPaperBetIdGetResponses = {
 };
 
 export type GetPaperBetApiV1PaperBetsPaperBetIdGetResponse = GetPaperBetApiV1PaperBetsPaperBetIdGetResponses[keyof GetPaperBetApiV1PaperBetsPaperBetIdGetResponses];
+
+export type DownloadReportApiV1PaperReportsReportIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Report Id
+         */
+        report_id: string;
+    };
+    query?: never;
+    url: '/api/v1/paper-reports/{report_id}';
+};
+
+export type DownloadReportApiV1PaperReportsReportIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DownloadReportApiV1PaperReportsReportIdGetError = DownloadReportApiV1PaperReportsReportIdGetErrors[keyof DownloadReportApiV1PaperReportsReportIdGetErrors];
+
+export type DownloadReportApiV1PaperReportsReportIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ReleaseComplianceApiV1SystemComplianceGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/system/compliance';
+};
+
+export type ReleaseComplianceApiV1SystemComplianceGetErrors = {
+    /**
+     * Ressource introuvable
+     */
+    404: ProblemDetails;
+    /**
+     * Requête invalide
+     */
+    422: ProblemDetails;
+};
+
+export type ReleaseComplianceApiV1SystemComplianceGetError = ReleaseComplianceApiV1SystemComplianceGetErrors[keyof ReleaseComplianceApiV1SystemComplianceGetErrors];
+
+export type ReleaseComplianceApiV1SystemComplianceGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ReleaseCompliance;
+};
+
+export type ReleaseComplianceApiV1SystemComplianceGetResponse = ReleaseComplianceApiV1SystemComplianceGetResponses[keyof ReleaseComplianceApiV1SystemComplianceGetResponses];
 
 export type SystemStatusApiV1SystemStatusGetData = {
     body?: never;

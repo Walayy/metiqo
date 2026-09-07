@@ -6,7 +6,7 @@ INGESTION_INTEGRATION_TESTS := tests/integration/test_backfill.py tests/integrat
 OE_JSON_FLAG = $(if $(filter 1 true yes,$(JSON)),--json,)
 OE_FIXTURE_FLAG = $(if $(strip $(FIXTURE)),--fixture $(FIXTURE),)
 
-.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-leakage test-migrations test-ingestion test-e2e openapi openapi-check check $(OE_TARGETS)
+.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-leakage test-migrations test-ingestion test-e2e openapi openapi-check check backup $(OE_TARGETS)
 
 help:
 	@echo "Metiquo - commandes développeur"
@@ -34,10 +34,12 @@ help:
 	@echo "  make oe-rebuild-canonical FROM=2025-01-01"
 	@echo "  make features-rebuild FROM=2025-01-01 [CODE_COMMIT=<hash>]"
 	@echo "  make model-train MARKET=game_winner [DATASET=<uuid>] [CODE_COMMIT=<hash>]"
+	@echo "  make backup JSON=1  Sauvegarde DB, raw, modèles et quarantaine en mode réel"
+	@echo "  make release-check AUDIENCE=personal|public|commercial Vérifie les portes de publication"
 
-up:
-	docker compose --profile mock run --rm --no-deps --build mock-mode-check
-	docker compose --profile mock up -d --build --wait --wait-timeout 120 postgres api worker web
+up: docker-build
+	docker compose --profile mock run --rm --no-deps mock-mode-check
+	docker compose --profile mock up -d --wait --wait-timeout 120 postgres api worker web
 
 down:
 	docker compose --profile "*" down --remove-orphans
@@ -46,8 +48,7 @@ db-migrate:
 	docker compose exec -T api alembic upgrade head
 
 docker-build:
-	docker compose config --quiet
-	docker compose --profile mock build
+	uv run --frozen python infra/scripts/build_images.py
 
 mock-seed:
 	uv run --frozen python infra/scripts/seed_mock_demo.py --check
@@ -56,7 +57,7 @@ mock-demo:
 	$(MAKE) mock-seed
 	$(MAKE) up
 	$(MAKE) db-migrate
-	@echo "Démo mock prête : http://127.0.0.1:3000"
+	@echo "Démo mock prête : ouvrir APP_PUBLIC_ORIGIN (défaut http://localhost:3000)"
 
 format:
 	pnpm run format
@@ -76,18 +77,82 @@ typecheck:
 
 test:
 	pnpm run test:components
-	uv run --frozen pytest
+	uv run --frozen python -m pytest
 
 test-leakage:
-	uv run --frozen pytest tests/leakage tests/model/test_rating_features.py tests/model/test_champion_meta_features.py tests/model/test_prior_missingness_features.py -vv
+	uv run --frozen python -m pytest tests/leakage tests/model/test_rating_features.py tests/model/test_champion_meta_features.py tests/model/test_prior_missingness_features.py -vv
 
 test-migrations:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour les tests de migration))
-	uv run --frozen pytest tests/integration -vv
+	uv run --frozen python -m pytest tests/integration -vv
 
 test-ingestion:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate ingestion))
-	uv run --frozen pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
+	uv run --frozen python -m pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
+
+.PHONY: test-value value-evaluate test-paper paper-settle paper-report paper-gate
+.PHONY: backup
+.PHONY: scan-secrets
+.PHONY: scan-security
+.PHONY: test-ops
+.PHONY: benchmark-reads
+.PHONY: release-check
+.PHONY: acceptance
+acceptance:
+	$(if $(strip $(CI_RUN)),,$(error CI_RUN est requis))
+	$(if $(strip $(NEGATIVE_CI_RUN)),,$(error NEGATIVE_CI_RUN est requis))
+	uv run --frozen python -m infra.scripts.acceptance --ci-run $(CI_RUN) --negative-ci-run $(NEGATIVE_CI_RUN)
+
+release-check:
+	$(if $(strip $(AUDIENCE)),,$(error AUDIENCE=personal|public|commercial est requis))
+	uv run --frozen python -m infra.scripts.check_release --audience $(AUDIENCE)
+
+benchmark-reads:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour créer la base de benchmark jetable))
+	uv run --frozen python -m infra.scripts.benchmark_reads
+
+test-ops:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate exploitation))
+	$(if $(strip $(TEST_PG_CONTAINER)),,$(error TEST_PG_CONTAINER est requis pour les backups réels))
+	$(if $(strip $(TEST_OPS_IMAGE)),,$(error TEST_OPS_IMAGE est requis pour les tests du worker packagé))
+	$(if $(strip $(TEST_BACKUP_IMAGE)),,$(error TEST_BACKUP_IMAGE est requis pour la restauration packagée))
+	$(if $(strip $(TEST_SECURITY_IMAGE)),,$(error TEST_SECURITY_IMAGE est requis pour les permissions API))
+	$(if $(strip $(TEST_SECURITY_WEB_IMAGE)),,$(error TEST_SECURITY_WEB_IMAGE est requis pour le web packagé))
+	$(if $(strip $(TEST_SECURITY_GATEWAY_IMAGE)),,$(error TEST_SECURITY_GATEWAY_IMAGE est requis pour TLS))
+	uv run --frozen python -m pytest tests/worker tests/operations tests/api/test_lifespan.py tests/integration/test_ops_gate.py tests/integration/test_ops_containers.py tests/integration/test_migration_dry_run.py tests/integration/test_job_queue.py tests/integration/test_job_recovery.py tests/integration/test_business_locks.py tests/integration/test_scheduled_sync.py tests/integration/test_alerts.py tests/integration/test_backups.py tests/integration/test_restore.py tests/integration/test_backup_container.py tests/integration/test_security_gateway.py tests/integration/test_secret_containers.py tests/integration/test_ops_audit.py tests/integration/test_system_observability.py -q
+
+scan-security:
+	uv run --frozen python -m infra.scripts.scan_security
+
+scan-secrets:
+	uv run --frozen python infra/scripts/scan_secrets.py
+
+backup:
+	uv run --frozen oe backup $(OE_JSON_FLAG)
+
+paper-gate:
+	uv run --frozen python infra/scripts/demo_paper_gate.py --output $(or $(OUTPUT),data/paper-gate-example.json)
+
+test-paper:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le ledger paper))
+	uv run --frozen python -m pytest tests/paper tests/integration/test_paper_ledger.py tests/integration/test_paper_creation.py tests/integration/test_paper_settlement_job.py tests/integration/test_paper_clv.py tests/integration/test_paper_reporting.py tests/integration/test_paper_reporting_audit.py tests/integration/test_real_paper_api.py tests/integration/test_paper_gate.py -vv
+
+paper-report:
+	uv run --frozen oe paper-report --currency $(or $(CURRENCY),EUR) $(OE_JSON_FLAG)
+
+paper-settle:
+	uv run --frozen oe paper-settle $(if $(strip $(PAPER_BET)),--paper-bet $(PAPER_BET),) $(OE_JSON_FLAG)
+
+test-value:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate value))
+	uv run --frozen python -m pytest tests/pricing tests/integration/test_value_pipeline.py tests/integration/test_signal_persistence.py tests/integration/test_migrations.py -vv
+
+value-evaluate:
+	$(if $(strip $(ODDS_SNAPSHOT)),,$(error ODDS_SNAPSHOT est requis))
+	$(if $(strip $(EVENT_MAPPING)),,$(error EVENT_MAPPING est requis))
+	$(if $(strip $(MARKET_MAPPING)),,$(error MARKET_MAPPING est requis))
+	$(if $(strip $(POLICY)),,$(error POLICY est requis))
+	uv run --frozen oe value-evaluate --odds-snapshot $(ODDS_SNAPSHOT) --event-mapping $(EVENT_MAPPING) --market-mapping $(MARKET_MAPPING) --policy $(POLICY) $(if $(strip $(PREDICTION)),--prediction $(PREDICTION),) $(OE_JSON_FLAG)
 
 test-e2e:
 	pnpm run test:e2e

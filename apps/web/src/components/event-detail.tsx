@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend } from "../lib/backend";
+
 import type {
   ItemResponseEvent,
   Market,
@@ -44,7 +48,7 @@ import {
 } from "./opportunity-presenters";
 
 async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/backend${path}`, {
+  const response = await readBackend(`/api/backend${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -214,8 +218,11 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
   });
   const opportunitiesQuery = useQuery({
     queryFn: ({ signal }) =>
-      fetchResource<PageResponseOpportunity>("/api/v1/opportunities?offset=0&limit=100", signal),
-    queryKey: ["opportunities", "event-detail"],
+      fetchResource<PageResponseOpportunity>(
+        `/api/v1/opportunities?eventId=${encodedEventId}&offset=0&limit=100`,
+        signal,
+      ),
+    queryKey: ["opportunities", "event-detail", eventId],
   });
 
   const isPending =
@@ -259,11 +266,13 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
 
       <RemoteDataBoundary
         className="min-w-0"
-        isLoading={isPending}
+        isLoading={isPending && !isError}
         isRefetching={isFetching && !isPending}
         loadingFallback={<RemoteLoadingState label="Chargement de l’événement" rows={8} />}
       >
-        {isError ? (
+        <QueryRecovery queries={[eventQuery, marketsQuery, oddsQuery, opportunitiesQuery]} />
+        {isError &&
+        ![eventQuery, marketsQuery, oddsQuery, opportunitiesQuery].every(canReadPrevious) ? (
           <RemoteRecoverableErrorState
             description="La fiche complète n’a pas pu être assemblée."
             onRetry={() => {
@@ -481,8 +490,8 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
               <div>
                 <h2 className="font-semibold">Paper trading uniquement</h2>
                 <p className="mt-1 max-w-2xl text-xs leading-5 text-ink-secondary">
-                  {signal ? describeOpportunity(signal) : "Aucun signal disponible."} Aucune mise
-                  réelle ni connexion bookmaker.
+                  {signal ? describeOpportunity(signal, referenceTime) : "Aucun signal disponible."}{" "}
+                  Aucune mise réelle ni connexion bookmaker.
                 </p>
               </div>
               {signal && isAdmissible(signal, referenceTime) ? (

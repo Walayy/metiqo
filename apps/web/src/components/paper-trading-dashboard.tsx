@@ -1,5 +1,9 @@
 "use client";
 
+import { QueryRecovery } from "./query-recovery";
+
+import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
+
 import type {
   ItemResponseOpportunity,
   ItemResponsePaperBet,
@@ -32,9 +36,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { formatDateTime } from "./opportunity-presenters";
+import { PaperFinancialReport } from "./paper-financial-report";
+import { RealPaperSettlement } from "./real-paper-settlement";
 
 const statusLabels: Readonly<Record<PaperBetStatus, string>> = {
   lost: "Perdu",
@@ -46,7 +52,7 @@ const statusLabels: Readonly<Record<PaperBetStatus, string>> = {
 };
 
 async function getJson<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/backend${path}`, {
+  const response = await readBackend(`/api/backend${path}`, {
     headers: { accept: "application/json" },
     signal,
   });
@@ -54,13 +60,14 @@ async function getJson<T>(path: string, signal: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`/api/backend${path}`, {
+async function postJson<T>(path: string, body: unknown, key?: string): Promise<T> {
+  const response = await requestBackend(`/api/backend${path}`, {
     body: JSON.stringify(body),
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      "Idempotency-Key": crypto.randomUUID(),
+      "Idempotency-Key": key ?? crypto.randomUUID(),
+      "X-Metiquo-CSRF": "1",
     },
     method: "POST",
   });
@@ -304,6 +311,7 @@ function SettlementForm({ bet }: Readonly<{ bet: PaperBet }>) {
 }
 
 function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
+  const identity = useRef({ payload: "", key: "" });
   const [stakeAmount, setStakeAmount] = useState("10");
   const opportunity = useQuery({
     enabled: signalId !== null,
@@ -315,15 +323,22 @@ function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
     queryKey: ["opportunity", signalId],
   });
   const creation = useMutation({
-    mutationFn: () =>
-      postJson<ItemResponsePaperBet>("/api/v1/paper-bets", {
+    mutationFn: () => {
+      const body = {
         currency: "EUR",
         signalId,
         stakeAmount,
-      }),
+      };
+      const payload = JSON.stringify(body);
+      if (identity.current.payload !== payload)
+        identity.current = { payload, key: crypto.randomUUID() };
+      return postJson<ItemResponsePaperBet>("/api/v1/paper-bets", body, identity.current.key);
+    },
   });
   const selected = opportunity.data?.data;
-  const publishable = selected?.quality.publishable === true;
+  const publishable =
+    selected?.quality.publishable === true &&
+    ["VALUE", "STRONG_VALUE"].includes(selected.value.grade);
 
   return (
     <Card aria-label="Créer une décision paper">
@@ -417,7 +432,9 @@ function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
                   Paper bet créé · aucune exécution réelle
                 </div>
                 <PaperCard bet={creation.data.data} local />
-                {creation.data.data.status === "open" ? (
+                {creation.data.meta.dataMode === "real" ? (
+                  <RealPaperSettlement bet={creation.data.data} />
+                ) : creation.data.data.status === "open" ? (
                   <SettlementForm bet={creation.data.data} />
                 ) : null}
               </div>
@@ -430,14 +447,19 @@ function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
 }
 
 export function PaperTradingDashboard() {
+  const [offset, setOffset] = useState(0);
   const searchParameters = useSearchParams();
   const signalIdParameter = searchParameters.get("signalId")?.trim();
   const signalId =
     signalIdParameter === undefined || signalIdParameter.length === 0 ? null : signalIdParameter;
   const paperBets = useQuery({
     queryFn: ({ signal }) =>
-      getJson<PageResponsePaperBet>("/api/v1/paper-bets?offset=0&limit=100", signal),
-    queryKey: ["paper-bets"],
+      getJson<PageResponsePaperBet>(
+        `/api/v1/paper-bets?offset=${String(offset)}&limit=100`,
+        signal,
+      ),
+    queryKey: ["paper-bets", offset],
+    refetchInterval: 30_000,
   });
   const bets = paperBets.data?.data ?? [];
 
@@ -464,6 +486,7 @@ export function PaperTradingDashboard() {
       </div>
 
       <CreationPanel signalId={signalId} />
+      <PaperFinancialReport />
 
       <section aria-labelledby="paper-history" className="grid gap-4">
         <div className="flex items-center gap-3">
@@ -472,7 +495,8 @@ export function PaperTradingDashboard() {
             Historique et P&L
           </h2>
         </div>
-        {paperBets.isError ? (
+        <QueryRecovery queries={[paperBets]} />
+        {paperBets.isError && !canReadPrevious(paperBets) ? (
           <RemoteRecoverableErrorState onRetry={() => void paperBets.refetch()} />
         ) : (
           <RemoteDataBoundary
@@ -481,7 +505,7 @@ export function PaperTradingDashboard() {
             loadingFallback={<RemoteLoadingState minHeight="20rem" rows={6} />}
           >
             <div className="grid gap-4">
-              <PnlSummary bets={bets} />
+              {paperBets.data?.meta.dataMode === "mock" ? <PnlSummary bets={bets} /> : null}
               {bets.length > 0 ? (
                 <div className="grid gap-4 lg:grid-cols-2">
                   {bets.map((bet) => (
@@ -491,6 +515,29 @@ export function PaperTradingDashboard() {
               ) : (
                 <RemoteEmptyState description="Aucune décision paper dans ce mode." />
               )}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  disabled={offset === 0}
+                  onClick={() => {
+                    setOffset(Math.max(0, offset - 100));
+                  }}
+                >
+                  Page précédente
+                </Button>
+                <span className="text-sm">
+                  {paperBets.data?.page.total ?? 0} décisions · page {Math.floor(offset / 100) + 1}
+                </span>
+                <Button
+                  variant="outline"
+                  disabled={offset + 100 >= (paperBets.data?.page.total ?? 0)}
+                  onClick={() => {
+                    setOffset(offset + 100);
+                  }}
+                >
+                  Page suivante
+                </Button>
+              </div>
             </div>
           </RemoteDataBoundary>
         )}

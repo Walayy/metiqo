@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Protocol, cast
 from uuid import UUID
 
-from sqlalchemy import Engine, Table, select
+from sqlalchemy import Connection, Engine, Table, func, select
 
 from metiquo.config import Settings
 from metiquo.contracts.enums import FreshnessStatus
@@ -37,14 +38,19 @@ class FreshnessRepository(Protocol):
 class PostgresFreshnessRepository:
     """Lire uniquement le pointeur validé et les incidents plus récents."""
 
-    def __init__(self, engine: Engine) -> None:
+    def __init__(self, engine: Engine | Connection) -> None:
         self._engine = engine
         self._catalog = cast(Table, SourceCatalog.__table__)
         self._snapshots = cast(Table, Snapshot.__table__)
         self._runs = cast(Table, IngestionRun.__table__)
 
     def get_facts(self, source_catalog_id: UUID) -> FreshnessFacts:
-        with self._engine.connect() as connection:
+        context = (
+            nullcontext(self._engine)
+            if isinstance(self._engine, Connection)
+            else self._engine.connect()
+        )
+        with context as connection:
             catalog = (
                 connection.execute(
                     select(self._catalog.c.status, self._catalog.c.current_snapshot_id).where(
@@ -57,6 +63,7 @@ class PostgresFreshnessRepository:
             if catalog is None:
                 return FreshnessFacts(catalog_status=None, current=None)
             current_row = None
+            confirmed_at = None
             if catalog["current_snapshot_id"] is not None:
                 current_row = (
                     connection.execute(
@@ -68,6 +75,14 @@ class PostgresFreshnessRepository:
                     )
                     .mappings()
                     .one_or_none()
+                )
+                confirmed_at = connection.scalar(
+                    select(func.max(self._runs.c.finished_at)).where(
+                        self._runs.c.source_catalog_id == source_catalog_id,
+                        self._runs.c.snapshot_id == catalog["current_snapshot_id"],
+                        self._runs.c.status == "succeeded",
+                        self._runs.c.counters["contentVerified"].astext == "true",
+                    )
                 )
             quarantine = connection.execute(
                 select(self._snapshots.c.received_at)
@@ -92,7 +107,12 @@ class PostgresFreshnessRepository:
                 .one_or_none()
             )
         current = (
-            PublishedSnapshot(id=current_row["id"], validated_at=current_row["validated_at"])
+            PublishedSnapshot(
+                id=current_row["id"],
+                validated_at=max(current_row["validated_at"], confirmed_at)
+                if confirmed_at
+                else current_row["validated_at"],
+            )
             if current_row is not None
             else None
         )

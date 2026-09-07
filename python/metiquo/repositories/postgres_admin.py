@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Literal, cast
+from typing import Any, Literal, cast
 from uuid import UUID
 
-from sqlalchemy import Connection, Engine, Table, case, func, select
+from sqlalchemy import Connection, Engine, Table, and_, case, func, literal, select, true, union_all
+from sqlalchemy.sql import Select
 
 from metiquo.contracts import DataQualityIssue, IngestionRunSummary, JobSummary, ProviderHealth
 from metiquo.contracts.enums import DataMode, FreshnessStatus, ProviderStatus
@@ -22,6 +24,7 @@ from metiquo.db.raw_models import (
     SourceCatalog,
 )
 from metiquo.foundation.time import Clock, SystemClock
+from metiquo.repositories.pagination import ReadPage, page_rows
 
 _PROVIDER = "oracles_elixir"
 _DATASET = "league_of_legends_match_data"
@@ -35,6 +38,8 @@ class PostgresAdminRepository:
     clock: Clock = field(default_factory=SystemClock)
     odds_max_age_seconds: int = 90
     odds_provider_max_age_seconds: Mapping[str, int] = field(default_factory=dict)
+    oe_freshness_sla_seconds: int = 10800
+    oe_current_year: int | None = None
 
     def list_data_sources(self) -> tuple[ProviderHealth, ...]:
         """Réunir la source historique et chaque fournisseur de cotes observé."""
@@ -46,11 +51,17 @@ class PostgresAdminRepository:
         snapshots = cast(Table, Snapshot.__table__)
         runs = cast(Table, IngestionRun.__table__)
         quarantine = cast(Table, QuarantineItem.__table__)
+        year_filter = (
+            catalogs.c.season_year == self.oe_current_year
+            if self.oe_current_year is not None
+            else true()
+        )
         with self.engine.connect() as connection:
             catalog_rows = connection.execute(
                 select(catalogs.c.status).where(
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
+                    year_filter,
                 )
             ).all()
             last_success = connection.execute(
@@ -60,8 +71,24 @@ class PostgresAdminRepository:
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
                     snapshots.c.status == "validated",
+                    snapshots.c.id == catalogs.c.current_snapshot_id,
+                    year_filter,
                 )
             ).scalar_one()
+            confirmed_at = connection.scalar(
+                select(func.max(runs.c.finished_at))
+                .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
+                .where(
+                    catalogs.c.provider == _PROVIDER,
+                    catalogs.c.dataset == _DATASET,
+                    year_filter,
+                    runs.c.snapshot_id == catalogs.c.current_snapshot_id,
+                    runs.c.status == "succeeded",
+                    runs.c.counters["contentVerified"].astext == "true",
+                )
+            )
+            if last_success is not None and confirmed_at is not None:
+                last_success = max(last_success, confirmed_at)
             last_failure = connection.execute(
                 select(func.max(runs.c.finished_at))
                 .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
@@ -69,6 +96,7 @@ class PostgresAdminRepository:
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
                     runs.c.status == "failed",
+                    year_filter,
                 )
             ).scalar_one()
             failure_count = connection.execute(
@@ -78,6 +106,7 @@ class PostgresAdminRepository:
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
                     runs.c.status == "failed",
+                    year_filter,
                 )
             ).scalar_one()
             last_quarantine = connection.execute(
@@ -87,17 +116,21 @@ class PostgresAdminRepository:
                 .where(
                     catalogs.c.provider == _PROVIDER,
                     catalogs.c.dataset == _DATASET,
+                    year_filter,
                 )
             ).scalar_one()
         checked_at = self.clock.now().value
-        if last_success is not None and last_success > checked_at:
-            checked_at = last_success
+        future_proof = last_success is not None and last_success > checked_at
         if not catalog_rows:
             status = ProviderStatus.UNAVAILABLE
             detail = "Aucune source Oracle's Elixir n'est cataloguée"
         elif last_success is None:
             status = ProviderStatus.UNAVAILABLE
             detail = "Aucun snapshot Oracle's Elixir validé"
+        elif future_proof:
+            status = ProviderStatus.DEGRADED
+            detail = "Horodatage de confirmation incohérent : date future"
+            last_success = None
         elif (
             any(str(row.status) != "active" for row in catalog_rows)
             or _not_older(last_failure, last_success)
@@ -109,6 +142,14 @@ class PostgresAdminRepository:
             status = ProviderStatus.OPERATIONAL
             detail = f"{len(catalog_rows)} source(s) annuelle(s) suivie(s)"
         age_seconds = _age_seconds(checked_at, last_success)
+        freshness = _status_freshness(status, last_success is not None)
+        if status is ProviderStatus.OPERATIONAL and (
+            age_seconds is not None and age_seconds > self.oe_freshness_sla_seconds
+        ):
+            status, freshness = ProviderStatus.DEGRADED, FreshnessStatus.STALE
+            detail = (
+                f"Dernière confirmation de contenu hors SLA ({self.oe_freshness_sla_seconds} s)"
+            )
         return ProviderHealth(
             provider_code=_PROVIDER,
             status=status,
@@ -117,7 +158,7 @@ class PostgresAdminRepository:
             last_capture_at=last_success,
             age_seconds=age_seconds,
             failure_count=int(failure_count),
-            freshness=_status_freshness(status, last_success is not None),
+            freshness=freshness,
             detail=detail,
         )
 
@@ -131,44 +172,40 @@ class PostgresAdminRepository:
             provider_rows = connection.execute(
                 select(providers).order_by(providers.c.code)
             ).mappings()
+            health_rows = connection.execute(
+                select(health)
+                .distinct(health.c.provider_id)
+                .order_by(
+                    health.c.provider_id,
+                    health.c.checked_at.desc(),
+                    case((health.c.status.in_(("degraded", "unavailable")), 1), else_=0).desc(),
+                    health.c.id.desc(),
+                )
+            ).mappings()
+            latest_by_provider = {row["provider_id"]: row for row in health_rows}
+            captures = dict(
+                connection.execute(
+                    select(snapshots.c.provider_id, func.max(snapshots.c.captured_at)).group_by(
+                        snapshots.c.provider_id
+                    )
+                )
+                .tuples()
+                .all()
+            )
+            counts = dict(
+                connection.execute(
+                    select(health.c.provider_id, func.count(health.c.id))
+                    .where(health.c.status.in_(("degraded", "unavailable")))
+                    .group_by(health.c.provider_id)
+                )
+                .tuples()
+                .all()
+            )
             for provider in provider_rows:
                 provider_id = cast(UUID, provider["id"])
-                latest_health = (
-                    connection.execute(
-                        select(health)
-                        .where(health.c.provider_id == provider_id)
-                        .order_by(
-                            health.c.checked_at.desc(),
-                            case(
-                                (
-                                    health.c.status.in_(("degraded", "unavailable")),
-                                    1,
-                                ),
-                                else_=0,
-                            ).desc(),
-                            health.c.id.desc(),
-                        )
-                        .limit(1)
-                    )
-                    .mappings()
-                    .one_or_none()
-                )
-                last_capture = cast(
-                    datetime | None,
-                    connection.execute(
-                        select(func.max(snapshots.c.captured_at)).where(
-                            snapshots.c.provider_id == provider_id
-                        )
-                    ).scalar_one(),
-                )
-                failures = int(
-                    connection.execute(
-                        select(func.count(health.c.id)).where(
-                            health.c.provider_id == provider_id,
-                            health.c.status.in_(("degraded", "unavailable")),
-                        )
-                    ).scalar_one()
-                )
+                latest_health = latest_by_provider.get(provider_id)
+                last_capture = captures.get(provider_id)
+                failures = int(counts.get(provider_id, 0))
                 checked_at = max(
                     value
                     for value in (
@@ -224,108 +261,166 @@ class PostgresAdminRepository:
             None,
         )
 
-    def list_ingestion_runs(self) -> tuple[IngestionRunSummary, ...]:
+    @staticmethod
+    def _run_statement() -> Select[tuple[Any, ...]]:
         runs = cast(Table, IngestionRun.__table__)
         catalogs = cast(Table, SourceCatalog.__table__)
         snapshots = cast(Table, Snapshot.__table__)
+        return (
+            select(
+                runs,
+                catalogs.c.season_year,
+                catalogs.c.current_snapshot_id,
+                snapshots.c.sha256,
+                snapshots.c.manifest,
+            )
+            .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
+            .outerjoin(
+                snapshots,
+                runs.c.snapshot_id == snapshots.c.id,
+            )
+            .where(
+                catalogs.c.provider == _PROVIDER,
+                catalogs.c.dataset == _DATASET,
+                runs.c.status.in_(("succeeded", "failed")),
+            )
+            .order_by(runs.c.started_at.desc(), runs.c.id.desc())
+        )
+
+    def list_ingestion_runs(self) -> tuple[IngestionRunSummary, ...]:
         with self.engine.connect() as connection:
-            rows = (
-                connection.execute(
-                    select(
-                        runs,
-                        catalogs.c.season_year,
-                        catalogs.c.current_snapshot_id,
-                        snapshots.c.sha256,
-                        snapshots.c.manifest,
-                    )
-                    .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
-                    .outerjoin(snapshots, runs.c.snapshot_id == snapshots.c.id)
-                    .where(
-                        catalogs.c.provider == _PROVIDER,
-                        catalogs.c.dataset == _DATASET,
-                        runs.c.status.in_(("succeeded", "failed")),
-                    )
-                    .order_by(runs.c.started_at.desc())
-                )
-                .mappings()
-                .all()
-            )
-            fingerprints = _schema_change_map(
-                connection=connection, catalogs=catalogs, snapshots=snapshots
-            )
+            rows = tuple(connection.execute(self._run_statement()).mappings())
+            fingerprints = _schema_change_map(connection, tuple(row["snapshot_id"] for row in rows))
         return tuple(self._run_summary(row, fingerprints) for row in rows)
 
-    def get_ingestion_run(self, run_id: UUID) -> IngestionRunSummary | None:
-        return next(
-            (item for item in self.list_ingestion_runs() if item.run_id == run_id),
-            None,
+    def ingestion_runs_page(
+        self, *, offset: int = 0, limit: int = 20, status: str | None = None
+    ) -> ReadPage[IngestionRunSummary]:
+        statement = self._run_statement()
+        if status is not None:
+            statement = statement.where(IngestionRun.status == status)
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            page = page_rows(connection, statement, offset=offset, limit=limit)
+            fingerprints = _schema_change_map(
+                connection, tuple(row["snapshot_id"] for row in page.items)
+            )
+        return ReadPage(
+            tuple(self._run_summary(row, fingerprints) for row in page.items), page.total
         )
 
-    def list_quality_issues(self) -> tuple[DataQualityIssue, ...]:
-        issues = cast(Table, QualityIssue.__table__)
-        runs = cast(Table, IngestionRun.__table__)
-        catalogs = cast(Table, SourceCatalog.__table__)
-        snapshots = cast(Table, Snapshot.__table__)
-        quarantine = cast(Table, QuarantineItem.__table__)
+    def get_ingestion_run(self, run_id: UUID) -> IngestionRunSummary | None:
         with self.engine.connect() as connection:
-            issue_rows = (
-                connection.execute(
-                    select(
-                        issues, catalogs.c.season_year, snapshots.c.status.label("snapshot_status")
-                    )
-                    .join(runs, issues.c.run_id == runs.c.id)
-                    .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
-                    .outerjoin(snapshots, issues.c.snapshot_id == snapshots.c.id)
-                    .where(
-                        catalogs.c.provider == _PROVIDER,
-                        catalogs.c.dataset == _DATASET,
-                    )
-                    .order_by(issues.c.created_at.desc())
-                )
+            row = (
+                connection.execute(self._run_statement().where(IngestionRun.id == run_id))
                 .mappings()
-                .all()
+                .one_or_none()
             )
-            quarantine_rows = (
-                connection.execute(
-                    select(quarantine, catalogs.c.season_year)
-                    .join(snapshots, quarantine.c.snapshot_id == snapshots.c.id)
-                    .join(catalogs, snapshots.c.source_catalog_id == catalogs.c.id)
-                    .where(
-                        catalogs.c.provider == _PROVIDER,
-                        catalogs.c.dataset == _DATASET,
-                    )
-                    .order_by(quarantine.c.quarantined_at.desc())
-                )
-                .mappings()
-                .all()
+            if row is None:
+                return None
+            fingerprints = _schema_change_map(connection, (row["snapshot_id"],))
+        return self._run_summary(row, fingerprints)
+
+    @staticmethod
+    def _quality_statement() -> Select[tuple[Any, ...]]:
+        issues, runs = cast(Table, QualityIssue.__table__), cast(Table, IngestionRun.__table__)
+        catalogs, snapshots = cast(Table, SourceCatalog.__table__), cast(Table, Snapshot.__table__)
+        quarantine = cast(Table, QuarantineItem.__table__)
+        source = func.concat(_PROVIDER + "/", catalogs.c.season_year)
+        scope = and_(catalogs.c.provider == _PROVIDER, catalogs.c.dataset == _DATASET)
+        severity = case((issues.c.severity == "blocking", "blocking"), else_="warning")
+        status = case((snapshots.c.status == "quarantined", "quarantined"), else_="open")
+        entries = union_all(
+            select(
+                issues.c.id,
+                issues.c.created_at.label("observed_at"),
+                severity.label("severity"),
+                status.label("status"),
+                func.jsonb_build_object(
+                    "issueId",
+                    issues.c.id,
+                    "source",
+                    source,
+                    "code",
+                    issues.c.code,
+                    "severity",
+                    severity,
+                    "status",
+                    status,
+                    "detail",
+                    issues.c.message,
+                    "observedAt",
+                    issues.c.created_at,
+                    "dataMode",
+                    "real",
+                ).label("document"),
             )
-        values = [
-            DataQualityIssue(
-                issue_id=row["id"],
-                source=f"{_PROVIDER}/{row['season_year']}",
-                code=str(row["code"]),
-                severity="blocking" if row["severity"] == "blocking" else "warning",
-                status=("quarantined" if row["snapshot_status"] == "quarantined" else "open"),
-                detail=str(row["message"]),
-                observed_at=row["created_at"],
-                data_mode=DataMode.REAL,
+            .join(runs, issues.c.run_id == runs.c.id)
+            .join(catalogs, runs.c.source_catalog_id == catalogs.c.id)
+            .outerjoin(snapshots, issues.c.snapshot_id == snapshots.c.id)
+            .where(scope),
+            select(
+                quarantine.c.id,
+                quarantine.c.quarantined_at.label("observed_at"),
+                literal("blocking").label("severity"),
+                literal("quarantined").label("status"),
+                func.jsonb_build_object(
+                    "issueId",
+                    quarantine.c.id,
+                    "source",
+                    source,
+                    "code",
+                    quarantine.c.reason_code,
+                    "severity",
+                    "blocking",
+                    "status",
+                    "quarantined",
+                    "detail",
+                    "Snapshot isolé ; le dernier snapshot validé reste publié",
+                    "observedAt",
+                    quarantine.c.quarantined_at,
+                    "dataMode",
+                    "real",
+                ).label("document"),
             )
-            for row in issue_rows
-        ]
-        values.extend(
-            DataQualityIssue(
-                issue_id=row["id"],
-                source=f"{_PROVIDER}/{row['season_year']}",
-                code=str(row["reason_code"]),
-                severity="blocking",
-                status="quarantined",
-                detail="Snapshot isolé ; le dernier snapshot validé reste publié",
-                observed_at=row["quarantined_at"],
-                data_mode=DataMode.REAL,
+            .join(snapshots, quarantine.c.snapshot_id == snapshots.c.id)
+            .join(catalogs, snapshots.c.source_catalog_id == catalogs.c.id)
+            .where(scope),
+        ).subquery("quality_entries")
+        return select(entries).order_by(entries.c.observed_at.desc(), entries.c.id.desc())
+
+    def list_quality_issues(self) -> tuple[DataQualityIssue, ...]:
+        with self.engine.connect() as connection:
+            rows = connection.execute(self._quality_statement()).mappings()
+            return tuple(
+                DataQualityIssue.model_validate_json(json.dumps(row["document"])) for row in rows
             )
-            for row in quarantine_rows
+
+    def quality_issues_page(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 20,
+        severity: str | None = None,
+        status: str | None = None,
+    ) -> ReadPage[DataQualityIssue]:
+        statement = self._quality_statement()
+        if severity is not None:
+            statement = statement.where(statement.selected_columns.severity == severity)
+        if status is not None:
+            statement = statement.where(statement.selected_columns.status == status)
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            page = page_rows(connection, statement, offset=offset, limit=limit)
+        return ReadPage(
+            tuple(
+                DataQualityIssue.model_validate_json(json.dumps(row["document"]))
+                for row in page.items
+            ),
+            page.total,
         )
-        return tuple(sorted(values, key=lambda item: item.observed_at, reverse=True))
 
     def list_jobs(self) -> tuple[JobSummary, ...]:
         jobs = cast(Table, BackfillJob.__table__)
@@ -391,33 +486,42 @@ class PostgresAdminRepository:
 
 
 def _schema_change_map(
-    *, connection: Connection, catalogs: Table, snapshots: Table
+    connection: Connection, snapshot_ids: tuple[UUID | None, ...]
 ) -> dict[UUID, bool]:
+    if not snapshot_ids:
+        return {}
+    snapshots = cast(Table, Snapshot.__table__)
+    fingerprint = snapshots.c.manifest["schemaFingerprint"].astext
+    history = (
+        select(
+            snapshots.c.id,
+            fingerprint.label("fingerprint"),
+            func.lag(snapshots.c.id)
+            .over(
+                partition_by=snapshots.c.source_catalog_id,
+                order_by=(snapshots.c.validated_at, snapshots.c.id),
+            )
+            .label("previous_id"),
+            func.lag(fingerprint)
+            .over(
+                partition_by=snapshots.c.source_catalog_id,
+                order_by=(snapshots.c.validated_at, snapshots.c.id),
+            )
+            .label("previous_fingerprint"),
+        )
+        .where(snapshots.c.status == "validated")
+        .subquery("schema_history")
+    )
     rows = connection.execute(
-        select(snapshots.c.id, snapshots.c.source_catalog_id, snapshots.c.manifest)
-        .join(catalogs, snapshots.c.source_catalog_id == catalogs.c.id)
-        .where(
-            catalogs.c.provider == _PROVIDER,
-            catalogs.c.dataset == _DATASET,
-            snapshots.c.status == "validated",
-        )
-        .order_by(snapshots.c.source_catalog_id, snapshots.c.validated_at)
-    ).mappings()
-    previous: dict[UUID, str | None] = {}
-    result: dict[UUID, bool] = {}
-    for row in rows:
-        catalog_id = cast(UUID, row["source_catalog_id"])
-        manifest = cast(dict[str, object], row["manifest"])
-        fingerprint = (
-            str(manifest["schemaFingerprint"])
-            if manifest.get("schemaFingerprint") is not None
-            else None
-        )
-        result[cast(UUID, row["id"])] = (
-            catalog_id in previous and previous[catalog_id] != fingerprint
-        )
-        previous[catalog_id] = fingerprint
-    return result
+        select(
+            history.c.id,
+            and_(
+                history.c.previous_id.is_not(None),
+                history.c.fingerprint.is_distinct_from(history.c.previous_fingerprint),
+            ),
+        ).where(history.c.id.in_(snapshot_ids))
+    )
+    return {identity: bool(changed) for identity, changed in rows}
 
 
 def _not_older(candidate: datetime | None, baseline: datetime | None) -> bool:

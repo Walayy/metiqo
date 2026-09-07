@@ -19,6 +19,7 @@ from metiquo.contracts.enums import (
     SelectionType,
     ValueGrade,
 )
+from metiquo.db.core_models import GameTeamStat
 from metiquo.db.ml_models import PrematchPrediction
 from metiquo.db.odds_models import (
     EventMappingAttempt,
@@ -44,6 +45,7 @@ _STORED_VALUE_KEYS = (
     "event_mapping_attempt_id",
     "policy_version",
     "selection_type",
+    "selected_team_id",
     "offered_odds",
     "raw_implied_probability",
     "model_probability",
@@ -139,6 +141,7 @@ class StoredSignal:
     odds_age_seconds: int
     computed_at: datetime
     signal_fingerprint: str
+    selected_team_id: UUID | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "computed_at", normalize_utc_datetime(self.computed_at))
@@ -146,6 +149,7 @@ class StoredSignal:
 
 @dataclass(frozen=True, slots=True)
 class _SignalSources:
+    selected_team_id: UUID
     offered_odds: Decimal
     captured_at: datetime
     selection: SelectionType
@@ -166,30 +170,38 @@ class PostgresSignalRepository:
 
     def append(self, publication: SignalPublication) -> StoredSignal:
         computed_at = self._clock.now().value
-        signals = cast(Table, SignalRecord.__table__)
         with self.engine.begin() as connection:
-            _require_policy(connection, publication.decision.policy_version)
-            sources = _load_sources(
-                connection,
-                publication.odds_snapshot_id,
-                publication.prediction_id,
-                publication.event_mapping_attempt_id,
-            )
-            values = _build_values(publication, sources, computed_at)
-            fingerprint = _content_hash(values)
-            signal_id = uuid5(NAMESPACE_URL, f"metiquo:signal:{fingerprint}")
-            connection.execute(
-                insert(signals)
-                .values(id=signal_id, signal_fingerprint=fingerprint, **values)
-                .on_conflict_do_nothing(index_elements=[signals.c.signal_fingerprint])
-            )
-            row = (
-                connection.execute(
-                    select(signals).where(signals.c.signal_fingerprint == fingerprint)
-                )
-                .mappings()
-                .one()
-            )
+            return self.append_in_transaction(connection, publication, computed_at=computed_at)
+
+    def append_in_transaction(
+        self,
+        connection: Connection,
+        publication: SignalPublication,
+        *,
+        computed_at: datetime,
+    ) -> StoredSignal:
+        """Publier avec la preuve du gate dans une seule transaction propriétaire."""
+        signals = cast(Table, SignalRecord.__table__)
+        _require_policy(connection, publication.decision.policy_version)
+        sources = _load_sources(
+            connection,
+            publication.odds_snapshot_id,
+            publication.prediction_id,
+            publication.event_mapping_attempt_id,
+        )
+        values = _build_values(publication, sources, normalize_utc_datetime(computed_at))
+        fingerprint = _content_hash(values)
+        signal_id = uuid5(NAMESPACE_URL, f"metiquo:signal:{fingerprint}")
+        connection.execute(
+            insert(signals)
+            .values(id=signal_id, signal_fingerprint=fingerprint, **values)
+            .on_conflict_do_nothing(index_elements=[signals.c.signal_fingerprint])
+        )
+        row = (
+            connection.execute(select(signals).where(signals.c.signal_fingerprint == fingerprint))
+            .mappings()
+            .one()
+        )
         return _stored(row)
 
     def get(self, signal_id: UUID) -> StoredSignal:
@@ -221,11 +233,14 @@ class PostgresSignalRepository:
             if row is None:
                 raise KeyError(signal_id)
             _require_policy(connection, cast(str, row["policy_version"]))
+            if row["selected_team_id"] is None:
+                raise SignalIntegrityError("signal legacy sans preuve d'identité de sélection")
             sources = _load_sources(
                 connection,
                 cast(UUID, row["odds_snapshot_id"]),
                 cast(UUID, row["prediction_id"]),
                 cast(UUID, row["event_mapping_attempt_id"]),
+                selected_team_id=cast(UUID, row["selected_team_id"]),
             )
         _verify_row(row, sources)
         values = {key: row[key] for key in _STORED_VALUE_KEYS}
@@ -259,6 +274,8 @@ def _load_sources(
     odds_snapshot_id: UUID,
     prediction_id: UUID,
     event_mapping_attempt_id: UUID,
+    *,
+    selected_team_id: UUID | None = None,
 ) -> _SignalSources:
     snapshots = cast(Table, OddsSnapshotRecord.__table__)
     selections = cast(Table, ProviderOddsSelection.__table__)
@@ -334,13 +351,17 @@ def _load_sources(
     selection = SelectionType(str(odds_row.selection_type))
     if selections_inverted:
         selection = _invert_team_selection(selection)
-    if selection is SelectionType.TEAM_A:
+    selected_team_id = selected_team_id or canonical_selected_team(
+        connection, canonical_event_id, selection
+    )
+    if selected_team_id == prediction["team_a_id"]:
         probability_keys = ("team_a_probability", "team_a_low", "team_a_high")
-    elif selection is SelectionType.TEAM_B:
+    elif selected_team_id == prediction["team_b_id"]:
         probability_keys = ("team_b_probability", "team_b_low", "team_b_high")
     else:
         raise SignalIntegrityError("la sélection du snapshot ne correspond pas au modèle binaire")
     return _SignalSources(
+        selected_team_id=selected_team_id,
         offered_odds=cast(Decimal, odds_row.decimal_odds),
         captured_at=normalize_utc_datetime(captured_at),
         selection=selection,
@@ -351,6 +372,22 @@ def _load_sources(
         model_probability_low=cast(Decimal, prediction[probability_keys[1]]),
         model_probability_high=cast(Decimal, prediction[probability_keys[2]]),
     )
+
+
+def canonical_selected_team(
+    connection: Connection, event_id: UUID, selection: SelectionType
+) -> UUID:
+    if selection not in {SelectionType.TEAM_A, SelectionType.TEAM_B}:
+        raise SignalIntegrityError("la sélection canonique doit désigner une équipe")
+    team_id = connection.scalar(
+        select(GameTeamStat.team_id).where(
+            GameTeamStat.game_id == event_id,
+            GameTeamStat.side == ("Blue" if selection is SelectionType.TEAM_A else "Red"),
+        )
+    )
+    if team_id is None:
+        raise SignalIntegrityError("l'identité canonique de l'équipe sélectionnée est introuvable")
+    return team_id
 
 
 def _build_values(
@@ -377,6 +414,7 @@ def _build_values(
         "event_mapping_attempt_id": publication.event_mapping_attempt_id,
         "policy_version": publication.decision.policy_version,
         "selection_type": publication.selection.value,
+        "selected_team_id": sources.selected_team_id,
         "offered_odds": _metric(sources.offered_odds),
         "raw_implied_probability": _metric(raw_implied),
         "model_probability": _metric(sources.model_probability),
@@ -508,6 +546,7 @@ def _stored(row: RowMapping) -> StoredSignal:
         odds_age_seconds=cast(int, row["odds_age_seconds"]),
         computed_at=cast(datetime, row["computed_at"]),
         signal_fingerprint=str(row["signal_fingerprint"]),
+        selected_team_id=cast(UUID | None, row["selected_team_id"]),
     )
 
 

@@ -6,6 +6,8 @@ Metiquo est un projet personnel Dockerisé de pricing et de détection de value 
 
 La spécification normative se trouve dans [`docs/specs/00_SFG_METIQUO.md`](docs/specs/00_SFG_METIQUO.md). Le plan d’exécution et le backlog se trouvent dans le même dossier. L’avancement vérifié est consigné dans [`docs/progress.md`](docs/progress.md).
 
+La [recette QA-007 du MVP personnel](docs/acceptance.md) est terminée sur `5eec0ea` : 22 critères validés, 634 tests Python et 106 parcours navigateur sans exclusion. Les preuves sont archivées avec leurs empreintes. La publication publique ou commerciale reste bloquée par les portes de conformité ; P10 et P11 restent hors périmètre.
+
 ## Outillage
 
 - Node.js `24.20.0` et pnpm `11.25.0` ;
@@ -26,7 +28,7 @@ uv sync --frozen
 make mock-demo
 ```
 
-`make mock-demo` vérifie d’abord la graine déterministe et les 12 scénarios normatifs, construit le profil Compose `mock`, attend la santé des services puis applique les migrations. L’application est ensuite accessible sur `http://127.0.0.1:3000`. Ce profil ne contacte ni Oracle’s Elixir ni un fournisseur de cotes : toutes les données métier sont générées localement à partir de `MOCK_SEED` et isolées du mode réel.
+`make mock-demo` vérifie d’abord la graine déterministe et les 12 scénarios normatifs, construit le profil Compose `mock`, attend la santé des services puis applique les migrations. Ouvrir l’origine configurée par `APP_PUBLIC_ORIGIN`, par défaut `http://localhost:3000` : les mutations vérifient cette origine exacte. Ce profil ne contacte ni Oracle’s Elixir ni un fournisseur de cotes : toutes les données métier sont générées localement à partir de `MOCK_SEED` et isolées du mode réel.
 
 Le parcours de démonstration couvre Opportunités, Événements, Modèles, Données, Administration, mapping et Paper trading. Pour vérifier les parcours critiques et l’accessibilité sur la stack démarrée :
 
@@ -47,7 +49,7 @@ make up
 make db-migrate
 ```
 
-L’API est alors disponible sur `http://127.0.0.1:8000`. Les sondes `GET /health` et `GET /ready` doivent répondre avec le statut HTTP `200` après la migration. L’application Next.js répond sur `http://127.0.0.1:3000` et expose sa propre sonde `GET /health`.
+L’API est alors disponible sur `http://127.0.0.1:8000`. Les sondes `GET /health` et `GET /ready` doivent répondre avec le statut HTTP `200` après la migration. L’application Next.js répond sur `http://localhost:3000` et expose sa propre sonde `GET /health`.
 
 Arrêter la stack sans supprimer ses volumes persistants :
 
@@ -104,6 +106,8 @@ Les alias équivalents sont `make oe-catalog`, `make oe-backfill FROM=2014 TO=20
 
 Les codes retour sont stables : `0` succès, `2` usage ou configuration invalide, `3` snapshot frais requis mais indisponible, `4` échec de source ou de pipeline, `5` intégrité du snapshot invalide et `6` backfill partiel. Les erreurs machine-readable contiennent toujours `ok=false` et un `errorCode` sans secret.
 
+Le [gate value P6](docs/value-gate.md) relie les preuves PostgreSQL par `oe value-evaluate` ou `make value-evaluate`. L'opérateur fournit les identifiants de cote, mapping et prédiction ainsi que la politique ; le service calcule le grade et les motifs, puis conserve atomiquement le signal et son audit. `make test-value` vérifie ce parcours sur PostgreSQL, y compris les refus avant calcul.
+
 Un contenu téléchargé puis refusé par la validation physique, le contrat de schéma ou la qualité métier est écrit dans l’ObjectStore de quarantaine et lié au run en échec. Il ne déplace jamais `raw.source_catalog.current_snapshot_id`. Une réponse HTML de quota est refusée avant la création d’un snapshot ; avec `--allow-stale`, la commande annonce explicitement `degraded` ou `quarantined` et l’identifiant du dernier snapshot validé réutilisé.
 
 ### Gate P2 ingestion
@@ -129,7 +133,7 @@ En mode mock, l’API expose les collections et détails versionnés sous `/api/
 
 Le contrat complet et reproductible est versionné dans `packages/contracts/openapi/v1.json`.
 
-En `APP_DATA_MODE=real`, les mêmes DTO `/api/v1/models` et `/api/v1/backtests` sont projetés depuis le registre PostgreSQL et ses rapports walk-forward. Les routes `/api/v1/opportunities`, détail et explication projettent les signaux append-only publiables par EV prudente décroissante ; `NO_EDGE` et `BLOCKED` ne sont visibles que par filtre diagnostic explicite. Les mutations `/api/v1/admin/models/train`, `/{modelVersionId}/promote` et `/{modelVersionId}/retire` exigent aussi `Idempotency-Key`, créent un job observable et alimentent le journal append-only `/api/v1/admin/audit-log`. Une promotion reste refusée tant que le benchmark enregistré ne bat pas les trois baselines requises sur le gate multi-métrique. Le workflow d’entraînement concret utilisé par `model-train` implémente aussi la frontière `RealModelTrainingWorkflow` de l’API ; sans injection dans le processus API, la demande réelle échoue explicitement en `DEPENDENCY_UNAVAILABLE` et le job conserve cet échec.
+En `APP_DATA_MODE=real`, les mêmes DTO `/api/v1/models` et `/api/v1/backtests` sont projetés depuis le registre PostgreSQL et ses rapports walk-forward. Les routes `/api/v1/opportunities`, détail et explication projettent les signaux append-only publiables par EV prudente décroissante ; `NO_EDGE` et `BLOCKED` ne sont visibles que par filtre diagnostic explicite. Les mutations `/api/v1/admin/models/train`, `/{modelVersionId}/promote` et `/{modelVersionId}/retire` exigent aussi `Idempotency-Key`, créent un job observable et alimentent le journal append-only `/api/v1/admin/audit-log`. Une promotion reste refusée tant que le benchmark enregistré ne bat pas les trois baselines requises sur le gate multi-métrique. En production, une demande d’entraînement crée un job PostgreSQL `model.train` et retourne son reçu avec le statut HTTP 202. Le worker exécute le workflow réel et enregistre la version produite ; l’interface suit son état sans promotion automatique. La demande reste refusée si la révision Git du code n’est pas configurée.
 
 Le package `@metiquo/contracts` génère depuis ce fichier les DTO, le client Fetch et les options TanStack Query. `make openapi` régénère le contrat backend puis le client ; `make openapi-check` échoue si l’un des deux n’est plus synchronisé. Aucun DTO API n’est recopié à la main dans le frontend.
 
@@ -147,7 +151,7 @@ Les actions mock de synchronisation, cycle de vie modèle, paper betting, décis
 
 ## Conteneurs locaux
 
-`make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web sert le build standalone Next.js sous un utilisateur non privilégié et avec une racine en lecture seule.
+`make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. En mode réel, le worker exécute la file PostgreSQL et la planification des synchronisations, alertes, sauvegardes et règlements paper. Le conteneur web sert le build standalone Next.js sous un utilisateur non privilégié et avec une racine en lecture seule. Le [runbook d’exploitation](docs/runbook.md) décrit le démarrage réel, les migrations sur copie, les sauvegardes, les restaurations et les incidents.
 
 Les ports web et API sont liés uniquement à `127.0.0.1`. PostgreSQL reste sur un réseau Docker interne. Le profil `production` ajoute le gateway HTTPS et `object-store` ajoute également MinIO ; ce dernier refuse de démarrer tant que ses identifiants ne sont pas fournis hors du dépôt.
 

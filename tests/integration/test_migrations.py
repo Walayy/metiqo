@@ -120,14 +120,27 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
         }
         assert set(inspect(connection).get_table_names(schema="odds")) == ODDS_TABLES
         assert set(inspect(connection).get_table_names(schema="signals")) == {
+            "financial_reports",
+            "paper_bets",
+            "settlements",
             "signals",
+            "value_evaluations",
             "value_policies",
             "value_policy_audits",
+        }
+        assert set(inspect(connection).get_table_names(schema="ops")) == {
+            "jobs",
+            "audit_events",
+            "alert_states",
+            "backup_runs",
+            "owner_accounts",
+            "owner_sessions",
+            "http_rate_limits",
         }
         assert all(
             inspect(connection).get_table_names(schema=name) == []
             for name in ALL_SCHEMAS
-            if name not in {"raw", "core", "features", "ml", "odds", "signals"}
+            if name not in {"raw", "core", "features", "ml", "odds", "signals", "ops"}
         )
         assert connection.execute(text("SHOW TIME ZONE")).scalar_one() == "UTC"
     engine.dispose()

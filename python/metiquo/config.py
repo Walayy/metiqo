@@ -1,5 +1,6 @@
 """Configuration serveur validée à la frontière du processus."""
 
+import json
 from datetime import UTC, tzinfo
 from decimal import Decimal
 from enum import StrEnum
@@ -21,6 +22,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from metiquo.contracts.enums import DataMode as DataMode
 from metiquo.contracts.enums import MarketType, OddsPhase
+from metiquo.foundation.network_boundary import (
+    allowed_without_auth,
+    literal_address,
+    origin_host,
+    private_networks,
+)
+from metiquo.foundation.release_compliance import GateStatus, ReleaseAudience, verify_release
 
 type PositiveSeconds = Annotated[int, Field(gt=0)]
 
@@ -31,6 +39,11 @@ class AppEnvironment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
     PRODUCTION = "production"
+
+
+class AuthMode(StrEnum):
+    DISABLED = "disabled"
+    OWNER = "owner"
 
 
 class ObjectStoreBackend(StrEnum):
@@ -56,11 +69,27 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="forbid",
         frozen=True,
+        hide_input_in_errors=True,
     )
 
     app_env: AppEnvironment
     app_data_mode: DataMode
+    release_audience: ReleaseAudience = "personal"
+    oe_commercial_gate: GateStatus = "NO-GO"
+    riot_product_gate: GateStatus = "NO-GO"
+    release_evidence_file: Path | None = Field(default=None, repr=False, exclude=True)
+    app_code_commit: str | None = Field(default=None, pattern=r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
     database_url: SecretStr
+    database_url_file: Path | None = Field(default=None, repr=False, exclude=True)
+    oe_google_drive_bearer_file: Path | None = Field(default=None, repr=False, exclude=True)
+    auth_mode: AuthMode = AuthMode.DISABLED
+    app_publish_host: str = "127.0.0.1"
+    app_public_origin: str = "http://localhost:3000"
+    auth_private_networks: tuple[str, ...] = ()
+    auth_session_idle_seconds: int = Field(default=1800, ge=60, le=86400)
+    auth_session_absolute_seconds: int = Field(default=43200, ge=300, le=604800)
+    auth_session_rotation_seconds: int = Field(default=900, ge=60, le=86400)
+    auth_session_grace_seconds: int = Field(default=10, ge=0, le=30)
 
     object_store_backend: ObjectStoreBackend = ObjectStoreBackend.FILESYSTEM
     object_store_root: Path = Path("/data")
@@ -80,6 +109,30 @@ class Settings(BaseSettings):
     oe_retry_base_seconds: float = Field(default=1.0, gt=0)
     oe_retry_max_seconds: float = Field(default=30.0, gt=0)
     oe_google_drive_bearer: SecretStr | None = None
+    worker_scheduler_enabled: bool = True
+    worker_scheduler_tick_seconds: int = Field(default=15, ge=1, le=300)
+    worker_retry_delays_seconds: tuple[int, ...] = (600, 1800, 7200)
+    worker_retry_jitter_fraction: float = Field(default=0.1, ge=0, le=0.5)
+    oe_sync_interval_seconds: int = Field(default=10800, ge=60)
+    oe_closed_audit_months: int = Field(default=1, ge=1, le=12)
+    oe_deep_check_interval_seconds: int = Field(default=86400, ge=60)
+    paper_settlement_interval_seconds: int = Field(default=300, ge=60)
+    paper_report_interval_seconds: int = Field(default=300, ge=60)
+    model_freshness_sla_seconds: int = Field(default=2592000, gt=0)
+    alert_interval_seconds: int = Field(default=300, ge=60)
+    alert_cooldown_seconds: int = Field(default=21600, ge=60)
+    alert_mapping_backlog_limit: int = Field(default=10, ge=1)
+    backup_enabled: bool = True
+    backup_root: Path | None = None
+    backup_interval_seconds: int = Field(default=86400, ge=3600)
+    backup_freshness_sla_seconds: int = Field(default=129600, ge=3600)
+    backup_retention_count: int = Field(default=7, ge=1, le=3650)
+    backup_timeout_seconds: int = Field(default=3600, ge=1, le=86400)
+    backup_external: bool = False
+    backup_age_recipient: str | None = None
+    backup_age_binary: str = "age"
+    backup_pg_dump_binary: str = "pg_dump"
+    backup_pg_restore_binary: str = "pg_restore"
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
@@ -101,6 +154,50 @@ class Settings(BaseSettings):
     signal_max_kelly_fraction: Decimal = Field(default=Decimal("0.25"), ge=0, le=1)
     signal_min_mapping_confidence: Decimal = Field(default=Decimal("0.80"), ge=0, le=1)
 
+    paper_bankroll_policy_version: str = Field(
+        default="paper-manual-v1", min_length=1, max_length=128
+    )
+    paper_bankroll_currency: str = Field(default="EUR", pattern=r"^[A-Z]{3}$")
+    paper_bankroll_initial: Decimal = Field(default=Decimal(1000), gt=0, allow_inf_nan=False)
+    paper_max_open_exposure: Decimal = Field(default=Decimal(100), gt=0, allow_inf_nan=False)
+    paper_settlement_delay_seconds: int = Field(default=300, ge=0)
+    paper_settlement_max_attempts: int = Field(default=3, ge=1, le=5)
+    paper_closing_max_age_seconds: int = Field(default=90, gt=0)
+
+    @field_validator("app_code_commit", mode="before")
+    @classmethod
+    def empty_build_revision(cls, value: object) -> object:
+        return None if value == "" else value
+
+    @model_validator(mode="before")
+    @classmethod
+    def read_server_secret_files(cls, value: object) -> object:
+        if not isinstance(value, dict):
+            return value
+        values = dict(value)
+        for name in ("database_url", "oe_google_drive_bearer"):
+            file_name = f"{name}_file"
+            file_value = values.get(file_name)
+            if not file_value:
+                continue
+            if values.get(name):
+                raise ValueError(
+                    f"{name.upper()} et {file_name.upper()} sont mutuellement exclusifs"
+                )
+            try:
+                path = Path(file_value)
+                if not path.is_absolute() or not path.is_file() or path.stat().st_size > 16384:
+                    raise OSError
+                content = path.read_text(encoding="utf-8").removesuffix("\n").removesuffix("\r")
+                if not content or len(content.encode()) > 16384:
+                    raise OSError
+            except (OSError, ValueError, TypeError):
+                raise ValueError(
+                    f"{file_name.upper()} exige un fichier serveur lisible et borné"
+                ) from None
+            values[name] = SecretStr(content)
+        return values
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, value: SecretStr) -> SecretStr:
@@ -111,6 +208,56 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL doit utiliser PostgreSQL avec le driver psycopg")
         if parsed.hostname is None or parsed.path in {"", "/"}:
             raise ValueError("DATABASE_URL doit préciser un hôte et une base")
+        return value
+
+    @field_validator("auth_private_networks", mode="before")
+    @classmethod
+    def parse_private_networks(cls, value: object) -> object:
+        return json.loads(value) if isinstance(value, str) else value
+
+    @model_validator(mode="after")
+    def validate_auth_boundary(self) -> Self:
+        self.check_auth_boundary()
+        return self
+
+    def check_auth_boundary(self) -> None:
+        if self.auth_session_rotation_seconds >= self.auth_session_idle_seconds:
+            raise ValueError("La rotation de session doit précéder son expiration inactive")
+        if self.auth_session_idle_seconds > self.auth_session_absolute_seconds:
+            raise ValueError("La durée inactive ne doit pas dépasser la durée absolue")
+        networks = private_networks(self.auth_private_networks)
+        literal_address(self.app_publish_host)
+        host = origin_host(self.app_public_origin)
+        if (
+            self.auth_mode is AuthMode.OWNER
+            and urlsplit(self.app_public_origin).scheme != "https"
+            and not (
+                allowed_without_auth(host, ()) and allowed_without_auth(self.app_publish_host, ())
+            )
+        ):
+            raise ValueError("AUTH_MODE=owner exige HTTPS hors loopback")
+        if self.auth_mode is AuthMode.DISABLED:
+            if not allowed_without_auth(self.app_publish_host, networks):
+                raise ValueError(
+                    "AUTH_MODE=disabled interdit APP_PUBLISH_HOST "
+                    "hors loopback ou réseau privé explicite"
+                )
+            if not allowed_without_auth(host, networks):
+                raise ValueError(
+                    "AUTH_MODE=disabled interdit APP_PUBLIC_ORIGIN "
+                    "hors loopback ou réseau privé explicite"
+                )
+
+    @field_validator("worker_retry_delays_seconds", mode="before")
+    @classmethod
+    def parse_worker_retry_delays(cls, value: object) -> object:
+        return json.loads(value) if isinstance(value, str) else value
+
+    @field_validator("worker_retry_delays_seconds")
+    @classmethod
+    def validate_worker_retry_delays(cls, value: tuple[int, ...]) -> tuple[int, ...]:
+        if not value or len(value) > 20 or any(not 1 <= item <= 86400 for item in value):
+            raise ValueError("Les délais du worker doivent être bornés à 1..86400 secondes")
         return value
 
     @field_validator("display_timezone")
@@ -188,6 +335,15 @@ class Settings(BaseSettings):
         """Fuseau appliqué exclusivement lors du rendu."""
 
         return ZoneInfo(self.display_timezone)
+
+    @model_validator(mode="after")
+    def validate_release_compliance(self) -> Self:
+        verify_release(self.release_audience, self.release_gates, self.release_evidence_file)
+        return self
+
+    @property
+    def release_gates(self) -> dict[str, GateStatus]:
+        return {"OE-COMMERCIAL": self.oe_commercial_gate, "RIOT-PRODUCT": self.riot_product_gate}
 
     @property
     def internal_tzinfo(self) -> tzinfo:

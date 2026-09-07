@@ -115,6 +115,7 @@ def build_read_router(service: ReadService, clock: Clock) -> APIRouter:
     def list_opportunities(
         offset: Offset = 0,
         limit: Limit = 20,
+        event_id: Annotated[UUID | None, Query(alias="eventId")] = None,
         competition: str | None = None,
         team: str | None = None,
         market: MarketType | None = None,
@@ -132,6 +133,7 @@ def build_read_router(service: ReadService, clock: Clock) -> APIRouter:
             item
             for item in service.list_opportunities()
             if (include_diagnostics or item.quality.publishable)
+            and (event_id is None or item.event.event_id == event_id)
             and _matches_text(item.event.competition, competition)
             and (
                 team is None
@@ -291,10 +293,18 @@ def build_read_router(service: ReadService, clock: Clock) -> APIRouter:
     def list_jobs(
         offset: Offset = 0,
         limit: Limit = 20,
-        status: Literal["idle", "succeeded", "failed", "running"] | None = None,
+        status: Literal["idle", "queued", "succeeded", "failed", "running", "cancelled", "dead"]
+        | None = None,
     ) -> PageResponse[JobSummary]:
         items = tuple(job for job in service.list_jobs() if status is None or job.status == status)
         return _page(items, offset, limit, clock)
+
+    @router.get("/admin/jobs/{job_id}", response_model=ItemResponse[JobSummary])
+    def get_job(job_id: UUID) -> ItemResponse[JobSummary]:
+        job = next((item for item in service.list_jobs() if item.job_id == job_id), None)
+        if job is None:
+            raise BusinessError(ErrorCode.NOT_FOUND, "Job introuvable")
+        return ItemResponse(data=job, meta=_meta(clock))
 
     @router.get(
         "/admin/capabilities",

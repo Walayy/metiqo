@@ -1,0 +1,684 @@
+{
+  "ticket": "QA-005",
+  "status": "passed",
+  "testedCommit": "467a4aa3a5d187fa877663ed69781995120caea7",
+  "positiveRun": {
+    "conclusion": "success",
+    "headSha": "467a4aa3a5d187fa877663ed69781995120caea7",
+    "jobs": [
+      {
+        "completedAt": "2026-09-07T16:23:54Z",
+        "conclusion": "success",
+        "databaseId": 101808681765,
+        "name": "Qualité",
+        "startedAt": "2026-09-07T16:22:10Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:22:12Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:22:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:22:14Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T16:22:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:22:41Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T16:22:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:22:41Z",
+            "conclusion": "skipped",
+            "name": "Injecter la faute temporelle uniquement pour l'exercice demandé",
+            "number": 4,
+            "startedAt": "2026-09-07T16:22:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:22:43Z",
+            "conclusion": "success",
+            "name": "Vérifier le cutoff critique avant tout autre contrôle",
+            "number": 5,
+            "startedAt": "2026-09-07T16:22:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:23:49Z",
+            "conclusion": "success",
+            "name": "Vérifier formats, types, contrats et tests",
+            "number": 6,
+            "startedAt": "2026-09-07T16:22:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:23:52Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 11,
+            "startedAt": "2026-09-07T16:23:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:23:52Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 12,
+            "startedAt": "2026-09-07T16:23:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:23:52Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-07T16:23:52Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142924516/job/101808681765"
+      },
+      {
+        "completedAt": "2026-09-07T16:27:34Z",
+        "conclusion": "success",
+        "databaseId": 101808681952,
+        "name": "Interface Playwright",
+        "startedAt": "2026-09-07T16:22:09Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:22:11Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:22:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:22:11Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T16:22:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:22:56Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T16:22:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:27:29Z",
+            "conclusion": "success",
+            "name": "Exécuter les parcours mock, visuels, clavier et réseau",
+            "number": 4,
+            "startedAt": "2026-09-07T16:22:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:27:30Z",
+            "conclusion": "success",
+            "name": "Vérifier tous les parcours sélectionnés ; Owner est exécuté dans runtime",
+            "number": 5,
+            "startedAt": "2026-09-07T16:27:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:27:30Z",
+            "conclusion": "success",
+            "name": "Conserver les preuves navigateur",
+            "number": 6,
+            "startedAt": "2026-09-07T16:27:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:27:32Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 11,
+            "startedAt": "2026-09-07T16:27:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:27:33Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 12,
+            "startedAt": "2026-09-07T16:27:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:27:33Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-07T16:27:33Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142924516/job/101808681952"
+      },
+      {
+        "completedAt": "2026-09-07T16:34:33Z",
+        "conclusion": "success",
+        "databaseId": 101808681975,
+        "name": "Migrations PostgreSQL",
+        "startedAt": "2026-09-07T16:22:10Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:22:12Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:22:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:22:14Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T16:22:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:23:09Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T16:22:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:23:12Z",
+            "conclusion": "success",
+            "name": "Installer le chiffrement natif des sauvegardes",
+            "number": 4,
+            "startedAt": "2026-09-07T16:23:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:26:06Z",
+            "conclusion": "success",
+            "name": "Construire toutes les images depuis le commit propre",
+            "number": 5,
+            "startedAt": "2026-09-07T16:23:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:26:50Z",
+            "conclusion": "success",
+            "name": "Auditer les dépendances, les images et l'historique",
+            "number": 6,
+            "startedAt": "2026-09-07T16:26:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:26:55Z",
+            "conclusion": "success",
+            "name": "Préparer PostgreSQL réel et le scanner vérifié",
+            "number": 7,
+            "startedAt": "2026-09-07T16:26:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:33:50Z",
+            "conclusion": "success",
+            "name": "Exécuter toute la suite Python, y compris Owner, bundle, reprise et atomicité",
+            "number": 8,
+            "startedAt": "2026-09-07T16:26:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:33:50Z",
+            "conclusion": "success",
+            "name": "Refuser les tests sautés ou les preuves incomplètes",
+            "number": 9,
+            "startedAt": "2026-09-07T16:33:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:25Z",
+            "conclusion": "success",
+            "name": "Mesurer les lectures réelles sans charge concurrente",
+            "number": 10,
+            "startedAt": "2026-09-07T16:33:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:26Z",
+            "conclusion": "success",
+            "name": "Conserver les preuves même en cas d'échec",
+            "number": 11,
+            "startedAt": "2026-09-07T16:34:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:27Z",
+            "conclusion": "success",
+            "name": "Arrêter uniquement la base de cet exercice",
+            "number": 12,
+            "startedAt": "2026-09-07T16:34:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:31Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 23,
+            "startedAt": "2026-09-07T16:34:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:32Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 24,
+            "startedAt": "2026-09-07T16:34:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:32Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-09-07T16:34:32Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142924516/job/101808681975"
+      },
+      {
+        "completedAt": "2026-09-07T16:34:38Z",
+        "conclusion": "success",
+        "databaseId": 101811642412,
+        "name": "Build Docker",
+        "startedAt": "2026-09-07T16:34:36Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:34:36Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:34:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:36Z",
+            "conclusion": "success",
+            "name": "Confirmer les builds, les scans et les essais des images dans runtime",
+            "number": 2,
+            "startedAt": "2026-09-07T16:34:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:37Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 3,
+            "startedAt": "2026-09-07T16:34:36Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142924516/job/101811642412"
+      },
+      {
+        "completedAt": "2026-09-07T16:34:42Z",
+        "conclusion": "success",
+        "databaseId": 101811642558,
+        "name": "Gate MVP",
+        "startedAt": "2026-09-07T16:34:36Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:34:37Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:34:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:39Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T16:34:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:39Z",
+            "conclusion": "success",
+            "name": "Refuser toute dépendance échouée, annulée ou sautée",
+            "number": 3,
+            "startedAt": "2026-09-07T16:34:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:40Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 6,
+            "startedAt": "2026-09-07T16:34:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:34:40Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 7,
+            "startedAt": "2026-09-07T16:34:40Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142924516/job/101811642558"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/Walayy/metiqo/actions/runs/34142924516"
+  },
+  "negativeRun": {
+    "conclusion": "failure",
+    "headSha": "467a4aa3a5d187fa877663ed69781995120caea7",
+    "jobs": [
+      {
+        "completedAt": "2026-09-07T16:20:34Z",
+        "conclusion": "failure",
+        "databaseId": 101808160155,
+        "name": "Qualité",
+        "startedAt": "2026-09-07T16:20:01Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:20:02Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:20:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:03Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T16:20:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:29Z",
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup",
+            "number": 3,
+            "startedAt": "2026-09-07T16:20:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:29Z",
+            "conclusion": "success",
+            "name": "Injecter la faute temporelle uniquement pour l'exercice demandé",
+            "number": 4,
+            "startedAt": "2026-09-07T16:20:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:31Z",
+            "conclusion": "failure",
+            "name": "Vérifier le cutoff critique avant tout autre contrôle",
+            "number": 5,
+            "startedAt": "2026-09-07T16:20:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:31Z",
+            "conclusion": "skipped",
+            "name": "Vérifier formats, types, contrats et tests",
+            "number": 6,
+            "startedAt": "2026-09-07T16:20:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:31Z",
+            "conclusion": "success",
+            "name": "Post Run ./.github/actions/setup",
+            "number": 11,
+            "startedAt": "2026-09-07T16:20:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:31Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 12,
+            "startedAt": "2026-09-07T16:20:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:31Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-07T16:20:31Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142754544/job/101808160155"
+      },
+      {
+        "completedAt": "2026-09-07T16:20:03Z",
+        "conclusion": "failure",
+        "databaseId": 101808160509,
+        "name": "Build Docker",
+        "startedAt": "2026-09-07T16:20:00Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:20:01Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:20:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:01Z",
+            "conclusion": "failure",
+            "name": "Confirmer les builds, les scans et les essais des images dans runtime",
+            "number": 2,
+            "startedAt": "2026-09-07T16:20:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:01Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 3,
+            "startedAt": "2026-09-07T16:20:01Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142754544/job/101808160509"
+      },
+      {
+        "completedAt": "2026-09-07T16:19:58Z",
+        "conclusion": "skipped",
+        "databaseId": 101808161358,
+        "name": "Migrations PostgreSQL",
+        "startedAt": "2026-09-07T16:19:59Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142754544/job/101808161358"
+      },
+      {
+        "completedAt": "2026-09-07T16:19:58Z",
+        "conclusion": "skipped",
+        "databaseId": 101808161483,
+        "name": "Interface Playwright",
+        "startedAt": "2026-09-07T16:19:59Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142754544/job/101808161483"
+      },
+      {
+        "completedAt": "2026-09-07T16:20:42Z",
+        "conclusion": "failure",
+        "databaseId": 101808309442,
+        "name": "Gate MVP",
+        "startedAt": "2026-09-07T16:20:36Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-07T16:20:38Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-07T16:20:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:39Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 2,
+            "startedAt": "2026-09-07T16:20:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:39Z",
+            "conclusion": "failure",
+            "name": "Refuser toute dépendance échouée, annulée ou sautée",
+            "number": 3,
+            "startedAt": "2026-09-07T16:20:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:39Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+            "number": 6,
+            "startedAt": "2026-09-07T16:20:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-07T16:20:40Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 7,
+            "startedAt": "2026-09-07T16:20:39Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/Walayy/metiqo/actions/runs/34142754544/job/101808309442"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/Walayy/metiqo/actions/runs/34142754544"
+  },
+  "backend": {
+    "path": "data/ci/qa005-final-34142924516/runtime-evidence/data/ci/backend.xml",
+    "sha256": "a4057dae23c2d7aed51c01ebacab51d9a88a984f86e1bd67bf240dcc5fae9fd7",
+    "passed": 616,
+    "skipped": 0,
+    "failed": 0
+  },
+  "browser": {
+    "path": "data/ci/qa005-final-34142924516/browser-evidence/data/ci/playwright.xml",
+    "sha256": "143805ce934c99e82dc62db40a709ff00bf260163e649421f4a876e99ff8cdff",
+    "passed": 104,
+    "skipped": 0,
+    "failed": 0
+  },
+  "security": {
+    "path": "data/ci/qa005-final-34142924516/runtime-evidence/data/security/20260907T162606Z-bf615b5b/summary.json",
+    "sha256": "db6323faf4335e0ce37d44082e7b44df4dd25f6ffc48790222f1c077f3d307df",
+    "passed": true,
+    "blocking": 0,
+    "reported": 360,
+    "images": {
+      "api": {
+        "name": "metiquo-api:local",
+        "id": "sha256:c9c02950d652dde33bf1b414d31bf5270dfeac30db9cbd9f97cd1dc76738d04d"
+      },
+      "worker": {
+        "name": "metiquo-worker:local",
+        "id": "sha256:c9c02950d652dde33bf1b414d31bf5270dfeac30db9cbd9f97cd1dc76738d04d"
+      },
+      "web": {
+        "name": "metiquo-web:local",
+        "id": "sha256:6cae7103df1cbe7c0e993d2bc8599d9e63972b7d930fe13706e0415a885b6c45"
+      },
+      "postgres": {
+        "name": "metiquo-postgres:local",
+        "id": "sha256:ff08b03727cbc9da05981cc64d4168bf306a20e71bf5d48967633068a7a76336"
+      },
+      "gateway": {
+        "name": "metiquo-gateway:local",
+        "id": "sha256:e3b571a3c891a79fed5615a09a7661b508b8adf71333be0f0a84a0609479d560"
+      }
+    }
+  },
+  "performance": {
+    "path": "data/ci/qa005-final-34142924516/runtime-evidence/data/performance/20260907T163352Z-5cfa9afd/report.json",
+    "sha256": "2dcf8cbc0cb314e7dea55f03ed9d9f36cbd78f4e4e5c76eca5750ab93c9e801a",
+    "passed": true
+  },
+  "artifacts": [
+    {
+      "id": 10026909132,
+      "node_id": "MDg6QXJ0aWZhY3QxMDAyNjkwOTEzMg==",
+      "name": "runtime-evidence",
+      "size_in_bytes": 542718,
+      "url": "https://api.github.com/repos/Walayy/metiqo/actions/artifacts/10026909132",
+      "archive_download_url": "https://api.github.com/repos/Walayy/metiqo/actions/artifacts/10026909132/zip",
+      "expired": false,
+      "digest": "sha256:dbf131a6992e02686bf2a99beeb39a8cb2291b894ca2a5c647e8761d93e869f2",
+      "created_at": "2026-09-07T16:34:26Z",
+      "updated_at": "2026-09-07T16:34:26Z",
+      "expires_at": "2026-10-07T16:34:25Z",
+      "workflow_run": {
+        "id": 34142924516,
+        "repository_id": 1357104532,
+        "head_repository_id": 1357104532,
+        "head_branch": "codex/qa-005-normative-ci",
+        "head_sha": "467a4aa3a5d187fa877663ed69781995120caea7"
+      }
+    },
+    {
+      "id": 10026721095,
+      "node_id": "MDg6QXJ0aWZhY3QxMDAyNjcyMTA5NQ==",
+      "name": "browser-evidence",
+      "size_in_bytes": 2454039,
+      "url": "https://api.github.com/repos/Walayy/metiqo/actions/artifacts/10026721095",
+      "archive_download_url": "https://api.github.com/repos/Walayy/metiqo/actions/artifacts/10026721095/zip",
+      "expired": false,
+      "digest": "sha256:5100ee49ebecd2e43740a52d87e5696e78ae354e5e61770075981b8bfa1db5dd",
+      "created_at": "2026-09-07T16:27:30Z",
+      "updated_at": "2026-09-07T16:27:30Z",
+      "expires_at": "2026-10-07T16:27:30Z",
+      "workflow_run": {
+        "id": 34142924516,
+        "repository_id": 1357104532,
+        "head_repository_id": 1357104532,
+        "head_branch": "codex/qa-005-normative-ci",
+        "head_sha": "467a4aa3a5d187fa877663ed69781995120caea7"
+      }
+    }
+  ],
+  "scope": "Real GitHub Linux runs on the same clean commit. The forced temporal fault fails three tests and the mandatory gate. The normal run executes every required job. Fixtures do not grant financial validation or source permissions."
+}

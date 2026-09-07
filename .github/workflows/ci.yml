@@ -5,130 +5,143 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      critical_fault:
+        description: Exercice négatif explicite — injecter une fuite au cutoff ; la CI doit échouer
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ inputs.critical_fault || false }}
   cancel-in-progress: true
 
 jobs:
   quality:
     name: Qualité
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Récupérer le dépôt
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-      - name: Installer pnpm
-        uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
-        with:
-          run_install: false
-      - name: Installer Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - name: Installer uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-        with:
-          version: 0.11.23
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-      - name: Installer Python
-        run: uv python install 3.13.14
-      - name: Installer les dépendances
-        run: |
-          pnpm install --frozen-lockfile
-          uv sync --frozen
-      - name: Exécuter les contrôles locaux
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: ./.github/actions/setup
+      - name: Injecter la faute temporelle uniquement pour l'exercice demandé
+        if: inputs.critical_fault == true
+        run: uv run --frozen python infra/scripts/inject_critical_fault.py
+      - name: Vérifier le cutoff critique avant tout autre contrôle
+        run: make test-leakage
+      - name: Vérifier formats, types, contrats et tests
         run: make check
 
-  migrations:
+  runtime:
     name: Migrations PostgreSQL
+    if: inputs.critical_fault != true
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    services:
-      postgres:
-        image: postgres:18@sha256:4aabea78cf39b90e834caf3af7d602a18565f6fe2508705c8d01aa63245c2e20
-        env:
-          POSTGRES_DB: metiquo
-          POSTGRES_PASSWORD: metiquo
-          POSTGRES_USER: metiquo
-          PGTZ: UTC
-          TZ: UTC
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U metiquo -d metiquo"
-          --health-interval 2s
-          --health-timeout 3s
-          --health-retries 15
+    timeout-minutes: 60
     env:
-      TEST_DATABASE_URL: postgresql+psycopg://metiquo:metiquo@127.0.0.1:5432/metiquo
+      TEST_DATABASE_URL: postgresql+psycopg://metiquo:metiquo@127.0.0.1:5432/metiquo?connect_timeout=5
+      TEST_PG_CONTAINER: metiquo-ci-postgres
+      TEST_OPS_IMAGE: metiquo-worker:local
+      TEST_BACKUP_IMAGE: metiquo-api:local
+      TEST_SECURITY_IMAGE: metiquo-api:local
+      TEST_SECURITY_WEB_IMAGE: metiquo-web:local
+      TEST_SECURITY_GATEWAY_IMAGE: metiquo-gateway:local
+      RUN_OWNER_BROWSER: "1"
+      RUN_BUNDLE_SECRET_SCAN: "1"
     steps:
-      - name: Récupérer le dépôt
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-      - name: Installer uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          version: 0.11.23
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-      - name: Installer Python et les dépendances
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          chromium: "true"
+      - name: Installer le chiffrement natif des sauvegardes
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y age
+      - name: Construire toutes les images depuis le commit propre
+        run: uv run --frozen python infra/scripts/build_images.py --require-clean
+      - name: Démarrer la démo complète sur un projet Compose neuf puis le supprimer
+        run: uv run --frozen python -m infra.scripts.startup_acceptance
+      - name: Préparer PostgreSQL réel et le scanner vérifié
         run: |
-          uv python install 3.13.14
-          uv sync --frozen
-      - name: Tester les migrations
-        run: make test-migrations
+          docker run -d --name "$TEST_PG_CONTAINER" -e POSTGRES_USER=metiquo -e POSTGRES_PASSWORD=metiquo -e POSTGRES_DB=metiquo -e TZ=UTC -p 127.0.0.1:5432:5432 metiquo-postgres:local
+          for attempt in $(seq 1 30); do docker exec "$TEST_PG_CONTAINER" pg_isready -h 127.0.0.1 -U metiquo && break; sleep 1; done
+          docker exec "$TEST_PG_CONTAINER" pg_isready -h 127.0.0.1 -U metiquo
+          uv run --frozen python -c 'import os; from infra.scripts.install_security_tools import install_tool; from pathlib import Path; Path(os.environ["GITHUB_ENV"]).open("a").write("GITLEAKS_BINARY=" + str(install_tool("gitleaks")) + "\n")'
+      - name: Exécuter toute la suite Python, y compris Owner, bundle, reprise et atomicité
+        run: uv run --frozen python -m pytest --junitxml=data/ci/backend.xml -q
+      - name: Refuser les tests sautés ou les preuves incomplètes
+        run: uv run --frozen python infra/scripts/verify_release_evidence.py junit data/ci/backend.xml
+      - name: Mesurer les lectures réelles sans charge concurrente
+        run: uv run --frozen python -m infra.scripts.benchmark_reads
+      - name: Auditer les dépendances, l'historique et les images du dernier build exercé
+        run: make scan-security
+      - name: Conserver les preuves même en cas d'échec
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: runtime-evidence
+          path: |
+            data/ci
+            data/security
+            data/performance
+            data/acceptance
+            playwright-report
+          retention-days: 30
+          if-no-files-found: error
+      - name: Arrêter uniquement la base de cet exercice
+        if: always()
+        run: docker rm -f "$TEST_PG_CONTAINER"
 
   e2e:
     name: Interface Playwright
+    if: inputs.critical_fault != true
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Récupérer le dépôt
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-      - name: Installer pnpm
-        uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: ./.github/actions/setup
         with:
-          run_install: false
-      - name: Installer Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - name: Installer uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-        with:
-          version: 0.11.23
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-      - name: Installer Python
-        run: uv python install 3.13.14
-      - name: Installer les dépendances
-        run: |
-          pnpm install --frozen-lockfile
-          uv sync --frozen
-      - name: Installer Chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Tester le shell et les thèmes
-        run: make test-e2e
-      - if: always()
-        name: Conserver le rapport Playwright
+          chromium: "true"
+      - name: Exécuter les parcours mock, visuels, clavier et réseau
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: data/ci/playwright.xml
+        run: pnpm exec playwright test --grep-invert 'authenticates the Owner' --reporter=list,junit
+      - name: Vérifier tous les parcours sélectionnés ; Owner est exécuté dans runtime
+        run: uv run --frozen python infra/scripts/verify_release_evidence.py junit data/ci/playwright.xml
+      - name: Conserver les preuves navigateur
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: playwright-report
-          path: playwright-report
-          retention-days: 7
+          name: browser-evidence
+          path: |
+            data/ci
+            playwright-report
+            test-results
+          retention-days: 30
+          if-no-files-found: error
 
   docker:
     name: Build Docker
+    if: always()
+    needs: [runtime]
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
-      - name: Récupérer le dépôt
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-      - name: Construire les images
-        run: make docker-build
+      - name: Confirmer les builds, les scans et les essais des images dans runtime
+        env:
+          RUNTIME_RESULT: ${{ needs.runtime.result }}
+        run: test "$RUNTIME_RESULT" = success
+
+  release:
+    name: Gate MVP
+    if: always()
+    needs: [quality, runtime, e2e]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - name: Refuser toute dépendance échouée, annulée ou sautée
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: python3 infra/scripts/verify_release_evidence.py jobs

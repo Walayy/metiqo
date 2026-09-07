@@ -11,7 +11,13 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 CORE_SERVICES = {"postgres", "volume-init", "api", "worker", "web"}
 FORBIDDEN_SERVICES = {"airflow", "celery", "feature-store", "kafka", "redis", "spark"}
-PERSISTENT_VOLUMES = {"postgres_data", "raw_snapshots", "model_artifacts", "backups"}
+PERSISTENT_VOLUMES = {
+    "postgres_data",
+    "raw_snapshots",
+    "quarantine_snapshots",
+    "model_artifacts",
+    "backups",
+}
 
 
 def compose_configuration() -> dict[str, object]:
@@ -53,3 +59,29 @@ def test_compose_applies_least_privilege_boundaries() -> None:
     assert services["volume-init"]["network_mode"] == "none"
     assert services["mock-mode-check"]["network_mode"] == "none"
     assert services["minio-volume-init"]["network_mode"] == "none"
+    assert "ingestion_egress" in cast(dict[str, object], services["worker"]["networks"])
+    assert "ingestion_egress" not in cast(dict[str, object], services["postgres"]["networks"])
+    api_volumes = cast(list[dict[str, object]], services["api"]["volumes"])
+    worker_volumes = cast(list[dict[str, object]], services["worker"]["volumes"])
+    assert api_volumes and all(volume.get("read_only", False) for volume in api_volumes)
+    assert any(volume["target"] == "/data/work" for volume in worker_volumes)
+    gateway_volumes = cast(list[dict[str, object]], services["gateway"]["volumes"])
+    assert any(
+        volume["target"] == "/data" and volume["type"] == "volume" for volume in gateway_volumes
+    )
+    assert services["worker"]["stop_grace_period"] == "1m30s"
+
+
+@pytest.mark.integration
+def test_compose_binds_the_validated_publication_address(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_PUBLISH_HOST", "192.168.10.4")
+    monkeypatch.setenv("APP_PUBLIC_ORIGIN", "http://192.168.10.4:3000")
+    monkeypatch.setenv("AUTH_PRIVATE_NETWORKS", '["192.168.10.0/24"]')
+    services = cast(dict[str, dict[str, object]], compose_configuration()["services"])
+    for name in ("api", "web", "gateway"):
+        ports = cast(list[dict[str, object]], services[name]["ports"])
+        assert all(port["host_ip"] == "192.168.10.4" for port in ports)
+    for name in ("api", "worker"):
+        environment = cast(dict[str, str], services[name]["environment"])
+        assert environment["APP_PUBLISH_HOST"] == "192.168.10.4"
+        assert environment["AUTH_PRIVATE_NETWORKS"] == '["192.168.10.0/24"]'
