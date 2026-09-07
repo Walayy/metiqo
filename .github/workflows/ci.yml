@@ -60,8 +60,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y age
       - name: Construire toutes les images depuis le commit propre
         run: uv run --frozen python infra/scripts/build_images.py --require-clean
-      - name: Auditer les dépendances, les images et l'historique
-        run: make scan-security
+      - name: Démarrer la démo complète sur un projet Compose neuf puis le supprimer
+        run: uv run --frozen python -m infra.scripts.startup_acceptance
       - name: Préparer PostgreSQL réel et le scanner vérifié
         run: |
           docker run -d --name "$TEST_PG_CONTAINER" -e POSTGRES_USER=metiquo -e POSTGRES_PASSWORD=metiquo -e POSTGRES_DB=metiquo -e TZ=UTC -p 127.0.0.1:5432:5432 metiquo-postgres:local
@@ -74,8 +74,8 @@ jobs:
         run: uv run --frozen python infra/scripts/verify_release_evidence.py junit data/ci/backend.xml
       - name: Mesurer les lectures réelles sans charge concurrente
         run: uv run --frozen python -m infra.scripts.benchmark_reads
-      - name: Démarrer la démo complète sur un projet Compose neuf puis le supprimer
-        run: uv run --frozen python -m infra.scripts.startup_acceptance
+      - name: Auditer les dépendances, l'historique et les images du dernier build exercé
+        run: make scan-security
       - name: Conserver les preuves même en cas d'échec
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

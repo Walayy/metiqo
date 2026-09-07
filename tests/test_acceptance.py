@@ -13,6 +13,7 @@ from infra.scripts.acceptance import (
     junit_cases,
     verify_manual_review,
     verify_runs,
+    verify_runtime,
 )
 from infra.scripts.startup_acceptance import compose_services
 
@@ -106,6 +107,25 @@ def test_compose_json_array_and_stream_preserve_each_service() -> None:
     ]
     assert compose_services(json.dumps(services)) == services
     assert compose_services("\n".join(json.dumps(item) for item in services)) == services
+
+
+def test_runtime_requires_the_exact_images_exercised_by_startup() -> None:
+    revision = "a" * 40
+    identities = {
+        name: "sha256:" + "b" * 64 for name in ("api", "worker", "web", "postgres", "gateway")
+    }
+    security = {
+        "commit": revision,
+        "passed": True,
+        "blocking": [],
+        "images": {name: {"id": value} for name, value in identities.items()},
+    }
+    performance = {"commit": revision, "passed": True, "sourceUnchanged": True}
+    startup = {"commit": revision, "passed": True, "images": identities}
+    verify_runtime(security, performance, startup, revision)
+    identities["web"] = "sha256:" + "c" * 64
+    with pytest.raises(ValueError, match="images"):
+        verify_runtime(security, performance, startup, revision)
 
 
 def test_artifact_digest_and_archive_paths_are_verified(tmp_path: Path) -> None:

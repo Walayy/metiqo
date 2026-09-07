@@ -24,7 +24,8 @@ rapports JUnit doivent contenir les suites complètes sans doublon, exclusion,
 échec ou erreur. Une disparition d'un cas requis fait échouer son critère.
 
 Les preuves de sécurité, performance et démarrage doivent être vertes et porter
-sur le même commit. La revue visuelle de QA-006 reste liée aux fichiers source et
+sur le même commit. Les identifiants des cinq images scannées doivent correspondre
+au dernier build de la recette. La revue visuelle de QA-006 reste liée aux fichiers source et
 aux deux captures inspectées par leurs empreintes. Une modification de ces
 éléments exige une nouvelle revue ; elle ne reçoit aucun PASS implicite.
 
@@ -36,8 +37,9 @@ code de sortie non nul. Aucun test sauté n'est assimilé à un succès.
 
 ## Démarrage effectivement exercé
 
-Le job runtime appelle `infra.scripts.startup_acceptance` après les tests et les
-mesures. Ce script crée un nom de projet Compose aléatoire, vérifie l'absence
+Le job runtime appelle `infra.scripts.startup_acceptance` avant les tests et les
+mesures ; le scan final porte ainsi sur les mêmes images. Ce script crée un nom
+de projet Compose aléatoire, vérifie l'absence
 initiale de conteneurs, volumes et réseaux portant ce nom, puis lance la seule
 commande utilisateur `make mock-demo`. Celle-ci vérifie les scénarios, construit
 et démarre Compose, puis applique les migrations.

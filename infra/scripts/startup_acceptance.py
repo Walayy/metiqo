@@ -150,6 +150,25 @@ def main() -> int:
                 raise ValueError(f"Page de la stack indisponible : {path}")
             pages[path] = status
         report["pages"] = pages
+        report["images"] = {
+            name: command(
+                ["docker", "image", "inspect", f"metiquo-{name}:local", "--format", "{{.Id}}"]
+            ).strip()
+            for name in ("api", "worker", "web", "postgres", "gateway")
+        }
+        for name in ("api", "worker"):
+            image_revision = command(
+                [
+                    "docker",
+                    "image",
+                    "inspect",
+                    f"metiquo-{name}:local",
+                    "--format",
+                    '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+                ]
+            ).strip()
+            if image_revision != revision:
+                raise ValueError("Provenance des images Python incorrecte")
         report["versions"] = {
             "compose": command(["docker", "compose", "version", "--short"]).strip(),
             "python": command(

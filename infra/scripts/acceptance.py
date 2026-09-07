@@ -346,6 +346,25 @@ def fingerprint(path: Path) -> dict[str, str]:
     }
 
 
+def verify_runtime(
+    security: dict[str, Any],
+    performance: dict[str, Any],
+    startup: dict[str, Any],
+    revision: str,
+) -> None:
+    for proof in (security, performance, startup):
+        if proof.get("commit") != revision or proof.get("passed") is not True:
+            raise ValueError("Une preuve runtime est invalide ou provient d'un autre commit")
+    if security.get("blocking") or not performance.get("sourceUnchanged"):
+        raise ValueError("Gate sécurité ou provenance du benchmark refusé")
+    scanned = {name: item["id"] for name, item in security.get("images", {}).items()}
+    if (
+        set(scanned) != {"api", "worker", "web", "postgres", "gateway"}
+        or startup.get("images") != scanned
+    ):
+        raise ValueError("Les images scannées diffèrent des images du dernier démarrage")
+
+
 def collect(ci_run: str, negative_run: str, output: Path) -> dict[str, Any]:
     revision = code_revision(ROOT)
     if revision is None:
@@ -378,11 +397,7 @@ def collect(ci_run: str, negative_run: str, output: Path) -> dict[str, Any]:
     (performance_path,) = runtime.glob("performance/*/report.json")
     (startup_path,) = runtime.glob("acceptance/startup-*/report.json")
     security, performance, startup = map(read_json, (security_path, performance_path, startup_path))
-    for proof in (security, performance, startup):
-        if proof.get("commit") != revision or proof.get("passed") is not True:
-            raise ValueError("Une preuve runtime est invalide ou provient d'un autre commit")
-    if security.get("blocking") or not performance.get("sourceUnchanged"):
-        raise ValueError("Gate sécurité ou provenance du benchmark refusé")
+    verify_runtime(security, performance, startup, revision)
     manual = verify_manual_review(ROOT)
     startup_ok = (
         startup.get("command") == ["make", "mock-demo"]
