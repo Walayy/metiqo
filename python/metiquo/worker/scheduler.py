@@ -24,6 +24,7 @@ class SchedulePolicy:
     settlement_seconds: int = 300
     report_seconds: int = 300
     currency: str = "EUR"
+    alerts_seconds: int = 300
 
     def __post_init__(self) -> None:
         if not 2014 <= self.current_year <= 2200 or not 1 <= self.closed_months <= 12:
@@ -34,6 +35,7 @@ class SchedulePolicy:
                 self.deep_seconds,
                 self.settlement_seconds,
                 self.report_seconds,
+                self.alerts_seconds,
             )
             < 60
         ):
@@ -49,6 +51,7 @@ class SchedulePolicy:
             settings.paper_settlement_interval_seconds,
             settings.paper_report_interval_seconds,
             settings.paper_bankroll_currency,
+            settings.alert_interval_seconds,
         )
 
 
@@ -88,6 +91,7 @@ def planned_jobs(
             jobs.append(PlannedJob("oe.deep", scope, payload, slot(policy.deep_seconds)))
     jobs.extend(
         (
+            PlannedJob("ops.alerts", "ops:alerts", {}, slot(policy.alerts_seconds)),
             PlannedJob("paper.settle", "paper:settlement", {}, slot(policy.settlement_seconds)),
             PlannedJob(
                 "paper.report",

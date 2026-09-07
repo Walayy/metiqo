@@ -16,6 +16,7 @@ def test_scheduler_selects_current_closed_and_modified_years_once_per_slot() -> 
         "oe.deep",
         "paper.settle",
         "paper.report",
+        "ops.alerts",
     }
     current = next(item for item in initial if item.job_type == "oe.sync")
     assert current.scheduled_at == now.replace(hour=6, minute=0)

@@ -10,6 +10,23 @@ from sqlalchemy.orm import Mapped, mapped_column
 from metiquo.db.base import Base, UtcDateTime
 
 
+class AlertStateRecord(Base):
+    __tablename__ = "alert_states"
+    __table_args__ = (
+        CheckConstraint("jsonb_typeof(details) = 'object'", name="details_object"),
+        CheckConstraint(
+            "changed_at <= observed_at AND last_notified_at <= observed_at", name="times"
+        ),
+        {"schema": "ops"},
+    )
+    code: Mapped[str] = mapped_column(String(64), primary_key=True)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    observed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    changed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    last_notified_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    details: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+
+
 class AuditEventRecord(Base):
     __tablename__ = "audit_events"
     __table_args__ = (

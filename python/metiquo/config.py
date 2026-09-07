@@ -91,6 +91,9 @@ class Settings(BaseSettings):
     paper_settlement_interval_seconds: int = Field(default=300, ge=60)
     paper_report_interval_seconds: int = Field(default=300, ge=60)
     model_freshness_sla_seconds: int = Field(default=2592000, gt=0)
+    alert_interval_seconds: int = Field(default=300, ge=60)
+    alert_cooldown_seconds: int = Field(default=21600, ge=60)
+    alert_mapping_backlog_limit: int = Field(default=10, ge=1)
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
