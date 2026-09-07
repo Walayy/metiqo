@@ -1,14 +1,88 @@
 """Handlers métier disponibles avant la planification automatique."""
 
+import hashlib
 from datetime import timedelta
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
 
 from metiquo.config import Settings
+from metiquo.db.raw_models import IngestionRun, SourceCatalog
 from metiquo.foundation.errors import BusinessError, ErrorCode
+from metiquo.ingestion.freshness import FreshnessPolicy
+from metiquo.ingestion.operations import refresh_catalog, verify_snapshot
+from metiquo.ingestion.sync import OracleElixirYearSync, SyncFailed
 from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
 from metiquo.worker.contracts import JobContext, JobHandler
+
+
+class OracleCatalogHandler:
+    def __init__(self, engine: Engine, settings: Settings) -> None:
+        self.engine, self.settings = engine, settings
+
+    def handle(self, context: JobContext) -> dict[str, object]:
+        context.cancellation.raise_if_cancelled()
+        result = refresh_catalog(self.settings, self.engine, clock=context.clock)
+        if result["usedFallback"]:
+            raise BusinessError(
+                ErrorCode.DEPENDENCY_UNAVAILABLE,
+                "Catalogue confirmé par fallback ; découverte distante indisponible",
+                retryable=True,
+            )
+        return {
+            "origin": result["origin"],
+            "decisions": result["decisions"],
+            "alerts": result["alerts"],
+        }
+
+
+class OracleSyncHandler:
+    def __init__(self, engine: Engine, settings: Settings, *, deep: bool = False) -> None:
+        self.engine, self.settings, self.deep = engine, settings, deep
+
+    def handle(self, context: JobContext) -> dict[str, object]:
+        context.cancellation.raise_if_cancelled()
+        year = context.payload.get("year")
+        if type(year) is not int or not 2014 <= year <= 2200:
+            raise BusinessError(ErrorCode.INVALID_INPUT, "Année du job invalide")
+        if self.deep:
+            with self.engine.connect() as connection:
+                identity = connection.scalar(
+                    select(SourceCatalog.current_snapshot_id).where(
+                        SourceCatalog.provider == "oracles_elixir",
+                        SourceCatalog.dataset == "league_of_legends_match_data",
+                        SourceCatalog.season_year == year,
+                        SourceCatalog.status == "active",
+                    )
+                )
+            if identity is None:
+                raise BusinessError(ErrorCode.INVALID_STATE, "Aucun snapshot validé à contrôler")
+            return verify_snapshot(self.engine, self.settings, identity)
+        report = OracleElixirYearSync(
+            engine=self.engine, settings=self.settings, clock=context.clock
+        ).sync_year(
+            year=year,
+            policy=FreshnessPolicy(allow_stale=True),
+            check_unchanged=True,
+            request_key_hash=hashlib.sha256(str(context.job_id).encode()).hexdigest(),
+        )
+        with self.engine.connect() as connection:
+            failure_code = connection.scalar(
+                select(IngestionRun.error_code).where(
+                    IngestionRun.id == report.run_id, IngestionRun.status == "failed"
+                )
+            )
+        if failure_code is not None or report.transport == "validated-private-mirror":
+            raise SyncFailed(
+                "Snapshot conservé ; synchronisation distante indisponible",
+                error_code=failure_code or "SOURCE_UNAVAILABLE",
+                run_id=report.run_id,
+            )
+        return {
+            "runId": str(report.run_id),
+            "snapshotId": str(report.snapshot_id),
+            "freshness": report.freshness.status.value,
+        }
 
 
 class PaperReportHandler:
@@ -53,6 +127,10 @@ class PaperSettlementHandler:
 
 def default_handlers(engine: Engine, settings: Settings) -> dict[str, JobHandler]:
     return {
+        "oe.catalog": OracleCatalogHandler(engine, settings),
+        "oe.sync": OracleSyncHandler(engine, settings),
+        "oe.audit": OracleSyncHandler(engine, settings),
+        "oe.deep": OracleSyncHandler(engine, settings, deep=True),
         "paper.report": PaperReportHandler(engine, settings),
         "paper.settle": PaperSettlementHandler(engine, settings),
     }

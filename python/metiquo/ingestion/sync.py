@@ -50,6 +50,7 @@ from metiquo.ingestion.local_transports import (
 )
 from metiquo.ingestion.manifest import build_snapshot_manifest, store_snapshot
 from metiquo.ingestion.object_store import FilesystemObjectStore
+from metiquo.ingestion.operations import verify_snapshot
 from metiquo.ingestion.physical_validation import PhysicalValidationReport, PhysicalValidator
 from metiquo.ingestion.promotion import SnapshotPromotionService
 from metiquo.ingestion.quarantine import QuarantineService
@@ -159,6 +160,7 @@ class OracleElixirYearSync:
         fixture_path: Path | None = None,
         run_kind: str = "sync",
         request_key_hash: str | None = None,
+        check_unchanged: bool = False,
     ) -> YearSyncReport:
         with resource_lock(self._engine, oe_scope("oracles_elixir", year)):
             return self._sync_year_locked(
@@ -167,6 +169,7 @@ class OracleElixirYearSync:
                 fixture_path=fixture_path,
                 run_kind=run_kind,
                 request_key_hash=request_key_hash,
+                check_unchanged=check_unchanged,
             )
 
     def _sync_year_locked(
@@ -177,6 +180,7 @@ class OracleElixirYearSync:
         fixture_path: Path | None = None,
         run_kind: str = "sync",
         request_key_hash: str | None = None,
+        check_unchanged: bool = False,
     ) -> YearSyncReport:
         catalog = self._catalog_record(year)
         if catalog is None:
@@ -207,9 +211,15 @@ class OracleElixirYearSync:
                     source=source,
                     destination=working / "source.download",
                     fixture_path=fixture_path,
+                    reuse_run_id=run_id if check_unchanged else None,
                 )
                 transport_name = metadata.transport
                 self._set_transport(run_id, transport_name)
+                if download is None:
+                    decision = self._freshness(catalog_id, policy)
+                    return YearSyncReport(
+                        run_id, None, decision.snapshot_id, transport_name, decision, None
+                    )
                 try:
                     physical = PhysicalValidator().validate(
                         download,
@@ -293,6 +303,10 @@ class OracleElixirYearSync:
                     engine=self._engine,
                     clock=self._clock,
                 ).emit_for_run(load_run_id)
+                if transport_name != "validated-private-mirror":
+                    self._confirm_content(
+                        run_id, promoted.snapshot_id, metadata, metadata_verified=False
+                    )
         except Exception as error:
             error_code = _error_code(error)
             self._fail_run(run_id, error_code)
@@ -329,7 +343,8 @@ class OracleElixirYearSync:
         source: SourceRef,
         destination: Path,
         fixture_path: Path | None,
-    ) -> tuple[SourceMetadata, SafeDownloadResult]:
+        reuse_run_id: UUID | None = None,
+    ) -> tuple[SourceMetadata, SafeDownloadResult | None]:
         transports = self._transports(source, fixture_path)
         last_error: Exception | None = None
         for transport in transports:
@@ -338,6 +353,8 @@ class OracleElixirYearSync:
                     partial(transport.probe, source),
                     policy=transport.policy.retry,
                 )
+                if reuse_run_id is not None and self._reuse_confirmed(metadata, reuse_run_id):
+                    return metadata, None
                 download = RetryExecutor().execute(
                     partial(
                         SafeDownloader().download,
@@ -392,6 +409,68 @@ class OracleElixirYearSync:
                 mirror=mirror,
             )
         return tuple(result)
+
+    def _reuse_confirmed(self, metadata: SourceMetadata, run_id: UUID) -> bool:
+        if metadata.transport == "validated-private-mirror" or metadata.checksum_sha256 is None:
+            return False
+        with self._engine.connect() as connection:
+            row = connection.execute(
+                select(Snapshot.id, Snapshot.byte_size)
+                .join(SourceCatalog, SourceCatalog.current_snapshot_id == Snapshot.id)
+                .where(
+                    SourceCatalog.provider == metadata.source.provider,
+                    SourceCatalog.season_year == metadata.source.year,
+                    SourceCatalog.drive_file_id == metadata.source.source_id,
+                    SourceCatalog.dataset == "league_of_legends_match_data",
+                    Snapshot.status == "validated",
+                    Snapshot.sha256 == metadata.checksum_sha256,
+                    select(IngestionRun.id)
+                    .where(
+                        IngestionRun.snapshot_id == Snapshot.id,
+                        IngestionRun.run_kind == "load",
+                        IngestionRun.status == "succeeded",
+                    )
+                    .exists(),
+                )
+            ).one_or_none()
+        if row is None or (
+            metadata.content_length is not None and metadata.content_length != row.byte_size
+        ):
+            return False
+        verify_snapshot(self._engine, self._settings, row.id)
+        self._set_transport(run_id, metadata.transport)
+        self._confirm_content(run_id, row.id, metadata, metadata_verified=True)
+        return True
+
+    def _confirm_content(
+        self, run_id: UUID, snapshot_id: UUID, metadata: SourceMetadata, *, metadata_verified: bool
+    ) -> None:
+        with self._engine.begin() as connection:
+            counters = dict(
+                connection.execute(
+                    select(self._runs.c.counters).where(self._runs.c.id == run_id)
+                ).scalar_one()
+            )
+            counters.update(contentVerified=True, metadataVerified=metadata_verified)
+            counters["sourceProbe"] = {
+                "transport": metadata.transport,
+                "probedAt": metadata.probed_at.isoformat(),
+                "sha256": metadata.checksum_sha256,
+                "byteSize": metadata.content_length,
+                "sourceId": metadata.source.source_id,
+            }
+            connection.execute(
+                update(self._runs)
+                .where(self._runs.c.id == run_id)
+                .values(
+                    snapshot_id=snapshot_id,
+                    status="succeeded",
+                    finished_at=self._clock.now().value,
+                    counters=counters,
+                    error_code=None,
+                    error_detail=None,
+                )
+            )
 
     def _catalog_record(self, year: int) -> dict[str, object] | None:
         with self._engine.connect() as connection:
@@ -460,7 +539,7 @@ class OracleElixirYearSync:
         with self._engine.begin() as connection:
             connection.execute(
                 update(self._runs)
-                .where(self._runs.c.id == run_id, self._runs.c.status == "running")
+                .where(self._runs.c.id == run_id, self._runs.c.status.in_(("running", "succeeded")))
                 .values(
                     status="failed",
                     finished_at=now,

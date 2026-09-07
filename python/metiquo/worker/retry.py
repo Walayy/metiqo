@@ -1,6 +1,7 @@
 """Politique de reprise bornée sans exposer les messages techniques des dépendances."""
 
 import hashlib
+import re
 from dataclasses import dataclass
 from datetime import timedelta
 from uuid import UUID
@@ -8,6 +9,7 @@ from uuid import UUID
 from sqlalchemy.exc import DBAPIError
 
 from metiquo.foundation.errors import BusinessError, ErrorCode
+from metiquo.ingestion.sync import SyncFailed
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +40,22 @@ class RetryPolicy:
 
 
 def classify_failure(error: Exception) -> JobFailure:
+    if isinstance(error, SyncFailed):
+        code = (
+            error.error_code
+            if re.fullmatch(r"[A-Z][A-Z0-9_]{0,63}", error.error_code)
+            else "SOURCE_SYNC_FAILED"
+        )
+        return JobFailure(
+            code,
+            code
+            in {
+                "SOURCE_TIMEOUT",
+                "SOURCE_UNAVAILABLE",
+                "SOURCE_RATE_LIMITED",
+                "SOURCE_QUOTA_EXCEEDED",
+            },
+        )
     if isinstance(error, BusinessError):
         permanent = error.code in {
             ErrorCode.INVALID_INPUT,

@@ -3,7 +3,7 @@
 import io
 import json
 import logging
-from threading import Thread
+from threading import Event, Thread
 
 from metiquo.foundation.identifiers import CorrelationId, JobId, TraceId
 from metiquo.foundation.observability import JsonFormatter
@@ -66,3 +66,25 @@ def test_worker_starts_and_stops_cleanly_without_job() -> None:
     assert thread.is_alive() is False
     messages = [json.loads(line)["message"] for line in stream.getvalue().splitlines()]
     assert messages == ["worker.started", "worker.stopped"]
+
+
+def test_scheduler_recovers_after_failure_and_stops_with_runtime() -> None:
+    recovered = Event()
+
+    class Scheduler:
+        attempts = 0
+
+        def tick(self) -> None:
+            self.attempts += 1
+            if self.attempts == 1:
+                raise RuntimeError("scheduler unavailable")
+            recovered.set()
+
+    scheduler = Scheduler()
+    runtime = WorkerRuntime(scheduler=scheduler, schedule_seconds=0.01)
+    thread = Thread(target=runtime.run)
+    thread.start()
+    assert recovered.wait(2)
+    runtime.request_stop()
+    thread.join(timeout=2)
+    assert not thread.is_alive() and scheduler.attempts >= 2

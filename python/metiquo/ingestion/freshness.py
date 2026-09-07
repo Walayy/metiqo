@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import Protocol, cast
 from uuid import UUID
 
-from sqlalchemy import Connection, Engine, Table, select
+from sqlalchemy import Connection, Engine, Table, func, select
 
 from metiquo.config import Settings
 from metiquo.contracts.enums import FreshnessStatus
@@ -63,6 +63,7 @@ class PostgresFreshnessRepository:
             if catalog is None:
                 return FreshnessFacts(catalog_status=None, current=None)
             current_row = None
+            confirmed_at = None
             if catalog["current_snapshot_id"] is not None:
                 current_row = (
                     connection.execute(
@@ -74,6 +75,14 @@ class PostgresFreshnessRepository:
                     )
                     .mappings()
                     .one_or_none()
+                )
+                confirmed_at = connection.scalar(
+                    select(func.max(self._runs.c.finished_at)).where(
+                        self._runs.c.source_catalog_id == source_catalog_id,
+                        self._runs.c.snapshot_id == catalog["current_snapshot_id"],
+                        self._runs.c.status == "succeeded",
+                        self._runs.c.counters["contentVerified"].astext == "true",
+                    )
                 )
             quarantine = connection.execute(
                 select(self._snapshots.c.received_at)
@@ -98,7 +107,12 @@ class PostgresFreshnessRepository:
                 .one_or_none()
             )
         current = (
-            PublishedSnapshot(id=current_row["id"], validated_at=current_row["validated_at"])
+            PublishedSnapshot(
+                id=current_row["id"],
+                validated_at=max(current_row["validated_at"], confirmed_at)
+                if confirmed_at
+                else current_row["validated_at"],
+            )
             if current_row is not None
             else None
         )

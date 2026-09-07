@@ -1,5 +1,6 @@
 """Configuration serveur validée à la frontière du processus."""
 
+import json
 from datetime import UTC, tzinfo
 from decimal import Decimal
 from enum import StrEnum
@@ -80,6 +81,15 @@ class Settings(BaseSettings):
     oe_retry_base_seconds: float = Field(default=1.0, gt=0)
     oe_retry_max_seconds: float = Field(default=30.0, gt=0)
     oe_google_drive_bearer: SecretStr | None = None
+    worker_scheduler_enabled: bool = True
+    worker_scheduler_tick_seconds: int = Field(default=15, ge=1, le=300)
+    worker_retry_delays_seconds: tuple[int, ...] = (600, 1800, 7200)
+    worker_retry_jitter_fraction: float = Field(default=0.1, ge=0, le=0.5)
+    oe_sync_interval_seconds: int = Field(default=10800, ge=60)
+    oe_closed_audit_months: int = Field(default=1, ge=1, le=12)
+    oe_deep_check_interval_seconds: int = Field(default=86400, ge=60)
+    paper_settlement_interval_seconds: int = Field(default=300, ge=60)
+    paper_report_interval_seconds: int = Field(default=300, ge=60)
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)
@@ -121,6 +131,18 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL doit utiliser PostgreSQL avec le driver psycopg")
         if parsed.hostname is None or parsed.path in {"", "/"}:
             raise ValueError("DATABASE_URL doit préciser un hôte et une base")
+        return value
+
+    @field_validator("worker_retry_delays_seconds", mode="before")
+    @classmethod
+    def parse_worker_retry_delays(cls, value: object) -> object:
+        return json.loads(value) if isinstance(value, str) else value
+
+    @field_validator("worker_retry_delays_seconds")
+    @classmethod
+    def validate_worker_retry_delays(cls, value: tuple[int, ...]) -> tuple[int, ...]:
+        if not value or len(value) > 20 or any(not 1 <= item <= 86400 for item in value):
+            raise ValueError("Les délais du worker doivent être bornés à 1..86400 secondes")
         return value
 
     @field_validator("display_timezone")
