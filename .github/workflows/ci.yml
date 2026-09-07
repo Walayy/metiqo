@@ -65,8 +65,8 @@ jobs:
       - name: Préparer PostgreSQL réel et le scanner vérifié
         run: |
           docker run -d --name "$TEST_PG_CONTAINER" -e POSTGRES_USER=metiquo -e POSTGRES_PASSWORD=metiquo -e POSTGRES_DB=metiquo -e TZ=UTC -p 127.0.0.1:5432:5432 metiquo-postgres:local
-          for attempt in $(seq 1 30); do docker exec "$TEST_PG_CONTAINER" pg_isready -U metiquo && break; sleep 1; done
-          docker exec "$TEST_PG_CONTAINER" pg_isready -U metiquo
+          for attempt in $(seq 1 30); do docker exec "$TEST_PG_CONTAINER" pg_isready -h 127.0.0.1 -U metiquo && break; sleep 1; done
+          docker exec "$TEST_PG_CONTAINER" pg_isready -h 127.0.0.1 -U metiquo
           uv run --frozen python -c 'import os; from infra.scripts.install_security_tools import install_tool; from pathlib import Path; Path(os.environ["GITHUB_ENV"]).open("a").write("GITLEAKS_BINARY=" + str(install_tool("gitleaks")) + "\n")'
       - name: Exécuter toute la suite Python, y compris Owner, bundle, reprise et atomicité
         run: uv run --frozen python -m pytest --junitxml=data/ci/backend.xml -q
