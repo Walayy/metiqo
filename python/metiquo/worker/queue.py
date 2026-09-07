@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
-from sqlalchemy import Engine, and_, or_, select, text, update
+from sqlalchemy import Engine, and_, or_, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,7 @@ from metiquo.db.ops_models import JobRecord
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.locks import try_transaction_lock
 from metiquo.foundation.time import Clock, SystemClock, normalize_utc_datetime
+from metiquo.worker.retry import RetryPolicy
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +39,8 @@ class StoredJob:
     cancel_requested: bool
     error_code: str | None
     result: dict[str, object]
+    rerun_of: UUID | None
+    reason: str | None
 
 
 def _fingerprint(value: object) -> str:
@@ -71,6 +74,8 @@ def _stored(row: JobRecord) -> StoredJob:
         row.cancel_requested,
         row.error_code,
         row.result,
+        row.rerun_of,
+        row.reason,
     )
 
 
@@ -81,6 +86,7 @@ class PostgresJobQueue:
         *,
         clock: Clock | None = None,
         lease_duration: timedelta = timedelta(seconds=60),
+        retry_policy: RetryPolicy | None = None,
     ) -> None:
         if lease_duration <= timedelta(0):
             raise ValueError("Le bail doit être positif")
@@ -89,6 +95,7 @@ class PostgresJobQueue:
             clock or SystemClock(),
             lease_duration,
         )
+        self.retry_policy = retry_policy or RetryPolicy()
 
     def enqueue(
         self,
@@ -101,6 +108,8 @@ class PostgresJobQueue:
         scheduled_at: datetime | None = None,
         max_attempts: int = 3,
         trace_id: UUID | None = None,
+        rerun_of: UUID | None = None,
+        reason: str | None = None,
     ) -> StoredJob:
         if (
             re.fullmatch(r"[a-z][a-z0-9_.-]{0,63}", job_type) is None
@@ -111,6 +120,8 @@ class PostgresJobQueue:
             or not actor.strip()
             or len(actor) > 255
             or not 1 <= max_attempts <= 20
+            or (reason is not None and (not reason.strip() or len(reason) > 400))
+            or (rerun_of is not None and reason is None)
         ):
             raise BusinessError(ErrorCode.INVALID_INPUT, "Requête de job invalide")
         now = self.clock.now().value
@@ -124,6 +135,8 @@ class PostgresJobQueue:
                 "actor": actor,
                 "scheduledAt": scheduled_at.isoformat() if scheduled_at else None,
                 "maxAttempts": max_attempts,
+                **({"reason": reason} if reason is not None else {}),
+                **({"rerunOf": str(rerun_of), "reason": reason} if rerun_of is not None else {}),
             }
         )
         with self.engine.begin() as connection, Session(bind=connection) as session:
@@ -145,6 +158,8 @@ class PostgresJobQueue:
                     scheduled_at=scheduled,
                     cancel_requested=False,
                     result={},
+                    rerun_of=rerun_of,
+                    reason=reason,
                 )
                 .on_conflict_do_nothing(index_elements=["idempotency_fingerprint"])
             )
@@ -174,7 +189,6 @@ class PostgresJobQueue:
                     select(JobRecord)
                     .where(
                         JobRecord.id.not_in(skipped),
-                        JobRecord.cancel_requested.is_(False),
                         or_(
                             and_(JobRecord.status == "queued", JobRecord.scheduled_at <= now),
                             and_(JobRecord.status == "running", JobRecord.lease_expires_at <= now),
@@ -190,6 +204,11 @@ class PostgresJobQueue:
                 if not connection.scalar(
                     text("SELECT pg_try_advisory_xact_lock(:lock)"), {"lock": job_lock_id(row.id)}
                 ):
+                    continue
+                if row.cancel_requested:
+                    row.status, row.finished_at, row.error_code = "cancelled", now, "CANCELLED"
+                    row.owner, row.lease_token, row.lease_expires_at = None, None, None
+                    session.flush()
                     continue
                 if not try_transaction_lock(connection, row.scope):
                     continue
@@ -216,6 +235,52 @@ class PostgresJobQueue:
         now = self.clock.now().value
         return self._owned_update(job, heartbeat_at=now, lease_expires_at=now + self.lease_duration)
 
+    def request_cancel(self, job_id: UUID) -> StoredJob:
+        with self.engine.begin() as connection, Session(bind=connection) as session:
+            row = session.get(JobRecord, job_id, with_for_update=True)
+            if row is None:
+                raise BusinessError(ErrorCode.NOT_FOUND, "Job introuvable")
+            if row.status in {"queued", "running"}:
+                row.cancel_requested = True
+                if row.status == "queued":
+                    row.status, row.finished_at, row.error_code = (
+                        "cancelled",
+                        self.clock.now().value,
+                        "CANCELLED",
+                    )
+                session.flush()
+            return _stored(row)
+
+    def acknowledge_cancel(self, job: StoredJob) -> bool:
+        return self._owned_update(
+            job,
+            status="cancelled",
+            cancel_requested=True,
+            error_code="CANCELLED",
+            finished_at=self.clock.now().value,
+            owner=None,
+            lease_token=None,
+            lease_expires_at=None,
+        )
+
+    def rerun(self, job_id: UUID, *, key: str, actor: str, reason: str) -> StoredJob:
+        previous = self.get(job_id)
+        if previous.status not in {"failed", "dead", "cancelled"}:
+            raise BusinessError(
+                ErrorCode.CONFLICT, "Seul un job terminé sans succès peut être relancé"
+            )
+        return self.enqueue(
+            previous.job_type,
+            previous.payload,
+            key=key,
+            scope=previous.scope,
+            actor=actor,
+            max_attempts=previous.max_attempts,
+            trace_id=previous.trace_id,
+            rerun_of=job_id,
+            reason=reason,
+        )
+
     def release_unstarted(self, job: StoredJob) -> bool:
         """Rendre une prise dont le handler n'a pas commencé, sans consommer d'essai."""
         return self._owned_update(
@@ -239,14 +304,19 @@ class PostgresJobQueue:
             lease_expires_at=None,
         )
 
-    def fail(self, job: StoredJob, error_code: str) -> bool:
+    def fail(self, job: StoredJob, error_code: str, *, retryable: bool = False) -> bool:
         if re.fullmatch(r"[A-Z][A-Z0-9_]{0,63}", error_code) is None:
             raise ValueError("Code d'erreur invalide")
+        retry = retryable and job.attempt < job.max_attempts
+        now = self.clock.now().value
         return self._owned_update(
             job,
-            status="failed",
+            status="queued" if retry else "dead" if retryable else "failed",
             error_code=error_code,
-            finished_at=self.clock.now().value,
+            scheduled_at=now + self.retry_policy.delay(job.job_id, job.attempt)
+            if retry
+            else job.scheduled_at,
+            finished_at=None if retry else now,
             owner=None,
             lease_token=None,
             lease_expires_at=None,
@@ -255,9 +325,9 @@ class PostgresJobQueue:
     def _owned_update(self, job: StoredJob, **values: object) -> bool:
         if job.lease_token is None:
             return False
-        with self.engine.begin() as connection:
-            changed = connection.execute(
-                update(JobRecord)
+        with self.engine.begin() as connection, Session(bind=connection) as session:
+            row = session.scalar(
+                select(JobRecord)
                 .where(
                     JobRecord.id == job.job_id,
                     JobRecord.status == "running",
@@ -265,7 +335,20 @@ class PostgresJobQueue:
                     JobRecord.lease_token == job.lease_token,
                     JobRecord.lease_expires_at > self.clock.now().value,
                 )
-                .values(**values)
-                .returning(JobRecord.id)
-            ).scalar_one_or_none()
-            return changed is not None
+                .with_for_update()
+            )
+            if row is None:
+                return False
+            if row.cancel_requested and values.get("status") in {
+                "queued",
+                "succeeded",
+                "failed",
+                "dead",
+            }:
+                values.update(
+                    status="cancelled", finished_at=self.clock.now().value, error_code="CANCELLED"
+                )
+            for name, value in values.items():
+                setattr(row, name, value)
+            session.flush()
+            return True

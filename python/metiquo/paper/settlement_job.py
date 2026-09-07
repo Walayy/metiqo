@@ -392,7 +392,13 @@ class PostgresPaperSettlementService:
             evaluated_at=now,
         )
 
-    def run_pending(self, *, limit: int = 100, max_attempts: int = 3) -> SettlementJobReport:
+    def run_pending(
+        self,
+        *,
+        limit: int = 100,
+        max_attempts: int = 3,
+        checkpoint: Callable[[], None] | None = None,
+    ) -> SettlementJobReport:
         if not 1 <= limit <= 1000 or not 1 <= max_attempts <= 5:
             raise ValueError("Limite 1..1000 et tentatives 1..5 requises")
         with self.engine.connect() as connection:
@@ -412,6 +418,8 @@ class PostgresPaperSettlementService:
         failed: list[UUID] = []
         for identity in ids:
             for attempt in range(max_attempts):
+                if checkpoint is not None:
+                    checkpoint()
                 try:
                     result = self.settle(identity)
                     if result.status is Status.PENDING_REVIEW:

@@ -16,6 +16,7 @@ class PaperReportHandler:
         self.engine, self.settings = engine, settings
 
     def handle(self, context: JobContext) -> dict[str, object]:
+        context.cancellation.raise_if_cancelled()
         currency = context.payload.get("currency")
         if not isinstance(currency, str):
             raise BusinessError(ErrorCode.INVALID_INPUT, "Devise du job absente")
@@ -32,13 +33,17 @@ class PaperSettlementHandler:
         self.engine, self.settings = engine, settings
 
     def handle(self, context: JobContext) -> dict[str, object]:
+        context.cancellation.raise_if_cancelled()
         service = PostgresPaperSettlementService(
             self.engine,
             source_sla=timedelta(seconds=self.settings.oe_freshness_sla_seconds),
             settlement_delay=timedelta(seconds=self.settings.paper_settlement_delay_seconds),
             clock=context.clock,
         )
-        report = service.run_pending(max_attempts=self.settings.paper_settlement_max_attempts)
+        report = service.run_pending(
+            max_attempts=self.settings.paper_settlement_max_attempts,
+            checkpoint=context.cancellation.raise_if_cancelled,
+        )
         if report.failed:
             raise BusinessError(
                 ErrorCode.DEPENDENCY_UNAVAILABLE, "Échec partiel du règlement paper", retryable=True

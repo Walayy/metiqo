@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, Index, String, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -67,3 +67,5 @@ class JobRecord(Base):
     cancel_requested: Mapped[bool] = mapped_column(Boolean, nullable=False)
     error_code: Mapped[str | None] = mapped_column(String(64))
     result: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    rerun_of: Mapped[UUID | None] = mapped_column(ForeignKey("ops.jobs.id"))
+    reason: Mapped[str | None] = mapped_column(String(400))

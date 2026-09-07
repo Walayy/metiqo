@@ -1529,4 +1529,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les huit premiers tests passent en 35,71 secondes ; les neuf tests complémentaires passent en 24,80 secondes. Deux jobs d'une même année se sérialisent sans consommer de tentative pour l'attente, tandis qu'une autre année avance. Le timeout est borné, une session propriétaire terminée libère son verrou, la réentrance backfill/sync fonctionne et une exception libère la ressource. Entraînement et promotion partagent la portée `model:lol:game_winner` ; la tentative concurrente échoue sans publication, puis le parcours complet candidat/champion et candidat bloqué réussit. Le règlement conserve ses verrous transactionnels par bankroll et ligne paper, déjà utilisés par les appels directs et les jobs. Ruff et mypy passent sur les fichiers concernés.
 - **Blocker éventuel :** aucun ; `OPS-003` ajoute la politique de reprise et l'annulation contrôlée.
 - **ADR éventuel :** aucun ; verrous par session pour les traitements longs, transactionnels pour les mutations atomiques, sans service externe.
-- **Commit/hash :** commit dédié `feat(ops): serialize business operations by resource`, hash consigné après création.
+- **Commit/hash :** `715204e` (`feat(ops): serialize business operations by resource`).
+
+## OPS-003 — Retries, reprise et annulation
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OPS-001` est `DONE` ; les protections de portée `OPS-002` sont validées.
+- **Fichiers créés/modifiés :** politique de retry, file, runner et token d'annulation ; points de contrôle du lot paper, commandes `jobs show/cancel/rerun`, modèle de relance et tests PostgreSQL/worker.
+- **Migrations :** `20260908_0040` ajoute la référence au job original et le motif de relance, protégés contre les modifications. La relance crée une requête distincte, sans réinitialiser le job terminé.
+- **Commandes/tests exécutés :** tests écrits avant la politique ; trois tests worker, dix tests PostgreSQL reprise/queue/verrous/migrations, puis dix tests CLI/reprise/règlement/gate ingestion ; Ruff et mypy ciblés.
+- **Résultat exact :** les trois tests worker passent en 0,32 seconde ; les dix tests PostgreSQL initiaux en 12,19 secondes ; les dix tests complémentaires en 52,65 secondes. Une erreur transitoire est planifiée à nouveau avec délais 10 minutes, 30 minutes, 2 heures et jitter déterministe borné ; une entrée invalide reste permanente même si l'appelant autorise une nouvelle tentative. Le maximum d'essais mène à `dead`, une erreur permanente à `failed`. L'annulation fonctionne en attente, pendant un handler, lors de l'arrêt coopératif et après disparition du propriétaire. La course annulation/fin conserve les références déjà publiées sans annoncer un succès. Une relance motivée a un nouvel identifiant, reste idempotente et conserve son parent immuable. Les commandes n'affichent pas le payload privé. Ruff et mypy passent.
+- **Blocker éventuel :** aucun ; `OPS-004` raccorde ces mécanismes à la planification des services réels.
+- **ADR éventuel :** aucun ; annulation aux frontières atomiques, sans effacer les unités métier déjà commises. Le bail expiré ne permet jamais à un ancien propriétaire de terminer le job.
+- **Commit/hash :** commit dédié `feat(ops): bound retries and control job cancellation`, hash consigné après création.

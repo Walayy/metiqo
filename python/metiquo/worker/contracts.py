@@ -9,6 +9,10 @@ from metiquo.foundation.identifiers import CorrelationId, JobId, TraceId
 from metiquo.foundation.time import Clock, UtcInstant
 
 
+class JobCancelled(Exception):
+    """Le handler s'arrête à une frontière atomique."""
+
+
 class CancellationToken:
     """Signal d'annulation coopérative partageable avec un handler."""
 
@@ -21,6 +25,13 @@ class CancellationToken:
 
     def cancel(self) -> None:
         self._event.set()
+
+    def wait(self, timeout_seconds: float) -> bool:
+        return self._event.wait(timeout_seconds)
+
+    def raise_if_cancelled(self) -> None:
+        if self.is_cancelled:
+            raise JobCancelled()
 
 
 @dataclass(frozen=True, slots=True)

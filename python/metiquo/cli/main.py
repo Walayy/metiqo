@@ -52,6 +52,7 @@ from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
 from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
 from metiquo.services.value_pipeline import PostgresValuePipeline, ValueEvaluationRequest
+from metiquo.worker.queue import PostgresJobQueue
 
 _PROVIDER = "oracles_elixir"
 _DATASET = "league_of_legends_match_data"
@@ -166,6 +167,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     report.add_argument("--currency", required=True)
     _machine_output(report)
+    jobs = commands.add_parser("jobs", help="consulter, annuler ou relancer les jobs")
+    job_commands = jobs.add_subparsers(dest="job_action", required=True)
+    for action in ("show", "cancel", "rerun"):
+        operation = job_commands.add_parser(action)
+        operation.add_argument("job_id", type=UUID)
+        if action == "rerun":
+            operation.add_argument("--key", required=True)
+            operation.add_argument("--actor", required=True)
+            operation.add_argument("--reason", required=True)
+        _machine_output(operation)
     return parser
 
 
@@ -219,6 +230,38 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "jobs":
+        if settings.app_data_mode is not DataMode.REAL:
+            raise CliError(
+                "jobs exige APP_DATA_MODE=real",
+                code="REAL_MODE_REQUIRED",
+                exit_code=ExitCode.USAGE_OR_CONFIGURATION,
+            )
+        queue = PostgresJobQueue(engine)
+        if arguments.job_action == "cancel":
+            job = queue.request_cancel(arguments.job_id)
+        elif arguments.job_action == "rerun":
+            job = queue.rerun(
+                arguments.job_id, key=arguments.key, actor=arguments.actor, reason=arguments.reason
+            )
+        else:
+            job = queue.get(arguments.job_id)
+        return {
+            "command": "jobs",
+            "job": {
+                "id": str(job.job_id),
+                "type": job.job_type,
+                "scope": job.scope,
+                "status": job.status,
+                "attempt": job.attempt,
+                "maxAttempts": job.max_attempts,
+                "scheduledAt": job.scheduled_at.isoformat(),
+                "cancelRequested": job.cancel_requested,
+                "errorCode": job.error_code,
+                "traceId": str(job.trace_id),
+                "rerunOf": str(job.rerun_of) if job.rerun_of else None,
+            },
+        }, ExitCode.SUCCESS
     if arguments.command == "paper-report":
         if settings.app_data_mode is not DataMode.REAL:
             raise CliError(

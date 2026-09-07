@@ -6,13 +6,13 @@ from threading import Event, Thread
 
 from sqlalchemy import text
 
-from metiquo.foundation.errors import BusinessError
 from metiquo.foundation.identifiers import CorrelationId, JobId, TraceId
 from metiquo.foundation.locks import ResourceBusy, resource_lock
 from metiquo.foundation.observability import bind_log_context
 from metiquo.foundation.time import UtcInstant
-from metiquo.worker.contracts import CancellationToken, JobContext, JobHandler
+from metiquo.worker.contracts import CancellationToken, JobCancelled, JobContext, JobHandler
 from metiquo.worker.queue import PostgresJobQueue, StoredJob, job_lock_id
+from metiquo.worker.retry import classify_failure
 
 
 class PostgresJobRunner:
@@ -22,12 +22,16 @@ class PostgresJobRunner:
         self.queue, self.handlers, self.owner = queue, dict(handlers), owner
         self.logger = logging.getLogger("metiquo.worker")
         self.active_cancellation: CancellationToken | None = None
+        self._stop_requested = Event()
 
     def request_stop(self) -> None:
+        self._stop_requested.set()
         if self.active_cancellation is not None:
             self.active_cancellation.cancel()
 
     def run_once(self) -> bool:
+        if self._stop_requested.is_set():
+            return False
         job = self.queue.claim(self.owner)
         if job is None:
             return False
@@ -60,6 +64,8 @@ class PostgresJobRunner:
         assert job.started_at is not None
         token = CancellationToken()
         self.active_cancellation = token
+        if self._stop_requested.is_set() or self.queue.get(job.job_id).cancel_requested:
+            token.cancel()
         stop_heartbeat = Event()
 
         def renew() -> None:
@@ -68,6 +74,8 @@ class PostgresJobRunner:
                     if not self.queue.heartbeat(job):
                         token.cancel()
                         return
+                    if self.queue.get(job.job_id).cancel_requested:
+                        token.cancel()
                 except Exception:
                     token.cancel()
                     self.logger.error("worker.heartbeat_failed")
@@ -89,17 +97,20 @@ class PostgresJobRunner:
             heartbeat.start()
             try:
                 self.logger.info("worker.job_started")
+                token.raise_if_cancelled()
                 result = handler.handle(context)
+                token.raise_if_cancelled()
                 if self.queue.complete(job, result or {}):
-                    self.logger.info("worker.job_succeeded")
+                    self.logger.info("worker.job_finished")
                 else:
                     self.logger.warning("worker.job_ownership_lost")
-            except BusinessError as error:
-                self.queue.fail(job, error.code.value)
-                self.logger.warning("worker.job_failed")
-            except Exception:
-                self.queue.fail(job, "UNEXPECTED_ERROR")
-                self.logger.error("worker.job_failed")
+            except JobCancelled:
+                self.queue.acknowledge_cancel(job)
+                self.logger.info("worker.job_cancelled")
+            except Exception as error:
+                failure = classify_failure(error)
+                self.queue.fail(job, failure.code, retryable=failure.retryable)
+                self.logger.warning("worker.job_attempt_failed")
             finally:
                 stop_heartbeat.set()
                 heartbeat.join(timeout=5)
