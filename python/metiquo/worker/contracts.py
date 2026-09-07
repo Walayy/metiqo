@@ -1,6 +1,7 @@
 """Contrats des futurs handlers de jobs."""
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from threading import Event
 from typing import Protocol
 
@@ -32,9 +33,10 @@ class JobContext:
     started_at: UtcInstant
     clock: Clock
     cancellation: CancellationToken
+    payload: Mapping[str, object] = field(default_factory=dict)
 
 
 class JobHandler(Protocol):
     """Interface minimale d'un traitement métier synchrone."""
 
-    def handle(self, context: JobContext) -> None: ...
+    def handle(self, context: JobContext) -> dict[str, object] | None: ...

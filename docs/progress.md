@@ -1505,4 +1505,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Validation globale :** 507 tests Python passent en 240,37 secondes, avec 22 tests composants et 9 tests anti-fuite ; format, lint, typage et client OpenAPI sont verts. Le premier contrôle avait isolé une seule référence mock obsolète. Retirer uniquement les deux nouveaux champs CLV du JSON reproduisait exactement son ancienne empreinte ; la référence a donc été actualisée après cette vérification, puis ses 13 tests et le contrôle global complet ont passé. Les cinq parcours navigateur paper validés par `PAP-009` restent la preuve UI de cette phase, sans changement UI dans `PAP-010`.
 - **Blocker éventuel :** aucun pour le gate technique P7. La performance financière après collecte effective reste non validée ; les fixtures ne constituent aucun backtest financier réel. Cette réserve n'empêche pas le travail d'exploitation et de sécurité P8.
 - **ADR éventuel :** aucun ; le gate réutilise les services et les fixtures prévues, dans une base éphémère et sans bookmaker externe.
-- **Commit/hash :** commit dédié `test(paper): validate financial gate on empty database`, hash consigné après création.
+- **Commit/hash :** `a89054b` (`test(paper): validate financial gate on empty database`).
+
+## OPS-001 — Table jobs et worker PostgreSQL
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `FND-008`, `FND-004` et le gate P7 sont `DONE`.
+- **Fichiers créés/modifiés :** modèle `ops_models.py`, migration 39, file `worker/queue.py`, runner et handlers paper, contexte de job, cycle du worker et point d'entrée réel ; tests PostgreSQL, attentes de migration et guide `docs/worker.md`.
+- **Migrations :** `20260908_0039` crée `ops.jobs`, les index de prise/bail et le trigger qui interdit de modifier une requête ou de supprimer l'historique. Les champs de suivi restent modifiables sous contrôle du propriétaire du bail.
+- **Commandes/tests exécutés :** tests écrits avant la file, tests PostgreSQL queue/migrations/gate ingestion ; correction de l'attente de schéma vide, puis sept tests queue/migrations/worker ; après ajout du verrou d'exécution, cinq tests queue/worker ; Ruff et mypy strict ciblés.
+- **Résultat exact :** les sept tests passent en 7,28 secondes, puis les cinq tests enrichis passent en 4,81 secondes. Deux workers concurrents obtiennent exactement un propriétaire ; un bail expiré est repris avec une nouvelle tentative et un nouveau jeton. L'ancien propriétaire ne peut ni renouveler ni terminer le job. Un handler qui détient encore son verrou empêche la reprise concurrente sans consommer de tentative supplémentaire. Le vrai handler financier publie un rapport et conserve son identifiant ; un type inconnu échoue explicitement. Un job futur attend son horaire. Modifier le payload ou supprimer l'historique échoue en SQL. Les migrations aller/retour et le gate ingestion passent avec le schéma 39.
+- **Blocker éventuel :** aucun ; `OPS-002` ajoute les verrous de portée entre jobs différents. Les politiques de reprise et l'annulation contrôlée appartiennent à `OPS-003`, la planification à `OPS-004`.
+- **ADR éventuel :** aucun ; file PostgreSQL, baux, verrous et handlers idempotents sans broker externe.
+- **Commit/hash :** commit dédié `feat(ops): run jobs through PostgreSQL leases`, hash consigné après création.
