@@ -1517,4 +1517,16 @@ Ce fichier consigne uniquement des résultats effectivement vérifiés. La SFG r
 - **Résultat exact :** les sept tests passent en 7,28 secondes, puis les cinq tests enrichis passent en 4,81 secondes. Deux workers concurrents obtiennent exactement un propriétaire ; un bail expiré est repris avec une nouvelle tentative et un nouveau jeton. L'ancien propriétaire ne peut ni renouveler ni terminer le job. Un handler qui détient encore son verrou empêche la reprise concurrente sans consommer de tentative supplémentaire. Le vrai handler financier publie un rapport et conserve son identifiant ; un type inconnu échoue explicitement. Un job futur attend son horaire. Modifier le payload ou supprimer l'historique échoue en SQL. Les migrations aller/retour et le gate ingestion passent avec le schéma 39.
 - **Blocker éventuel :** aucun ; `OPS-002` ajoute les verrous de portée entre jobs différents. Les politiques de reprise et l'annulation contrôlée appartiennent à `OPS-003`, la planification à `OPS-004`.
 - **ADR éventuel :** aucun ; file PostgreSQL, baux, verrous et handlers idempotents sans broker externe.
-- **Commit/hash :** commit dédié `feat(ops): run jobs through PostgreSQL leases`, hash consigné après création.
+- **Commit/hash :** `bc413bc` (`feat(ops): run jobs through PostgreSQL leases`).
+
+## OPS-002 — Advisory locks et unicité métier
+
+- **Statut :** `DONE`
+- **Dépendances vérifiées :** `OPS-001` et `OE-021` sont `DONE`.
+- **Fichiers créés/modifiés :** verrous communs `foundation/locks.py`, prise de file et runner, synchronisation OE directe et backfill, entraînement et transitions de modèle ; tests de concurrence, perte de session et modèle.
+- **Migrations :** aucune ; advisory locks PostgreSQL partagés avec la clé historique provider/année du backfill.
+- **Commandes/tests exécutés :** huit tests PostgreSQL verrous/queue/backfill/gate ingestion ; assertion d'entraînement concurrent d'abord en échec, puis neuf tests verrous/modèles/règlement ; Ruff, mypy ciblé et contrôles documentaires.
+- **Résultat exact :** les huit premiers tests passent en 35,71 secondes ; les neuf tests complémentaires passent en 24,80 secondes. Deux jobs d'une même année se sérialisent sans consommer de tentative pour l'attente, tandis qu'une autre année avance. Le timeout est borné, une session propriétaire terminée libère son verrou, la réentrance backfill/sync fonctionne et une exception libère la ressource. Entraînement et promotion partagent la portée `model:lol:game_winner` ; la tentative concurrente échoue sans publication, puis le parcours complet candidat/champion et candidat bloqué réussit. Le règlement conserve ses verrous transactionnels par bankroll et ligne paper, déjà utilisés par les appels directs et les jobs. Ruff et mypy passent sur les fichiers concernés.
+- **Blocker éventuel :** aucun ; `OPS-003` ajoute la politique de reprise et l'annulation contrôlée.
+- **ADR éventuel :** aucun ; verrous par session pour les traitements longs, transactionnels pour les mutations atomiques, sans service externe.
+- **Commit/hash :** commit dédié `feat(ops): serialize business operations by resource`, hash consigné après création.

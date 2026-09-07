@@ -8,6 +8,7 @@ from sqlalchemy import text
 
 from metiquo.foundation.errors import BusinessError
 from metiquo.foundation.identifiers import CorrelationId, JobId, TraceId
+from metiquo.foundation.locks import ResourceBusy, resource_lock
 from metiquo.foundation.observability import bind_log_context
 from metiquo.foundation.time import UtcInstant
 from metiquo.worker.contracts import CancellationToken, JobContext, JobHandler
@@ -39,7 +40,12 @@ class PostgresJobRunner:
             try:
                 if not self.queue.heartbeat(job):
                     return False
-                return self._execute(job)
+                try:
+                    with resource_lock(self.queue.engine, job.scope):
+                        return self._execute(job)
+                except ResourceBusy:
+                    self.queue.release_unstarted(job)
+                    return False
             finally:
                 try:
                     execution.execute(text("SELECT pg_advisory_unlock(:lock)"), {"lock": lock})

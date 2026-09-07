@@ -26,6 +26,7 @@ from metiquo.db.raw_models import (
 from metiquo.db.raw_models import (
     QualityIssue as PersistedQualityIssue,
 )
+from metiquo.foundation.locks import oe_scope, resource_lock
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.data_quality import (
     DataQualityValidator,
@@ -151,6 +152,24 @@ class OracleElixirYearSync:
         self._quality_issues = cast(Table, PersistedQualityIssue.__table__)
 
     def sync_year(
+        self,
+        *,
+        year: int,
+        policy: FreshnessPolicy,
+        fixture_path: Path | None = None,
+        run_kind: str = "sync",
+        request_key_hash: str | None = None,
+    ) -> YearSyncReport:
+        with resource_lock(self._engine, oe_scope("oracles_elixir", year)):
+            return self._sync_year_locked(
+                year=year,
+                policy=policy,
+                fixture_path=fixture_path,
+                run_kind=run_kind,
+                request_key_hash=request_key_hash,
+            )
+
+    def _sync_year_locked(
         self,
         *,
         year: int,

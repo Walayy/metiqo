@@ -28,6 +28,7 @@ from metiquo.features import (
     TrainOnlyPreprocessor,
     TransformedFeatureRow,
 )
+from metiquo.foundation.locks import resource_lock
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.models.baselines import BaselineEvaluator, BaselineRun, BaselineRunRepository
 from metiquo.models.benchmark import (
@@ -66,6 +67,8 @@ from metiquo.models.rating import (
 )
 from metiquo.models.registry import (
     CANDIDATE,
+    MODEL_GAME,
+    MODEL_MARKET,
     ModelArtifactStore,
     ModelRegistration,
     ModelRegistry,
@@ -206,6 +209,10 @@ class GameWinnerTrainingWorkflow:
         return self.run().model_version_id
 
     def run(self) -> TrainingGateResult:
+        with resource_lock(self._engine, f"model:{MODEL_GAME}:{MODEL_MARKET}"):
+            return self._run_locked()
+
+    def _run_locked(self) -> TrainingGateResult:
         dataset = self._load_dataset()
         examples = TrainingExampleRepository(engine=self._engine).load(dataset)
         plan = WalkForwardSplitter(self._walk_forward).split(examples)

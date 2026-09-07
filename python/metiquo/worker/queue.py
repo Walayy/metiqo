@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from metiquo.db.ops_models import JobRecord
 from metiquo.foundation.errors import BusinessError, ErrorCode
+from metiquo.foundation.locks import try_transaction_lock
 from metiquo.foundation.time import Clock, SystemClock, normalize_utc_datetime
 
 
@@ -190,6 +191,8 @@ class PostgresJobQueue:
                     text("SELECT pg_try_advisory_xact_lock(:lock)"), {"lock": job_lock_id(row.id)}
                 ):
                     continue
+                if not try_transaction_lock(connection, row.scope):
+                    continue
                 if row.attempt >= row.max_attempts:
                     row.status, row.finished_at, row.error_code = "dead", now, "LEASE_EXHAUSTED"
                     row.owner, row.lease_token, row.lease_expires_at = None, None, None
@@ -212,6 +215,17 @@ class PostgresJobQueue:
     def heartbeat(self, job: StoredJob) -> bool:
         now = self.clock.now().value
         return self._owned_update(job, heartbeat_at=now, lease_expires_at=now + self.lease_duration)
+
+    def release_unstarted(self, job: StoredJob) -> bool:
+        """Rendre une prise dont le handler n'a pas commencé, sans consommer d'essai."""
+        return self._owned_update(
+            job,
+            status="queued",
+            attempt=job.attempt - 1,
+            owner=None,
+            lease_token=None,
+            lease_expires_at=None,
+        )
 
     def complete(self, job: StoredJob, result: dict[str, object]) -> bool:
         _fingerprint(result)

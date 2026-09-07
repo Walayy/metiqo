@@ -19,6 +19,7 @@ from sqlalchemy.dialects.postgresql import insert
 from metiquo.db.ml_models import ModelStatusEvent as ModelStatusEventRow
 from metiquo.db.ml_models import ModelVersion as ModelVersionRow
 from metiquo.db.ml_models import ShadowPrediction as ShadowPredictionRow
+from metiquo.foundation.locks import ResourceBusy, try_transaction_lock
 from metiquo.foundation.time import Clock, SystemClock, normalize_utc_datetime
 from metiquo.models.baselines import COMPETITION_PRIOR, RATING, RECENT_FORM
 from metiquo.models.evaluation import PromotionMetricPolicy
@@ -148,6 +149,7 @@ class ModelLifecycle:
             )
             if target is None:
                 raise ValueError("version candidate introuvable")
+            _lock_model_scope(connection, target)
             if target["status"] != CANDIDATE:
                 raise ValueError("seule une version candidate peut être promue")
             if target["evaluation_report_fingerprint"] != evidence.evaluation_report_fingerprint:
@@ -242,6 +244,7 @@ class ModelLifecycle:
             )
             if target is None or target["status"] != RETIRED:
                 raise ValueError("le rollback exige une version précédemment retirée")
+            _lock_model_scope(connection, target)
             current = (
                 connection.execute(
                     select(models)
@@ -333,6 +336,7 @@ class ModelLifecycle:
             )
             if target is None or target["status"] != CANDIDATE:
                 raise ValueError("seule une version candidate peut être bloquée")
+            _lock_model_scope(connection, target)
             connection.execute(
                 update(models)
                 .where(models.c.id == model_version_id)
@@ -381,6 +385,7 @@ class ModelLifecycle:
             )
             if target is None:
                 raise ValueError("version de modèle introuvable")
+            _lock_model_scope(connection, target)
             current_status = cast(str, target["status"])
             if current_status not in {CANDIDATE, CHAMPION}:
                 raise ValueError("seul un candidat ou un champion actif peut être retiré")
@@ -508,6 +513,12 @@ class ModelLifecycle:
                 .all()
             )
         return tuple(_stored_event(row) for row in rows)
+
+
+def _lock_model_scope(connection: Connection, target: RowMapping) -> None:
+    scope = f"model:{target['game']}:{target['market']}"
+    if not try_transaction_lock(connection, scope):
+        raise ResourceBusy(scope)
 
 
 def _record_event(
