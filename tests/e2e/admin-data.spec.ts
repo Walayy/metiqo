@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
-import type { SystemStatusResponse } from "../../packages/contracts/src/generated/types.gen.js";
+import type {
+  PageResponseJobSummary,
+  SystemStatusResponse,
+} from "../../packages/contracts/src/generated/types.gen.js";
 
 test("shows source degradation, snapshots, schema gaps and blocking anomalies", async ({
   page,
@@ -38,6 +41,64 @@ test("runs one controlled sync and exposes its audited result", async ({ page })
     page.getByRole("status").filter({ hasText: "Synchronisation terminée" }),
   ).toContainText("12 lignes");
   await expect(page.getByRole("region", { name: "Journal d’audit" })).toContainText("mock.sync");
+});
+
+test("keeps a queued sync distinct from completion and reuses its key after a lost response", async ({
+  page,
+}) => {
+  const jobId = "781227d3-29bc-4e43-9665-64b6e7545d09";
+  const runId = "e0214ab1-35c8-491e-9caf-25cfaf925a91";
+  const keys: string[] = [];
+  let accepted = false;
+  let completed = false;
+  const job = () => ({
+    jobId,
+    name: "oe.sync",
+    status: completed ? "succeeded" : "queued",
+    dataMode: "real",
+    runId: completed ? runId : null,
+  });
+  await page.route("**/api/backend/api/v1/admin/jobs?*", async (route) => {
+    const response = await route.fetch();
+    const body = (await response.json()) as PageResponseJobSummary;
+    await route.fulfill({
+      json: { ...body, data: accepted ? [job()] : [], meta: { ...body.meta, dataMode: "real" } },
+    });
+  });
+  await page.route("**/api/backend/api/v1/admin/oracles-elixir/sync", async (route) => {
+    keys.push(route.request().headers()["idempotency-key"] ?? "");
+    accepted = true;
+    if (keys.length === 1) {
+      await route.abort("failed");
+      return;
+    }
+    await route.fulfill({
+      status: 202,
+      json: {
+        data: job(),
+        meta: {
+          dataMode: "real",
+          freshness: "fresh",
+          asOf: "2026-09-07T00:00:00Z",
+          computedAt: "2026-09-07T00:00:00Z",
+          appVersion: "0.1.0",
+        },
+      },
+    });
+  });
+  await page.goto("/admin");
+  await page.getByRole("button", { name: "Lancer la synchronisation real" }).click();
+  await expect(page.getByText("Synchronisation échouée")).toBeVisible();
+  await page.getByRole("button", { name: "Réessayer", exact: true }).click();
+  const receipt = page.getByRole("status").filter({ hasText: jobId });
+  await expect(receipt).toContainText("Synchronisation en file");
+  await expect(receipt).not.toContainText("Synchronisation terminée");
+  expect(keys).toHaveLength(2);
+  expect(keys[0]).not.toBe("");
+  expect(keys[1]).toBe(keys[0]);
+  completed = true;
+  await expect(receipt).toContainText("Synchronisation terminée");
+  await expect(receipt).toContainText(runId);
 });
 
 test("shows measured operations with readable data during a source failure", async ({

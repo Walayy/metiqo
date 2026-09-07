@@ -81,6 +81,7 @@ class JobSummary(ContractModel):
     error_code: str | None = Field(default=None, alias="errorCode")
     cancel_requested: bool = Field(default=False, alias="cancelRequested")
     trace_id: UUID | None = Field(default=None, alias="traceId")
+    run_id: UUID | None = Field(default=None, alias="runId")
 
 
 class AuditEntry(ContractModel):

@@ -6,6 +6,7 @@ import type {
   DataQualityIssue,
   IngestionRunSummary,
   ItemResponseIngestionRunSummary,
+  ItemResponseJobSummary,
   JobSummary,
   PageResponseAuditEntry,
   PageResponseCapabilityEvaluationDto,
@@ -42,7 +43,7 @@ import {
   Rows3,
   ShieldAlert,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { formatDateTime } from "./opportunity-presenters";
 import { MappingReviewQueue } from "./mapping-review-queue";
@@ -59,11 +60,13 @@ async function readResource<T>(path: string, signal: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function startSync(): Promise<ItemResponseIngestionRunSummary> {
+async function startSync(
+  key: string,
+): Promise<ItemResponseIngestionRunSummary | ItemResponseJobSummary> {
   const response = await fetch(`${API_BASE}/oracles-elixir/sync`, {
     headers: {
       accept: "application/json",
-      "Idempotency-Key": crypto.randomUUID(),
+      "Idempotency-Key": key,
       "X-Metiquo-CSRF": "1",
     },
     method: "POST",
@@ -72,7 +75,7 @@ async function startSync(): Promise<ItemResponseIngestionRunSummary> {
     const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(problem?.detail ?? "La synchronisation n’a pas pu démarrer");
   }
-  return (await response.json()) as ItemResponseIngestionRunSummary;
+  return (await response.json()) as ItemResponseIngestionRunSummary | ItemResponseJobSummary;
 }
 
 function Panel({
@@ -592,10 +595,17 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
 
 export function AdminOperationsDashboard() {
   const queryClient = useQueryClient();
+  const [submittedJob, setSubmittedJob] = useState<JobSummary | null>(null);
   const jobs = useQuery({
     queryFn: ({ signal }) =>
       readResource<PageResponseJobSummary>("/jobs?offset=0&limit=100", signal),
     queryKey: ["admin", "jobs"],
+    refetchInterval: (query) => {
+      if (!submittedJob) return false;
+      const current =
+        query.state.data?.data.find((job) => job.jobId === submittedJob.jobId) ?? submittedJob;
+      return ["queued", "running"].includes(current.status) ? 2000 : false;
+    },
   });
   const audit = useQuery({
     queryFn: ({ signal }) =>
@@ -604,7 +614,8 @@ export function AdminOperationsDashboard() {
   });
   const sync = useMutation({
     mutationFn: startSync,
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      setSubmittedJob("jobId" in response.data ? response.data : null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "data-sources"] }),
@@ -615,11 +626,13 @@ export function AdminOperationsDashboard() {
     },
   });
   const dataMode = jobs.data?.meta.dataMode ?? "mock";
+  const activeJob =
+    jobs.data?.data.find((job) => job.jobId === submittedJob?.jobId) ?? submittedJob;
 
   return (
     <div className="grid gap-6 sm:gap-8">
       <PageHeader
-        description="Commandes idempotentes, résultats immédiats et journal audité. Une action déclenche une seule actualisation ciblée, sans polling."
+        description="Commandes idempotentes et journal audité. Les synchronisations en file sont suivies jusqu’à leur résultat."
         eyebrow="Opérations contrôlées"
         title="Administration"
       />
@@ -629,7 +642,7 @@ export function AdminOperationsDashboard() {
           <Button
             disabled={sync.isPending}
             onClick={() => {
-              sync.mutate();
+              sync.mutate(crypto.randomUUID());
             }}
           >
             {sync.isPending ? (
@@ -655,12 +668,12 @@ export function AdminOperationsDashboard() {
           <RemoteRecoverableErrorState
             description={sync.error.message}
             onRetry={() => {
-              sync.mutate();
+              sync.mutate(sync.variables);
             }}
             title="Synchronisation échouée"
           />
         ) : null}
-        {sync.data ? (
+        {sync.data && "rowCount" in sync.data.data && !submittedJob ? (
           <div
             aria-live="polite"
             className="grid gap-3 rounded-lg border border-emerald-300 bg-emerald-50/80 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/30"
@@ -675,6 +688,29 @@ export function AdminOperationsDashboard() {
               {formatDateTime(sync.data.data.completedAt)}
             </p>
             <p className="break-all text-xs text-ink-secondary">Run {sync.data.data.runId}</p>
+          </div>
+        ) : null}
+        {activeJob ? (
+          <div
+            aria-live="polite"
+            className="grid gap-2 rounded-lg border border-divider bg-surface-muted p-4 text-sm"
+            role="status"
+          >
+            <p className="font-semibold">
+              {activeJob.status === "queued"
+                ? "Synchronisation en file"
+                : activeJob.status === "running"
+                  ? "Synchronisation en cours"
+                  : activeJob.status === "succeeded"
+                    ? "Synchronisation terminée"
+                    : "Synchronisation interrompue"}
+            </p>
+            <p className="break-all text-xs text-ink-secondary">Job {activeJob.jobId}</p>
+            {activeJob.runId ? (
+              <p className="break-all text-xs text-ink-secondary">Run {activeJob.runId}</p>
+            ) : null}
+            {activeJob.errorCode ? <p>{activeJob.errorCode}</p> : null}
+            <p>Le dernier snapshot validé reste actif jusqu’à la validation du suivant.</p>
           </div>
         ) : null}
       </Panel>

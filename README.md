@@ -149,7 +149,7 @@ Les actions mock de synchronisation, cycle de vie modèle, paper betting, décis
 
 ## Conteneurs locaux
 
-`make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. Le worker possède un cycle de vie avec arrêt gracieux, mais aucun scheduler ni job métier n’est encore activé. Le conteneur web sert le build standalone Next.js sous un utilisateur non privilégié et avec une racine en lecture seule.
+`make up` démarre le profil Compose `mock`. L’API FastAPI expose les sondes `/health`, `/ready`, `/api/v1/system/status` et les lectures métier documentées ci-dessus. En mode réel, le worker exécute la file PostgreSQL et la planification des synchronisations, alertes, sauvegardes et règlements paper. Le conteneur web sert le build standalone Next.js sous un utilisateur non privilégié et avec une racine en lecture seule. Le [runbook d’exploitation](docs/runbook.md) décrit le démarrage réel, les migrations sur copie, les sauvegardes, les restaurations et les incidents.
 
 Les ports web et API sont liés uniquement à `127.0.0.1`. PostgreSQL reste sur un réseau Docker interne. Le profil `production` ajoute le gateway HTTPS et `object-store` ajoute également MinIO ; ce dernier refuse de démarrer tant que ses identifiants ne sont pas fournis hors du dépôt.
 

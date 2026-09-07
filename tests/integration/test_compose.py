@@ -59,6 +59,17 @@ def test_compose_applies_least_privilege_boundaries() -> None:
     assert services["volume-init"]["network_mode"] == "none"
     assert services["mock-mode-check"]["network_mode"] == "none"
     assert services["minio-volume-init"]["network_mode"] == "none"
+    assert "ingestion_egress" in cast(dict[str, object], services["worker"]["networks"])
+    assert "ingestion_egress" not in cast(dict[str, object], services["postgres"]["networks"])
+    api_volumes = cast(list[dict[str, object]], services["api"]["volumes"])
+    worker_volumes = cast(list[dict[str, object]], services["worker"]["volumes"])
+    assert api_volumes and all(volume.get("read_only", False) for volume in api_volumes)
+    assert any(volume["target"] == "/data/work" for volume in worker_volumes)
+    gateway_volumes = cast(list[dict[str, object]], services["gateway"]["volumes"])
+    assert any(
+        volume["target"] == "/data" and volume["type"] == "volume" for volume in gateway_volumes
+    )
+    assert services["worker"]["stop_grace_period"] == "1m30s"
 
 
 @pytest.mark.integration

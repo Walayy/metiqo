@@ -1180,6 +1180,23 @@
         "title": "ItemResponse[IngestionRunSummary]",
         "type": "object"
       },
+      "ItemResponse_JobSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobSummary"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[JobSummary]",
+        "type": "object"
+      },
       "ItemResponse_MappingReview_": {
         "additionalProperties": false,
         "properties": {
@@ -1375,6 +1392,18 @@
             "minLength": 1,
             "title": "Name",
             "type": "string"
+          },
+          "runId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runid"
           },
           "scheduledAt": {
             "anyOf": [
@@ -4668,6 +4697,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_JobSummary_"
+                }
+              }
+            },
+            "description": "Synchronisation en file"
           },
           "422": {
             "content": {

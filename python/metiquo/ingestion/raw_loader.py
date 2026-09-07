@@ -15,6 +15,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import Connection, Engine, Table, select, text, update
 
 from metiquo.db.raw_models import IngestionRun, Snapshot, SourceCatalog
+from metiquo.foundation.cancellation import checkpoint
 from metiquo.foundation.time import Clock, SystemClock
 
 _BATCH_SIZE = 1_000
@@ -314,6 +315,7 @@ class RawTabularLoader:
         key_fields: tuple[str, ...],
     ) -> Iterator[_StagedRow]:
         for ordinal, source_row in enumerate(reader, start=1):
+            checkpoint()
             malformed = None in source_row or any(value is None for value in source_row.values())
             payload = {
                 str(name): value

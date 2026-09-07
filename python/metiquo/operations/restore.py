@@ -26,7 +26,7 @@ from metiquo.operations.backup_repository import (
     safe_child,
     verify_file,
 )
-from metiquo.operations.backup_tools import BackupError, PostgresTools, file_hash
+from metiquo.operations.backup_tools import BackupError, PostgresTools, file_hash, run_process
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,7 +91,7 @@ class RestoreService:
                 if encrypted:
                     if request.identity is None or not request.identity.is_file():
                         raise BackupError("RESTORE_IDENTITY_REQUIRED")
-                    result = subprocess.run(
+                    result = run_process(
                         [
                             self.settings.backup_age_binary,
                             "--decrypt",
@@ -100,9 +100,7 @@ class RestoreService:
                             str(source),
                         ],
                         stdout=stream,
-                        stderr=subprocess.PIPE,
                         timeout=self.settings.backup_timeout_seconds,
-                        check=False,
                     )
                     if result.returncode:
                         raise BackupError("RESTORE_DECRYPT_FAILED")

@@ -90,13 +90,19 @@ class OracleSyncHandler:
             if identity is None:
                 raise BusinessError(ErrorCode.INVALID_STATE, "Aucun snapshot validé à contrôler")
             return verify_snapshot(self.engine, self.settings, identity)
+        allow_stale = context.payload.get("allowStale", True)
+        require_fresh = context.payload.get("requireFresh", False)
+        if type(allow_stale) is not bool or type(require_fresh) is not bool:
+            raise BusinessError(ErrorCode.INVALID_INPUT, "Politique de fraîcheur du job invalide")
         report = OracleElixirYearSync(
             engine=self.engine, settings=self.settings, clock=context.clock
         ).sync_year(
             year=year,
-            policy=FreshnessPolicy(allow_stale=True),
+            policy=FreshnessPolicy(allow_stale=allow_stale, require_fresh=require_fresh),
             check_unchanged=True,
-            request_key_hash=hashlib.sha256(str(context.job_id).encode()).hexdigest(),
+            request_key_hash=hashlib.sha256(
+                f"{context.job_id}:{context.attempt}".encode()
+            ).hexdigest(),
         )
         with self.engine.connect() as connection:
             failure_code = connection.scalar(

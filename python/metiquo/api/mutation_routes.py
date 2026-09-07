@@ -22,6 +22,7 @@ from metiquo.contracts import (
     AuditEntry,
     ContractMetadata,
     IngestionRunSummary,
+    JobSummary,
     MappingReview,
     ModelSummary,
     PaperBet,
@@ -54,6 +55,9 @@ def build_mutation_router(service: MockMutationService, clock: Clock) -> APIRout
     @router.post(
         "/admin/oracles-elixir/sync",
         response_model=ItemResponse[IngestionRunSummary],
+        responses={
+            202: {"model": ItemResponse[JobSummary], "description": "Synchronisation en file"}
+        },
     )
     def sync(idempotency_key: IdempotencyKey) -> ItemResponse[IngestionRunSummary]:
         return ItemResponse(data=service.sync(idempotency_key), meta=_meta(clock))

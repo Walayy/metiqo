@@ -29,8 +29,8 @@ cette même valeur à la validation Python. Une configuration invalide empêche 
 démarrage de l'API et du worker ; les dépendances de santé empêchent le démarrage
 normal du web et du gateway. Les sockets internes des conteneurs continuent
 d'écouter sur leur réseau Docker ; cette adresse interne est distincte de la
-publication sur l'hôte. Le gateway livré est configuré pour localhost : un
-changement d'origine nécessite également sa configuration TLS correspondante.
+publication sur l'hôte. Le gateway utilise la même `APP_PUBLIC_ORIGIN`, en HTTPS
+avec son autorité locale persistée ; les appareils clients doivent lui faire confiance.
 
 Hors Compose, appliquer la même adresse de publication au serveur ou reverse proxy
 effectivement démarré. Une redirection de ports/NAT ou un tunnel externe n'est pas

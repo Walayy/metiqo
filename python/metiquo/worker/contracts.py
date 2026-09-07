@@ -5,11 +5,12 @@ from dataclasses import dataclass, field
 from threading import Event
 from typing import Protocol
 
+from metiquo.foundation.cancellation import OperationCancelled
 from metiquo.foundation.identifiers import CorrelationId, JobId, TraceId
 from metiquo.foundation.time import Clock, UtcInstant
 
 
-class JobCancelled(Exception):
+class JobCancelled(OperationCancelled):
     """Le handler s'arrête à une frontière atomique."""
 
 
@@ -45,6 +46,7 @@ class JobContext:
     clock: Clock
     cancellation: CancellationToken
     payload: Mapping[str, object] = field(default_factory=dict)
+    attempt: int = 1
 
 
 class JobHandler(Protocol):

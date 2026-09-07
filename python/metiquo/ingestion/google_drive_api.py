@@ -17,6 +17,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 from pydantic import SecretStr
 
 from metiquo.config import Settings
+from metiquo.foundation.cancellation import checkpoint
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.source_errors import (
     SourceInvalidResponse,
@@ -194,6 +195,7 @@ class GoogleDriveApiTransport:
             created = True
             with output:
                 for chunk in stream.chunks:
+                    checkpoint()
                     if not isinstance(chunk, bytes):
                         raise self._error(
                             SourceInvalidResponse, source, "fragment Drive non binaire"

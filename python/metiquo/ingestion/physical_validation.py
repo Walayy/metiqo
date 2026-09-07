@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, TextIO, cast
 
+from metiquo.foundation.cancellation import checkpoint
 from metiquo.ingestion.safe_download import SafeDownloadResult
 from metiquo.ingestion.source_errors import (
     ArchiveCorrupted,
@@ -217,6 +218,7 @@ def _scan_csv(
     row_count = 0
     try:
         for line_number, row in enumerate(reader, start=2):
+            checkpoint()
             if len(row) != len(header):
                 raise SchemaIncompatible(
                     "nombre de colonnes CSV incohérent",
@@ -246,5 +248,6 @@ def _hash_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         while chunk := stream.read(_HASH_CHUNK_SIZE):
+            checkpoint()
             digest.update(chunk)
     return digest.hexdigest()

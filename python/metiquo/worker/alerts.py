@@ -76,7 +76,8 @@ class PostgresAlertMonitor:
                     SELECT 1 FROM raw.ingestion_runs ok WHERE ok.source_catalog_id = c.id
                     AND ok.status = 'succeeded' AND ok.finished_at <= :now
                     AND ok.finished_at > q.created_at
-                    AND (ok.run_kind = 'load' OR ok.counters->>'contentVerified' = 'true')
+                    AND ok.snapshot_id = c.current_snapshot_id
+                    AND ok.counters->>'contentVerified' = 'true'
                   )
             """),
                 {"now": self.clock.now().value},

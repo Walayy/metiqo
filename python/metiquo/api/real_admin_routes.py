@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Query
+from fastapi.responses import JSONResponse
 
 from metiquo.api.dto import (
     CapabilityEvaluationDto,
@@ -265,13 +266,25 @@ def build_real_admin_router(
     @router.post(
         "/oracles-elixir/sync",
         response_model=ItemResponse[IngestionRunSummary],
+        responses={
+            202: {"model": ItemResponse[JobSummary], "description": "Synchronisation en file"}
+        },
     )
     def sync(
         idempotency_key: IdempotencyKey,
         year: Annotated[int | None, Query(ge=2014, le=2200)] = None,
-    ) -> ItemResponse[IngestionRunSummary]:
+    ) -> ItemResponse[IngestionRunSummary] | JSONResponse:
+        result = mutation_service.sync(idempotency_key, year)
+        if isinstance(result, JobSummary):
+            return JSONResponse(
+                status_code=202,
+                content=ItemResponse(data=result, meta=_meta(repository, clock)).model_dump(
+                    mode="json",
+                    by_alias=True,
+                ),
+            )
         return ItemResponse(
-            data=mutation_service.sync(idempotency_key, year),
+            data=result,
             meta=_meta(repository, clock),
         )
 

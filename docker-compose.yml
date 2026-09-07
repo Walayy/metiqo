@@ -95,12 +95,14 @@ services:
     command:
       - /bin/sh
       - -ec
-      - chown -R 10001:10001 /data/raw /data/models /data/backups /data/quarantine
+      - chown -R 10001:10001 /data/raw /data/models /data/backups /data/quarantine /data/work && chown -R 1000:1000 /data/gateway
     volumes:
       - raw_snapshots:/data/raw
       - model_artifacts:/data/models
       - backups:/data/backups
       - quarantine_snapshots:/data/quarantine
+      - ingestion_work:/data/work
+      - gateway_data:/data/gateway
     network_mode: none
     restart: "no"
 
@@ -131,9 +133,20 @@ services:
     image: metiquo-api:local
     build: *python-build
     init: true
+    stop_grace_period: 30s
     read_only: true
     command:
-      ["uvicorn", "metiquo.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+      [
+        "uvicorn",
+        "metiquo.api.app:create_app",
+        "--factory",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--timeout-graceful-shutdown",
+        "25",
+      ]
     environment: *app-environment
     depends_on:
       postgres:
@@ -171,6 +184,7 @@ services:
     image: metiquo-worker:local
     build: *python-build
     init: true
+    stop_grace_period: 90s
     read_only: true
     command: ["python", "-m", "metiquo.worker"]
     environment: *app-environment
@@ -192,8 +206,10 @@ services:
       - quarantine_snapshots:/data/quarantine
       - model_artifacts:/data/models
       - backups:/data/backups
+      - ingestion_work:/data/work
     networks:
       - backend
+      - ingestion_egress
     restart: unless-stopped
 
   web:
@@ -243,7 +259,11 @@ services:
     profiles: ["production", "object-store"]
     user: "1000:1000"
     read_only: true
+    environment:
+      APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:-https://localhost:8443}
     depends_on:
+      volume-init:
+        condition: service_completed_successfully
       api:
         condition: service_healthy
       web:
@@ -254,10 +274,10 @@ services:
         host_ip: ${APP_PUBLISH_HOST:-127.0.0.1}
     tmpfs:
       - /config:size=8m,mode=0700,uid=1000,gid=1000
-      - /data:size=32m,mode=0700,uid=1000,gid=1000
       - /tmp:size=8m,mode=1777
     volumes:
       - ./infra/gateway/Caddyfile:/etc/caddy/Caddyfile:ro
+      - gateway_data:/data
     networks:
       - frontend
     restart: unless-stopped
@@ -291,6 +311,7 @@ networks:
   backend:
     internal: true
   frontend:
+  ingestion_egress:
 
 volumes:
   postgres_data:
@@ -298,4 +319,6 @@ volumes:
   model_artifacts:
   backups:
   quarantine_snapshots:
+  ingestion_work:
+  gateway_data:
   minio_data:

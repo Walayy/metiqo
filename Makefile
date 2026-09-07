@@ -94,6 +94,13 @@ test-ingestion:
 .PHONY: backup
 .PHONY: scan-secrets
 .PHONY: scan-security
+.PHONY: test-ops
+test-ops:
+	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate exploitation))
+	$(if $(strip $(TEST_PG_CONTAINER)),,$(error TEST_PG_CONTAINER est requis pour les backups réels))
+	$(if $(strip $(TEST_OPS_IMAGE)),,$(error TEST_OPS_IMAGE est requis pour les tests du worker packagé))
+	uv run --frozen python -m pytest tests/worker tests/operations tests/api/test_lifespan.py tests/integration/test_ops_gate.py tests/integration/test_ops_containers.py tests/integration/test_migration_dry_run.py tests/integration/test_job_queue.py tests/integration/test_job_recovery.py tests/integration/test_business_locks.py tests/integration/test_scheduled_sync.py tests/integration/test_alerts.py tests/integration/test_backups.py tests/integration/test_restore.py tests/integration/test_backup_container.py tests/integration/test_security_gateway.py tests/integration/test_secret_containers.py tests/integration/test_ops_audit.py tests/integration/test_system_observability.py -q
+
 scan-security:
 	uv run --frozen python -m infra.scripts.scan_security
 

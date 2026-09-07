@@ -13,7 +13,8 @@ from uuid import UUID, uuid4
 from pydantic import Field
 
 from metiquo.contracts.base import ContractModel, UtcDateTime
-from metiquo.operations.backup_tools import BackupError, file_hash
+from metiquo.foundation.cancellation import checkpoint
+from metiquo.operations.backup_tools import BackupError, file_hash, run_process
 
 
 class FileProof(ContractModel):
@@ -117,18 +118,18 @@ class BackupRepository:
         try:
             with temporary.open("xb") as output:
                 if self.recipient:
-                    result = subprocess.run(
+                    result = run_process(
                         [self.age_binary, "--encrypt", "--recipient", self.recipient, str(source)],
                         stdout=output,
-                        stderr=subprocess.PIPE,
-                        check=False,
                         timeout=self.timeout,
                     )
                     if result.returncode:
                         raise BackupError("BACKUP_ENCRYPTION_FAILED")
                 else:
                     with source.open("rb") as input_stream:
-                        shutil.copyfileobj(input_stream, output, length=1024 * 1024)
+                        while chunk := input_stream.read(1024 * 1024):
+                            checkpoint()
+                            output.write(chunk)
                 output.flush()
                 os.fsync(output.fileno())
             if target.exists():

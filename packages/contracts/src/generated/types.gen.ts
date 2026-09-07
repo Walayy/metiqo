@@ -627,6 +627,14 @@ export type ItemResponseIngestionRunSummary = {
 };
 
 /**
+ * ItemResponse[JobSummary]
+ */
+export type ItemResponseJobSummary = {
+    data: JobSummary;
+    meta: ContractMetadata;
+};
+
+/**
  * ItemResponse[MappingReview]
  */
 export type ItemResponseMappingReview = {
@@ -717,6 +725,10 @@ export type JobSummary = {
      * Name
      */
     name: string;
+    /**
+     * Runid
+     */
+    runId?: string | null;
     /**
      * Scheduledat
      */
@@ -2481,6 +2493,10 @@ export type SyncApiV1AdminOraclesElixirSyncPostResponses = {
      * Successful Response
      */
     200: ItemResponseIngestionRunSummary;
+    /**
+     * Synchronisation en file
+     */
+    202: ItemResponseJobSummary;
 };
 
 export type SyncApiV1AdminOraclesElixirSyncPostResponse = SyncApiV1AdminOraclesElixirSyncPostResponses[keyof SyncApiV1AdminOraclesElixirSyncPostResponses];

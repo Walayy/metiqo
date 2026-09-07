@@ -1,6 +1,8 @@
 """Fabrique de l'application FastAPI."""
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from importlib.metadata import version
 from time import perf_counter
 from typing import Final
@@ -9,7 +11,7 @@ from uuid import uuid4
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -182,7 +184,30 @@ def create_app(
         resolved_settings.database_url.get_secret_value()
     )
     resolved_clock = clock or SystemClock()
-    app = FastAPI(title="Metiquo API", version=version("metiquo"), docs_url=None, redoc_url=None)
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            engines: set[Engine] = set()
+            real = getattr(application.state, "real_admin_engine", None)
+            owner = getattr(application.state, "owner_auth", None)
+            if real is not None:
+                engines.add(real)
+            if owner is not None:
+                engines.add(owner.engine)
+            for engine in engines:
+                await run_in_threadpool(engine.dispose)
+            logging.getLogger("metiquo.api").info("api.stopped")
+
+    app = FastAPI(
+        title="Metiquo API",
+        version=version("metiquo"),
+        docs_url=None,
+        redoc_url=None,
+        lifespan=lifespan,
+    )
     app.state.api_metrics = ApiMetrics()
     app.include_router(_router(resolved_settings, resolved_probe, resolved_clock))
     if resolved_settings.app_data_mode is DataMode.MOCK:

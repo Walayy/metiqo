@@ -47,6 +47,7 @@ from metiquo.models import (
 )
 from metiquo.operations.backup import BackupService
 from metiquo.operations.backup_tools import BackupError
+from metiquo.operations.migration_drill import MigrationDrill
 from metiquo.operations.restore import RestoreRequest, RestoreService
 from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
 from metiquo.paper.reporting import PostgresFinancialReportingService
@@ -178,6 +179,11 @@ def build_parser() -> argparse.ArgumentParser:
     restore.add_argument("--target-database", required=True)
     restore.add_argument("--target-objects", type=Path, required=True)
     restore.add_argument("--identity", type=Path)
+    restore.add_argument(
+        "--migration-dry-run",
+        action="store_true",
+        help="vérifier aussi les migrations courantes sur la copie restaurée",
+    )
     _machine_output(restore)
     auth = commands.add_parser("auth", help="préparer ou renouveler les identifiants Owner")
     auth_commands = auth.add_subparsers(dest="auth_action", required=True)
@@ -286,15 +292,17 @@ def _dispatch(
             "ownerId": str(owner_id),
         }, ExitCode.SUCCESS
     if arguments.command == "restore":
-        restored = RestoreService(engine, settings).run(
-            RestoreRequest(
-                arguments.backup_id,
-                arguments.index_sha256,
-                arguments.target_database,
-                arguments.target_objects,
-                arguments.identity,
-            )
+        request = RestoreRequest(
+            arguments.backup_id,
+            arguments.index_sha256,
+            arguments.target_database,
+            arguments.target_objects,
+            arguments.identity,
         )
+        if arguments.migration_dry_run:
+            drill = MigrationDrill(engine, settings).run(request)
+            return {"command": "migration-dry-run", **drill.document()}, ExitCode.SUCCESS
+        restored = RestoreService(engine, settings).run(request)
         return {
             "command": "restore",
             "backupId": str(restored.backup_id),

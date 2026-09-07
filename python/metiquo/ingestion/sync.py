@@ -28,6 +28,7 @@ from metiquo.db.raw_models import (
 from metiquo.db.raw_models import (
     QualityIssue as PersistedQualityIssue,
 )
+from metiquo.foundation.cancellation import OperationCancelled, checkpoint
 from metiquo.foundation.identifiers import SnapshotId
 from metiquo.foundation.locks import oe_scope, resource_lock
 from metiquo.foundation.observability import bind_log_context
@@ -146,6 +147,8 @@ class OracleElixirYearSync:
         self._settings = settings
         self._clock = clock or SystemClock()
         settings.object_store_root.mkdir(parents=True, exist_ok=True)
+        self._work_root = settings.object_store_root / "work"
+        self._work_root.mkdir(parents=True, exist_ok=True)
         self._store = FilesystemObjectStore(settings.object_store_root / "raw" / "oracles_elixir")
         self._quarantine_store = FilesystemObjectStore(
             settings.object_store_root / "quarantine" / "oracles_elixir"
@@ -217,7 +220,7 @@ class OracleElixirYearSync:
         try:
             with tempfile.TemporaryDirectory(
                 prefix=f"metiquo-oe-{year}-",
-                dir=self._settings.object_store_root,
+                dir=self._work_root,
             ) as directory:
                 working = Path(directory)
                 metadata, download = self._download(
@@ -284,6 +287,7 @@ class OracleElixirYearSync:
                     },
                     ingestion_code_version="metiquo-0.1.0",
                 )
+                checkpoint()
                 stored = store_snapshot(
                     object_store=self._store,
                     download=download,
@@ -320,6 +324,11 @@ class OracleElixirYearSync:
                     self._confirm_content(
                         run_id, promoted.snapshot_id, metadata, metadata_verified=False
                     )
+        except OperationCancelled:
+            self._fail_run(run_id, "CANCELLED")
+            if load_run_id is not None:
+                self._fail_run(load_run_id, "CANCELLED")
+            raise
         except Exception as error:
             error_code = _error_code(error)
             self._fail_run(run_id, error_code)
@@ -361,6 +370,7 @@ class OracleElixirYearSync:
         transports = self._transports(source, fixture_path)
         last_error: Exception | None = None
         for transport in transports:
+            checkpoint()
             try:
                 metadata = RetryExecutor().execute(
                     partial(transport.probe, source),
@@ -717,19 +727,25 @@ def _materialize_csv(
     if physical.compression == "gzip":
         with gzip.open(download.final_path, "rb") as source, target.open("xb") as output:
             while chunk := source.read(1024 * 1024):
+                checkpoint()
                 output.write(chunk)
         return target
     with zipfile.ZipFile(download.final_path) as archive:
         members = [member for member in archive.infolist() if not member.is_dir()]
         with archive.open(members[0]) as source, target.open("xb") as output:
             while chunk := source.read(1024 * 1024):
+                checkpoint()
                 output.write(chunk)
     return target
 
 
 def _read_rows(path: Path, physical: PhysicalValidationReport) -> list[dict[str, str]]:
     with path.open("r", encoding=physical.encoding, newline="") as stream:
-        return list(csv.DictReader(stream, delimiter=physical.delimiter))
+        rows = []
+        for row in csv.DictReader(stream, delimiter=physical.delimiter):
+            checkpoint()
+            rows.append(row)
+        return rows
 
 
 def _manifest_date(value: str | None) -> datetime | None:

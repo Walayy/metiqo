@@ -13,7 +13,7 @@ from sqlalchemy import Engine, RowMapping, Table, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from metiquo.config import Settings
-from metiquo.contracts import IngestionRunSummary, ModelSummary
+from metiquo.contracts import IngestionRunSummary, JobSummary, ModelSummary
 from metiquo.contracts.enums import DataMode, GameTitle, MarketType
 from metiquo.db.ml_models import CalibratorArtifact, TabularBenchmarkRun
 from metiquo.db.ml_models import ModelActionAudit as ModelActionAuditRow
@@ -23,12 +23,12 @@ from metiquo.db.raw_models import IngestionRun
 from metiquo.foundation.audit import mutation_actor
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock, SystemClock
-from metiquo.ingestion.freshness import FreshDataRequired, FreshnessPolicy
-from metiquo.ingestion.sync import OracleElixirYearSync, SyncFailed
 from metiquo.models import ModelLifecycle, PromotionEvidence
 from metiquo.models.baselines import COMPETITION_PRIOR, RATING, RECENT_FORM
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
+from metiquo.repositories.postgres_operations import PostgresOperationsRepository
+from metiquo.worker.queue import PostgresJobQueue
 
 
 class RealModelTrainingWorkflow(Protocol):
@@ -56,7 +56,9 @@ class RealAdminMutationService:
         if self.clock is None:
             object.__setattr__(self, "clock", SystemClock())
 
-    def sync(self, idempotency_key: str, year: int | None = None) -> IngestionRunSummary:
+    def sync(
+        self, idempotency_key: str, year: int | None = None
+    ) -> IngestionRunSummary | JobSummary:
         selected_year = year if year is not None else self.settings.oe_current_year
         request_hash = hashlib.sha256(
             f"real.oe.sync\0{selected_year}\0{idempotency_key}".encode()
@@ -71,37 +73,26 @@ class RealAdminMutationService:
                     context={"year": selected_year},
                 )
             return summary
-        try:
-            report = OracleElixirYearSync(
-                engine=self.engine,
-                settings=self.settings,
-            ).sync_year(
-                year=selected_year,
-                policy=FreshnessPolicy.from_settings(self.settings),
-                request_key_hash=request_hash,
-            )
-        except FreshDataRequired as error:
-            raise BusinessError(
-                ErrorCode.DEPENDENCY_UNAVAILABLE,
-                "Aucun snapshot Oracle's Elixir frais n'est disponible",
-                retryable=True,
-                context={"reasonCode": error.decision.reason_code, "year": selected_year},
-            ) from error
-        except SyncFailed as error:
-            raise BusinessError(
-                ErrorCode.DEPENDENCY_UNAVAILABLE,
-                "La source Oracle's Elixir ne répond pas aux critères d'ingestion",
-                retryable=True,
-                context={"reasonCode": error.error_code, "year": selected_year},
-            ) from error
-        summary = self.repository.get_ingestion_run(report.run_id)
-        if summary is None:
+        # The HTTP process only writes the queue. Raw/model mounts stay read-only.
+        job = PostgresJobQueue(self.engine, clock=self.clock).enqueue(
+            "oe.sync",
+            {
+                "year": selected_year,
+                "allowStale": self.settings.oe_allow_stale,
+                "requireFresh": self.settings.oe_require_fresh,
+            },
+            key=f"manual:oe.sync:{request_hash}",
+            scope=f"oe:oracles_elixir:{selected_year}",
+            actor=mutation_actor("local-admin"),
+        )
+        queued = PostgresOperationsRepository(self.engine).job(job.job_id)
+        if queued is None:
             raise BusinessError(
                 ErrorCode.INVALID_STATE,
-                "Le résultat de synchronisation n'est pas observable",
-                context={"runId": str(report.run_id)},
+                "La synchronisation en file n'est pas observable",
+                context={"jobId": str(job.job_id)},
             )
-        return summary
+        return queued
 
     def _existing(self, request_hash: str) -> UUID | None:
         runs = cast(Table, IngestionRun.__table__)

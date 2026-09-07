@@ -5,10 +5,14 @@ from __future__ import annotations
 import hashlib
 import os
 import subprocess
+import time
 from collections.abc import Mapping
 from pathlib import Path
+from typing import IO
 
 from sqlalchemy.engine import URL
+
+from metiquo.foundation.cancellation import checkpoint
 
 
 class BackupError(RuntimeError):
@@ -18,8 +22,48 @@ class BackupError(RuntimeError):
 
 
 def file_hash(path: Path) -> str:
+    digest = hashlib.sha256()
     with path.open("rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
+        while chunk := stream.read(1024 * 1024):
+            checkpoint()
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def run_process(
+    arguments: list[str],
+    *,
+    timeout: int,
+    stdin: IO[bytes] | int | None = None,
+    stdout: IO[bytes] | int = subprocess.DEVNULL,
+    env: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[bytes]:
+    checkpoint()
+    deadline = time.monotonic() + timeout
+    with subprocess.Popen(
+        arguments, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, env=env
+    ) as process:
+        try:
+            while True:
+                checkpoint()
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise subprocess.TimeoutExpired(arguments, timeout)
+                try:
+                    output, errors = process.communicate(timeout=min(0.2, remaining))
+                    return subprocess.CompletedProcess(
+                        arguments, process.returncode, output, errors
+                    )
+                except subprocess.TimeoutExpired:
+                    continue
+        except BaseException:
+            process.terminate()
+            try:
+                process.communicate(timeout=3)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+            raise
 
 
 class PostgresTools:
@@ -54,7 +98,7 @@ class PostgresTools:
     def dump(self, snapshot: str, target: Path) -> None:
         try:
             with target.open("xb") as stream:
-                result = subprocess.run(
+                result = run_process(
                     [
                         *self.dump_command,
                         "--format=custom",
@@ -64,10 +108,8 @@ class PostgresTools:
                         f"--snapshot={snapshot}",
                     ],
                     stdout=stream,
-                    stderr=subprocess.PIPE,
                     env=self.environment,
                     timeout=self.timeout,
-                    check=False,
                 )
                 stream.flush()
                 os.fsync(stream.fileno())
@@ -82,7 +124,7 @@ class PostgresTools:
     def restore(self, source: Path, database: str) -> None:
         try:
             with source.open("rb") as stream:
-                result = subprocess.run(
+                result = run_process(
                     [
                         *self.restore_command,
                         "--dbname",
@@ -95,10 +137,8 @@ class PostgresTools:
                     ],
                     stdin=stream,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.PIPE,
                     env={**self.environment, "PGDATABASE": database},
                     timeout=self.timeout,
-                    check=False,
                 )
             if result.returncode:
                 raise BackupError("RESTORE_DATABASE_FAILED")

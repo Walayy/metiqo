@@ -8,6 +8,7 @@ from time import perf_counter
 from sqlalchemy import text
 
 from metiquo.foundation.audit import audit_context
+from metiquo.foundation.cancellation import cancellation_scope
 from metiquo.foundation.identifiers import CorrelationId, JobId, TraceId
 from metiquo.foundation.locks import ResourceBusy, resource_lock
 from metiquo.foundation.observability import bind_log_context
@@ -92,8 +93,10 @@ class PostgresJobRunner:
             self.queue.clock,
             token,
             job.payload,
+            job.attempt,
         )
         with (
+            cancellation_scope(token.raise_if_cancelled),
             audit_context(actor=job.actor, trace_id=job.trace_id),
             bind_log_context(
                 job_id=context.job_id,

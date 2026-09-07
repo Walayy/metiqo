@@ -78,6 +78,29 @@ def test_real_alert_job_audits_trace_and_resolves_quality_after_verified_content
     assert quality.impact is not None and quality.impact["traceId"] == str(job.trace_id)
     later = NOW + timedelta(seconds=1)
     with engine.begin() as connection:
+        old_catalog_id = connection.scalar(
+            select(SourceCatalog.id).where(SourceCatalog.current_snapshot_id == snapshot_id)
+        )
+        connection.execute(
+            insert(IngestionRun).values(
+                id=uuid4(),
+                source_catalog_id=old_catalog_id,
+                snapshot_id=snapshot_id,
+                run_kind="load",
+                status="succeeded",
+                attempt=1,
+                correlation_id="old-raw-rebuild",
+                counters={},
+                started_at=later,
+                finished_at=later,
+                created_at=later,
+            )
+        )
+    assert PostgresAlertMonitor(engine, settings, FixedClock(UtcInstant(later))).check() == (), (
+        "Rebuilding old raw content does not prove that the source anomaly is resolved"
+    )
+    later += timedelta(seconds=1)
+    with engine.begin() as connection:
         catalog_id = connection.scalar(
             select(SourceCatalog.id).where(SourceCatalog.current_snapshot_id == snapshot_id)
         )

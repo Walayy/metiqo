@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import dataclass
+from uuid import UUID
 
 from sqlalchemy import Engine, text
 
@@ -14,7 +15,8 @@ _JOBS = """
       'lastRunAt', coalesce(finished_at, started_at),
       'dataMode', 'real', 'scope', scope, 'attempt', attempt, 'maxAttempts', max_attempts,
       'scheduledAt', scheduled_at, 'heartbeatAt', heartbeat_at, 'leaseExpiresAt', lease_expires_at,
-      'errorCode', error_code, 'cancelRequested', cancel_requested, 'traceId', trace_id
+      'errorCode', error_code, 'cancelRequested', cancel_requested, 'traceId', trace_id,
+      'runId', result->>'runId'
     ) AS document FROM ops.jobs
     UNION ALL
     SELECT id, updated_at, jsonb_build_object('jobId', id, 'name', name, 'status', status,
@@ -34,7 +36,8 @@ _AUDITS = """
         encode(sha256(convert_to(a.id::text, 'UTF8')), 'hex')),
       'occurredAt', coalesce(m.occurred_at, r.occurred_at, a.occurred_at),
       'dataMode', 'real', 'actor', a.actor, 'reason', r.reason,
-      'impact', jsonb_build_object('traceId', a.trace_id, 'targetType', a.target_type,
+      'impact', coalesce(r.impact, '{}'::jsonb) || jsonb_build_object(
+        'traceId', a.trace_id, 'targetType', a.target_type,
         'beforeRefs', a.before_refs, 'afterRefs', a.after_refs, 'recordedAt', a.occurred_at)
     ) AS document FROM ops.audit_events a
     LEFT JOIN ml.model_action_audits m ON a.target_type = 'ml.model_action_audits'
@@ -66,6 +69,16 @@ class OperationalPage[T]:
 class PostgresOperationsRepository:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def job(self, identity: UUID) -> JobSummary | None:
+        with self.engine.connect() as connection:
+            document = connection.scalar(
+                text(f"WITH entries AS ({_JOBS}) SELECT document FROM entries WHERE id = :id"),
+                {"id": identity},
+            )
+        return (
+            JobSummary.model_validate_json(json.dumps(document)) if document is not None else None
+        )
 
     def jobs(
         self, *, offset: int = 0, limit: int = 20, status: str | None = None
