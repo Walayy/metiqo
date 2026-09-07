@@ -7,9 +7,10 @@ import { useState } from "react";
 
 type ProvidersProperties = Readonly<{
   children: ReactNode;
+  nonce?: string;
 }>;
 
-export function Providers({ children }: ProvidersProperties) {
+export function Providers({ children, nonce }: ProvidersProperties) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -25,6 +26,7 @@ export function Providers({ children }: ProvidersProperties) {
 
   return (
     <ThemeProvider
+      {...(nonce ? { nonce } : {})}
       attribute="data-theme"
       defaultTheme="system"
       disableTransitionOnChange

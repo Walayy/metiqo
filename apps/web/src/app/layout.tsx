@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
 import "@fontsource-variable/inter";
@@ -17,7 +18,8 @@ type RootLayoutProperties = Readonly<{
   children: ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProperties) {
+export default async function RootLayout({ children }: RootLayoutProperties) {
+  const nonce = (await headers()).get("x-nonce") ?? "";
   const configuredMode = process.env.APP_DATA_MODE ?? "mock";
   if (configuredMode !== "mock" && configuredMode !== "real") {
     throw new Error("APP_DATA_MODE must be either mock or real");
@@ -26,7 +28,7 @@ export default function RootLayout({ children }: RootLayoutProperties) {
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
-        <Providers>
+        <Providers nonce={nonce}>
           <AppShell dataMode={configuredMode satisfies DataMode}>
             <OwnerAccess>{children}</OwnerAccess>
           </AppShell>

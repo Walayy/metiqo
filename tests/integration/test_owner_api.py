@@ -31,7 +31,9 @@ def test_owner_login_cookie_protected_reads_and_logout(postgresql_url: str) -> N
 
     async def exercise() -> None:
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="https://localhost:3000"
+            transport=ASGITransport(app=app),
+            base_url="https://localhost:3000",
+            headers={"Origin": "https://localhost:3000", "X-Metiquo-CSRF": "1"},
         ) as client:
             assert (await client.get("/health")).status_code == 200
             assert (await client.get("/api/v1/opportunities")).status_code == 401
@@ -79,7 +81,9 @@ def test_owner_identity_overrides_client_supplied_audit_actor(postgresql_url: st
 
     async def exercise() -> str:
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="https://localhost:3000"
+            transport=ASGITransport(app=app),
+            base_url="https://localhost:3000",
+            headers={"Origin": "https://localhost:3000", "X-Metiquo-CSRF": "1"},
         ) as client:
             logged_in = await client.post(
                 "/api/v1/auth/login", json={"username": "owner", "password": FIXTURE_PASSWORD}

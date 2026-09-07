@@ -57,7 +57,7 @@ mock-demo:
 	$(MAKE) mock-seed
 	$(MAKE) up
 	$(MAKE) db-migrate
-	@echo "Démo mock prête : http://127.0.0.1:3000"
+	@echo "Démo mock prête : ouvrir APP_PUBLIC_ORIGIN (défaut http://localhost:3000)"
 
 format:
 	pnpm run format

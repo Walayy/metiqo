@@ -204,6 +204,7 @@ services:
     read_only: true
     command: ["node", "apps/web/server.js"]
     environment:
+      APP_PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:-http://localhost:3000}
       APP_DATA_MODE: ${APP_DATA_MODE:-mock}
       API_BASE_URL: http://api:8000
     depends_on:

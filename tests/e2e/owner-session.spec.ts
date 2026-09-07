@@ -18,6 +18,10 @@ test("authenticates the Owner through the browser proxy and invalidates logout",
   await page.getByLabel("Mot de passe", { exact: true }).fill("fixture-only-owner-passphrase");
   await page.getByRole("button", { name: "Se connecter", exact: true }).click();
   await expect(page.getByRole("button", { name: "Déconnexion", exact: true })).toBeVisible();
+  const forgedLogout = await page.request.post("/api/backend/api/v1/auth/logout", {
+    headers: { Origin: "https://attacker.test", "X-Metiquo-CSRF": "1" },
+  });
+  expect(forgedLogout.status()).toBe(403);
   await expect(
     page.getByRole("heading", { level: 1, name: "Opportunités", exact: true }),
   ).toBeVisible();

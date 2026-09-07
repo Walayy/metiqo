@@ -25,6 +25,7 @@ from metiquo.api.dto import (
     ReadyResponse,
     SystemStatusResponse,
 )
+from metiquo.api.http_security import HttpProtection
 from metiquo.api.messages import (
     HTTP_ERROR_TITLE,
     INVALID_REQUEST_DETAIL,
@@ -38,6 +39,7 @@ from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, Readin
 from metiquo.api.real_admin_routes import build_real_admin_router
 from metiquo.api.real_historical_routes import build_real_historical_router
 from metiquo.api.real_model_routes import build_real_model_router
+from metiquo.auth.rate_limit import HttpRateLimiter
 from metiquo.auth.service import AuthError, OwnerAuthService
 from metiquo.canonical.capabilities import CapabilityRegistry
 from metiquo.config import AuthMode, Settings, load_settings
@@ -180,7 +182,7 @@ def create_app(
         resolved_settings.database_url.get_secret_value()
     )
     resolved_clock = clock or SystemClock()
-    app = FastAPI(title="Metiquo API", version=version("metiquo"))
+    app = FastAPI(title="Metiquo API", version=version("metiquo"), docs_url=None, redoc_url=None)
     app.state.api_metrics = ApiMetrics()
     app.include_router(_router(resolved_settings, resolved_probe, resolved_clock))
     if resolved_settings.app_data_mode is DataMode.MOCK:
@@ -270,6 +272,7 @@ def create_app(
 
     @app.middleware("http")
     async def bind_request_audit(request: Request, call_next: RequestResponseEndpoint) -> Response:
+        request.state.audit_entered = True
         trace = uuid4()
         with (
             audit_context(actor="api-local" if owner_auth is None else "anonymous", trace_id=trace),
@@ -418,4 +421,10 @@ def create_app(
         )
 
     install_domain_contract_schemas(app)
+    app.add_middleware(
+        HttpProtection,
+        settings=resolved_settings,
+        limiter=HttpRateLimiter(owner_auth.engine if owner_auth else None, resolved_clock),
+        metrics=app.state.api_metrics,
+    )
     return app

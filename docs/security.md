@@ -91,4 +91,50 @@ supprimé par les commandes applicatives.
 
 La preuve navigateur utilise un compte de fixture dans une base de test et couvre
 bootstrap CLI, login erroné, login réussi, lecture protégée et déconnexion via Next.
-Les protections HTTP complémentaires sont suivies par SEC-003 avant le gate P8.
+Les protections HTTP ci-dessous complètent les sessions avant le gate P8.
+
+## Frontières HTTP
+
+Les mutations navigateur exigent l'origine exacte `APP_PUBLIC_ORIGIN` et
+`X-Metiquo-CSRF: 1`, y compris pour login/logout. Les origines absentes ou `null`
+sont refusées en mode Owner ; `Sec-Fetch-Site: cross-site` et `same-site` sont
+refusés sur mutation. Un script d'un autre site ne peut pas ajouter cet en-tête
+sans preflight ; aucun CORS externe n'est ouvert. Le proxy transmet ces en-têtes,
+sans en fabriquer. Le mode disabled local conserve les appels serveur sans
+métadonnées navigateur ; les requêtes avec Origin ou Fetch Metadata passent les
+mêmes contrôles. Cette approche AJAX et le contrôle d'origine suivent les
+[recommandations CSRF OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).
+
+Ouvrir exactement l'origine configurée : `localhost` et `127.0.0.1` représentent
+deux origines différentes. Pour le gateway livré, déclarer
+`APP_PUBLIC_ORIGIN=https://localhost:8443` et utiliser cette URL. Le proxy Next
+n'accepte que les chemins `/api/v1/...` vers son backend serveur fixé.
+API et proxy limitent les corps de mutation à 64 Kio, y compris avec un transfert
+en plusieurs morceaux sans Content-Length. Pydantic refuse les champs inconnus
+et les types invalides sans répéter le contenu de la requête dans les erreurs.
+
+Les connexions disposent de 5 tentatives par minute et de 20 par quart d'heure ;
+les autres mutations disposent de 60 tentatives par minute. Ce sont des fenêtres
+fixes UTC, avec budgets globaux pour l'unique Owner : changer d'IP, de nom saisi
+ou de cookie ne crée pas de nouveau budget. Les tentatives refusées consomment
+le budget, et les réponses 429 portent Retry-After. Trois compteurs au maximum
+sont partagés et mis à jour atomiquement en PostgreSQL en mode Owner ; un
+redémarrage ne les réinitialise pas. Le mode disabled local utilise des compteurs
+en mémoire. Un dépassement ne bloque pas les lectures de la session déjà ouverte.
+
+Les réponses API portent nosniff, DENY, Referrer-Policy, Permissions-Policy,
+Cache-Control no-store et une CSP fermée pour le JSON. HTTPS ajoute HSTS un an.
+Le contrat reste disponible en JSON OpenAPI ; les pages de documentation
+interactives utilisant des scripts CDN ne sont pas exposées par l'API.
+Les erreurs inattendues deviennent un Problem Details générique ; les erreurs SQL
+deviennent 503, sans stack, paramètres SQL, cookie ni mot de passe dans la réponse.
+
+Next génère un nonce aléatoire de 256 bits pour chaque rendu dynamique, remplace
+tout nonce fourni par le client et le transmet au script du thème. La CSP des
+scripts utilise ce nonce et strict-dynamic, sans unsafe-inline ni unsafe-eval en
+production. Les styles inline restent autorisés pour les composants et le thème ;
+les objets, frames et destinations de formulaires externes sont interdits.
+Le rendu dynamique et l'application du nonce suivent la
+[documentation CSP de Next.js](https://nextjs.org/docs/app/guides/content-security-policy).
+Les tests Chromium vérifient les nonces, le thème, la navigation et les mutations
+permises/refusées, sans erreur console ou d'hydratation dans ce parcours.

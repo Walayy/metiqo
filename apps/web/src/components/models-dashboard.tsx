@@ -64,6 +64,7 @@ async function runModelAction(request: ModelAction): Promise<ItemResponseModelSu
       accept: "application/json",
       "content-type": "application/json",
       "Idempotency-Key": crypto.randomUUID(),
+      "X-Metiquo-CSRF": "1",
     },
     method: "POST",
   });

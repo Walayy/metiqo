@@ -64,6 +64,7 @@ async function startSync(): Promise<ItemResponseIngestionRunSummary> {
     headers: {
       accept: "application/json",
       "Idempotency-Key": crypto.randomUUID(),
+      "X-Metiquo-CSRF": "1",
     },
     method: "POST",
   });

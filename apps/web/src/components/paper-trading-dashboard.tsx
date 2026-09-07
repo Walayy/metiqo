@@ -63,6 +63,7 @@ async function postJson<T>(path: string, body: unknown, key?: string): Promise<T
       accept: "application/json",
       "content-type": "application/json",
       "Idempotency-Key": key ?? crypto.randomUUID(),
+      "X-Metiquo-CSRF": "1",
     },
     method: "POST",
   });

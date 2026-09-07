@@ -24,7 +24,11 @@ export function RealPaperSettlement({ bet }: Readonly<{ bet: PaperBet }>) {
       const response = await fetch("/api/backend/api/v1/admin/paper-bets/settle", {
         method: "POST",
         body: payload,
-        headers: { "content-type": "application/json", "Idempotency-Key": identity.current.key },
+        headers: {
+          "content-type": "application/json",
+          "Idempotency-Key": identity.current.key,
+          "X-Metiquo-CSRF": "1",
+        },
       });
       if (!response.ok) {
         const error = (await response.json()) as { detail?: string };

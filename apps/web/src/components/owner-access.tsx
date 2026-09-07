@@ -52,7 +52,7 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
         method: "POST",
         cache: "no-store",
         credentials: "same-origin",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "X-Metiquo-CSRF": "1" },
         body: JSON.stringify({ username, password }),
         signal: AbortSignal.timeout(15_000),
       });
@@ -82,6 +82,7 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
     setError(null);
     try {
       const response = await fetch(`${AUTH_URL}/logout`, {
+        headers: { "X-Metiquo-CSRF": "1" },
         method: "POST",
         credentials: "same-origin",
         signal: AbortSignal.timeout(15_000),

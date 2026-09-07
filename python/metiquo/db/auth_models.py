@@ -9,6 +9,15 @@ from sqlalchemy.orm import Mapped, mapped_column
 from metiquo.db.base import Base, UtcDateTime
 
 
+class HttpRateLimitRecord(Base):
+    __tablename__ = "http_rate_limits"
+    __table_args__ = (CheckConstraint("attempts >= 1", name="attempts"), {"schema": "ops"})
+
+    bucket: Mapped[str] = mapped_column(String(64), primary_key=True)
+    window_start: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    attempts: Mapped[int] = mapped_column(nullable=False)
+
+
 class OwnerAccountRecord(Base):
     __tablename__ = "owner_accounts"
     __table_args__ = (

@@ -26,7 +26,7 @@ uv sync --frozen
 make mock-demo
 ```
 
-`make mock-demo` vérifie d’abord la graine déterministe et les 12 scénarios normatifs, construit le profil Compose `mock`, attend la santé des services puis applique les migrations. L’application est ensuite accessible sur `http://127.0.0.1:3000`. Ce profil ne contacte ni Oracle’s Elixir ni un fournisseur de cotes : toutes les données métier sont générées localement à partir de `MOCK_SEED` et isolées du mode réel.
+`make mock-demo` vérifie d’abord la graine déterministe et les 12 scénarios normatifs, construit le profil Compose `mock`, attend la santé des services puis applique les migrations. Ouvrir l’origine configurée par `APP_PUBLIC_ORIGIN`, par défaut `http://localhost:3000` : les mutations vérifient cette origine exacte. Ce profil ne contacte ni Oracle’s Elixir ni un fournisseur de cotes : toutes les données métier sont générées localement à partir de `MOCK_SEED` et isolées du mode réel.
 
 Le parcours de démonstration couvre Opportunités, Événements, Modèles, Données, Administration, mapping et Paper trading. Pour vérifier les parcours critiques et l’accessibilité sur la stack démarrée :
 
@@ -47,7 +47,7 @@ make up
 make db-migrate
 ```
 
-L’API est alors disponible sur `http://127.0.0.1:8000`. Les sondes `GET /health` et `GET /ready` doivent répondre avec le statut HTTP `200` après la migration. L’application Next.js répond sur `http://127.0.0.1:3000` et expose sa propre sonde `GET /health`.
+L’API est alors disponible sur `http://127.0.0.1:8000`. Les sondes `GET /health` et `GET /ready` doivent répondre avec le statut HTTP `200` après la migration. L’application Next.js répond sur `http://localhost:3000` et expose sa propre sonde `GET /health`.
 
 Arrêter la stack sans supprimer ses volumes persistants :
 

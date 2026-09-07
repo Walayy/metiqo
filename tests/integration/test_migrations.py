@@ -135,6 +135,7 @@ def test_database_readiness_requires_migrations_at_head(postgresql_url: str) -> 
             "backup_runs",
             "owner_accounts",
             "owner_sessions",
+            "http_rate_limits",
         }
         assert all(
             inspect(connection).get_table_names(schema=name) == []
