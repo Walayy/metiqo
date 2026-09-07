@@ -2,7 +2,9 @@
 
 import asyncio
 import json
+import os
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from httpx2 import ASGITransport, AsyncClient, Response
@@ -124,3 +126,28 @@ def test_real_paper_api_create_review_loss_and_cached_metrics(
     assert metrics["data"]["estimates"]["roi"]["value"] == "-1"
     assert metrics["data"]["estimates"]["roi"]["sampleSize"] == 1
     assert request("GET", f"/api/v1/paper-reports/{report.report_id}").status_code == 200
+    export_path = os.environ.get("PAPER_GATE_REPORT_PATH")
+    if export_path:
+        Path(export_path).write_text(
+            json.dumps(
+                {
+                    "gate": "P7",
+                    "fixture": True,
+                    "financialPerformanceValidated": False,
+                    "notice": (
+                        "Synthetic observed-quote fixture. "
+                        "Not a financial backtest or live performance."
+                    ),
+                    "reportId": str(report.report_id),
+                    "computedAt": report.computed_at.isoformat(),
+                    "inputFingerprint": report.input_fingerprint,
+                    "reportFingerprint": report.report_fingerprint,
+                    "inputEvidence": report.input_evidence,
+                    "document": report.document,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )

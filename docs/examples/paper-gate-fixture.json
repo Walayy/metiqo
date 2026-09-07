@@ -1,0 +1,466 @@
+{
+  "gate": "P7",
+  "fixture": true,
+  "financialPerformanceValidated": false,
+  "notice": "Synthetic observed-quote fixture. Not a financial backtest or live performance.",
+  "reportId": "aa101645-bf6b-547c-b620-7394bd898f10",
+  "computedAt": "2026-08-10T01:06:00+00:00",
+  "inputFingerprint": "eeafc7a2e4fbc1b05bc26bb1af3c888a4604d3f717bfdee8138afe5bb8f28803",
+  "reportFingerprint": "15382ebd11667a2722358f9831c37220baa6d9067bdcde420fcf52b1063dbd88",
+  "inputEvidence": {
+    "entries": [
+      {
+        "paperBetId": "d9b34fb0-8008-532b-b8b3-3c66ddaf4ec9",
+        "signalId": "d1c550f9-c1f1-5d05-913a-43c278f1a618",
+        "oddsSnapshotId": "e5ab2b55-3d0d-5046-8a92-8785aea86123",
+        "quoteFingerprint": "0654dd039ca9480c286dc45e7bd827b95f6cda4c2ec15c414ce3bcba33f14527",
+        "decisionFingerprint": "354e14344ba1ed75f5d41e84108b9ba8580b569016896b49bb149c03061b88af",
+        "settlementId": "9e5e2464-6589-5ad8-946e-124b2a796263",
+        "closingSnapshotId": "a9c84555-6964-5e99-ad06-a8c686e02778",
+        "closingFingerprint": "0285da4e289893f0d0ddd4855c6607055c70ccd34ab178a558b5b1c5fcc4a6c0"
+      }
+    ],
+    "signalCount": 2,
+    "methodVersion": "paper-finance-v1",
+    "currency": "EUR",
+    "closingMaxAgeSeconds": 90,
+    "auditFingerprint": "b37ef8eb46892033ad65cd5d19db766d3d93d15e83225d4a8d9f2f6830d5938f"
+  },
+  "document": {
+    "methodVersion": "paper-finance-v1",
+    "currency": "EUR",
+    "signals": 2,
+    "bets": 1,
+    "settled": 1,
+    "open": 0,
+    "pendingReview": 0,
+    "estimates": {
+      "turnover": {
+        "value": "10",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "settled_turnover": {
+        "value": "10",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "profit_loss": {
+        "value": "-10",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "yield": {
+        "value": "-1",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "hit_rate": {
+        "value": "0",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "hit_rate_mean_odds": {
+        "value": "8",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "void_rate": {
+        "value": "0",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "open_exposure": {
+        "value": "0",
+        "sampleSize": 0,
+        "unavailableReason": null
+      },
+      "clv": {
+        "value": "1",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "roi": {
+        "value": "-1",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "return_volatility": {
+        "value": null,
+        "sampleSize": 1,
+        "unavailableReason": "INSUFFICIENT_OBSERVATIONS"
+      },
+      "announced_ev": {
+        "value": "2.2",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "realized_minus_announced": {
+        "value": "-3.2",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "max_drawdown": {
+        "value": "10",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "max_simultaneous_exposure": {
+        "value": "10",
+        "sampleSize": 1,
+        "unavailableReason": null
+      },
+      "yield_ci_low": {
+        "value": null,
+        "sampleSize": 1,
+        "unavailableReason": "INSUFFICIENT_TEMPORAL_BLOCKS"
+      },
+      "yield_ci_high": {
+        "value": null,
+        "sampleSize": 1,
+        "unavailableReason": "INSUFFICIENT_TEMPORAL_BLOCKS"
+      }
+    },
+    "segments": [
+      {
+        "dimension": "competition",
+        "key": "0f7509a1-ecf4-5526-be37-5bd3e03b84fc",
+        "sampleSize": 1,
+        "turnover": "10",
+        "profitLoss": "-10",
+        "yield": "-1"
+      },
+      {
+        "dimension": "grade",
+        "key": "VALUE",
+        "sampleSize": 1,
+        "turnover": "10",
+        "profitLoss": "-10",
+        "yield": "-1"
+      },
+      {
+        "dimension": "market",
+        "key": "MATCH_WINNER/SERIES",
+        "sampleSize": 1,
+        "turnover": "10",
+        "profitLoss": "-10",
+        "yield": "-1"
+      },
+      {
+        "dimension": "model",
+        "key": "ff86d1c2-e6b0-54d6-95bf-32b464a8a40f",
+        "sampleSize": 1,
+        "turnover": "10",
+        "profitLoss": "-10",
+        "yield": "-1"
+      },
+      {
+        "dimension": "odds_bucket",
+        "key": "longshot",
+        "sampleSize": 1,
+        "turnover": "10",
+        "profitLoss": "-10",
+        "yield": "-1"
+      }
+    ],
+    "correlations": [],
+    "eventExposure": [],
+    "bootstrap": {
+      "unit": "UTC entry day",
+      "replicates": 2000,
+      "seed": 42,
+      "confidenceLevel": "0.95"
+    },
+    "audit": {
+      "methodVersion": "complete-paper-audit-v1",
+      "signalScope": "all currencies; physical signals, entry rechecks identified separately",
+      "counts": {
+        "taken": 1,
+        "entry_recheck": 1
+      },
+      "signals": [
+        {
+          "signalId": "d1c550f9-c1f1-5d05-913a-43c278f1a618",
+          "fingerprint": "0149af605224910ff911002f44fb5828158098dc0ee3dd5ffb628a6bd0afbfeb",
+          "computedAt": "2026-08-09T23:20:10+00:00",
+          "policyVersion": "p6-63f1909a725d45e5b96ba0795c406a40",
+          "grade": "VALUE",
+          "reasons": [],
+          "oddsSnapshotId": "e5ab2b55-3d0d-5046-8a92-8785aea86123",
+          "offeredOdds": "8",
+          "predictionId": "7f658759-301c-54e9-a289-b46073c6adfc",
+          "expectedValue": "2.2",
+          "conservativeExpectedValue": "0.234144",
+          "selectedTeamId": "ffe7a6c7-cf50-5d1b-8973-bec04d4446dd",
+          "paperDisposition": "taken",
+          "paperBetId": "d9b34fb0-8008-532b-b8b3-3c66ddaf4ec9",
+          "paperCurrency": "EUR"
+        },
+        {
+          "signalId": "ff5d9502-219a-520a-aacc-892fa5b52048",
+          "fingerprint": "06dd6d280407ebe909076fb877379a9b1322fa3ca7d559c4f44e4f98fe33b4e1",
+          "computedAt": "2026-08-09T23:20:20+00:00",
+          "policyVersion": "p6-63f1909a725d45e5b96ba0795c406a40",
+          "grade": "VALUE",
+          "reasons": [],
+          "oddsSnapshotId": "e5ab2b55-3d0d-5046-8a92-8785aea86123",
+          "offeredOdds": "8",
+          "predictionId": "7f658759-301c-54e9-a289-b46073c6adfc",
+          "expectedValue": "2.2",
+          "conservativeExpectedValue": "0.234144",
+          "selectedTeamId": "ffe7a6c7-cf50-5d1b-8973-bec04d4446dd",
+          "paperDisposition": "entry_recheck",
+          "paperBetId": null,
+          "paperCurrency": null
+        }
+      ],
+      "earlyAbstentions": [],
+      "entries": [
+        {
+          "paperBetId": "d9b34fb0-8008-532b-b8b3-3c66ddaf4ec9",
+          "signalId": "d1c550f9-c1f1-5d05-913a-43c278f1a618",
+          "actor": "admin-local",
+          "placedAt": "2026-08-09T23:20:20+00:00",
+          "decisionEvidence": {
+            "mode": "paper",
+            "creation": "manual",
+            "eventProof": {
+              "bestOf": 1,
+              "gameId": "d5369f2d-c5f2-5db7-b898-8bae40084a5c",
+              "startAt": "2026-08-10T00:00:00+00:00",
+              "teamAId": "6ad00e74-736c-51ec-ac79-81dba7eb5180",
+              "teamBId": "ffe7a6c7-cf50-5d1b-8973-bec04d4446dd",
+              "gameNumber": 1,
+              "competitionId": "0f7509a1-ecf4-5526-be37-5bd3e03b84fc"
+            },
+            "exposureBefore": "0",
+            "availableBefore": "1000",
+            "bankrollOpening": "1000",
+            "bankrollVersion": "paper-manual-v1",
+            "maxOpenExposure": "100",
+            "entryEvaluationId": "eb149985-03d1-5be7-8982-fe24389a9d03",
+            "signalFingerprint": "0149af605224910ff911002f44fb5828158098dc0ee3dd5ffb628a6bd0afbfeb",
+            "entryEvaluationFingerprint": "3ccc215bf9d7cbde20fe5a89987b8dac9a3968f078cb60246f2c40c8e182db15"
+          },
+          "signalOdds": "8",
+          "entryOdds": "8",
+          "slippageRatio": "0",
+          "slippageMethod": "exact-signal-snapshot-v1"
+        }
+      ],
+      "oddsHistory": [
+        {
+          "oddsSnapshotId": "e5ab2b55-3d0d-5046-8a92-8785aea86123",
+          "selectionId": "3d341e47-9f11-5019-abb9-b7f3674a8216",
+          "marketId": "837ad2db-2f0e-52ee-b86a-4f5ad58d2461",
+          "decimalOdds": "8",
+          "capturedAt": "2026-08-09T23:20:00+00:00",
+          "recordedAt": "2026-08-09T23:20:01+00:00",
+          "timestampReliable": true,
+          "informationalOnly": false,
+          "marketStatus": "open",
+          "fingerprint": "0654dd039ca9480c286dc45e7bd827b95f6cda4c2ec15c414ce3bcba33f14527",
+          "previousSnapshotId": null,
+          "changeFromPreviousRatio": null
+        },
+        {
+          "oddsSnapshotId": "a9c84555-6964-5e99-ad06-a8c686e02778",
+          "selectionId": "3d341e47-9f11-5019-abb9-b7f3674a8216",
+          "marketId": "837ad2db-2f0e-52ee-b86a-4f5ad58d2461",
+          "decimalOdds": "4",
+          "capturedAt": "2026-08-09T23:59:30+00:00",
+          "recordedAt": "2026-08-09T23:59:31+00:00",
+          "timestampReliable": true,
+          "informationalOnly": false,
+          "marketStatus": "open",
+          "fingerprint": "9fe92c6b324f075e6fe365c078c8c003ce587609583aa972e81614cf84ba9bfe",
+          "previousSnapshotId": "e5ab2b55-3d0d-5046-8a92-8785aea86123",
+          "changeFromPreviousRatio": "-0.5"
+        }
+      ],
+      "settlementHistory": [
+        {
+          "paperBetId": "d9b34fb0-8008-532b-b8b3-3c66ddaf4ec9",
+          "settlementId": "c0707341-8e83-5af3-993e-062f452559d5",
+          "revision": 1,
+          "supersedesId": null,
+          "occurredAt": "2026-08-09T23:20:20+00:00",
+          "status": "pending_review",
+          "profitLoss": null,
+          "profitLossAdjustment": "0",
+          "actor": "admin-local",
+          "reason": "RESULT_NOT_KNOWN_AFTER_EVENT",
+          "resultSnapshotId": "90b518af-2105-41e1-9341-f253d8c5b50f",
+          "rulesVersion": "match-winner-v1",
+          "requestFingerprint": "3d0f183668bea8390d2ba7be3ae0e70bce02299f811f19e21635439d86e4cc35",
+          "evidence": {
+            "source": {
+              "status": "fresh",
+              "snapshotId": "90b518af-2105-41e1-9341-f253d8c5b50f",
+              "currentSnapshotId": "90b518af-2105-41e1-9341-f253d8c5b50f"
+            },
+            "eventProof": {
+              "bestOf": 1,
+              "gameId": "d5369f2d-c5f2-5db7-b898-8bae40084a5c",
+              "startAt": "2026-08-10T00:00:00+00:00",
+              "teamAId": "6ad00e74-736c-51ec-ac79-81dba7eb5180",
+              "teamBId": "ffe7a6c7-cf50-5d1b-8973-bec04d4446dd",
+              "gameNumber": 1,
+              "competitionId": "0f7509a1-ecf4-5526-be37-5bd3e03b84fc"
+            },
+            "resultHashes": {
+              "game": "4c0da84bf70b309cea580f98ea1ffe23baeb52d2dfcadbd20c47ff687855ad69",
+              "teamA": "2e649ba6956b02874928672ceb4fa33dc85903d383bd673494d0e7f7222709a8",
+              "teamB": "e752dc559cc7e732d6f73607d547053f88bc1816b633f2238a047471a882c908",
+              "revision": 1
+            },
+            "entrySignalId": "d1c550f9-c1f1-5d05-913a-43c278f1a618",
+            "outcomeReason": "RESULT_NOT_KNOWN_AFTER_EVENT",
+            "requestReason": "Check source",
+            "correctionReason": null,
+            "outcomeFingerprint": "adf60e7d41c13e23a5e98cc9053a02b9fcec51b2cb8b3de39df1049bbbb6f4a1",
+            "canonicalRevisionIds": ["de821604-5d5a-5c3b-ad43-cb86bd101fdb"],
+            "settlementDelaySeconds": 300
+          }
+        },
+        {
+          "paperBetId": "d9b34fb0-8008-532b-b8b3-3c66ddaf4ec9",
+          "settlementId": "9e5e2464-6589-5ad8-946e-124b2a796263",
+          "revision": 2,
+          "supersedesId": "c0707341-8e83-5af3-993e-062f452559d5",
+          "occurredAt": "2026-08-10T01:06:00+00:00",
+          "status": "lost",
+          "profitLoss": "-10",
+          "profitLossAdjustment": "-10",
+          "actor": "admin-local",
+          "reason": "VALIDATED_SERIES_RESULT",
+          "resultSnapshotId": "d88b4b16-2f0e-4d7c-8c3a-def047ec0a00",
+          "rulesVersion": "match-winner-v1",
+          "requestFingerprint": "b52f1b20b77f1a7aae27a10e5fe98c80d81a97be7c9906c01968113f9773e042",
+          "evidence": {
+            "flags": [],
+            "scoreA": 1,
+            "scoreB": 0,
+            "source": {
+              "status": "fresh",
+              "snapshotId": "d88b4b16-2f0e-4d7c-8c3a-def047ec0a00",
+              "currentSnapshotId": "d88b4b16-2f0e-4d7c-8c3a-def047ec0a00"
+            },
+            "winner": "TEAM_A",
+            "complete": true,
+            "selection": "TEAM_B",
+            "shortened": false,
+            "allowsDraw": false,
+            "eventProof": {
+              "bestOf": 1,
+              "gameId": "d5369f2d-c5f2-5db7-b898-8bae40084a5c",
+              "startAt": "2026-08-10T00:00:00+00:00",
+              "teamAId": "6ad00e74-736c-51ec-ac79-81dba7eb5180",
+              "teamBId": "ffe7a6c7-cf50-5d1b-8973-bec04d4446dd",
+              "gameNumber": 1,
+              "competitionId": "0f7509a1-ecf4-5526-be37-5bd3e03b84fc"
+            },
+            "snapshotId": "d88b4b16-2f0e-4d7c-8c3a-def047ec0a00",
+            "processedAt": "2026-08-10T01:00:00+00:00",
+            "validatedAt": "2026-08-10T01:00:00+00:00",
+            "resultHashes": {
+              "game": "abf9fca5a70cb20b2ecdc6e3925b84e313cf47176d1d4b7f99b581b94b07c16a",
+              "teamA": "3addc7d356a60454f1e9dabe880ac9f5cb135957ea34ebc1f8289b855dd3faa0",
+              "teamB": "660535099e44dbfa5c15934876247ae21fa028bbca8417532de0982097beb876",
+              "revision": 2
+            },
+            "sourceStatus": "validated",
+            "engineVersion": "series-settlement-v1",
+            "entrySignalId": "d1c550f9-c1f1-5d05-913a-43c278f1a618",
+            "outcomeReason": "VALIDATED_SERIES_RESULT",
+            "requestReason": "Read arrived OE",
+            "expectedBestOf": 1,
+            "observedBestOf": 1,
+            "rulesReference": "match-winner-v1",
+            "correctionReason": null,
+            "rulesFingerprint": "2af3f41a214d36187968a2ba7e6e6d961d889e32d450d50ef389b4c799bc4c1d",
+            "resultFingerprint": "31e0f1e3957928ee7987c5f83551c017eaaffd526f91504931c76db1b414bcec",
+            "outcomeFingerprint": "54acbeb168630796c1fb655b90dc9eb77734a7528537448bfa20f18e7cf755da",
+            "canonicalRevisionIds": ["810b9aac-2f32-58aa-a5ed-a3335288ee0a"],
+            "settlementDelaySeconds": 300
+          }
+        }
+      ],
+      "policies": [
+        {
+          "policyId": "6ea6d626-5cb4-49d9-983f-21e5742d4b6a",
+          "version": "p6-63f1909a725d45e5b96ba0795c406a40",
+          "fingerprint": "10a1e424ff4a30c8c75a69828d9f05c775ce1562c55fb769bd4e30227eef0869",
+          "tunedThrough": "2026-07-31T23:59:00+00:00",
+          "finalTestStartsAt": "2026-08-01T00:00:00+00:00",
+          "minEdge": "0.03",
+          "minEv": "0.05",
+          "minConservativeEv": "0",
+          "maxOddsAgeSeconds": 90,
+          "minMappingConfidence": "0.8",
+          "overrides": {
+            "bucket": {
+              "longshot": {
+                "minEdge": "0.09",
+                "maxOddsAgeSeconds": 45
+              }
+            },
+            "market": {
+              "MATCH_WINNER": {
+                "minEv": "0.05"
+              }
+            },
+            "competition": {
+              "22222222-2222-4222-8222-222222222222": {
+                "minMappingConfidence": "0.9"
+              }
+            }
+          }
+        }
+      ],
+      "policyChanges": [
+        {
+          "auditId": "39e6dbcd-fa68-4603-b0cf-1e31b6a85afd",
+          "policyId": "6ea6d626-5cb4-49d9-983f-21e5742d4b6a",
+          "previousPolicyId": null,
+          "actor": "p6-fixture",
+          "reason": "Gate thresholds fixed before evaluation",
+          "occurredAt": "2026-08-09T23:20:00+00:00",
+          "changes": {
+            "policy": {
+              "version": "p6-63f1909a725d45e5b96ba0795c406a40",
+              "overrides": {
+                "bucket": {
+                  "longshot": {
+                    "minEdge": "0.09",
+                    "maxOddsAgeSeconds": 45
+                  }
+                },
+                "market": {
+                  "MATCH_WINNER": {
+                    "minEv": "0.05"
+                  }
+                },
+                "competition": {
+                  "22222222-2222-4222-8222-222222222222": {
+                    "minMappingConfidence": "0.9"
+                  }
+                }
+              },
+              "thresholds": {
+                "minEv": "0.05",
+                "minEdge": "0.03",
+                "maxOddsAgeSeconds": 90,
+                "minConservativeEv": "0",
+                "minMappingConfidence": "0.8"
+              },
+              "tunedThrough": "2026-07-31T23:59:00+00:00",
+              "finalTestStartsAt": "2026-08-01T00:00:00+00:00"
+            },
+            "previousVersion": null
+          }
+        }
+      ]
+    }
+  }
+}

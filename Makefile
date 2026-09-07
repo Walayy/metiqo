@@ -89,10 +89,13 @@ test-ingestion:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate ingestion))
 	uv run --frozen pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
 
-.PHONY: test-value value-evaluate test-paper paper-settle paper-report
+.PHONY: test-value value-evaluate test-paper paper-settle paper-report paper-gate
+paper-gate:
+	uv run --frozen python infra/scripts/demo_paper_gate.py --output $(or $(OUTPUT),data/paper-gate-example.json)
+
 test-paper:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le ledger paper))
-	uv run --frozen python -m pytest tests/paper tests/integration/test_paper_ledger.py tests/integration/test_paper_creation.py tests/integration/test_paper_settlement_job.py tests/integration/test_paper_clv.py tests/integration/test_paper_reporting.py tests/integration/test_paper_reporting_audit.py tests/integration/test_real_paper_api.py -vv
+	uv run --frozen python -m pytest tests/paper tests/integration/test_paper_ledger.py tests/integration/test_paper_creation.py tests/integration/test_paper_settlement_job.py tests/integration/test_paper_clv.py tests/integration/test_paper_reporting.py tests/integration/test_paper_reporting_audit.py tests/integration/test_real_paper_api.py tests/integration/test_paper_gate.py -vv
 
 paper-report:
 	uv run --frozen oe paper-report --currency $(or $(CURRENCY),EUR) $(OE_JSON_FLAG)
