@@ -357,12 +357,16 @@ export function ModelsDashboard() {
             Entraîner un candidat
           </Button>
           {action.data ? (
-            <p aria-live="polite" className="text-sm text-emerald-700" role="status">
+            <p
+              aria-live="polite"
+              className="text-sm text-emerald-700 dark:text-emerald-300"
+              role="status"
+            >
               Action terminée · {action.data.data.status} · {action.data.data.modelVersion}
             </p>
           ) : null}
           {action.error ? (
-            <p className="text-sm text-red-700" role="alert">
+            <p className="text-sm text-red-700 dark:text-red-300" role="alert">
               {action.error.message}
             </p>
           ) : null}
