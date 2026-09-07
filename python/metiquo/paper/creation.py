@@ -188,6 +188,15 @@ class PostgresPaperService:
                     "Le signal n'est plus admissible à l'entrée paper",
                     context={"reasons": ",".join(reason.value for reason in admission.reasons)},
                 )
+            if (
+                admission.signal is None
+                or admission.signal.selected_team_id != signal.selected_team_id
+            ):
+                raise BusinessError(
+                    ErrorCode.INVALID_STATE,
+                    "L'identité de l'équipe a changé depuis le signal ; "
+                    "une nouvelle décision est requise",
+                )
             bet = PaperBetRecord(
                 id=uuid5(NAMESPACE_URL, f"metiquo:paper:{identity}"),
                 signal_id=signal.id,

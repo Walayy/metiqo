@@ -44,6 +44,10 @@ COPY infra/compose/bootstrap/mock_mode_check.py /opt/metiquo-bootstrap/mock_mode
 
 USER 10001:10001
 
+ARG APP_CODE_COMMIT=""
+ENV APP_CODE_COMMIT=$APP_CODE_COMMIT
+LABEL org.opencontainers.image.revision=$APP_CODE_COMMIT
+
 EXPOSE 8000
 
 CMD ["python", "/opt/metiquo-bootstrap/api_health.py"]

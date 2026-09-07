@@ -1387,6 +1387,18 @@
             ],
             "title": "Maxattempts"
           },
+          "modelVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelversionid"
+          },
           "name": {
             "maxLength": 255,
             "minLength": 1,
@@ -4263,9 +4275,12 @@
                 {
                   "enum": [
                     "idle",
+                    "queued",
                     "succeeded",
                     "failed",
-                    "running"
+                    "running",
+                    "cancelled",
+                    "dead"
                   ],
                   "type": "string"
                 },
@@ -4300,6 +4315,49 @@
           }
         },
         "summary": "List Jobs",
+        "tags": [
+          "reads"
+        ]
+      }
+    },
+    "/api/v1/admin/jobs/{job_id}": {
+      "get": {
+        "operationId": "get_job_api_v1_admin_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_JobSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Job",
         "tags": [
           "reads"
         ]
@@ -4525,6 +4583,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_JobSummary_"
+                }
+              }
+            },
+            "description": "Entraînement en file"
           },
           "422": {
             "content": {
@@ -5519,6 +5587,23 @@
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "eventId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Eventid"
             }
           },
           {

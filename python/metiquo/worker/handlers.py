@@ -5,17 +5,62 @@ from datetime import timedelta
 
 from sqlalchemy import Engine, select
 
-from metiquo.config import Settings
+from metiquo.config import ObjectStoreBackend, Settings
 from metiquo.db.raw_models import IngestionRun, SourceCatalog
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.ingestion.freshness import FreshnessPolicy
+from metiquo.ingestion.object_store import FilesystemObjectStore
 from metiquo.ingestion.operations import refresh_catalog, verify_snapshot
 from metiquo.ingestion.sync import OracleElixirYearSync, SyncFailed
+from metiquo.models import GameWinnerTrainingWorkflow, ModelArtifactStore
 from metiquo.operations.backup import BackupService
 from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
 from metiquo.worker.alerts import PostgresAlertMonitor
 from metiquo.worker.contracts import JobContext, JobHandler
+
+
+class ModelTrainingHandler:
+    def __init__(self, engine: Engine, settings: Settings) -> None:
+        self.engine, self.settings = engine, settings
+
+    def handle(self, context: JobContext) -> dict[str, object]:
+        context.cancellation.raise_if_cancelled()
+        if (
+            context.payload.get("gameTitle") != "lol"
+            or context.payload.get("marketType") != "MATCH_WINNER"
+        ):
+            raise BusinessError(ErrorCode.INVALID_INPUT, "Marché d'entraînement non pris en charge")
+        commit = self.settings.app_code_commit
+        if commit is None or context.payload.get("codeCommit") != commit:
+            raise BusinessError(
+                ErrorCode.INVALID_STATE,
+                "La révision du worker ne correspond pas à la demande d'entraînement",
+            )
+        if self.settings.object_store_backend is not ObjectStoreBackend.FILESYSTEM:
+            raise BusinessError(ErrorCode.INVALID_STATE, "Stockage de modèles non pris en charge")
+        try:
+            result = GameWinnerTrainingWorkflow(
+                engine=self.engine,
+                artifacts=ModelArtifactStore(
+                    FilesystemObjectStore(self.settings.object_store_root / "models")
+                ),
+                code_commit=commit,
+                clock=context.clock,
+            ).run()
+        except ValueError as error:
+            raise BusinessError(
+                ErrorCode.INVALID_STATE,
+                "Les données ou paramètres ne permettent pas un entraînement valide",
+            ) from error
+        context.cancellation.raise_if_cancelled()
+        return {
+            "modelVersionId": str(result.model_version_id),
+            "modelStatus": result.model_status,
+            "datasetId": str(result.dataset_id),
+            "gatePassed": result.gate_passed,
+            "codeCommit": commit,
+        }
 
 
 class AlertHandler:
@@ -165,6 +210,7 @@ class PaperSettlementHandler:
 
 def default_handlers(engine: Engine, settings: Settings) -> dict[str, JobHandler]:
     return {
+        "model.train": ModelTrainingHandler(engine, settings),
         "ops.alerts": AlertHandler(engine, settings),
         "ops.backup": BackupHandler(engine, settings),
         "oe.catalog": OracleCatalogHandler(engine, settings),

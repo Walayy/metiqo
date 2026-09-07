@@ -8,9 +8,10 @@ from importlib import import_module
 from uuid import UUID
 
 import pytest
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, insert, select, text
 
 from metiquo.contracts.enums import DataMode, PaperBetStatus
+from metiquo.db.core_models import GameTeamStat
 from metiquo.db.paper_models import PaperBetRecord
 from metiquo.db.pricing_models import ValueEvaluationRecord
 from metiquo.foundation.errors import BusinessError, ErrorCode
@@ -51,6 +52,42 @@ def test_paper_creation_replays_and_rejects_conflicting_keys(context: _Context) 
         assert stored["decision_evidence"]["mode"] == "paper"
         assert stored["decision_evidence"]["entryEvaluationId"]
         assert stored["decision_evidence"]["availableBefore"] == "100"
+
+
+@pytest.mark.integration
+def test_paper_entry_refuses_a_canonical_correction_that_changes_the_selected_team(
+    context: _Context,
+) -> None:
+    values = bet_values(context)
+    with context.engine.begin() as connection:
+        rows = [
+            dict(row)
+            for row in connection.execute(
+                select(GameTeamStat.__table__).where(GameTeamStat.game_id == context.event.event_id)
+            ).mappings()
+        ]
+        assert len(rows) == 2
+        # Rebuild the mutable current projection, keeping the original prediction and signal.
+        connection.execute(
+            delete(GameTeamStat).where(GameTeamStat.game_id == context.event.event_id)
+        )
+        connection.execute(
+            insert(GameTeamStat),
+            [{**row, "side": "Red" if row["side"] == "Blue" else "Blue"} for row in rows],
+        )
+        evaluations_before = connection.scalar(
+            select(func.count()).select_from(ValueEvaluationRecord)
+        )
+    with pytest.raises(BusinessError, match="identité"):
+        _service(context).create(
+            "changed-selection", values["signal_id"], Decimal(10), "EUR", actor="operator"
+        )
+    with context.engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(PaperBetRecord)) == 0
+        assert (
+            connection.scalar(select(func.count()).select_from(ValueEvaluationRecord))
+            == evaluations_before
+        )
 
 
 @pytest.mark.integration

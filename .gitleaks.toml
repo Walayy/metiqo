@@ -14,3 +14,13 @@ regexes = [
   '''^0f7509a1-ecf4-5526-be37-5bd3e03b84fc$''',
   '''^ff86d1c2-e6b0-54d6-95bf-32b464a8a40f$''',
 ]
+
+[[rules.allowlists]]
+description = "QA-004 verified SHA256 of the OpenAPI log and Owner UI source"
+condition = "AND"
+paths = ['''(?:^|[/\\])docs[/\\]evidence[/\\]qa-004[/\\]report\.json$''']
+regexTarget = "secret"
+regexes = [
+  '''^d4cf2c5f140e53218a3fb853b606f0877faa2d8570e85c49ec987af1788e1900$''',
+  '''^7105d252854b1049a30a182013f915ca7b81267b14c13d5520cc110b8ef87279$''',
+]

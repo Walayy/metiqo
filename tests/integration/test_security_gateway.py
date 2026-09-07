@@ -15,7 +15,10 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.integration
-def test_rebuilt_gateway_serves_web_and_api_with_verified_tls(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "origin", ["https://localhost:8443", "https://localhost", "https://localhost:9443"]
+)
+def test_rebuilt_gateway_serves_web_and_api_with_verified_tls(tmp_path: Path, origin: str) -> None:
     api = os.environ.get("TEST_SECURITY_IMAGE")
     web = os.environ.get("TEST_SECURITY_WEB_IMAGE")
     gateway = os.environ.get("TEST_SECURITY_GATEWAY_IMAGE")
@@ -50,7 +53,7 @@ def test_rebuilt_gateway_serves_web_and_api_with_verified_tls(tmp_path: Path) ->
                     "-e",
                     "AUTH_MODE=disabled",
                     "-e",
-                    "APP_PUBLIC_ORIGIN=https://localhost:8443",
+                    f"APP_PUBLIC_ORIGIN={origin}",
                     api,
                     "uvicorn",
                     "metiquo.api.app:create_app",
@@ -69,13 +72,15 @@ def test_rebuilt_gateway_serves_web_and_api_with_verified_tls(tmp_path: Path) ->
                     "-e",
                     "API_BASE_URL=http://api:8000",
                     "-e",
-                    "APP_PUBLIC_ORIGIN=https://localhost:8443",
+                    f"APP_PUBLIC_ORIGIN={origin}",
                     web,
                 ],
             ),
             (
                 "gateway",
                 [
+                    "-e",
+                    f"APP_PUBLIC_ORIGIN={origin}",
                     "--user",
                     "1000:1000",
                     "--tmpfs",

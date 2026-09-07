@@ -109,6 +109,7 @@ def test_events_paginate_in_sql_and_keep_total_past_the_last_page(postgresql_url
     )
     assert repository.page(offset=2000, limit=20).total == 1004
     assert repository.page(offset=0, limit=20, team="%_").total == 0
+
     with count_queries(engine) as queries:
         assert repository.get(page.items[0].event_id) == page.items[0]
     assert len(queries) == 1
@@ -148,6 +149,8 @@ def test_signal_projection_does_not_query_events_once_per_signal(context: _Conte
     assert len(page.items) == 20 and page.total == 51
     assert repository.page(offset=100, limit=20).total == 51
     assert repository.page(offset=0, limit=20, team="%_").total == 0
+    assert repository.page(event_id=page.items[0].event.event_id, limit=1).total == 51
+    assert repository.page(event_id=uuid4(), limit=1).total == 0
 
 
 @pytest.mark.integration

@@ -39,6 +39,7 @@ from metiquo.contracts.enums import (
     ProviderStatus,
 )
 from metiquo.foundation.audit import mutation_actor
+from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_mapping import PostgresMappingRepository
@@ -164,6 +165,13 @@ def build_real_admin_router(
             page=PageInfo(offset=offset, limit=limit, total=page.total),
             meta=_meta(repository, clock),
         )
+
+    @router.get("/jobs/{job_id}", response_model=ItemResponse[JobSummary])
+    def get_job(job_id: UUID) -> ItemResponse[JobSummary]:
+        job = PostgresOperationsRepository(repository.engine).job(job_id)
+        if job is None:
+            raise BusinessError(ErrorCode.NOT_FOUND, "Job introuvable")
+        return ItemResponse(data=job, meta=_meta(repository, clock))
 
     @router.get("/audit-log", response_model=PageResponse[AuditEntry])
     def list_audit(offset: Offset = 0, limit: Limit = 20) -> PageResponse[AuditEntry]:
@@ -294,19 +302,25 @@ def build_real_admin_router(
             meta=_meta(repository, clock),
         )
 
-    @router.post("/models/train", response_model=ItemResponse[ModelSummary])
+    @router.post(
+        "/models/train",
+        response_model=ItemResponse[ModelSummary],
+        responses={202: {"model": ItemResponse[JobSummary], "description": "Entraînement en file"}},
+    )
     def train(
         request: TrainModelRequest,
         idempotency_key: IdempotencyKey,
-    ) -> ItemResponse[ModelSummary]:
-        return ItemResponse(
-            data=mutation_service.train(
-                idempotency_key,
-                request.game_title,
-                request.market_type,
-            ),
-            meta=_meta(repository, clock),
-        )
+    ) -> ItemResponse[ModelSummary] | JSONResponse:
+        result = mutation_service.train(idempotency_key, request.game_title, request.market_type)
+        if isinstance(result, JobSummary):
+            return JSONResponse(
+                status_code=202,
+                content=ItemResponse(data=result, meta=_meta(repository, clock)).model_dump(
+                    mode="json",
+                    by_alias=True,
+                ),
+            )
+        return ItemResponse(data=result, meta=_meta(repository, clock))
 
     @router.post(
         "/models/{model_version_id}/promote",

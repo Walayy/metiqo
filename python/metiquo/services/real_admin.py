@@ -107,9 +107,11 @@ class RealAdminMutationService:
         idempotency_key: str,
         game_title: GameTitle,
         market_type: MarketType,
-    ) -> ModelSummary:
+    ) -> ModelSummary | JobSummary:
         """Exécuter le workflow réel, puis publier le candidat produit."""
 
+        if self.training_workflow is None:
+            return self._queue_training(idempotency_key, game_title, market_type)
         job = self._start_model_job(
             action="train",
             idempotency_key=idempotency_key,
@@ -119,14 +121,6 @@ class RealAdminMutationService:
         completed = self._completed_model(job)
         if completed is not None:
             return completed
-        if self.training_workflow is None:
-            error = BusinessError(
-                ErrorCode.DEPENDENCY_UNAVAILABLE,
-                "Le workflow d'entraînement réel n'est pas configuré",
-                retryable=True,
-            )
-            self._fail_model_job(job, error)
-            raise error
         try:
             model_version_id = self.training_workflow.train(game_title, market_type)
             return self._succeed_model_job(job, model_version_id)
@@ -141,6 +135,35 @@ class RealAdminMutationService:
             )
             self._fail_model_job(job, failure)
             raise failure from error
+
+    def _queue_training(
+        self, idempotency_key: str, game_title: GameTitle, market_type: MarketType
+    ) -> JobSummary:
+        if (
+            game_title is not GameTitle.LEAGUE_OF_LEGENDS
+            or market_type is not MarketType.MATCH_WINNER
+        ):
+            raise BusinessError(ErrorCode.INVALID_INPUT, "Seul lol/game_winner peut être entraîné")
+        commit = self.settings.app_code_commit
+        if commit is None:
+            raise BusinessError(
+                ErrorCode.DEPENDENCY_UNAVAILABLE,
+                "La révision du code d'entraînement n'est pas configurée",
+            )
+        fingerprint = hashlib.sha256(idempotency_key.strip().encode()).hexdigest()
+        queued = PostgresJobQueue(self.engine, clock=self.clock).enqueue(
+            "model.train",
+            {"gameTitle": game_title.value, "marketType": market_type.value, "codeCommit": commit},
+            key=f"manual:model.train:{fingerprint}",
+            scope="model:lol:game_winner",
+            actor=mutation_actor("local-admin"),
+        )
+        summary = PostgresOperationsRepository(self.engine).job(queued.job_id)
+        if summary is None:
+            raise BusinessError(
+                ErrorCode.INVALID_STATE, "L'entraînement en file n'est pas observable"
+            )
+        return summary
 
     def promote(self, idempotency_key: str, model_version_id: UUID, reason: str) -> ModelSummary:
         """Promouvoir seulement si le benchmark enregistré satisfait encore le gate."""

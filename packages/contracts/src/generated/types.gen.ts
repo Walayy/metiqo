@@ -722,6 +722,10 @@ export type JobSummary = {
      */
     maxAttempts?: number | null;
     /**
+     * Modelversionid
+     */
+    modelVersionId?: string | null;
+    /**
      * Name
      */
     name: string;
@@ -2234,7 +2238,7 @@ export type ListJobsApiV1AdminJobsGetData = {
         /**
          * Status
          */
-        status?: 'idle' | 'succeeded' | 'failed' | 'running' | null;
+        status?: 'idle' | 'queued' | 'succeeded' | 'failed' | 'running' | 'cancelled' | 'dead' | null;
     };
     url: '/api/v1/admin/jobs';
 };
@@ -2256,6 +2260,36 @@ export type ListJobsApiV1AdminJobsGetResponses = {
 };
 
 export type ListJobsApiV1AdminJobsGetResponse = ListJobsApiV1AdminJobsGetResponses[keyof ListJobsApiV1AdminJobsGetResponses];
+
+export type GetJobApiV1AdminJobsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/jobs/{job_id}';
+};
+
+export type GetJobApiV1AdminJobsJobIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetJobApiV1AdminJobsJobIdGetError = GetJobApiV1AdminJobsJobIdGetErrors[keyof GetJobApiV1AdminJobsJobIdGetErrors];
+
+export type GetJobApiV1AdminJobsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ItemResponseJobSummary;
+};
+
+export type GetJobApiV1AdminJobsJobIdGetResponse = GetJobApiV1AdminJobsJobIdGetResponses[keyof GetJobApiV1AdminJobsJobIdGetResponses];
 
 export type ListPendingMappingsApiV1AdminMappingsPendingGetData = {
     body?: never;
@@ -2390,6 +2424,10 @@ export type TrainApiV1AdminModelsTrainPostResponses = {
      * Successful Response
      */
     200: ItemResponseModelSummary;
+    /**
+     * Entraînement en file
+     */
+    202: ItemResponseJobSummary;
 };
 
 export type TrainApiV1AdminModelsTrainPostResponse = TrainApiV1AdminModelsTrainPostResponses[keyof TrainApiV1AdminModelsTrainPostResponses];
@@ -2941,6 +2979,10 @@ export type ListOpportunitiesApiV1OpportunitiesGetData = {
          * Limit
          */
         limit?: number;
+        /**
+         * Eventid
+         */
+        eventId?: string | null;
         /**
          * Competition
          */

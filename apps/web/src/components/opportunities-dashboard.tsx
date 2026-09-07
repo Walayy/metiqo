@@ -313,13 +313,18 @@ function OddsCell({
   );
 }
 
-function Explanation({ opportunity }: Readonly<{ opportunity: Opportunity }>) {
+function Explanation({
+  opportunity,
+  referenceTime,
+}: Readonly<{ opportunity: Opportunity; referenceTime: string }>) {
   return (
     <details className="group max-w-64 text-xs">
       <summary className="cursor-pointer rounded font-semibold text-accent-strong outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
         Explication
       </summary>
-      <p className="mt-2 leading-5 text-ink-secondary">{describeOpportunity(opportunity)}</p>
+      <p className="mt-2 leading-5 text-ink-secondary">
+        {describeOpportunity(opportunity, referenceTime)}
+      </p>
     </details>
   );
 }
@@ -436,7 +441,7 @@ function OpportunityTable({
                       Ouvrir le signal
                     </Link>
                   </Button>
-                  <Explanation opportunity={opportunity} />
+                  <Explanation opportunity={opportunity} referenceTime={referenceTime} />
                 </div>
               </td>
             </tr>
@@ -531,7 +536,7 @@ function OpportunityCards({
                     Ouvrir le signal
                   </Link>
                 </Button>
-                <Explanation opportunity={opportunity} />
+                <Explanation opportunity={opportunity} referenceTime={referenceTime} />
               </div>
             </div>
           </CardContent>

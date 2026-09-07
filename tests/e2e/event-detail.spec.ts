@@ -6,9 +6,15 @@ test("opens a complete event sheet with an accessible odds summary", async ({ pa
   await expect(page.getByRole("heading", { level: 1, name: "Événements" })).toBeVisible();
   const eventCard = page.getByRole("region", { name: "Aurore 02 contre Bastion 02" });
   await expect(eventCard).toContainText("Best of 3");
+  const signalsResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname.endsWith("/api/v1/opportunities"),
+  );
   await eventCard.getByRole("link", { name: "Ouvrir la fiche" }).click();
 
   await expect(page).toHaveURL(/\/events\/[0-9a-f-]+$/);
+  expect(new URL((await signalsResponse).url()).searchParams.get("eventId")).toBe(
+    new URL(page.url()).pathname.split("/").at(-1),
+  );
   await expect(
     page.getByRole("heading", { level: 1, name: "Aurore 02 vs Bastion 02" }),
   ).toBeVisible();

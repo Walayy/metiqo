@@ -91,6 +91,7 @@ class PostgresOpportunityRepository:
         *,
         offset: int = 0,
         limit: int = 20,
+        event_id: UUID | None = None,
         competition: str | None = None,
         team: str | None = None,
         market: MarketType | None = None,
@@ -117,6 +118,8 @@ class PostgresOpportunityRepository:
             if grade is not None
             else statement.where(entries.c.grade.in_(_OPPORTUNITY_GRADES))
         )
+        if event_id is not None:
+            statement = statement.where(entries.c.canonical_event_id == event_id)
         if market is not None and market is not MarketType.MATCH_WINNER:
             statement = statement.where(false())
         for column, minimum in (

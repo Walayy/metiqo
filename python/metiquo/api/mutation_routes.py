@@ -62,7 +62,11 @@ def build_mutation_router(service: MockMutationService, clock: Clock) -> APIRout
     def sync(idempotency_key: IdempotencyKey) -> ItemResponse[IngestionRunSummary]:
         return ItemResponse(data=service.sync(idempotency_key), meta=_meta(clock))
 
-    @router.post("/admin/models/train", response_model=ItemResponse[ModelSummary])
+    @router.post(
+        "/admin/models/train",
+        response_model=ItemResponse[ModelSummary],
+        responses={202: {"model": ItemResponse[JobSummary], "description": "Entraînement en file"}},
+    )
     def train(
         request: TrainModelRequest,
         idempotency_key: IdempotencyKey,

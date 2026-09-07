@@ -9,7 +9,7 @@ const metadata = {
   freshness: "fresh",
 };
 
-function model(status: "candidate" | "champion") {
+function model(status: "candidate" | "champion" | "blocked") {
   return {
     algorithm: "hist_gradient_boosting",
     artifactHash: "b".repeat(64),
@@ -38,6 +38,141 @@ function pageResponse(data: readonly unknown[]) {
     page: { limit: 100, offset: 0, total: data.length },
   };
 }
+
+test("exposes a blocked registered version without offering promotion", async ({
+  page,
+}, testInfo) => {
+  await page.route("**/api/backend/api/v1/models?**", async (route) => {
+    await route.fulfill({ json: pageResponse([model("blocked")]) });
+  });
+  await page.route("**/api/backend/api/v1/backtests?**", async (route) => {
+    await route.fulfill({ json: pageResponse([]) });
+  });
+  await page.goto("/models");
+  const blocked = page.getByRole("region", { name: "Versions bloquées et retirées" });
+  await expect(blocked).toContainText(modelVersionId);
+  await expect(blocked).toContainText("blocked");
+  await expect(blocked.getByRole("button", { name: "Promouvoir" })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath("blocked-model.png"), fullPage: true });
+});
+
+test("reuses the training request identity after losing its acknowledgement", async ({ page }) => {
+  const keys: string[] = [];
+  await page.route("**/api/backend/api/v1/admin/models/train", async (route) => {
+    keys.push(route.request().headers()["idempotency-key"] ?? "");
+    if (keys.length === 1) {
+      await route.abort("connectionclosed");
+    } else {
+      await route.fulfill({ json: { data: model("candidate"), meta: metadata } });
+    }
+  });
+  await page.goto("/models");
+  const train = page.getByRole("button", { name: "Entraîner un candidat" });
+  await train.click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "La réponse à la demande" }),
+  ).toBeVisible();
+  expect(keys).toHaveLength(1);
+  await train.click();
+  await expect(page.getByRole("status").filter({ hasText: "Action terminée" })).toBeVisible();
+  expect(keys).toHaveLength(2);
+  expect(keys[0]).toBeTruthy();
+  expect(keys[1]).toBe(keys[0]);
+});
+
+for (const outcome of ["succeeded", "failed", "cancelled"] as const) {
+  test(`observes queued training until ${outcome} without claiming a model was promoted`, async ({
+    page,
+  }, testInfo) => {
+    const jobId = "61111111-2222-4333-8444-555555555555";
+    let state: "queued" | "running" | typeof outcome = "queued";
+    let posts = 0;
+    let reads = 0;
+    const job = () => ({
+      dataMode: "real",
+      jobId,
+      name: "model.train",
+      status: state,
+      errorCode: state === "failed" ? "INVALID_STATE" : null,
+      modelVersionId: state === "succeeded" ? modelVersionId : null,
+    });
+    await page.route("**/api/backend/api/v1/models?**", async (route) => {
+      await route.fulfill({
+        json: pageResponse(state === "succeeded" ? [model("candidate")] : []),
+      });
+    });
+    await page.route("**/api/backend/api/v1/backtests?**", async (route) => {
+      await route.fulfill({ json: pageResponse([]) });
+    });
+    await page.route("**/api/backend/api/v1/admin/models/train", async (route) => {
+      posts += 1;
+      await route.fulfill({ status: 202, json: { data: job(), meta: metadata } });
+    });
+    await page.route(`**/api/backend/api/v1/admin/jobs/${jobId}`, async (route) => {
+      reads += 1;
+      await route.fulfill({ json: { data: job(), meta: metadata } });
+    });
+    await page.goto("/models");
+    const train = page.getByRole("button", { name: "Entraîner un candidat" });
+    await train.click();
+    const progress = page.getByRole("status", { name: "Entraînement" });
+    await expect(progress).toContainText("En attente");
+    await expect(train).toBeDisabled();
+    state = "running";
+    await expect(progress).toContainText("En cours");
+    state = outcome;
+    if (outcome === "succeeded") {
+      await expect(progress).toContainText("Terminé");
+      await expect(progress).toContainText(modelVersionId);
+      await expect(
+        page
+          .getByRole("region", { name: "Challengers", exact: true })
+          .filter({ has: page.getByRole("region", { name: "Modèle real-game-winner-v42" }) }),
+      ).toContainText("real-game-winner-v42");
+      await expect(
+        page
+          .getByRole("region", { name: "Champions actifs" })
+          .getByRole("region", { name: /^Modèle / }),
+      ).toHaveCount(0);
+    } else {
+      await expect(progress).toContainText(
+        outcome === "failed" ? "Échec · INVALID_STATE" : "Annulé",
+      );
+    }
+    await expect(train).toBeEnabled();
+    expect(posts).toBe(1);
+    expect(reads).toBeGreaterThanOrEqual(3);
+    await page.screenshot({ path: testInfo.outputPath(`training-${outcome}.png`), fullPage: true });
+  });
+}
+
+test("hides a training status after a permission refusal and restores it only after a successful read", async ({
+  page,
+}) => {
+  const jobId = "71111111-2222-4333-8444-555555555555";
+  const job = { dataMode: "real", jobId, name: "model.train", status: "queued" };
+  let permission = 200;
+  await page.route("**/api/backend/api/v1/admin/models/train", async (route) => {
+    await route.fulfill({ status: 202, json: { data: job, meta: metadata } });
+  });
+  await page.route(`**/api/backend/api/v1/admin/jobs/${jobId}`, async (route) => {
+    await route.fulfill({
+      status: permission,
+      json: permission === 200 ? { data: job, meta: metadata } : { detail: "Accès refusé" },
+    });
+  });
+  await page.goto("/models");
+  await page.getByRole("button", { name: "Entraîner un candidat" }).click();
+  await expect(page.getByRole("status", { name: "Entraînement" })).toContainText("En attente");
+  permission = 403;
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Suivi de l’entraînement indisponible" }),
+  ).toBeVisible();
+  await expect(page.getByRole("status", { name: "Entraînement" })).toHaveCount(0);
+  permission = 200;
+  await page.getByRole("button", { name: "Réessayer le suivi" }).click();
+  await expect(page.getByRole("status", { name: "Entraînement" })).toContainText("En attente");
+});
 
 test("promotes a real candidate and keeps the exact prediction version visible", async ({
   page,

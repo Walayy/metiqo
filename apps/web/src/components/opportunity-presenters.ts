@@ -175,8 +175,25 @@ export function newerOddsSnapshot(
     : undefined;
 }
 
-export function describeOpportunity(opportunity: Opportunity) {
-  if (opportunity.quality.publishable) {
+export function describeOpportunity(
+  opportunity: Opportunity,
+  referenceTime = opportunity.meta.computedAt,
+) {
+  if (opportunity.event.status === "cancelled")
+    return "Match annulé : aucune entrée paper possible.";
+  if (opportunity.event.status === "finished")
+    return "Match terminé : aucune entrée paper possible.";
+  if (
+    opportunity.event.status === "live" ||
+    new Date(opportunity.event.startsAt).getTime() <= new Date(referenceTime).getTime()
+  ) {
+    return "Match déjà commencé : aucune entrée paper possible.";
+  }
+  if (opportunity.meta.freshness !== "fresh")
+    return "Fraîcheur insuffisante : actualiser les données avant toute décision.";
+  if (opportunity.market.status !== "open")
+    return "Marché fermé ou suspendu : aucune entrée paper possible.";
+  if (isAdmissible(opportunity, referenceTime)) {
     return "Signal admissible : les contrôles de qualité et de fraîcheur sont satisfaits.";
   }
 

@@ -1,4 +1,4 @@
-{$APP_PUBLIC_ORIGIN:https://localhost:8443} {
+{$METIQUO_GATEWAY_ADDRESS:https://localhost:8443} {
 	tls internal
 
 	handle /api/backend/* {

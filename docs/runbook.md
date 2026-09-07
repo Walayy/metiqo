@@ -29,8 +29,13 @@ docker compose @composeArgs up -d --wait api web gateway worker
 ```
 
 Le bootstrap demande le mot de passe sans écho et refuse un deuxième compte.
-Seul le port HTTPS du gateway est publié. Caddy utilise `APP_PUBLIC_ORIGIN` ;
-avec le TLS interne, l'appareil navigateur doit approuver son autorité locale.
+Seul le port HTTPS du gateway est publié. Caddy utilise le hostname de
+`APP_PUBLIC_ORIGIN` et écoute toujours sur le port interne 8443. Pour publier un
+autre port, exporter aussi `GATEWAY_HTTPS_PORT` dans le shell Compose : par exemple
+9443 avec `APP_PUBLIC_ORIGIN=https://localhost:9443`, ou 443 pour l'origine HTTPS
+sans port explicite. Cette variable Compose ne se place pas dans le fichier de
+configuration `.env` du backend. IPv6 conserve les crochets de l'adresse.
+Avec le TLS interne, l'appareil navigateur doit approuver son autorité locale.
 Le certificat public peut être lu avec
 `docker compose @composeArgs exec -T gateway cat /data/caddy/pki/authorities/local/root.crt`.
 La clé privée reste dans le volume `gateway_data`, accessible au seul service
@@ -50,6 +55,24 @@ Le bouton admin retourne immédiatement un reçu 202 pour un nouveau job réel.
 L'interface suit son état et affiche son run après exécution. Une réponse réseau
 perdue se relance avec la même clé d'idempotence ; le clic sur une nouvelle action
 crée une nouvelle clé. Les réponses 200 des anciens runs et du mock restent valides.
+
+L'entraînement réel suit le même principe : le bouton de `/models` crée un job
+`model.train`, consultable par `GET /api/v1/admin/jobs/{jobId}`. Le worker choisit
+le dernier dataset game winner versionné, produit les preuves walk-forward et
+enregistre un candidat ou un modèle bloqué. La promotion reste une décision
+distincte soumise au gate du registre. Une base sans dataset produit un échec
+observable ; elle ne reçoit aucun modèle de démonstration. Une annulation reçue
+avant la publication empêche l'enregistrement de la version.
+
+`make docker-build` associe les images Python à la révision Git complète uniquement
+si le checkout est propre, fichiers nouveaux compris. La release utilise
+`uv run --frozen python infra/scripts/build_images.py --require-clean` et refuse
+un checkout modifié. Sans cette provenance, le développement reste disponible
+mais l'entraînement réel retourne une indisponibilité explicite. L'API inscrit
+la révision dans la demande et le worker refuse un job destiné à une autre
+révision. Pour lancer ces processus directement hors Docker, `APP_CODE_COMMIT`
+doit désigner leur commit exact et propre. Un build Compose direct sans métadonnée
+de révision ne permet pas l'entraînement réel.
 
 Le worker écrit `raw`, `quarantine`, `models`, `backups` et son espace `work`.
 L'API ne monte les objets qu'en lecture. Le réseau `ingestion_egress` donne une

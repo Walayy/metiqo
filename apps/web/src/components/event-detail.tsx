@@ -218,8 +218,11 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
   });
   const opportunitiesQuery = useQuery({
     queryFn: ({ signal }) =>
-      fetchResource<PageResponseOpportunity>("/api/v1/opportunities?offset=0&limit=100", signal),
-    queryKey: ["opportunities", "event-detail"],
+      fetchResource<PageResponseOpportunity>(
+        `/api/v1/opportunities?eventId=${encodedEventId}&offset=0&limit=100`,
+        signal,
+      ),
+    queryKey: ["opportunities", "event-detail", eventId],
   });
 
   const isPending =
@@ -487,8 +490,8 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
               <div>
                 <h2 className="font-semibold">Paper trading uniquement</h2>
                 <p className="mt-1 max-w-2xl text-xs leading-5 text-ink-secondary">
-                  {signal ? describeOpportunity(signal) : "Aucun signal disponible."} Aucune mise
-                  réelle ni connexion bookmaker.
+                  {signal ? describeOpportunity(signal, referenceTime) : "Aucun signal disponible."}{" "}
+                  Aucune mise réelle ni connexion bookmaker.
                 </p>
               </div>
               {signal && isAdmissible(signal, referenceTime) ? (

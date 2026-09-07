@@ -108,6 +108,7 @@ def build_real_historical_router(
     def list_opportunities(
         offset: Offset = 0,
         limit: Limit = 20,
+        event_id: Annotated[UUID | None, Query(alias="eventId")] = None,
         competition: str | None = None,
         team: str | None = None,
         market: MarketType | None = None,
@@ -126,6 +127,7 @@ def build_real_historical_router(
         page = opportunity_repository.page(
             offset=offset,
             limit=limit,
+            event_id=event_id,
             competition=competition,
             team=team,
             market=market,

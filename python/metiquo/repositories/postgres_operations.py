@@ -16,7 +16,7 @@ _JOBS = """
       'dataMode', 'real', 'scope', scope, 'attempt', attempt, 'maxAttempts', max_attempts,
       'scheduledAt', scheduled_at, 'heartbeatAt', heartbeat_at, 'leaseExpiresAt', lease_expires_at,
       'errorCode', error_code, 'cancelRequested', cancel_requested, 'traceId', trace_id,
-      'runId', result->>'runId'
+      'runId', result->>'runId', 'modelVersionId', result->>'modelVersionId'
     ) AS document FROM ops.jobs
     UNION ALL
     SELECT id, updated_at, jsonb_build_object('jobId', id, 'name', name, 'status', status,

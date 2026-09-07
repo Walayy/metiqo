@@ -429,7 +429,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                   />
                 </dl>
                 <p className="text-sm leading-6 text-ink-secondary">
-                  {describeOpportunity(opportunity)}
+                  {describeOpportunity(opportunity, referenceTime)}
                 </p>
               </SectionCard>
 

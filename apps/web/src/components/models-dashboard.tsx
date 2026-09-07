@@ -6,7 +6,9 @@ import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
 
 import type {
   BacktestSummary,
+  ItemResponseJobSummary,
   ItemResponseModelSummary,
+  JobSummary,
   ModelSummary,
   PageResponseBacktestSummary,
   PageResponseModelSummary,
@@ -33,7 +35,7 @@ import {
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { formatDateTime, formatDecimal } from "./opportunity-presenters";
 
@@ -48,7 +50,10 @@ async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
 
 type ModelAction = { action: "train" } | { action: "promote" | "retire"; modelVersionId: string };
 
-async function runModelAction(request: ModelAction): Promise<ItemResponseModelSummary> {
+async function runModelAction(
+  request: ModelAction,
+  key: string,
+): Promise<ItemResponseModelSummary | ItemResponseJobSummary> {
   const endpoint =
     request.action === "train"
       ? "/api/v1/admin/models/train"
@@ -67,16 +72,18 @@ async function runModelAction(request: ModelAction): Promise<ItemResponseModelSu
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      "Idempotency-Key": crypto.randomUUID(),
+      "Idempotency-Key": key,
       "X-Metiquo-CSRF": "1",
     },
     method: "POST",
+  }).catch(() => {
+    throw new Error("La réponse à la demande n’a pas pu être confirmée. Vous pouvez réessayer.");
   });
   if (!response.ok) {
     const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(problem?.detail ?? "La décision sur le modèle a échoué");
   }
-  return (await response.json()) as ItemResponseModelSummary;
+  return (await response.json()) as ItemResponseModelSummary | ItemResponseJobSummary;
 }
 
 function Panel({
@@ -301,6 +308,35 @@ function BacktestTable({
 
 export function ModelsDashboard() {
   const queryClient = useQueryClient();
+  const trainingKey = useRef<string | null>(null);
+  const [submittedJob, setSubmittedJob] = useState<JobSummary | null>(null);
+  const trainingQuery = useQuery({
+    enabled: submittedJob !== null,
+    queryKey: ["training-job", submittedJob?.jobId],
+    queryFn: ({ signal }) =>
+      fetchResource<ItemResponseJobSummary>(
+        `/api/v1/admin/jobs/${submittedJob?.jobId ?? ""}`,
+        signal,
+      ),
+    refetchInterval: (query) => {
+      if (!canReadPrevious({ data: query.state.data ?? submittedJob, error: query.state.error })) {
+        return false;
+      }
+      const status = query.state.data?.data.status ?? submittedJob?.status;
+      return status === "queued" || status === "running" ? 2000 : false;
+    },
+  });
+  const observedTraining = trainingQuery.data?.data ?? submittedJob;
+  const training = canReadPrevious({ data: observedTraining, error: trainingQuery.error })
+    ? observedTraining
+    : null;
+  const trainingPending = training?.status === "queued" || training?.status === "running";
+  useEffect(() => {
+    if (training?.status === "succeeded") {
+      void queryClient.invalidateQueries({ queryKey: ["models"] });
+      void queryClient.invalidateQueries({ queryKey: ["backtests"] });
+    }
+  }, [queryClient, training?.jobId, training?.status]);
   const modelsQuery = useQuery({
     queryFn: ({ signal }) =>
       fetchResource<PageResponseModelSummary>("/api/v1/models?offset=0&limit=100", signal),
@@ -318,10 +354,24 @@ export function ModelsDashboard() {
   const backtests = backtestsQuery.data?.data ?? [];
   const champions = models.filter((model) => model.status === "champion");
   const challengers = models.filter((model) => model.status === "candidate");
+  const inactive = models.filter(
+    (model) => model.status === "blocked" || model.status === "retired",
+  );
   const referenceModel = champions.at(0) ?? models.at(0);
   const action = useMutation({
-    mutationFn: runModelAction,
-    onSuccess: async () => {
+    mutationFn: (request: ModelAction) =>
+      runModelAction(
+        request,
+        request.action === "train"
+          ? (trainingKey.current ??= crypto.randomUUID())
+          : crypto.randomUUID(),
+      ),
+    onSuccess: async (response, request) => {
+      if (request.action === "train") trainingKey.current = null;
+      if ("jobId" in response.data) {
+        setSubmittedJob(response.data);
+        return;
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["models"] }),
         queryClient.invalidateQueries({ queryKey: ["backtests"] }),
@@ -345,12 +395,12 @@ export function ModelsDashboard() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <Button
-            disabled={action.isPending}
+            disabled={action.isPending || trainingPending}
             onClick={() => {
               action.mutate({ action: "train" });
             }}
           >
-            {action.isPending ? (
+            {action.isPending || trainingPending ? (
               <RefreshCw
                 aria-hidden="true"
                 className="size-4 animate-spin motion-reduce:animate-none"
@@ -360,7 +410,7 @@ export function ModelsDashboard() {
             )}
             Entraîner un candidat
           </Button>
-          {action.data ? (
+          {action.data && "modelVersion" in action.data.data ? (
             <p
               aria-live="polite"
               className="text-sm text-emerald-700 dark:text-emerald-300"
@@ -368,6 +418,42 @@ export function ModelsDashboard() {
             >
               Action terminée · {action.data.data.status} · {action.data.data.modelVersion}
             </p>
+          ) : null}
+          {training ? (
+            <p
+              aria-label="Entraînement"
+              aria-live="polite"
+              className="text-sm text-ink-secondary"
+              role="status"
+            >
+              Entraînement ·{" "}
+              {
+                {
+                  queued: "En attente",
+                  running: "En cours",
+                  succeeded: "Terminé",
+                  failed: "Échec",
+                  dead: "Échec définitif",
+                  cancelled: "Annulé",
+                  idle: "Inactif",
+                }[training.status]
+              }
+              {training.errorCode ? ` · ${training.errorCode}` : ""}
+              {training.modelVersionId ? ` · ${training.modelVersionId}` : ""}
+            </p>
+          ) : null}
+          {trainingQuery.isError ? (
+            <div className="flex items-center gap-2 text-sm" role="alert">
+              Suivi de l’entraînement indisponible.
+              <Button
+                disabled={trainingQuery.isFetching}
+                onClick={() => void trainingQuery.refetch()}
+                size="small"
+                variant="outline"
+              >
+                Réessayer le suivi
+              </Button>
+            </div>
           ) : null}
           {action.error ? (
             <p className="text-sm text-red-700 dark:text-red-300" role="alert">
@@ -463,6 +549,24 @@ export function ModelsDashboard() {
                 </div>
               )}
             </Panel>
+
+            {inactive.length > 0 ? (
+              <Panel
+                icon={<CircleAlert className="size-4.5" />}
+                title="Versions bloquées et retirées"
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  {inactive.map((model) => (
+                    <ModelCard
+                      isPending={action.isPending}
+                      key={model.modelVersionId}
+                      model={model}
+                      onAction={action.mutate}
+                    />
+                  ))}
+                </div>
+              </Panel>
+            ) : null}
 
             {referenceModel ? (
               <Panel

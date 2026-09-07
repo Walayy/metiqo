@@ -73,6 +73,7 @@ class Settings(BaseSettings):
 
     app_env: AppEnvironment
     app_data_mode: DataMode
+    app_code_commit: str | None = Field(default=None, pattern=r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
     database_url: SecretStr
     database_url_file: Path | None = Field(default=None, repr=False, exclude=True)
     oe_google_drive_bearer_file: Path | None = Field(default=None, repr=False, exclude=True)
@@ -157,6 +158,11 @@ class Settings(BaseSettings):
     paper_settlement_delay_seconds: int = Field(default=300, ge=0)
     paper_settlement_max_attempts: int = Field(default=3, ge=1, le=5)
     paper_closing_max_age_seconds: int = Field(default=90, gt=0)
+
+    @field_validator("app_code_commit", mode="before")
+    @classmethod
+    def empty_build_revision(cls, value: object) -> object:
+        return None if value == "" else value
 
     @model_validator(mode="before")
     @classmethod

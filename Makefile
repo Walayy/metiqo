@@ -36,9 +36,9 @@ help:
 	@echo "  make model-train MARKET=game_winner [DATASET=<uuid>] [CODE_COMMIT=<hash>]"
 	@echo "  make backup JSON=1  Sauvegarde DB, raw, modèles et quarantaine en mode réel"
 
-up:
-	docker compose --profile mock run --rm --no-deps --build mock-mode-check
-	docker compose --profile mock up -d --build --wait --wait-timeout 120 postgres api worker web
+up: docker-build
+	docker compose --profile mock run --rm --no-deps mock-mode-check
+	docker compose --profile mock up -d --wait --wait-timeout 120 postgres api worker web
 
 down:
 	docker compose --profile "*" down --remove-orphans
@@ -47,8 +47,7 @@ db-migrate:
 	docker compose exec -T api alembic upgrade head
 
 docker-build:
-	docker compose config --quiet
-	docker compose --profile mock --profile production build
+	uv run --frozen python infra/scripts/build_images.py
 
 mock-seed:
 	uv run --frozen python infra/scripts/seed_mock_demo.py --check
@@ -104,6 +103,10 @@ test-ops:
 	$(if $(strip $(TEST_DATABASE_URL)),,$(error TEST_DATABASE_URL est requis pour le gate exploitation))
 	$(if $(strip $(TEST_PG_CONTAINER)),,$(error TEST_PG_CONTAINER est requis pour les backups réels))
 	$(if $(strip $(TEST_OPS_IMAGE)),,$(error TEST_OPS_IMAGE est requis pour les tests du worker packagé))
+	$(if $(strip $(TEST_BACKUP_IMAGE)),,$(error TEST_BACKUP_IMAGE est requis pour la restauration packagée))
+	$(if $(strip $(TEST_SECURITY_IMAGE)),,$(error TEST_SECURITY_IMAGE est requis pour les permissions API))
+	$(if $(strip $(TEST_SECURITY_WEB_IMAGE)),,$(error TEST_SECURITY_WEB_IMAGE est requis pour le web packagé))
+	$(if $(strip $(TEST_SECURITY_GATEWAY_IMAGE)),,$(error TEST_SECURITY_GATEWAY_IMAGE est requis pour TLS))
 	uv run --frozen python -m pytest tests/worker tests/operations tests/api/test_lifespan.py tests/integration/test_ops_gate.py tests/integration/test_ops_containers.py tests/integration/test_migration_dry_run.py tests/integration/test_job_queue.py tests/integration/test_job_recovery.py tests/integration/test_business_locks.py tests/integration/test_scheduled_sync.py tests/integration/test_alerts.py tests/integration/test_backups.py tests/integration/test_restore.py tests/integration/test_backup_container.py tests/integration/test_security_gateway.py tests/integration/test_secret_containers.py tests/integration/test_ops_audit.py tests/integration/test_system_observability.py -q
 
 scan-security:
