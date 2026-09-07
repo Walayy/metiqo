@@ -29,6 +29,7 @@ class BackupOperationalHealth(ContractModel):
     status: Literal["not_configured", "missing", "fresh", "stale", "failed"]
     last_success_at: UtcDateTime | None = Field(default=None, alias="lastSuccessAt")
     last_failure_at: UtcDateTime | None = Field(default=None, alias="lastFailureAt")
+    error_code: str | None = Field(default=None, alias="errorCode")
 
 
 class ApiProcessMetrics(ContractModel):

@@ -25,6 +25,8 @@ class SchedulePolicy:
     report_seconds: int = 300
     currency: str = "EUR"
     alerts_seconds: int = 300
+    backup_seconds: int = 86400
+    backups_enabled: bool = True
 
     def __post_init__(self) -> None:
         if not 2014 <= self.current_year <= 2200 or not 1 <= self.closed_months <= 12:
@@ -36,6 +38,7 @@ class SchedulePolicy:
                 self.settlement_seconds,
                 self.report_seconds,
                 self.alerts_seconds,
+                self.backup_seconds,
             )
             < 60
         ):
@@ -52,6 +55,8 @@ class SchedulePolicy:
             settings.paper_report_interval_seconds,
             settings.paper_bankroll_currency,
             settings.alert_interval_seconds,
+            settings.backup_interval_seconds,
+            settings.backup_enabled,
         )
 
 
@@ -101,6 +106,8 @@ def planned_jobs(
             ),
         )
     )
+    if policy.backups_enabled:
+        jobs.append(PlannedJob("ops.backup", "ops:backup", {}, slot(policy.backup_seconds)))
     return tuple(jobs)
 
 

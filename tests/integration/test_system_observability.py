@@ -77,7 +77,7 @@ def test_status_distinguishes_source_failure_reads_and_measured_job_metrics(
     assert operations["metrics"]["measuredJobCount"] == 1
     assert operations["metrics"]["signals"]["VALUE"] >= 1
     assert operations["metrics"]["api"]["requestCount"] >= 2
-    assert operations["backups"]["status"] == "not_configured"
+    assert operations["backups"]["status"] == "missing"
     assert postgresql_url not in response.text
     future_app = create_app(
         settings=settings,

@@ -80,7 +80,11 @@ jobs:
         run: |
           uv python install 3.13.14
           uv sync --frozen
+      - name: Installer le chiffrement des sauvegardes
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y age
       - name: Tester les migrations
+        env:
+          TEST_PG_CONTAINER: ${{ job.services.postgres.id }}
         run: make test-migrations
 
   e2e:

@@ -6,7 +6,7 @@ INGESTION_INTEGRATION_TESTS := tests/integration/test_backfill.py tests/integrat
 OE_JSON_FLAG = $(if $(filter 1 true yes,$(JSON)),--json,)
 OE_FIXTURE_FLAG = $(if $(strip $(FIXTURE)),--fixture $(FIXTURE),)
 
-.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-leakage test-migrations test-ingestion test-e2e openapi openapi-check check $(OE_TARGETS)
+.PHONY: help up down db-migrate docker-build mock-seed mock-demo format lint typecheck test test-leakage test-migrations test-ingestion test-e2e openapi openapi-check check backup $(OE_TARGETS)
 
 help:
 	@echo "Metiquo - commandes développeur"
@@ -34,6 +34,7 @@ help:
 	@echo "  make oe-rebuild-canonical FROM=2025-01-01"
 	@echo "  make features-rebuild FROM=2025-01-01 [CODE_COMMIT=<hash>]"
 	@echo "  make model-train MARKET=game_winner [DATASET=<uuid>] [CODE_COMMIT=<hash>]"
+	@echo "  make backup JSON=1  Sauvegarde DB, raw, modèles et quarantaine en mode réel"
 
 up:
 	docker compose --profile mock run --rm --no-deps --build mock-mode-check
@@ -90,6 +91,10 @@ test-ingestion:
 	uv run --frozen pytest tests/ingestion $(INGESTION_INTEGRATION_TESTS) -vv
 
 .PHONY: test-value value-evaluate test-paper paper-settle paper-report paper-gate
+.PHONY: backup
+backup:
+	uv run --frozen oe backup $(OE_JSON_FLAG)
+
 paper-gate:
 	uv run --frozen python infra/scripts/demo_paper_gate.py --output $(or $(OUTPUT),data/paper-gate-example.json)
 

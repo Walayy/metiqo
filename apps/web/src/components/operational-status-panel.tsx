@@ -58,6 +58,7 @@ function Measurements({ operations }: Readonly<{ operations: OperationalStatus }
     {
       name: "Sauvegardes",
       status: labels[backups.status],
+      reason: backups.errorCode,
       detail: backups.lastSuccessAt
         ? `Dernier succès le ${formatDateTime(backups.lastSuccessAt)}`
         : "Aucun succès enregistré",

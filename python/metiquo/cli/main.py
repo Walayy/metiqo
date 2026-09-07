@@ -41,6 +41,8 @@ from metiquo.models import (
     ModelArtifactStore,
     WalkForwardConfig,
 )
+from metiquo.operations.backup import BackupService
+from metiquo.operations.backup_tools import BackupError
 from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
 from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
@@ -161,6 +163,8 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--currency", required=True)
     _machine_output(report)
     jobs = commands.add_parser("jobs", help="consulter, annuler ou relancer les jobs")
+    backup = commands.add_parser("backup", help="sauvegarder la base et les objets immuables")
+    _machine_output(backup)
     job_commands = jobs.add_subparsers(dest="job_action", required=True)
     for action in ("show", "cancel", "rerun"):
         operation = job_commands.add_parser(action)
@@ -201,7 +205,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "runId": str(error.run_id),
         }
         exit_code = ExitCode.SOURCE_FAILURE
-    except (CliError, ConfigurationError, ValueError, BusinessError) as error:
+    except (CliError, ConfigurationError, ValueError, BusinessError, BackupError) as error:
         document = {
             "ok": False,
             "errorCode": getattr(error, "code", "INVALID_CONFIGURATION"),
@@ -224,6 +228,15 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "backup":
+        backup_result = BackupService(engine, settings).run()
+        return {
+            "command": "backup",
+            "backupId": str(backup_result.backup_id),
+            "path": str(backup_result.path),
+            "copiedObjects": backup_result.copied_objects,
+            "warnings": list(backup_result.warnings),
+        }, ExitCode.SUCCESS
     if arguments.command == "jobs":
         if settings.app_data_mode is not DataMode.REAL:
             raise CliError(

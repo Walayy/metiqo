@@ -8,7 +8,6 @@ from metiquo.config import Settings
 from metiquo.contracts.enums import FreshnessStatus
 from metiquo.contracts.system import (
     ApiProcessMetrics,
-    BackupOperationalHealth,
     ModelOperationalHealth,
     OperationalMetrics,
     OperationalStatus,
@@ -21,6 +20,7 @@ from metiquo.ingestion.freshness import (
     FreshnessService,
     PostgresFreshnessRepository,
 )
+from metiquo.operations.backup_health import backup_health
 
 
 class OperationalStatusService:
@@ -134,13 +134,14 @@ class OperationalStatusService:
             backlog = connection.scalar(
                 text("SELECT count(*) FROM odds.mapping_reviews WHERE status = 'pending'")
             )
+            backups = backup_health(connection, self.settings, now)
         return OperationalStatus(
             reads_available=readable,
             source=source,
             model=model,
             mapping_backlog=int(backlog or 0),
             job_counts=jobs,
-            backups=BackupOperationalHealth(status="not_configured"),
+            backups=backups,
             metrics=OperationalMetrics(
                 mean_job_duration_seconds=float(duration.mean)
                 if duration.mean is not None

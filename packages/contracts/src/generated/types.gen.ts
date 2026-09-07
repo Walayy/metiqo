@@ -178,6 +178,10 @@ export type BacktestSummary = {
  */
 export type BackupOperationalHealth = {
     /**
+     * Errorcode
+     */
+    errorCode?: string | null;
+    /**
      * Lastfailureat
      */
     lastFailureAt?: string | null;

@@ -10,6 +10,29 @@ from sqlalchemy.orm import Mapped, mapped_column
 from metiquo.db.base import Base, UtcDateTime
 
 
+class BackupRunRecord(Base):
+    __tablename__ = "backup_runs"
+    __table_args__ = (
+        CheckConstraint("status IN ('running','succeeded','failed')", name="status"),
+        CheckConstraint("(status = 'running') = (finished_at IS NULL)", name="finished_state"),
+        CheckConstraint("finished_at IS NULL OR finished_at >= started_at", name="times"),
+        CheckConstraint("sha256 IS NULL OR sha256 ~ '^[0-9a-f]{64}$'", name="sha256"),
+        CheckConstraint("status <> 'succeeded' OR sha256 IS NOT NULL", name="success_proof"),
+        Index("ix_backup_runs_repository", "repository_fingerprint", "started_at"),
+        {"schema": "ops"},
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    repository_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    object_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    sha256: Mapped[str | None] = mapped_column(String(64))
+    encrypted: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    retained: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+
+
 class AlertStateRecord(Base):
     __tablename__ = "alert_states"
     __table_args__ = (

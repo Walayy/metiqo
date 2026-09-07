@@ -11,7 +11,13 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 CORE_SERVICES = {"postgres", "volume-init", "api", "worker", "web"}
 FORBIDDEN_SERVICES = {"airflow", "celery", "feature-store", "kafka", "redis", "spark"}
-PERSISTENT_VOLUMES = {"postgres_data", "raw_snapshots", "model_artifacts", "backups"}
+PERSISTENT_VOLUMES = {
+    "postgres_data",
+    "raw_snapshots",
+    "quarantine_snapshots",
+    "model_artifacts",
+    "backups",
+}
 
 
 def compose_configuration() -> dict[str, object]:

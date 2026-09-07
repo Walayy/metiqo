@@ -94,6 +94,16 @@ class Settings(BaseSettings):
     alert_interval_seconds: int = Field(default=300, ge=60)
     alert_cooldown_seconds: int = Field(default=21600, ge=60)
     alert_mapping_backlog_limit: int = Field(default=10, ge=1)
+    backup_enabled: bool = True
+    backup_root: Path | None = None
+    backup_interval_seconds: int = Field(default=86400, ge=3600)
+    backup_freshness_sla_seconds: int = Field(default=129600, ge=3600)
+    backup_retention_count: int = Field(default=7, ge=1, le=3650)
+    backup_timeout_seconds: int = Field(default=3600, ge=1, le=86400)
+    backup_external: bool = False
+    backup_age_recipient: str | None = None
+    backup_age_binary: str = "age"
+    backup_pg_dump_binary: str = "pg_dump"
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)

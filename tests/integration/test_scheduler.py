@@ -29,17 +29,17 @@ def test_two_schedulers_create_one_active_job_per_year_and_coalesce_missed_slots
         list(pool.map(lambda _: scheduler.tick(), range(2)))
     with engine.connect() as connection:
         rows = connection.execute(select(JobRecord.job_type, JobRecord.scope)).all()
-    assert len(rows) == 6
+    assert len(rows) == 7
     assert len([row for row in rows if row.scope == "oe:oracles_elixir:2026"]) == 1
     later = PostgresJobQueue(engine, clock=FixedClock(UtcInstant(NOW + timedelta(days=8))))
     PostgresScheduler(later, SchedulePolicy(current_year=2026)).tick()
     with engine.connect() as connection:
-        assert connection.scalar(select(func.count()).select_from(JobRecord)) == 6
-    for _ in range(6):
+        assert connection.scalar(select(func.count()).select_from(JobRecord)) == 7
+    for _ in range(7):
         claimed = later.claim("cleanup")
         assert claimed is not None
         later.complete(claimed, {})
     PostgresScheduler(later, SchedulePolicy(current_year=2026)).tick()
     with engine.connect() as connection:
-        assert connection.scalar(select(func.count()).select_from(JobRecord)) == 10
+        assert connection.scalar(select(func.count()).select_from(JobRecord)) == 12
     engine.dispose()

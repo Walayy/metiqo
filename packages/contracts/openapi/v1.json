@@ -315,6 +315,17 @@
       "BackupOperationalHealth": {
         "additionalProperties": false,
         "properties": {
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
           "lastFailureAt": {
             "anyOf": [
               {

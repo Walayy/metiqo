@@ -10,6 +10,17 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 COPY --from=uv /uv /uvx /bin/
 
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y ca-certificates curl age \
+    && mkdir -p /usr/share/postgresql-common/pgdg \
+    && curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+       -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+       > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install --no-install-recommends -y postgresql-client-18 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --gid 10001 metiquo \
     && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin metiquo
 

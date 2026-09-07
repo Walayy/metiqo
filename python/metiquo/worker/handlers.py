@@ -11,6 +11,7 @@ from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.ingestion.freshness import FreshnessPolicy
 from metiquo.ingestion.operations import refresh_catalog, verify_snapshot
 from metiquo.ingestion.sync import OracleElixirYearSync, SyncFailed
+from metiquo.operations.backup import BackupService
 from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
 from metiquo.worker.alerts import PostgresAlertMonitor
@@ -25,6 +26,25 @@ class AlertHandler:
         context.cancellation.raise_if_cancelled()
         notices = PostgresAlertMonitor(self.engine, self.settings, context.clock).check()
         return {"alertEvents": [str(identity) for identity in notices]}
+
+
+class BackupHandler:
+    def __init__(self, engine: Engine, settings: Settings) -> None:
+        self.engine, self.settings = engine, settings
+
+    def handle(self, context: JobContext) -> dict[str, object]:
+        context.cancellation.raise_if_cancelled()
+        result = BackupService(
+            self.engine,
+            self.settings,
+            clock=context.clock,
+            checkpoint=context.cancellation.raise_if_cancelled,
+        ).run()
+        return {
+            "backupId": str(result.backup_id),
+            "copiedObjects": result.copied_objects,
+            "warnings": list(result.warnings),
+        }
 
 
 class OracleCatalogHandler:
@@ -139,6 +159,7 @@ class PaperSettlementHandler:
 def default_handlers(engine: Engine, settings: Settings) -> dict[str, JobHandler]:
     return {
         "ops.alerts": AlertHandler(engine, settings),
+        "ops.backup": BackupHandler(engine, settings),
         "oe.catalog": OracleCatalogHandler(engine, settings),
         "oe.sync": OracleSyncHandler(engine, settings),
         "oe.audit": OracleSyncHandler(engine, settings),

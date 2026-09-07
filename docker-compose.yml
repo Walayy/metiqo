@@ -28,6 +28,14 @@ x-app-environment: &app-environment
   ALERT_INTERVAL_SECONDS: ${ALERT_INTERVAL_SECONDS:-300}
   ALERT_COOLDOWN_SECONDS: ${ALERT_COOLDOWN_SECONDS:-21600}
   ALERT_MAPPING_BACKLOG_LIMIT: ${ALERT_MAPPING_BACKLOG_LIMIT:-10}
+  BACKUP_ENABLED: ${BACKUP_ENABLED:-true}
+  BACKUP_ROOT: ${BACKUP_ROOT:-/data/backups}
+  BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+  BACKUP_FRESHNESS_SLA_SECONDS: ${BACKUP_FRESHNESS_SLA_SECONDS:-129600}
+  BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-7}
+  BACKUP_TIMEOUT_SECONDS: ${BACKUP_TIMEOUT_SECONDS:-3600}
+  BACKUP_EXTERNAL: ${BACKUP_EXTERNAL:-false}
+  BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}
   OE_SOURCE_CATALOG_PATH: ${OE_SOURCE_CATALOG_PATH:-/app/config/oracles_elixir_sources.yml}
   OE_CONNECT_TIMEOUT_SECONDS: ${OE_CONNECT_TIMEOUT_SECONDS:-10}
   OE_READ_TIMEOUT_SECONDS: ${OE_READ_TIMEOUT_SECONDS:-60}
@@ -76,11 +84,12 @@ services:
     command:
       - /bin/sh
       - -ec
-      - chown -R 10001:10001 /data/raw /data/models /data/backups
+      - chown -R 10001:10001 /data/raw /data/models /data/backups /data/quarantine
     volumes:
       - raw_snapshots:/data/raw
       - model_artifacts:/data/models
       - backups:/data/backups
+      - quarantine_snapshots:/data/quarantine
     network_mode: none
     restart: "no"
 
@@ -138,6 +147,7 @@ services:
       - /tmp:size=16m,mode=1777
     volumes:
       - raw_snapshots:/data/raw:ro
+      - quarantine_snapshots:/data/quarantine:ro
       - model_artifacts:/data/models:ro
     networks:
       - backend
@@ -166,6 +176,7 @@ services:
       - /tmp:size=16m,mode=1777
     volumes:
       - raw_snapshots:/data/raw
+      - quarantine_snapshots:/data/quarantine
       - model_artifacts:/data/models
       - backups:/data/backups
     networks:
@@ -265,4 +276,5 @@ volumes:
   raw_snapshots:
   model_artifacts:
   backups:
+  quarantine_snapshots:
   minio_data:
