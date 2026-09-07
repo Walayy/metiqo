@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import gzip
 import hashlib
 import io
@@ -22,6 +23,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Engine, Table, create_engine, func, insert, select
 
+from metiquo.auth.service import AuthError, OwnerAuthService
 from metiquo.canonical.rosters import CanonicalRosterBuilder
 from metiquo.canonical.series import CanonicalSeriesBuilder
 from metiquo.config import ConfigurationError, ObjectStoreBackend, Settings, load_settings
@@ -177,6 +179,13 @@ def build_parser() -> argparse.ArgumentParser:
     restore.add_argument("--target-objects", type=Path, required=True)
     restore.add_argument("--identity", type=Path)
     _machine_output(restore)
+    auth = commands.add_parser("auth", help="préparer ou renouveler les identifiants Owner")
+    auth_commands = auth.add_subparsers(dest="auth_action", required=True)
+    for action in ("bootstrap-owner", "reset-password"):
+        operation = auth_commands.add_parser(action)
+        operation.add_argument("--username", required=True)
+        operation.add_argument("--password-file", type=Path)
+        _machine_output(operation)
     job_commands = jobs.add_subparsers(dest="job_action", required=True)
     for action in ("show", "cancel", "rerun"):
         operation = job_commands.add_parser(action)
@@ -217,7 +226,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             "runId": str(error.run_id),
         }
         exit_code = ExitCode.SOURCE_FAILURE
-    except (CliError, ConfigurationError, ValueError, BusinessError, BackupError) as error:
+    except (
+        CliError,
+        ConfigurationError,
+        ValueError,
+        BusinessError,
+        BackupError,
+        AuthError,
+    ) as error:
         document = {
             "ok": False,
             "errorCode": getattr(error, "code", "INVALID_CONFIGURATION"),
@@ -240,6 +256,35 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "auth":
+        if arguments.password_file is not None:
+            if (
+                not arguments.password_file.is_file()
+                or arguments.password_file.stat().st_size > 4096
+            ):
+                raise AuthError("AUTH_PASSWORD_FILE_INVALID", 400)
+            password = (
+                arguments.password_file.read_text(encoding="utf-8")
+                .removesuffix("\n")
+                .removesuffix("\r")
+            )
+        else:
+            if not sys.stdin.isatty():
+                raise AuthError("AUTH_PASSWORD_INPUT_REQUIRED", 400)
+            password = getpass.getpass("Mot de passe Owner : ")
+            if password != getpass.getpass("Confirmer le mot de passe : "):
+                raise AuthError("AUTH_PASSWORD_CONFIRMATION_MISMATCH", 400)
+        auth_service = OwnerAuthService(engine, settings)
+        owner_id = (
+            auth_service.bootstrap(arguments.username, password)
+            if arguments.auth_action == "bootstrap-owner"
+            else auth_service.reset_password(arguments.username, password)
+        )
+        return {
+            "command": "auth",
+            "action": arguments.auth_action,
+            "ownerId": str(owner_id),
+        }, ExitCode.SUCCESS
     if arguments.command == "restore":
         restored = RestoreService(engine, settings).run(
             RestoreRequest(

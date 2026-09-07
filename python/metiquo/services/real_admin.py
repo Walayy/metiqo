@@ -20,6 +20,7 @@ from metiquo.db.ml_models import ModelActionAudit as ModelActionAuditRow
 from metiquo.db.ml_models import ModelActionJob as ModelActionJobRow
 from metiquo.db.ml_models import ModelVersion as ModelVersionRow
 from metiquo.db.raw_models import IngestionRun
+from metiquo.foundation.audit import mutation_actor
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.ingestion.freshness import FreshDataRequired, FreshnessPolicy
@@ -166,7 +167,7 @@ class RealAdminMutationService:
             evidence = self._promotion_evidence(model_version_id, idempotency_key)
             ModelLifecycle(engine=self.engine, clock=self.clock).promote(
                 model_version_id,
-                actor="api-admin",
+                actor=mutation_actor("api-admin"),
                 reason=reason,
                 evidence=evidence,
             )
@@ -198,7 +199,7 @@ class RealAdminMutationService:
         try:
             ModelLifecycle(engine=self.engine, clock=self.clock).retire(
                 model_version_id,
-                actor="api-admin",
+                actor=mutation_actor("api-admin"),
                 reason=reason,
             )
             return self._succeed_model_job(job, model_version_id)

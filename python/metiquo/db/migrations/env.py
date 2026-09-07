@@ -6,6 +6,7 @@ from alembic import context
 from sqlalchemy import Connection, create_engine, pool
 
 from metiquo.config import load_settings
+from metiquo.db import auth_models as _auth_models  # noqa: F401
 from metiquo.db import core_models as _core_models  # noqa: F401
 from metiquo.db import feature_models as _feature_models  # noqa: F401
 from metiquo.db import mapping_models as _mapping_models  # noqa: F401

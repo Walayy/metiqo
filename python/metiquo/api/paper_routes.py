@@ -21,6 +21,7 @@ from metiquo.api.mutation_routes import IdempotencyKey
 from metiquo.config import Settings
 from metiquo.contracts import ContractMetadata, PaperBet
 from metiquo.contracts.enums import DataMode, FreshnessStatus, PaperBetStatus
+from metiquo.foundation.audit import mutation_actor
 from metiquo.foundation.errors import BusinessError, ErrorCode
 from metiquo.foundation.time import Clock
 from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
@@ -159,7 +160,7 @@ def build_real_paper_router(engine: Engine, settings: Settings, clock: Clock) ->
             request.signal_id,
             request.stake_amount,
             request.currency,
-            actor=request.actor,
+            actor=mutation_actor(request.actor),
         )
         return ItemResponse(data=bet, meta=_meta(clock, DataMode.REAL))
 
@@ -174,7 +175,7 @@ def build_real_paper_router(engine: Engine, settings: Settings, clock: Clock) ->
         bet = settlement.settle(
             request.paper_bet_id,
             key=idempotency_key,
-            actor=request.actor,
+            actor=mutation_actor(request.actor),
             correction_reason=request.correction_reason,
             request_reason=request.reason,
         )

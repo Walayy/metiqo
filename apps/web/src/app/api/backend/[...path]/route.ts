@@ -38,6 +38,18 @@ async function forward(request: Request, context: ProxyRouteContext) {
     const idempotencyKey = request.headers.get("idempotency-key");
     if (contentType) headers.set("content-type", contentType);
     if (idempotencyKey) headers.set("idempotency-key", idempotencyKey);
+    for (const name of ["origin", "x-csrf-token", "sec-fetch-site"]) {
+      const value = request.headers.get(name);
+      if (value) headers.set(name, value);
+    }
+    const cookies = request.headers
+      .get("cookie")
+      ?.split(";")
+      .filter((cookie) =>
+        ["metiquo_owner", "__Host-metiquo_owner"].includes(cookie.trim().split("=")[0] ?? ""),
+      )
+      .join(";");
+    if (cookies) headers.set("cookie", cookies);
     const body = request.method === "GET" ? "" : await request.text();
     const upstreamResponse = await fetch(upstreamUrl, {
       ...(body.length > 0 ? { body } : {}),
@@ -51,6 +63,11 @@ async function forward(request: Request, context: ProxyRouteContext) {
     if (responseContentType) {
       responseHeaders.set("content-type", responseContentType);
     }
+    for (const cookie of upstreamResponse.headers.getSetCookie()) {
+      responseHeaders.append("set-cookie", cookie);
+    }
+    const trace = upstreamResponse.headers.get("x-trace-id");
+    if (trace) responseHeaders.set("x-trace-id", trace);
 
     return new Response(upstreamResponse.body, {
       headers: responseHeaders,

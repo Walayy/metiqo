@@ -38,11 +38,57 @@ détectable par la configuration applicative ; il doit être déclaré avec l'or
 et l'adresse d'exposition correspondantes. Ne pas conserver une déclaration
 loopback pour une application rendue accessible depuis un réseau public.
 
-`AUTH_MODE=owner` est la voie prévue pour l'exposition réseau authentifiée. Au
-commit SEC-001, l'API refuse encore ce mode avec `AUTH_OWNER_UNAVAILABLE` : il ne
-faut pas annoncer une protection active avant le raccordement des sessions par
-SEC-002. Cette restriction est volontairement fermée en cas d'absence du service.
+`AUTH_MODE=owner` exige une session sur les lectures privées et les mutations.
+HTTPS est obligatoire hors loopback, y compris sur un réseau privé. L'API protège
+directement ses routes ; le proxy Next transmet uniquement le cookie Owner.
 
 Les tests couvrent la configuration, sa réévaluation par la fabrique API, le
 refus d'un vrai démarrage du serveur API et la correspondance entre adresses publiées
 et paramètres validés dans Compose.
+
+## Bootstrap et sessions Owner
+
+Appliquer les migrations, puis créer le compte unique depuis un terminal privé :
+
+```sh
+uv run --frozen oe auth bootstrap-owner --username owner
+```
+
+Le mot de passe est saisi deux fois sans écho, jamais en argument de commande.
+Le minimum est 15 caractères, le maximum 1024 octets UTF-8. Pour un lancement
+automatisé, `--password-file /run/secrets/owner_password` lit un fichier serveur
+protégé ; ne pas créer ce fichier dans le dépôt. Le bootstrap refuse un deuxième
+compte. Il peut précéder l'activation de `AUTH_MODE=owner`.
+
+Les mots de passe utilisent Argon2id via `argon2-cffi==25.1.0`, bibliothèque
+maintenue, avec ses paramètres par défaut (64 Mio, 3 passes, parallélisme 4).
+Un login réussi réévalue le besoin de rehash. Voir la
+[politique de paramètres officielle](https://argon2-cffi.readthedocs.io/en/stable/parameters.html).
+Seules les empreintes sont stockées ; elles sont exclues des références d'audit.
+
+La session contient 256 bits aléatoires. Le serveur conserve seulement son SHA-256 ;
+le navigateur reçoit un cookie HTTP-only, SameSite=Lax, Path=/, sans Domain et
+Secure sous HTTPS (`__Host-metiquo_owner`). Le cookie HTTP `metiquo_owner` est
+réservé au loopback. Aucune valeur de session n'est renvoyée dans le JSON.
+La connexion renouvelle la session précédente ; la déconnexion la révoque.
+
+La politique par défaut expire après 30 minutes sans activité ou 12 heures
+absolues, et effectue une rotation après 15 minutes. La rotation conserve
+l'expiration absolue. Le cookie précédent dispose de 10 secondes pour les requêtes
+déjà simultanées ; une seule rotation peut gagner. Les réglages
+`AUTH_SESSION_IDLE_SECONDS`, `AUTH_SESSION_ABSOLUTE_SECONDS`,
+`AUTH_SESSION_ROTATION_SECONDS` et `AUTH_SESSION_GRACE_SECONDS` sont validés.
+
+```sh
+uv run --frozen oe auth reset-password --username owner
+```
+
+La réinitialisation invalide toutes les sessions actives. Les connexions, échecs,
+rotations, déconnexions et réinitialisations sont audités sans secrets. Les actions
+connectées utilisent l'identité serveur `owner:<uuid>` dans l'audit, même si le
+client fournit un autre acteur. L'historique révoqué ne peut être réactivé ni
+supprimé par les commandes applicatives.
+
+La preuve navigateur utilise un compte de fixture dans une base de test et couvre
+bootstrap CLI, login erroné, login réussi, lecture protégée et déconnexion via Next.
+Les protections HTTP complémentaires sont suivies par SEC-003 avant le gate P8.

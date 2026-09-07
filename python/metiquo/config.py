@@ -77,6 +77,10 @@ class Settings(BaseSettings):
     app_publish_host: str = "127.0.0.1"
     app_public_origin: str = "http://localhost:3000"
     auth_private_networks: tuple[str, ...] = ()
+    auth_session_idle_seconds: int = Field(default=1800, ge=60, le=86400)
+    auth_session_absolute_seconds: int = Field(default=43200, ge=300, le=604800)
+    auth_session_rotation_seconds: int = Field(default=900, ge=60, le=86400)
+    auth_session_grace_seconds: int = Field(default=10, ge=0, le=30)
 
     object_store_backend: ObjectStoreBackend = ObjectStoreBackend.FILESYSTEM
     object_store_root: Path = Path("/data")
@@ -174,9 +178,21 @@ class Settings(BaseSettings):
         return self
 
     def check_auth_boundary(self) -> None:
+        if self.auth_session_rotation_seconds >= self.auth_session_idle_seconds:
+            raise ValueError("La rotation de session doit précéder son expiration inactive")
+        if self.auth_session_idle_seconds > self.auth_session_absolute_seconds:
+            raise ValueError("La durée inactive ne doit pas dépasser la durée absolue")
         networks = private_networks(self.auth_private_networks)
         literal_address(self.app_publish_host)
         host = origin_host(self.app_public_origin)
+        if (
+            self.auth_mode is AuthMode.OWNER
+            and urlsplit(self.app_public_origin).scheme != "https"
+            and not (
+                allowed_without_auth(host, ()) and allowed_without_auth(self.app_publish_host, ())
+            )
+        ):
+            raise ValueError("AUTH_MODE=owner exige HTTPS hors loopback")
         if self.auth_mode is AuthMode.DISABLED:
             if not allowed_without_auth(self.app_publish_host, networks):
                 raise ValueError(

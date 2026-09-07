@@ -10,11 +10,13 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
+from metiquo.api.auth_routes import build_auth_router, owner_cookie_name, set_owner_cookie
 from metiquo.api.contract_schema import install_domain_contract_schemas
 from metiquo.api.dto import (
     DependencyStatus,
@@ -36,8 +38,9 @@ from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, Readin
 from metiquo.api.real_admin_routes import build_real_admin_router
 from metiquo.api.real_historical_routes import build_real_historical_router
 from metiquo.api.real_model_routes import build_real_model_router
+from metiquo.auth.service import AuthError, OwnerAuthService
 from metiquo.canonical.capabilities import CapabilityRegistry
-from metiquo.config import AuthMode, ConfigurationError, Settings, load_settings
+from metiquo.config import AuthMode, Settings, load_settings
 from metiquo.contracts.enums import DataMode, FreshnessStatus
 from metiquo.foundation.audit import audit_context
 from metiquo.foundation.errors import BusinessError, ErrorCode
@@ -162,10 +165,6 @@ def create_app(
 
     resolved_settings = settings or load_settings()
     resolved_settings.check_auth_boundary()
-    if resolved_settings.auth_mode is AuthMode.OWNER:
-        raise ConfigurationError(
-            "AUTH_OWNER_UNAVAILABLE : les sessions Owner doivent être installées avant exposition"
-        )
     if settings is None:
         configure_json_logging(
             secrets=tuple(
@@ -256,29 +255,98 @@ def create_app(
             )
         )
 
+    owner_auth = None
+    if resolved_settings.auth_mode is AuthMode.OWNER:
+        auth_engine = (
+            app.state.real_admin_engine
+            if resolved_settings.app_data_mode is DataMode.REAL
+            else create_engine(
+                resolved_settings.database_url.get_secret_value(), pool_pre_ping=True
+            )
+        )
+        owner_auth = OwnerAuthService(auth_engine, resolved_settings, clock=resolved_clock)
+    app.state.owner_auth = owner_auth
+    app.include_router(build_auth_router(owner_auth, resolved_settings, resolved_clock))
+
     @app.middleware("http")
     async def bind_request_audit(request: Request, call_next: RequestResponseEndpoint) -> Response:
         trace = uuid4()
         with (
-            audit_context(actor="api-local", trace_id=trace),
+            audit_context(actor="api-local" if owner_auth is None else "anonymous", trace_id=trace),
             bind_log_context(trace_id=TraceId(trace)),
         ):
             started, status_code = perf_counter(), 500
+            response: Response
             try:
-                if resolved_settings.app_data_mode is DataMode.REAL and request.method in {
-                    "POST",
-                    "PUT",
-                    "PATCH",
-                    "DELETE",
+                resolution = None
+                public_paths = {
+                    "/health",
+                    "/ready",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/logout",
+                    "/api/v1/auth/session",
+                }
+                if owner_auth is not None and request.url.path not in public_paths - {
+                    "/api/v1/auth/session"
                 }:
-                    await run_in_threadpool(
-                        record_runtime_configuration,
-                        app.state.real_admin_engine,
-                        resolved_settings,
-                        service="api",
-                        clock=resolved_clock,
+                    try:
+                        resolution = await run_in_threadpool(
+                            owner_auth.authenticate,
+                            request.cookies.get(owner_cookie_name(resolved_settings), ""),
+                        )
+                    except SQLAlchemyError:
+                        status_code = 503
+                        response = _problem_response(
+                            ProblemDetails(
+                                title="Service de connexion indisponible",
+                                status=503,
+                                detail="Réessayez dans quelques instants.",
+                                code="AUTH_UNAVAILABLE",
+                                instance=request.url.path,
+                            )
+                        )
+                        response.headers["X-Trace-Id"] = str(trace)
+                        return response
+                request.state.owner = resolution.principal if resolution else None
+                actor = (
+                    f"owner:{resolution.principal.owner_id}"
+                    if resolution
+                    else ("api-local" if owner_auth is None else "anonymous")
+                )
+                with audit_context(actor=actor, trace_id=trace):
+                    if (
+                        owner_auth is not None
+                        and resolution is None
+                        and request.url.path not in public_paths
+                    ):
+                        response = _problem_response(
+                            ProblemDetails(
+                                title="Connexion requise",
+                                status=401,
+                                detail="Connectez-vous au compte Owner.",
+                                code="AUTH_REQUIRED",
+                                instance=request.url.path,
+                            )
+                        )
+                    else:
+                        if resolved_settings.app_data_mode is DataMode.REAL and request.method in {
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE",
+                        }:
+                            await run_in_threadpool(
+                                record_runtime_configuration,
+                                app.state.real_admin_engine,
+                                resolved_settings,
+                                service="api",
+                                clock=resolved_clock,
+                            )
+                        response = await call_next(request)
+                if resolution is not None and resolution.replacement is not None:
+                    set_owner_cookie(
+                        response, resolution.replacement, resolved_settings, resolved_clock
                     )
-                response = await call_next(request)
                 status_code = response.status_code
                 response.headers["X-Trace-Id"] = str(trace)
                 return response
@@ -294,6 +362,18 @@ def create_app(
                         "route": getattr(request.scope.get("route"), "path", "<unmatched>"),
                     },
                 )
+
+    @app.exception_handler(AuthError)
+    async def authentication_error_handler(request: Request, error: AuthError) -> JSONResponse:
+        return _problem_response(
+            ProblemDetails(
+                title="Connexion refusée",
+                status=error.status,
+                detail="Vérifiez vos identifiants et réessayez.",
+                code=error.code,
+                instance=request.url.path,
+            )
+        )
 
     @app.exception_handler(BusinessError)
     async def business_error_handler(request: Request, error: BusinessError) -> JSONResponse:

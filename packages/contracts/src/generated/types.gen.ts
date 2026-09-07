@@ -106,6 +106,21 @@ export type AuditEntry = {
 };
 
 /**
+ * AuthStatus
+ */
+export type AuthStatus = {
+    /**
+     * Authenticated
+     */
+    authenticated: boolean;
+    /**
+     * Mode
+     */
+    mode: 'disabled' | 'owner';
+    owner?: OwnerIdentity | null;
+};
+
+/**
  * BacktestKind
  *
  * Nature statistique ou financière d'un backtest.
@@ -1201,6 +1216,30 @@ export type OpportunityExplanation = {
 };
 
 /**
+ * OwnerIdentity
+ */
+export type OwnerIdentity = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Username
+     */
+    username: string;
+};
+
+/**
+ * OwnerLoginRequest
+ */
+export type OwnerLoginRequest = {
+    /**
+     * Username
+     */
+    username: string;
+};
+
+/**
  * PageInfo
  *
  * Fenêtre de pagination stable pour toute collection.
@@ -1983,6 +2022,20 @@ export type Value = {
  */
 export type ValueGrade = 'STRONG_VALUE' | 'VALUE' | 'WATCH' | 'NO_EDGE' | 'BLOCKED';
 
+/**
+ * OwnerLoginRequest
+ */
+export type OwnerLoginRequestWritable = {
+    /**
+     * Password
+     */
+    password: string;
+    /**
+     * Username
+     */
+    username: string;
+};
+
 export type CreateAliasApiV1AdminAliasesPostData = {
     body: CreateAliasRequest;
     headers: {
@@ -2504,6 +2557,63 @@ export type ListQualityIssuesApiV1AdminQualityIssuesGetResponses = {
 };
 
 export type ListQualityIssuesApiV1AdminQualityIssuesGetResponse = ListQualityIssuesApiV1AdminQualityIssuesGetResponses[keyof ListQualityIssuesApiV1AdminQualityIssuesGetResponses];
+
+export type LoginApiV1AuthLoginPostData = {
+    body: OwnerLoginRequestWritable;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/login';
+};
+
+export type LoginApiV1AuthLoginPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LoginApiV1AuthLoginPostError = LoginApiV1AuthLoginPostErrors[keyof LoginApiV1AuthLoginPostErrors];
+
+export type LoginApiV1AuthLoginPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: AuthStatus;
+};
+
+export type LoginApiV1AuthLoginPostResponse = LoginApiV1AuthLoginPostResponses[keyof LoginApiV1AuthLoginPostResponses];
+
+export type LogoutApiV1AuthLogoutPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/logout';
+};
+
+export type LogoutApiV1AuthLogoutPostResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type LogoutApiV1AuthLogoutPostResponse = LogoutApiV1AuthLogoutPostResponses[keyof LogoutApiV1AuthLogoutPostResponses];
+
+export type CurrentSessionApiV1AuthSessionGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/session';
+};
+
+export type CurrentSessionApiV1AuthSessionGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AuthStatus;
+};
+
+export type CurrentSessionApiV1AuthSessionGetResponse = CurrentSessionApiV1AuthSessionGetResponses[keyof CurrentSessionApiV1AuthSessionGetResponses];
 
 export type ListBacktestsApiV1BacktestsGetData = {
     body?: never;

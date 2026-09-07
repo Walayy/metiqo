@@ -1,6 +1,10 @@
 https://localhost:8443 {
 	tls internal
 
+	handle /api/backend/* {
+		reverse_proxy web:3000
+	}
+
 	handle /api/* {
 		reverse_proxy api:8000
 	}

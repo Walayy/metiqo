@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from metiquo.api.app import create_app
-from metiquo.config import ConfigurationError
+from tests.api.test_api import get
 from tests.test_config import build_settings
 
 
@@ -46,7 +46,7 @@ def test_loopback_defaults_and_ipv6_are_allowed() -> None:
     assert build_settings(app_publish_host="::1", app_public_origin="http://[::1]:3000")
 
 
-def test_api_revalidates_injected_settings_and_owner_mode_fails_closed() -> None:
+def test_api_revalidates_injected_settings_and_owner_mode_protects_routes() -> None:
     # Les doubles injectés ne doivent pas permettre de contourner le garde de démarrage.
     copied = build_settings().model_copy(update={"app_publish_host": "0.0.0.0"})
     with pytest.raises(ValueError, match="APP_PUBLISH_HOST"):
@@ -54,8 +54,13 @@ def test_api_revalidates_injected_settings_and_owner_mode_fails_closed() -> None
     owner = build_settings(
         auth_mode="owner", app_publish_host="0.0.0.0", app_public_origin="https://metiquo.example"
     )
-    with pytest.raises(ConfigurationError, match="AUTH_OWNER_UNAVAILABLE"):
-        create_app(settings=owner)
+    assert get(create_app(settings=owner), "/api/v1/opportunities").status_code == 401
+    with pytest.raises(ValidationError, match="exige HTTPS"):
+        build_settings(
+            auth_mode="owner",
+            app_publish_host="0.0.0.0",
+            app_public_origin="http://metiquo.example",
+        )
 
 
 def test_real_uvicorn_startup_refuses_public_disabled_auth() -> None:

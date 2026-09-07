@@ -37,6 +37,7 @@ from metiquo.contracts.enums import (
     MappingReviewStatus,
     ProviderStatus,
 )
+from metiquo.foundation.audit import mutation_actor
 from metiquo.foundation.time import Clock
 from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_mapping import PostgresMappingRepository
@@ -189,7 +190,7 @@ def build_real_admin_router(
                 idempotency_key,
                 mapping_review_id,
                 status,
-                request.reviewer,
+                mutation_actor(request.reviewer),
                 request.reason,
                 request.candidate_event_id,
             ),
@@ -240,7 +241,7 @@ def build_real_admin_router(
                 request.alias,
                 request.canonical_id,
                 request.entity_type,
-                request.reviewer,
+                mutation_actor(request.reviewer),
                 request.reason,
             ),
             meta=_meta(repository, clock),

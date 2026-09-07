@@ -6,6 +6,7 @@ import "@fontsource-variable/inter";
 import { AppShell, type DataMode } from "../components/app-shell";
 import "./globals.css";
 import { Providers } from "./providers";
+import { OwnerAccess } from "../components/owner-access";
 
 export const metadata: Metadata = {
   description: "Pricing probabiliste League of Legends traçable et prudent.",
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: RootLayoutProperties) {
     <html lang="fr" suppressHydrationWarning>
       <body>
         <Providers>
-          <AppShell dataMode={configuredMode satisfies DataMode}>{children}</AppShell>
+          <AppShell dataMode={configuredMode satisfies DataMode}>
+            <OwnerAccess>{children}</OwnerAccess>
+          </AppShell>
         </Providers>
       </body>
     </html>

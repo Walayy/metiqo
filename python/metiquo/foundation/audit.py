@@ -22,6 +22,12 @@ def current_audit_context() -> AuditContext | None:
     return _CONTEXT.get()
 
 
+def mutation_actor(fallback: str) -> str:
+    """L'identité authentifiée prévaut sur une attribution déclarée dans un payload."""
+    context = current_audit_context()
+    return context.actor if context is not None and context.actor.startswith("owner:") else fallback
+
+
 @contextmanager
 def audit_context(*, actor: str, trace_id: UUID) -> Iterator[None]:
     if not actor.strip() or len(actor) > 255:
