@@ -42,6 +42,7 @@ class BackupHandler:
         ).run()
         return {
             "backupId": str(result.backup_id),
+            "indexSha256": result.index_sha256,
             "copiedObjects": result.copied_objects,
             "warnings": list(result.warnings),
         }

@@ -22,6 +22,8 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Engine, Table, create_engine, func, insert, select
 
+from metiquo.canonical.rosters import CanonicalRosterBuilder
+from metiquo.canonical.series import CanonicalSeriesBuilder
 from metiquo.config import ConfigurationError, ObjectStoreBackend, Settings, load_settings
 from metiquo.contracts.enums import DataMode
 from metiquo.db.raw_models import CanonicalRow, IngestionRun, Snapshot, SourceCatalog
@@ -43,6 +45,7 @@ from metiquo.models import (
 )
 from metiquo.operations.backup import BackupService
 from metiquo.operations.backup_tools import BackupError
+from metiquo.operations.restore import RestoreRequest, RestoreService
 from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
 from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
@@ -165,6 +168,15 @@ def build_parser() -> argparse.ArgumentParser:
     jobs = commands.add_parser("jobs", help="consulter, annuler ou relancer les jobs")
     backup = commands.add_parser("backup", help="sauvegarder la base et les objets immuables")
     _machine_output(backup)
+    restore = commands.add_parser(
+        "restore", help="restaurer dans une base et un dossier de test neufs"
+    )
+    restore.add_argument("--backup-id", type=UUID, required=True)
+    restore.add_argument("--index-sha256", required=True)
+    restore.add_argument("--target-database", required=True)
+    restore.add_argument("--target-objects", type=Path, required=True)
+    restore.add_argument("--identity", type=Path)
+    _machine_output(restore)
     job_commands = jobs.add_subparsers(dest="job_action", required=True)
     for action in ("show", "cancel", "rerun"):
         operation = job_commands.add_parser(action)
@@ -228,6 +240,24 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "restore":
+        restored = RestoreService(engine, settings).run(
+            RestoreRequest(
+                arguments.backup_id,
+                arguments.index_sha256,
+                arguments.target_database,
+                arguments.target_objects,
+                arguments.identity,
+            )
+        )
+        return {
+            "command": "restore",
+            "backupId": str(restored.backup_id),
+            "database": restored.database,
+            "objectRoot": str(restored.object_root),
+            "objectsVerified": restored.objects_verified,
+            "migrationRevision": restored.migration_revision,
+        }, ExitCode.SUCCESS
     if arguments.command == "backup":
         backup_result = BackupService(engine, settings).run()
         return {
@@ -235,6 +265,7 @@ def _dispatch(
             "backupId": str(backup_result.backup_id),
             "path": str(backup_result.path),
             "copiedObjects": backup_result.copied_objects,
+            "indexSha256": backup_result.index_sha256,
             "warnings": list(backup_result.warnings),
         }, ExitCode.SUCCESS
     if arguments.command == "jobs":
@@ -625,6 +656,8 @@ def _rebuild(engine: Engine, settings: Settings, from_date: date) -> dict[str, o
             continue
         with store.open_source(year=int(row["year"]), sha256=str(row["sha256"])) as stream:
             payload = stream.read()
+        if hashlib.sha256(payload).hexdigest() != row["sha256"] or len(payload) != row["byte_size"]:
+            raise BackupError("REBUILD_RAW_CHECKSUM_INVALID")
         compression = str(manifest.get("compression", "none"))
         payload = _decompress_source(payload, compression)
         with tempfile.TemporaryDirectory(prefix="metiquo-rebuild-") as directory:
@@ -664,6 +697,8 @@ def _rebuild(engine: Engine, settings: Settings, from_date: date) -> dict[str, o
                 "load": loaded.statistics.to_dict(),
             }
         )
+    rosters = CanonicalRosterBuilder(engine=engine).build(provider=_PROVIDER, dataset=_DATASET)
+    series = CanonicalSeriesBuilder(engine=engine).build(provider=_PROVIDER, dataset=_DATASET)
     canonical = cast(Table, CanonicalRow.__table__)
     with engine.connect() as connection:
         row_count = int(
@@ -683,6 +718,9 @@ def _rebuild(engine: Engine, settings: Settings, from_date: date) -> dict[str, o
         "from": from_date.isoformat(),
         "snapshotsReplayed": rebuilt,
         "canonicalRowsFromDate": row_count,
+        "coreGames": series.source_games,
+        "coreSeries": series.series,
+        "rosterObservations": rosters.observations,
     }
 
 

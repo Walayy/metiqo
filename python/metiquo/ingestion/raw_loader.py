@@ -144,6 +144,7 @@ class RawTabularLoader:
                 delimiter=delimiter,
             )
             del header
+            self._recover_missing_projection(connection, staging_table, provider, dataset)
             statistics = self._classify(
                 connection=connection,
                 staging_table=staging_table,
@@ -338,6 +339,42 @@ class RawTabularLoader:
                 event_date=_event_date(payload),
                 reason_code=reason_code,
             )
+
+    @staticmethod
+    def _recover_missing_projection(
+        connection: Connection, staging_table: str, provider: str, dataset: str
+    ) -> None:
+        # Une projection perdue ne remet pas l'historique à la révision 1.
+        # Réparer sous le même verrou et dans la même transaction que le replay.
+        connection.execute(
+            text(f"""
+            INSERT INTO raw.canonical_rows (
+                id, provider, dataset, natural_key, row_hash, payload, event_date,
+                source_snapshot_id, source_run_id, revision, created_at, updated_at
+            )
+            SELECT gen_random_uuid(), latest.provider, latest.dataset, latest.natural_key,
+                   latest.row_hash, latest.payload, latest.event_date,
+                   latest.snapshot_id, latest.run_id, latest.revision,
+                   latest.created_at, latest.valid_from
+            FROM (
+                SELECT natural_key FROM {staging_table} staged
+                WHERE reason_code IS NULL AND NOT EXISTS (
+                    SELECT 1 FROM raw.canonical_rows current
+                    WHERE current.provider = :provider AND current.dataset = :dataset
+                      AND current.natural_key = staged.natural_key
+                )
+                GROUP BY natural_key HAVING count(*) = 1
+            ) missing
+            JOIN LATERAL (
+                SELECT history.* FROM raw.row_revisions history
+                WHERE history.provider = :provider AND history.dataset = :dataset
+                  AND history.natural_key = missing.natural_key
+                ORDER BY history.revision DESC LIMIT 1
+            ) latest ON true
+            ON CONFLICT ON CONSTRAINT uq_canonical_rows_natural_key DO NOTHING
+        """),
+            {"provider": provider, "dataset": dataset},
+        )
 
     @staticmethod
     def _classify(

@@ -104,6 +104,7 @@ class Settings(BaseSettings):
     backup_age_recipient: str | None = None
     backup_age_binary: str = "age"
     backup_pg_dump_binary: str = "pg_dump"
+    backup_pg_restore_binary: str = "pg_restore"
 
     odds_provider: OddsProvider = OddsProvider.MOCK
     odds_max_age_seconds: int = Field(default=90, gt=0)

@@ -30,10 +30,12 @@ class PostgresTools:
         url: URL,
         *,
         dump_command: tuple[str, ...] = ("pg_dump",),
+        restore_command: tuple[str, ...] = ("pg_restore",),
         environment_overrides: Mapping[str, str] | None = None,
         timeout: int = 3600,
     ) -> None:
         self.dump_command, self.timeout = dump_command, timeout
+        self.restore_command = restore_command
         self.environment = {
             **os.environ,
             "PGHOST": url.host or "localhost",
@@ -76,3 +78,29 @@ class PostgresTools:
                     raise BackupError("BACKUP_DUMP_INVALID")
         except (OSError, subprocess.TimeoutExpired) as error:
             raise BackupError("BACKUP_DUMP_UNAVAILABLE") from error
+
+    def restore(self, source: Path, database: str) -> None:
+        try:
+            with source.open("rb") as stream:
+                result = subprocess.run(
+                    [
+                        *self.restore_command,
+                        "--dbname",
+                        database,
+                        "--single-transaction",
+                        "--exit-on-error",
+                        "--no-owner",
+                        "--no-acl",
+                        "--no-password",
+                    ],
+                    stdin=stream,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    env={**self.environment, "PGDATABASE": database},
+                    timeout=self.timeout,
+                    check=False,
+                )
+            if result.returncode:
+                raise BackupError("RESTORE_DATABASE_FAILED")
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise BackupError("RESTORE_DATABASE_UNAVAILABLE") from error

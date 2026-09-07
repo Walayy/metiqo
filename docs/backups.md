@@ -1,8 +1,8 @@
 # Sauvegardes
 
 `oe backup --json` (ou `make backup JSON=1`) sauvegarde la base réelle et les
-objets locaux. Dans la stack, utiliser `docker compose exec -T worker oe backup
---json`. Le mode mock est refusé avant tout accès SQL. Le worker planifie la
+objets locaux. Dans la stack, utiliser
+`docker compose exec -T worker oe backup --json`. Le mode mock est refusé avant tout accès SQL. Le worker planifie la
 même opération chaque jour, avec un verrou PostgreSQL commun aux lancements
 manuels. `BACKUP_ENABLED=false` désactive aussi cette planification.
 
@@ -94,5 +94,5 @@ Les tests PostgreSQL utilisent une ingestion réelle alimentée par une fixture
 identifiée et un objet modèle de fixture, puis un vrai `pg_dump`. Ils vérifient
 la copie incrémentale, la rétention, la reprise après interruption, les refus de
 corruption/absence, l'immutabilité SQL, l'annulation et le chiffrement/déchiffrement
-age. Ce test de sauvegarde ne constitue pas encore une preuve de restauration
-ni de performance du modèle ; l'exercice complet est traité par OPS-009.
+age. L'exercice de [restauration et reconstruction](restore.md) complète cette
+preuve technique ; il ne valide pas la performance financière d'un modèle.

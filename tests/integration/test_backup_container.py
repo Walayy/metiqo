@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from alembic import command
@@ -17,7 +18,9 @@ from tests.integration.test_postgres_canonical_api import _settings
 
 
 @pytest.mark.integration
-def test_packaged_backup_runs_with_read_only_root(postgresql_url: str, tmp_path: Path) -> None:
+def test_packaged_backup_and_restore_with_read_only_root(
+    postgresql_url: str, tmp_path: Path
+) -> None:
     image, container = os.environ.get("TEST_BACKUP_IMAGE"), os.environ.get("TEST_PG_CONTAINER")
     if not image or not container:
         pytest.skip("TEST_BACKUP_IMAGE et TEST_PG_CONTAINER requis")
@@ -74,4 +77,39 @@ def test_packaged_backup_runs_with_read_only_root(postgresql_url: str, tmp_path:
         response = json.loads(result.stdout)
         assert (response["copiedObjects"] > 0) is expected_copy
         assert (tmp_path / "backups/runs" / response["backupId"] / "index.json").is_file()
+    restored_parent = tmp_path / "restore-area"
+    restored_parent.mkdir()
+    target_name = "metiquo_restore_" + uuid4().hex
+    admin = create_engine(engine.url.set(database="postgres"), isolation_level="AUTOCOMMIT")
+    try:
+        restored = subprocess.run(
+            [
+                *arguments[:-4],
+                "--mount",
+                f"type=bind,source={restored_parent},target=/restore",
+                image,
+                "oe",
+                "restore",
+                "--backup-id",
+                response["backupId"],
+                "--index-sha256",
+                response["indexSha256"],
+                "--target-database",
+                target_name,
+                "--target-objects",
+                "/restore/objects",
+                "--json",
+            ],
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert restored.returncode == 0, restored.stdout + restored.stderr
+        assert json.loads(restored.stdout)["objectsVerified"] > 0
+        assert list((restored_parent / "objects/raw").glob("**/source.csv"))
+    finally:
+        with admin.connect() as connection:
+            connection.exec_driver_sql(f'DROP DATABASE IF EXISTS "{target_name}" WITH (FORCE)')
+        admin.dispose()
     engine.dispose()

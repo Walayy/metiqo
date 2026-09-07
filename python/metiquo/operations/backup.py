@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -39,6 +39,7 @@ class BackupResult:
     backup_id: UUID
     path: Path
     copied_objects: int
+    index_sha256: str
     warnings: tuple[str, ...] = ()
 
 
@@ -139,9 +140,7 @@ class BackupService:
                 logging.getLogger("metiquo.backup").error("backup.retention_failed")
                 with self.engine.begin() as connection:
                     self._audit(connection, identity, "backup.retention_failed")
-                result = BackupResult(
-                    identity, result.path, result.copied_objects, ("BACKUP_RETENTION_FAILED",)
-                )
+                result = replace(result, warnings=("BACKUP_RETENTION_FAILED",))
             logging.getLogger("metiquo.backup").info("backup.completed")
             return result
 
@@ -333,7 +332,8 @@ class BackupService:
             )
             write_document(destination / "index.json", index)
             self.checkpoint()
-        return BackupResult(identity, destination, copied), file_hash(destination / "index.json")
+        digest = file_hash(destination / "index.json")
+        return BackupResult(identity, destination, copied, digest), digest
 
     def _retain(self, identity: UUID) -> None:
         repository = self._repository()
