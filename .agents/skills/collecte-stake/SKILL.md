@@ -76,12 +76,6 @@ Un report ne remet pas automatiquement une partie live en avant-match. Exiger un
 
 Délais, reprises, classification des erreurs et journalisation : appliquer exclusivement la politique du [skill d'implémentation](../implementation-verification/SKILL.md), avec arrêt immédiat des usages concernés en cas de refus d'accès.
 
-## Réduction des refus, sans fausse garantie
-
-D'abord vérifier les conditions et obtenir une clarification/autorisation du propriétaire pour l'automatisation envisagée. Si elle est accordée, une autorisation réseau ou un accès public stable fourni par le propriétaire peut réduire les refus. Ce point **n'est pas obtenu**. Vérifier également les consignes de robots et d'usage : leur absence ne vaut pas autorisation.
-
-Ensuite : navigateur pris en charge, contexte stable, charge minimale, pas de rafales au redémarrage, aucun rafraîchissement réseau déclenché par chaque écran, respect des pauses et de `Retry-After`. Ces mesures ne commandent ni le WAF, ni la disponibilité de l'origine. Aucune rotation de proxies, fausse localisation, résolution externe de CAPTCHA, désactivation TLS ou promesse « stealth » n'est retenue. Un 503 isolé reste un 503, pas automatiquement un anti-bot.
-
 ## Validation restante — condition de passage
 
 **Avant tout développement du collecteur final**, compléter ici un essai dans l'environnement réellement visé, après clarification des accès :
