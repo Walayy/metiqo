@@ -17,7 +17,7 @@ Typographie système, taille de texte courant 16 px, interligne proche de 1,5 ; 
 
 ### Rencontres
 
-En-tête avec nom Metiquo, navigation, état des données et thème. Titre « Rencontres » ; précision toujours visible « Partie 1 · Avant la série · LEC / LCK ». Filtre de ligue et filtre d'état seulement ; inutile d'ajouter recherche avancée ou calendrier complexe pour ce petit périmètre.
+En-tête avec nom Metiquo, navigation, état des données et thème. Titre « Rencontres » ; précision toujours visible « LoL · Partie 1 · Avant la série ». Filtre de compétition et filtre d'état seulement ; le premier propose « Toutes les compétitions » par défaut et les ligues/tournois réellement découverts, sans liste fermée ni priorité LEC/LCK. Inclure ligues régionales, académies et compétitions internationales. Garder ces filtres simples, sans recherche avancée ni calendrier complexe.
 
 Liste chronologique des rencontres suivies : logos et noms complets des deux équipes, ligue, date/heure, état, dernière observation des cotes. La sélection éventuellement intéressante et son EV peuvent apparaître sur une seconde ligne ; l'intitulé de la partie reste prioritaire. Une seule action explicite « Voir l'analyse » ; ne pas rendre toute la ligne cliquable au détriment de la sélection de texte.
 
@@ -49,7 +49,7 @@ Sur petit écran, transformer chaque ligne en fiche lisible, sans perdre les col
 
 Deux blocs, Stake.bet et Oracle’s Elixir : état compréhensible, dernière tentative, dernier succès, prochaine reprise ; pour Oracle, dernière partie présente et dernier import modifiant le contenu. Valeur absente = « Jamais réussi » ou « Non disponible », pas une date artificielle.
 
-En cas d'erreur, résumé utilisateur et code diagnostic copiable sans secret. Bouton de reprise seulement après la pause imposée ; il rejoint la file existante, sans lancer une collecte parallèle. L'ouverture du panneau ne provoque aucun appel externe. Une maintenance de mapping/schéma est signalée ici ; pas de tableau de bord supplémentaire.
+En cas d'erreur, résumé utilisateur et code diagnostic copiable sans secret. Bouton de reprise seulement après la pause imposée ; il rejoint la file existante, sans lancer une collecte parallèle. L'ouverture du panneau ne provoque aucun appel externe. Une maintenance de mapping/schéma est signalée ici ; pas de tableau de bord supplémentaire. Montrer la couverture constatée par compétition : présence chez les sources, marché partie 1 vérifié ou absent, historique disponible, qualification et éventuelle limite de suivi. Une absence non vérifiée reste « couverture non vérifiée » ; « Toutes les compétitions » désigne le périmètre, pas une garantie d'alimentation exhaustive.
 
 ## Composants et états
 
@@ -93,7 +93,7 @@ Placer le logo de ligue à côté de son nom, les logos des équipes près de le
 
 Pour les icônes UI, conserver localement un petit sous-ensemble SVG Lucide, avec les mentions exigées : [licence officielle Lucide](https://lucide.dev/license), consultée le **14 septembre 2026**. Aucun paquet npm, CDN runtime ou police d'icônes n'est nécessaire. Enregistrer la provenance et l'empreinte des fichiers acquis lors de l'implémentation ; aucune version d'asset non téléchargé n'est inventée dans cette archive.
 
-Pour LEC, LCK et les équipes activées : récupérer les **logos officiels dont l'usage est permis**, depuis les détenteurs ou leurs ressources de marque identifiées. Leur acquisition ponctuelle est une gestion d'assets, pas une nouvelle source de statistiques. Consigner une seule fois provenance, date et conditions ; ne pas scraper en permanence un service tiers de logos.
+Pour les compétitions et les équipes affichées, sans priorité de ligue : récupérer les **logos officiels dont l'usage est permis**, depuis les détenteurs ou leurs ressources de marque identifiées. Leur acquisition ponctuelle est une gestion d'assets, pas une nouvelle source de statistiques. Consigner une seule fois provenance, date et conditions ; ne pas scraper en permanence un service tiers de logos.
 
 Associer les assets aux identifiants canoniques vérifiés. Un changement de nom ne justifie pas un mauvais logo. Si un asset manque ou échoue, monogramme neutre et nom complet restent visibles. Prévoir les variantes de marque autorisées pour clair/sombre ou une petite surface protectrice neutre ; **ne pas inverser/recolorer arbitrairement les logos officiels**. Les icônes UI utilisent la couleur du texte ; les marques conservent leurs couleurs.
 
@@ -113,6 +113,6 @@ Faire tenir le parcours à 320 px de largeur CSS, à 200 % de zoom et sans cheva
 
 Parcourir **les trois vues et le panneau Données**, aux largeurs 360, 768 et 1 440 px, dans les deux thèmes ; vérifier aussi 320 px et zoom 200 % pour le reflow. Exécuter le parcours sans souris : filtre → analyse → choix → mise → enregistrement → résultat → retour. Refaire au toucher ou en émulation tactile.
 
-Inclure dans les fixtures : nom d'équipe très long, logo absent, date changée, aucune rencontre, collecte bloquée, HTML source invalide, cote périmée pendant la saisie, modèle expérimental, EV négative, chargement, erreur de sauvegarde et dialogue de correction. Sur chacun : aucun contenu coupé, aucun focus perdu, aucune perte de saisie, aucun état communiqué par la couleur seule.
+Inclure dans les fixtures : plusieurs compétitions dont une ligue régionale, une académie et un tournoi international, liste de filtres fournie, couverture partielle, nom d'équipe très long, logo absent, date changée, aucune rencontre, collecte bloquée, HTML source invalide, cote périmée pendant la saisie, modèle expérimental, EV négative, chargement, erreur de sauvegarde et dialogue de correction. Sur chacun : aucun contenu coupé, aucun focus perdu, aucune perte de saisie, aucun état communiqué par la couleur seule.
 
 Contrôler enfin la préférence de mouvement réduit, le thème dès la première image, les scrollbars, la sélection/copier-coller et les champs clavier français (virgule décimale). Une capture esthétique de l'état normal ne vaut pas validation du parcours et de tous ses états.

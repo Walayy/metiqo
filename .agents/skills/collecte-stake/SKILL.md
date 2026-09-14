@@ -48,6 +48,8 @@ Session publique conservée seulement pendant la vie du processus. Ne pas import
 
 ## Contrat de donnée à démontrer
 
+Le catalogue vise **toutes les compétitions LoL présentes sur Stake.bet**, sans priorité LEC/LCK ni exclusion des ligues régionales, académies, qualifications ou tournois internationaux/interrégionaux. Découvrir les compétitions réellement publiées, sans liste fermée ni URL de tournoi devinée. Une rencontre observée sans marché explicite du vainqueur de la partie 1 reste signalée comme non exploitable ; sa cote de série ne la remplace jamais. La présence et l'extraction vérifiées sur une compétition ne prouvent pas la couverture des autres ; les exemples LEC du registre restent des observations historiques limitées.
+
 Une observation admissible comprend les champs suivants, issus d'un relevé cohérent :
 
 | Groupe | Champs et règle |
@@ -66,7 +68,7 @@ Conserver les deux sélections dans la même observation atomique. Un marché in
 
 ## Fréquences et état exploitable
 
-Réglages initiaux de **prudence à qualifier**, pas limites officielles de Stake : catalogue toutes les **15 minutes** ; suivi de la partie 1 dans les **3 heures** précédant la série ; au maximum **quatre rencontres** suivies, choisies par début le plus proche. Les autres restent signalées « non suivies : capacité de collecte ».
+Réglages initiaux de **prudence à qualifier**, pas limites officielles de Stake : catalogue de toutes les compétitions LoL toutes les **15 minutes** ; suivi de la partie 1 dans les **3 heures** précédant la série ; au maximum **quatre rencontres** suivies, choisies par début le plus proche, sans priorité de ligue. Les autres restent signalées « non suivies : capacité de collecte ». Ce plafond technique initial ne restreint pas le périmètre sportif et ne démontre pas un suivi exhaustif. Mesurer sa capacité sur les chevauchements réels entre compétitions avant de qualifier la couverture obtenue.
 
 Un seul cycle de navigation actif. Viser un relevé complet par rencontre toutes les **60 secondes**, avec variation de ±10 %, sans provoquer une navigation par utilisateur. Répartir les rencontres dans le cycle. Ce rythme n'est acceptable que si les durées réellement observées le permettent sans chevauchement ; sinon réduire le nombre suivi, pas multiplier les navigateurs. Pour un flux déjà poussé par la page, ne pas créer de polling réseau supplémentaire ; valider la façon d'obtenir une confirmation complète récente.
 
@@ -84,5 +86,6 @@ Délais, reprises, classification des erreurs et journalisation : appliquer excl
 2. Extraire **les deux cotes du vainqueur de la partie 1** et tous les champs obligatoires. Croiser avec l'affichage de cette même page, à la même heure. Vérifier l'inversion éventuelle de l'ordre des équipes et les noms longs. Une seule cote de série ou des onglets vides = échec.
 3. Réaliser au moins **30 relevés planifiés espacés d'une minute** sur une fenêtre pertinente, puis observer au moins **deux journées de compétition** avec redémarrage autonome. Compter tous les créneaux, y compris les échecs et les marchés absents. Objectif initial : ≥95 % d'observations admissibles lorsque le marché cible est réellement ouvert, **zéro relevé erroné, zéro faux rafraîchissement, zéro intervention humaine**. Ce seuil n'est pas une garantie future.
 4. Observer, si disponibles, une suspension/reprise et le passage au début de série. Tester les états non rencontrés sur fixtures identifiées comme synthétiques, sans les compter comme preuves de comportement du site. Un état réel essentiel non observé laisse la qualification partielle.
+5. Consigner les compétitions réellement découvertes et celles dont le marché cible a été extrait, avec les absences, variantes de marché et limites de capacité. Vérifier les ligues régionales, académies et rencontres internationales lorsqu'elles sont présentes ; ne pas généraliser une preuve LEC/LCK à l'ensemble de LoL. Une compétition non observée reste de couverture non vérifiée, pas hors périmètre.
 
 Statut à maintenir : accès autorisé **à clarifier** ; extraction cible **non réalisée** ; cadence durable **non testée** ; transitions de marché **non observées**. Tant que ces réserves bloquantes persistent, ne pas déclarer le besoin d'alimentation automatisée satisfait.

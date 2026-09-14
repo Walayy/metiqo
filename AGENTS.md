@@ -6,7 +6,9 @@ Préparation du **14 septembre 2026**, sans code applicatif. Lire ce fichier pui
 
 Application personnelle française : **rencontres → analyse → simulation → résultat**. LoL uniquement ; **`stake.bet` exclusivement pour les cotes**, Oracle’s Elixir exclusivement pour les données sportives. Aucun pari automatique, fournisseur tiers de cotes, API payante, abonnement ou gestion multi-utilisateurs.
 
-V1 volontairement réduite au **vainqueur de la partie 1, avant la série**, pour les équipes premières LEC et LCK. Exclure autres parties, académies et rencontres interrégionales. Exiger le marché explicitement identifié de la partie : ne jamais remplacer une cote de partie par « vainqueur du match », même en BO1.
+V1 limitée au **vainqueur de la partie 1, avant la série**, pour **toutes les compétitions de League of Legends**, sans priorité ni restriction à LEC/LCK : LCS, LEC, LCK, LPL, CBLOL, LFL et toute autre ligue ou tournoi, y compris ligues régionales, académies, qualifications et rencontres internationales/interrégionales. Cette liste est illustrative, pas une liste fermée ni une preuve de couverture actuelle des sources. Exclure les autres parties. Exiger le marché explicitement identifié de la partie : ne jamais remplacer une cote de partie par « vainqueur du match », même en BO1.
+
+Découvrir les compétitions réellement publiées par les deux sources, sans filtre géographique ou de niveau imposé. Distinguer périmètre souhaité, présence chez chaque source, capacité de suivi et qualification du modèle par compétition. Une compétition reste dans le périmètre même si ses données ou son marché manquent : signaler la limite observée sans fabriquer de données ni changer de fournisseur. Les équipes premières et leurs académies gardent des identités distinctes.
 
 ## État réel et préalable
 
