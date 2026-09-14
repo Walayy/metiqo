@@ -26,7 +26,7 @@ Privilégier les bibliothèques standard pour CSV, calculs, dates, decimal, SQLi
 
 ## Organisation et fonctionnement
 
-Modules proposés, sans couches de façade : `collectors/stake`, `collectors/oracle`, `data`, `model`, `analysis`, `simulations`, `web`, `jobs`. `data` possède les accès SQL et migrations simples ; `model` reste pur et ne connaît pas Stake ; `analysis` joint une prédiction et une observation de prix ; `web` ne lance jamais directement une collecte longue.
+Modules proposés, sans couches de façade : `collectors/stake`, `collectors/oracle`, `data`, `model`, `analysis`, `simulations`, `web`, `jobs`. `data` possède les accès SQL et migrations simples ; `model` reste pur et ne connaît pas Stake ; `analysis` joint une prédiction et une observation de prix ; `web` ne lance jamais directement une collecte longue. Le périmètre comprend toutes les compétitions LoL : aucun filtre LEC/LCK ni priorité de ligue codés en dur. Les champs de compétition couvrent ligues et tournois, régionaux ou internationaux ; conserver les identités distinctes des équipes premières et académies. La couverture des sources, la capacité de suivi et la qualification par compétition sont des états explicites, sans nouveau service ni fournisseur.
 
 Le démarrage futur réalise les migrations nécessaires après sauvegarde, charge l'état local, puis planifie les deux sources lorsqu'elles sont autorisées et qualifiées. Un point d'entrée unique doit suffire ; pas de téléchargement CSV, commande d'entraînement et navigateur à lancer manuellement chaque jour. L'initialisation peut être en cours tandis que l'interface explique ce qui manque.
 
@@ -46,7 +46,7 @@ Les noms sont conceptuels ; pas besoin d'ajouter une table pour chaque état ou 
 | `games` | Parties normalisées, rattachées à leur révision ; une ligne par partie canonique. |
 | `fixtures` | Rencontres Stake observées, numéro de partie et état courant ; pas de catalogue multi-jeux. |
 | `odds_observations` | Relevés immuables du marché partie 1, contenant les deux sélections et leurs états. |
-| `model_runs` | Paramètres, classements, manifeste de données, bornes temporelles et qualification. |
+| `model_runs` | Paramètres, classements, manifeste de données, bornes temporelles, périmètre de qualification et statut par compétition/contexte évalué. |
 | `analyses` | Photographies de probabilités/explications et lien éventuel avec le relevé de cote ; prédiction prospective de référence identifiée. |
 | `simulations` | Photographie enregistrée, mise et résultat déclaré, idempotence et historique compact des corrections. |
 
@@ -127,7 +127,8 @@ Les fixtures synthétiques sont identifiées comme telles. Aucun test réseau ne
 
 | Priorité | Vérification | Critère de réussite |
 |---|---|---|
-| P0 | Contrats des sources | Identité exacte de partie/équipes, données requises extraites réellement, cadence et restrictions consignées. Les preuves documentaires seules ne passent pas ce test. |
+| P0 | Contrats des sources | Identité exacte de partie/équipes, données requises extraites réellement, cadence, couverture par compétition et restrictions consignées. Les preuves documentaires seules ne passent pas ce test. |
+| P0 | Toutes les compétitions LoL | Aucun filtre ni priorité LEC/LCK ; ligue régionale, académie distincte et tournoi international admissibles au périmètre. Une couverture absente/non vérifiée ou une limite de suivi reste visible ; aucune donnée ni qualification n'est fabriquée. |
 | P0 | Calculs indépendants | Exemples numériques et complémentarité du skill modèle vérifiés ; les cotes ne modifient aucune probabilité. |
 | P0 | Chronologie | Ajouter une partie future ou corriger plus tard un fichier ne change jamais une prédiction historique ; pas de sélection de paramètres sur le test final. |
 | P0 | Import transactionnel | HTML 200, CSV tronqué, schéma incompatible, doublons inter-fichiers et crash avant promotion laissent l'actif intact ; second import identique sans doublon. |
