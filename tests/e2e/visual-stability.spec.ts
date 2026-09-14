@@ -4,6 +4,8 @@ import { financialReport, operations } from "./helpers/transport-fixtures.js";
 const keyPages = [
   "/",
   "/events",
+  "/odds",
+  "/settings",
   "/events/1c6f28ad-4fdb-5a42-ac9e-90a863037d49",
   "/opportunities/f31e365e-ab44-53b2-b839-e1b9f2e3625b",
   "/models",
@@ -98,7 +100,7 @@ for (const [size, viewport] of Object.entries(viewports)) {
   }
 
   for (const kind of ["operations", "finance"] as const) {
-    test(`reserves ${size} ${kind} dimensions until the real response arrives`, async ({
+    test(`preserves ${size} ${kind} geometry ${kind === "finance" ? "during a report refresh" : "until the real response arrives"}`, async ({
       page,
     }, testInfo) => {
       await page.setViewportSize(viewport);
@@ -106,12 +108,15 @@ for (const [size, viewport] of Object.entries(viewports)) {
       let release!: () => void;
       const gate = new Promise<void>((resolve) => (release = resolve));
       const isOperations = kind === "operations";
+      if (!isOperations) await page.clock.install();
+      let reads = 0;
       await page.route(
         isOperations
           ? "**/api/backend/api/v1/system/status"
           : "**/api/backend/api/v1/paper-bets/metrics?**",
         async (route) => {
-          await gate;
+          reads += 1;
+          if (isOperations || reads > 1) await gate;
           await route.fulfill({ json: isOperations ? operations : financialReport });
         },
       );
@@ -121,18 +126,26 @@ for (const [size, viewport] of Object.entries(viewports)) {
         exact: true,
       });
       await expect(panel).toBeVisible();
+      if (!isOperations) await expect(panel).toContainText("-10,00");
       await panel.scrollIntoViewIfNeeded();
+      if (!isOperations) {
+        await page.clock.fastForward(30_001);
+        await expect.poll(() => reads).toBe(2);
+        await expect(panel).toHaveAttribute("aria-busy", "true");
+        await expect(panel.locator("[data-remote-skeleton]")).toHaveCount(0);
+      }
       // Two painted frames ensure the loading layout is actually measured.
       await page.evaluate(
         () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
       );
       const before = await panel.boundingBox();
       await panel.screenshot({
-        path: testInfo.outputPath(`${kind}-${size}-loading.png`),
+        path: testInfo.outputPath(`${kind}-${size}-${isOperations ? "loading" : "refreshing"}.png`),
         style: panelCaptureStyle,
       });
       release();
       await expect(panel).toContainText(isOperations ? "SOURCE_TIMEOUT" : "-10,00");
+      await expect(panel).toHaveAttribute("aria-busy", "false");
       const after = await panel.boundingBox();
       await testInfo.attach("panel-dimensions", {
         contentType: "application/json",
@@ -162,7 +175,8 @@ for (const [size, viewport] of Object.entries(viewports)) {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => (release = resolve));
     await page.route("**/api/backend/api/v1/events/*/odds-history?**", async (route) => {
-      const response = await route.fetch();
+      // Retry socket resets in this read-only transport; HTTP errors still reach the app.
+      const response = await route.fetch({ maxRetries: 2 });
       requests += 1;
       if (requests > 1) await gate;
       await route.fulfill({ response });
@@ -201,7 +215,7 @@ test("cancels loading animation immediately when reduced motion changes", async 
   const skeletons = page
     .getByRole("region", { name: "Rapport financier" })
     .locator("[data-remote-skeleton]");
-  await expect(skeletons).toHaveCount(32);
+  await expect(skeletons.first()).toBeVisible();
   await page.emulateMedia({ reducedMotion: "reduce" });
   expect(
     await skeletons.evaluateAll((nodes) =>

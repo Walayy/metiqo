@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Metiquo · lecture Stake</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <main>
+      <p>METIQUO · COTES OBSERVÉES</p>
+      <h1>Lire Stake dans votre navigateur</h1>
+      <p>
+        Ouvrez normalement Stake et vérifiez que les matchs sont accessibles. Le lecteur parcourt
+        les marchés, puis enregistre un fichier local pour Metiquo.
+      </p>
+      <p>
+        Le scan complet utilise un onglet dédié. Laissez cette page ouverte pendant la collecte.
+        Aucun pari n’est placé.
+      </p>
+      <div class="actions">
+        <button id="scan">Scanner les matchs LoL</button>
+        <button id="opened">Lire les matchs déjà ouverts</button>
+        <button id="stop" disabled>Arrêter</button>
+      </div>
+      <label
+        ><input type="checkbox" id="repeat" /> Recommencer 60 secondes après chaque collecte</label
+      >
+      <p id="status" role="status" aria-live="polite">Prêt.</p>
+      <pre id="report"></pre>
+      <p>
+        Fichier : <code>Metiquo/stake-browser-latest.json</code>, dans les téléchargements du
+        navigateur. Une collecte remplace ce fichier ; Metiquo archive les observations importées.
+      </p>
+      <p>
+        Si Stake demande une vérification ou refuse l’accès, le lecteur s’arrête. Effectuez
+        vous-même la vérification normale du site avant de relancer.
+      </p>
+    </main>
+    <script type="module" src="panel.js"></script>
+  </body>
+</html>

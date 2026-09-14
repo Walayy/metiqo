@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Metiquo — lecteur Stake",
+  "version": "1.0.0",
+  "description": "Lire les pages LoL accessibles dans votre navigateur et exporter leur DOM localement.",
+  "permissions": ["scripting", "downloads"],
+  "host_permissions": ["https://stake.bet/fr/sports/league-of-legends/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Ouvrir le lecteur Metiquo" }
+}

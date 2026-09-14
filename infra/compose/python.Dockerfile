@@ -6,7 +6,8 @@ ENV PATH="/app/.venv/bin:/usr/lib/postgresql/18/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    PLAYWRIGHT_BROWSERS_PATH=/opt/metiquo-browsers
 
 COPY --from=uv /uv /uvx /bin/
 
@@ -27,6 +28,11 @@ RUN groupadd --gid 10001 metiquo \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --frozen --no-dev --no-install-project
+RUN python -m patchright install --with-deps --no-shell chromium \
+    && python -m playwright install --no-shell chromium \
+    && chmod -R a+rX /opt/metiquo-browsers \
+    && rm -rf /var/lib/apt/lists/*
 COPY alembic.ini ./
 COPY config ./config
 COPY python ./python
@@ -41,6 +47,10 @@ RUN dpkg --purge --force-depends --force-remove-essential \
     && pg_dump --version && pg_restore --version
 
 COPY infra/compose/bootstrap/mock_mode_check.py /opt/metiquo-bootstrap/mock_mode_check.py
+
+# Chromium complet écrit sa configuration auxiliaire dans le tmpfs du worker.
+ENV XDG_CONFIG_HOME=/tmp/metiquo-browser-config \
+    XDG_CACHE_HOME=/tmp/metiquo-browser-cache
 
 USER 10001:10001
 

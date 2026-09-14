@@ -51,7 +51,7 @@ const remoteStateDefinitions = {
     mark: "M",
     role: "status",
     title: "Données simulées",
-    tone: "border-accent bg-accent-soft",
+    tone: "border-border-subtle bg-accent-soft",
   },
   offline: {
     description: "Les données déjà chargées restent disponibles lorsqu’elles sont sûres.",
@@ -90,7 +90,7 @@ const remoteStateDefinitions = {
   },
 } satisfies Record<RemoteStateKind, RemoteStateDefinition>;
 
-export type RemoteSkeletonProperties = Omit<HTMLAttributes<HTMLDivElement>, "children"> &
+export type RemoteSkeletonProperties = Omit<HTMLAttributes<HTMLSpanElement>, "children"> &
   Readonly<{
     height?: CSSProperties["blockSize"];
     width?: CSSProperties["inlineSize"];
@@ -104,7 +104,7 @@ export function RemoteSkeleton({
   ...properties
 }: RemoteSkeletonProperties) {
   return (
-    <div
+    <span
       aria-hidden="true"
       className={cn("metiquo-skeleton", className)}
       data-remote-skeleton="true"
@@ -159,6 +159,22 @@ export function RemoteLoadingState({
   );
 }
 
+/** Reserve the visible page while Suspense loads; final content keeps its natural height. */
+export function RemotePageLoadingState({
+  className,
+  rows = 8,
+  ...properties
+}: Omit<RemoteLoadingStateProperties, "minHeight">) {
+  return (
+    <RemoteLoadingState
+      className={cn("content-start", className)}
+      minHeight="calc(100dvh - 4rem)"
+      rows={rows}
+      {...properties}
+    />
+  );
+}
+
 export type RemoteStateProperties = Omit<HTMLAttributes<HTMLElement>, "children" | "title"> &
   Readonly<{
     action?: ReactNode;
@@ -183,7 +199,7 @@ export function RemoteState({
     <section
       aria-atomic="true"
       className={cn(
-        "flex items-start rounded-xl border text-ink-primary",
+        "flex min-w-0 items-start rounded-xl border text-ink-primary [overflow-wrap:anywhere]",
         compact ? "gap-3 px-4 py-3" : "min-h-48 gap-4 p-6",
         definition.tone,
         className,
@@ -305,19 +321,13 @@ export function RemoteDataBoundary({
   return (
     <div
       aria-busy={isLoading || isRefetching}
-      className={cn("relative", className)}
+      className={cn("relative min-w-0", className)}
       data-refetching={isRefetching ? "true" : "false"}
       {...properties}
     >
       {isRefetching && !showLoading ? (
-        <div
-          aria-label={refetchLabel}
-          className="pointer-events-none absolute right-3 top-3 z-10"
-          role="status"
-        >
-          <span className="inline-flex min-h-7 items-center rounded-full border border-border-strong bg-surface-raised px-3 text-xs font-semibold text-ink-secondary shadow-sm">
-            {refetchLabel}
-          </span>
+        <div aria-label={refetchLabel} className="metiquo-refetch-indicator" role="status">
+          <span className="sr-only">{refetchLabel}</span>
         </div>
       ) : null}
       {showLoading ? (loadingFallback ?? <RemoteLoadingState />) : children}

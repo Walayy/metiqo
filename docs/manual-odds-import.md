@@ -1,5 +1,9 @@
 # Import manuel de cotes
 
+La commande `oe odds-import` archive maintenant les relevés validés et les persiste
+dans PostgreSQL. La page `/odds` permet de les consulter avant mapping canonique.
+Voir [le parcours de consultation](observed-odds.md) pour la configuration et les tests.
+
 `ManualImportOddsProvider` accepte un document complet au format CSV UTF-8 ou une liste JSON. L'import est atomique : si une seule ligne est invalide, aucune observation du document ne devient visible. Chaque erreur contient le numéro de ligne, le champ, un code stable et un message.
 
 La clé d'idempotence est `sha256:<digest>`, où `digest` est le SHA-256 des octets exacts du document, avant décodage. Réimporter les mêmes octets ne crée aucun événement, marché, sélection ou snapshot supplémentaire et retourne `duplicate=true`.

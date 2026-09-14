@@ -43,6 +43,8 @@ CORE_TABLES = {
     "teams",
 }
 ODDS_TABLES = {
+    "stake_scrape_runs",
+    "stake_page_captures",
     "event_mapping_attempts",
     "event_mapping_candidate_scores",
     "events",

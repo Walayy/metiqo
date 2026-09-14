@@ -1,0 +1,74 @@
+[
+  {
+    "tab": "tab-main",
+    "scope": "Excerpt: match winner only, nine other main markets excluded.",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/circuito-desafiante-2026-split-2-t8/826033-keyd-stars-academy-kabum-ilha-das-lendas",
+      "competition": "Circuito Desafiante 2026 Split 2",
+      "participants": ["Keyd Academy", "KaBuM! Ilha das Lendas"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "expanded": true,
+          "label": "Vainqueur du match - Two options",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "Keyd Stars Academy",
+              "label": "Keyd Stars Academy",
+              "oddsText": "1,85",
+              "text": "Keyd Stars Academy 1,85"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "KaBuM! Ilha das Lendas",
+              "label": "KaBuM! Ilha das Lendas",
+              "oddsText": "1,85",
+              "text": "KaBuM! Ilha das Lendas 1,85"
+            }
+          ],
+          "rawText": "Vainqueur du match - Two options Keyd Stars Academy 1,85 KaBuM! Ilha das Lendas 1,85"
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-1",
+    "scope": "Only map 1 was inspected; other map tabs excluded from this replay.",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/circuito-desafiante-2026-split-2-t8/826033-keyd-stars-academy-kabum-ilha-das-lendas",
+      "competition": "Circuito Desafiante 2026 Split 2",
+      "participants": ["Keyd Academy", "KaBuM! Ilha das Lendas"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "label": "Map 1 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 1 Gagnant - Two options Keyd Stars Academy 1,85 KaBuM! Ilha das Lendas 1,85",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "Keyd Stars Academy",
+              "label": "Keyd Stars Academy",
+              "oddsText": "1,85",
+              "text": "Keyd Stars Academy 1,85"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "KaBuM! Ilha das Lendas",
+              "label": "KaBuM! Ilha das Lendas",
+              "oddsText": "1,85",
+              "text": "KaBuM! Ilha das Lendas 1,85"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

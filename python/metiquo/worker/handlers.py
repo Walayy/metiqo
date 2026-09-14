@@ -210,6 +210,7 @@ class PaperSettlementHandler:
 
 def default_handlers(engine: Engine, settings: Settings) -> dict[str, JobHandler]:
     return {
+        "odds.stake_scrape": StakeScrapingHandler(engine, settings),
         "model.train": ModelTrainingHandler(engine, settings),
         "ops.alerts": AlertHandler(engine, settings),
         "ops.backup": BackupHandler(engine, settings),
@@ -220,3 +221,26 @@ def default_handlers(engine: Engine, settings: Settings) -> dict[str, JobHandler
         "paper.report": PaperReportHandler(engine, settings),
         "paper.settle": PaperSettlementHandler(engine, settings),
     }
+
+
+class StakeScrapingHandler:
+    def __init__(self, engine: Engine, settings: Settings) -> None:
+        self.engine, self.settings = engine, settings
+
+    def handle(self, context: JobContext) -> dict[str, object]:
+        from metiquo.services.stake_scraping import scrape_stake
+
+        context.cancellation.raise_if_cancelled()
+        result = scrape_stake(
+            self.engine,
+            self.settings,
+            clock=context.clock,
+            checkpoint=context.cancellation.raise_if_cancelled,
+        )
+        if result["state"] in {"blocked", "failed", "partial"}:
+            raise BusinessError(
+                ErrorCode.DEPENDENCY_UNAVAILABLE,
+                "Collecte Stake incomplète : consulter son état",
+                retryable=False,
+            )
+        return result

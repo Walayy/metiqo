@@ -9,6 +9,7 @@ import {
   Database,
   FileChartColumnIncreasing,
   Menu,
+  ListOrdered,
   Settings,
   ShieldCheck,
   X,
@@ -17,7 +18,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useOnline } from "../lib/connectivity";
 import { ThemeMenu } from "./theme-menu";
@@ -33,6 +34,7 @@ type NavigationItem = Readonly<{
 export const navigationItems: readonly NavigationItem[] = [
   { href: "/", icon: ChartNoAxesCombined, label: "Opportunités" },
   { href: "/events", icon: CalendarDays, label: "Événements" },
+  { href: "/odds", icon: ListOrdered, label: "Cotes" },
   { href: "/paper-trading", icon: FileChartColumnIncreasing, label: "Paper trading" },
   { href: "/models", icon: Activity, label: "Modèles & backtests" },
   { href: "/data", icon: Database, label: "Données" },
@@ -55,8 +57,8 @@ function DataModeBadge({ dataMode }: Readonly<{ dataMode: DataMode }>) {
       aria-atomic="true"
       className={
         dataMode === "mock"
-          ? "relative border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200"
-          : "relative border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+          ? "relative shrink-0 whitespace-nowrap border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200"
+          : "relative shrink-0 whitespace-nowrap border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
       }
     >
       <span aria-hidden="true" className="mr-1.5 size-1.5 rounded-full bg-current" />
@@ -73,7 +75,8 @@ function DataModeBadge({ dataMode }: Readonly<{ dataMode: DataMode }>) {
 function Brand() {
   return (
     <Link
-      className="group flex min-h-11 items-center gap-3 rounded-lg outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+      aria-label="Metiquo — accueil"
+      className="group flex min-h-11 shrink-0 items-center gap-2 rounded-lg outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus sm:gap-3"
       href="/"
     >
       <span
@@ -84,7 +87,7 @@ function Brand() {
       </span>
       <span>
         <span className="block text-base font-bold tracking-tight text-ink-primary">Metiquo</span>
-        <span className="block text-xs text-ink-secondary">Pricing intelligence</span>
+        <span className="hidden text-xs text-ink-secondary sm:block">Pricing intelligence</span>
       </span>
     </Link>
   );
@@ -97,7 +100,10 @@ function Navigation({ onNavigate }: Readonly<{ onNavigate?: () => void }>) {
     <nav aria-label="Navigation principale">
       <ul className="grid gap-1">
         {navigationItems.map((item) => {
-          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          const active =
+            item.href === "/"
+              ? pathname === "/" || pathname.startsWith("/opportunities/")
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
 
           return (
@@ -125,9 +131,21 @@ function Navigation({ onNavigate }: Readonly<{ onNavigate?: () => void }>) {
 
 export function AppShell({ children, dataMode }: AppShellProperties) {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const navigationChosen = useRef(false);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 64rem)");
+    function closeOnDesktop() {
+      if (desktop.matches) setMobileNavigationOpen(false);
+    }
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      desktop.removeEventListener("change", closeOnDesktop);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-surface-canvas text-ink-primary">
+    <div className="min-h-screen min-w-0 bg-surface-canvas text-ink-primary">
       <a
         className="fixed left-4 top-4 z-[70] -translate-y-24 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast shadow-panel outline-none transition-transform focus:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus motion-reduce:transition-none"
         href="#main-content"
@@ -135,12 +153,12 @@ export function AppShell({ children, dataMode }: AppShellProperties) {
         Aller au contenu
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-border-subtle bg-surface-raised px-5 py-6 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-y-auto overscroll-contain border-r border-border-subtle bg-surface-raised px-4 py-6 lg:flex">
         <Brand />
         <div className="mt-9 flex-1">
           <Navigation />
         </div>
-        <div className="grid gap-4 border-t border-border-subtle pt-5">
+        <div className="mt-6 grid shrink-0 gap-4 border-t border-border-subtle pt-5">
           <div className="flex items-center justify-between gap-3">
             <DataModeBadge dataMode={dataMode} />
             <ThemeMenu />
@@ -151,10 +169,10 @@ export function AppShell({ children, dataMode }: AppShellProperties) {
         </div>
       </aside>
 
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-canvas/90 px-4 backdrop-blur-md sm:px-6 lg:hidden">
+      <div className="flex min-h-dvh min-w-0 flex-col lg:pl-60">
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border-subtle bg-surface-canvas/90 px-4 backdrop-blur-md sm:px-6 lg:hidden">
           <Brand />
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1">
             <DataModeBadge dataMode={dataMode} />
             <ThemeMenu />
             <Dialog.Root open={mobileNavigationOpen} onOpenChange={setMobileNavigationOpen}>
@@ -165,8 +183,23 @@ export function AppShell({ children, dataMode }: AppShellProperties) {
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[2px] data-[state=closed]:animate-none" />
-                <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-[min(88vw,22rem)] flex-col border-l border-border-subtle bg-surface-raised p-5 text-ink-primary shadow-panel outline-none">
-                  <div className="flex items-center justify-between gap-4">
+                <Dialog.Content
+                  className="fixed inset-y-0 right-0 z-50 flex max-h-dvh w-[min(88vw,22rem)] flex-col overflow-y-auto overscroll-contain border-l border-border-subtle bg-surface-raised p-5 text-ink-primary shadow-panel outline-none"
+                  onCloseAutoFocus={(event) => {
+                    if (
+                      navigationChosen.current ||
+                      window.matchMedia("(min-width: 64rem)").matches
+                    ) {
+                      event.preventDefault();
+                      navigationChosen.current = false;
+                      document.getElementById("main-content")?.focus();
+                    }
+                  }}
+                >
+                  <Dialog.Description className="sr-only">
+                    Accédez aux différentes pages de Metiquo.
+                  </Dialog.Description>
+                  <div className="flex shrink-0 items-center justify-between gap-4">
                     <Dialog.Title className="text-lg font-semibold tracking-tight">
                       Navigation
                     </Dialog.Title>
@@ -176,14 +209,15 @@ export function AppShell({ children, dataMode }: AppShellProperties) {
                       </Button>
                     </Dialog.Close>
                   </div>
-                  <div className="mt-7">
+                  <div className="my-7 shrink-0">
                     <Navigation
                       onNavigate={() => {
+                        navigationChosen.current = true;
                         setMobileNavigationOpen(false);
                       }}
                     />
                   </div>
-                  <p className="mt-auto border-t border-border-subtle pt-5 text-xs leading-5 text-ink-secondary">
+                  <p className="mt-auto shrink-0 border-t border-border-subtle pt-5 text-xs leading-5 text-ink-secondary">
                     Analyse et paper trading uniquement. Aucun pari réel n’est exécuté.
                   </p>
                 </Dialog.Content>
@@ -192,14 +226,10 @@ export function AppShell({ children, dataMode }: AppShellProperties) {
           </div>
         </header>
 
-        <main
-          className="mx-auto min-h-screen w-full max-w-[96rem] px-4 py-8 sm:px-6 sm:py-10 lg:px-10"
-          id="main-content"
-          tabIndex={-1}
-        >
+        <main className="ui-content-width flex-1 py-6 sm:py-8" id="main-content" tabIndex={-1}>
           {children}
         </main>
-        <footer className="mx-auto w-full max-w-[96rem] px-4 pb-8 text-xs leading-5 text-ink-secondary sm:px-6 lg:px-10">
+        <footer className="ui-content-width pb-8 text-xs leading-5 text-ink-secondary">
           <div className="border-t border-border-subtle pt-5">
             <p>Metiquo ne garantit aucun gain.</p>
             <p>Analyse et paper trading uniquement. Aucun pari réel n’est exécuté.</p>

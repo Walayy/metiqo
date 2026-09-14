@@ -1,0 +1,1549 @@
+[
+  {
+    "tab": "tab-main",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "competition": "LEC 2026 Summer Playoffs",
+      "displayedStart": "17:00 11/09/2026",
+      "participants": ["GIANTX", "Natus Vincere"],
+      "scores": ["-", "-"],
+      "links": [],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "markets": [
+        {
+          "label": "Vainqueur du match - Two options",
+          "expanded": true,
+          "rawText": "Vainqueur du match - Two options GIANTX 2,05 Natus Vincere 1,78",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "2,05",
+              "disabled": false,
+              "text": "GIANTX 2,05"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,78",
+              "disabled": false,
+              "text": "Natus Vincere 1,78"
+            }
+          ]
+        },
+        {
+          "label": "Handicap de la carte",
+          "expanded": true,
+          "rawText": "Handicap de la carte GIANTXNatus Vincere -2.5 6,60 2.5 1,10 -1.5 3,10 1.5 1,35 1.5 1,45 -1.5 2,70 2.5 1,12 -2.5 5,80",
+          "outcomes": [
+            {
+              "label": "GIANTX (-2.5)",
+              "displayedLabel": "-2.5",
+              "oddsText": "6,60",
+              "disabled": false,
+              "text": "-2.5 6,60"
+            },
+            {
+              "label": "Natus Vincere (2.5)",
+              "displayedLabel": "2.5",
+              "oddsText": "1,10",
+              "disabled": false,
+              "text": "2.5 1,10"
+            },
+            {
+              "label": "GIANTX (-1.5)",
+              "displayedLabel": "-1.5",
+              "oddsText": "3,10",
+              "disabled": false,
+              "text": "-1.5 3,10"
+            },
+            {
+              "label": "Natus Vincere (1.5)",
+              "displayedLabel": "1.5",
+              "oddsText": "1,35",
+              "disabled": false,
+              "text": "1.5 1,35"
+            },
+            {
+              "label": "GIANTX (1.5)",
+              "displayedLabel": "1.5",
+              "oddsText": "1,45",
+              "disabled": false,
+              "text": "1.5 1,45"
+            },
+            {
+              "label": "Natus Vincere (-1.5)",
+              "displayedLabel": "-1.5",
+              "oddsText": "2,70",
+              "disabled": false,
+              "text": "-1.5 2,70"
+            },
+            {
+              "label": "GIANTX (2.5)",
+              "displayedLabel": "2.5",
+              "oddsText": "1,12",
+              "disabled": false,
+              "text": "2.5 1,12"
+            },
+            {
+              "label": "Natus Vincere (-2.5)",
+              "displayedLabel": "-2.5",
+              "oddsText": "5,80",
+              "disabled": false,
+              "text": "-2.5 5,80"
+            }
+          ]
+        },
+        {
+          "label": "Nombre de maps",
+          "expanded": true,
+          "rawText": "Nombre de maps Plus deMoins de 3.5 1,26 3.5 3,40 4.5 2,40 4.5 1,50",
+          "outcomes": [
+            {
+              "label": "Over 3.5",
+              "displayedLabel": "3.5",
+              "oddsText": "1,26",
+              "disabled": false,
+              "text": "3.5 1,26"
+            },
+            {
+              "label": "Under 3.5",
+              "displayedLabel": "3.5",
+              "oddsText": "3,40",
+              "disabled": false,
+              "text": "3.5 3,40"
+            },
+            {
+              "label": "Over 4.5",
+              "displayedLabel": "4.5",
+              "oddsText": "2,40",
+              "disabled": false,
+              "text": "4.5 2,40"
+            },
+            {
+              "label": "Under 4.5",
+              "displayedLabel": "4.5",
+              "oddsText": "1,50",
+              "disabled": false,
+              "text": "4.5 1,50"
+            }
+          ]
+        },
+        {
+          "label": "Gagne au moins un map",
+          "expanded": true,
+          "rawText": "Gagne au moins un map Natus Vincere Oui 1,08 Non 6,30 GIANTX Oui 1,12 Non 5,30",
+          "outcomes": [
+            {
+              "label": "Yes Natus Vincere",
+              "displayedLabel": "Oui",
+              "oddsText": "1,08",
+              "disabled": false,
+              "text": "Oui 1,08"
+            },
+            {
+              "label": "No Natus Vincere",
+              "displayedLabel": "Non",
+              "oddsText": "6,30",
+              "disabled": false,
+              "text": "Non 6,30"
+            },
+            {
+              "label": "Yes GIANTX",
+              "displayedLabel": "Oui",
+              "oddsText": "1,12",
+              "disabled": false,
+              "text": "Oui 1,12"
+            },
+            {
+              "label": "No GIANTX",
+              "displayedLabel": "Non",
+              "oddsText": "5,30",
+              "disabled": false,
+              "text": "Non 5,30"
+            }
+          ]
+        },
+        {
+          "label": "Résultat final",
+          "expanded": true,
+          "rawText": "Résultat final Slider Tout 0:3 5,30 1:3 4,00 3:1 4,80 3:0 6,30 2:3 4,40 3:2 4,40",
+          "outcomes": [
+            {
+              "label": "0:3",
+              "displayedLabel": "0:3",
+              "oddsText": "5,30",
+              "disabled": false,
+              "text": "0:3 5,30"
+            },
+            {
+              "label": "1:3",
+              "displayedLabel": "1:3",
+              "oddsText": "4,00",
+              "disabled": false,
+              "text": "1:3 4,00"
+            },
+            {
+              "label": "3:1",
+              "displayedLabel": "3:1",
+              "oddsText": "4,80",
+              "disabled": false,
+              "text": "3:1 4,80"
+            },
+            {
+              "label": "3:0",
+              "displayedLabel": "3:0",
+              "oddsText": "6,30",
+              "disabled": false,
+              "text": "3:0 6,30"
+            },
+            {
+              "label": "2:3",
+              "displayedLabel": "2:3",
+              "oddsText": "4,40",
+              "disabled": false,
+              "text": "2:3 4,40"
+            },
+            {
+              "label": "3:2",
+              "displayedLabel": "3:2",
+              "oddsText": "4,40",
+              "disabled": false,
+              "text": "3:2 4,40"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 1 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 2 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 3 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 4 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 5 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-1",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "competition": "LEC 2026 Summer Playoffs",
+      "displayedStart": "17:00 11/09/2026",
+      "participants": ["GIANTX", "Natus Vincere"],
+      "scores": ["-", "-"],
+      "links": [],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "markets": [
+        {
+          "label": "Map 1 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 1 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - Premier à atteindre morts",
+          "expanded": true,
+          "rawText": "Map 1 - Premier à atteindre morts GIANTXNatus Vincere 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,88",
+              "disabled": false,
+              "text": "5 1,88"
+            },
+            {
+              "label": "Natus Vincere 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "5 1,82"
+            },
+            {
+              "label": "GIANTX 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "10 1,90"
+            },
+            {
+              "label": "Natus Vincere 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "10 1,80"
+            },
+            {
+              "label": "GIANTX 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "15 1,90"
+            },
+            {
+              "label": "Natus Vincere 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "15 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - Premier sang",
+          "expanded": true,
+          "rawText": "Map 1 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "GIANTX 1,85"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Natus Vincere 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - Premier Baron",
+          "expanded": true,
+          "rawText": "Map 1 - Premier Baron GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - Premier inhibiteur",
+          "expanded": true,
+          "rawText": "Map 1 - Premier inhibiteur GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - º meurtre",
+          "expanded": true,
+          "rawText": "Map 1 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "Natus Vincere 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "GIANTX 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "Natus Vincere 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "GIANTX 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            },
+            {
+              "label": "Natus Vincere 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - Quadruple meurtre",
+          "expanded": true,
+          "rawText": "Map 1 - Quadruple meurtre Yes 6,30",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "6,30",
+              "disabled": false,
+              "text": "Yes 6,30"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - Quintuple meurtre",
+          "expanded": true,
+          "rawText": "Map 1 - Quintuple meurtre Yes 11,00",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "11,00",
+              "disabled": false,
+              "text": "Yes 11,00"
+            }
+          ]
+        },
+        {
+          "label": "Map 1 - Victoires paires/impaires",
+          "expanded": true,
+          "rawText": "Map 1 - Victoires paires/impaires Odd 1,85 Even 1,85",
+          "outcomes": [
+            {
+              "label": "Odd",
+              "displayedLabel": "Odd",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Odd 1,85"
+            },
+            {
+              "label": "Even",
+              "displayedLabel": "Even",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Even 1,85"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-2",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "competition": "LEC 2026 Summer Playoffs",
+      "displayedStart": "17:00 11/09/2026",
+      "participants": ["GIANTX", "Natus Vincere"],
+      "scores": ["-", "-"],
+      "links": [],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "markets": [
+        {
+          "label": "Map 2 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 2 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - Premier à atteindre morts",
+          "expanded": true,
+          "rawText": "Map 2 - Premier à atteindre morts GIANTXNatus Vincere 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,88",
+              "disabled": false,
+              "text": "5 1,88"
+            },
+            {
+              "label": "Natus Vincere 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "5 1,82"
+            },
+            {
+              "label": "GIANTX 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "10 1,90"
+            },
+            {
+              "label": "Natus Vincere 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "10 1,80"
+            },
+            {
+              "label": "GIANTX 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "15 1,90"
+            },
+            {
+              "label": "Natus Vincere 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "15 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - Premier sang",
+          "expanded": true,
+          "rawText": "Map 2 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "GIANTX 1,85"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Natus Vincere 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - Premier Baron",
+          "expanded": true,
+          "rawText": "Map 2 - Premier Baron GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - Premier inhibiteur",
+          "expanded": true,
+          "rawText": "Map 2 - Premier inhibiteur GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - º meurtre",
+          "expanded": true,
+          "rawText": "Map 2 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "Natus Vincere 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "GIANTX 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "Natus Vincere 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "GIANTX 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            },
+            {
+              "label": "Natus Vincere 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - Quadruple meurtre",
+          "expanded": true,
+          "rawText": "Map 2 - Quadruple meurtre Yes 6,30",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "6,30",
+              "disabled": false,
+              "text": "Yes 6,30"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - Quintuple meurtre",
+          "expanded": true,
+          "rawText": "Map 2 - Quintuple meurtre Yes 11,00",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "11,00",
+              "disabled": false,
+              "text": "Yes 11,00"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 - Victoires paires/impaires",
+          "expanded": true,
+          "rawText": "Map 2 - Victoires paires/impaires Odd 1,85 Even 1,85",
+          "outcomes": [
+            {
+              "label": "Odd",
+              "displayedLabel": "Odd",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Odd 1,85"
+            },
+            {
+              "label": "Even",
+              "displayedLabel": "Even",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Even 1,85"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-3",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "competition": "LEC 2026 Summer Playoffs",
+      "displayedStart": "17:00 11/09/2026",
+      "participants": ["GIANTX", "Natus Vincere"],
+      "scores": ["-", "-"],
+      "links": [],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "markets": [
+        {
+          "label": "Map 3 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 3 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - Premier à atteindre morts",
+          "expanded": true,
+          "rawText": "Map 3 - Premier à atteindre morts GIANTXNatus Vincere 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,88",
+              "disabled": false,
+              "text": "5 1,88"
+            },
+            {
+              "label": "Natus Vincere 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "5 1,82"
+            },
+            {
+              "label": "GIANTX 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "10 1,90"
+            },
+            {
+              "label": "Natus Vincere 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "10 1,80"
+            },
+            {
+              "label": "GIANTX 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "15 1,90"
+            },
+            {
+              "label": "Natus Vincere 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "15 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - Premier sang",
+          "expanded": true,
+          "rawText": "Map 3 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "GIANTX 1,85"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Natus Vincere 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - Premier Baron",
+          "expanded": true,
+          "rawText": "Map 3 - Premier Baron GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - Premier inhibiteur",
+          "expanded": true,
+          "rawText": "Map 3 - Premier inhibiteur GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - º meurtre",
+          "expanded": true,
+          "rawText": "Map 3 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "Natus Vincere 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "GIANTX 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "Natus Vincere 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "GIANTX 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            },
+            {
+              "label": "Natus Vincere 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - Quadruple meurtre",
+          "expanded": true,
+          "rawText": "Map 3 - Quadruple meurtre Yes 6,30",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "6,30",
+              "disabled": false,
+              "text": "Yes 6,30"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - Quintuple meurtre",
+          "expanded": true,
+          "rawText": "Map 3 - Quintuple meurtre Yes 11,00",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "11,00",
+              "disabled": false,
+              "text": "Yes 11,00"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 - Victoires paires/impaires",
+          "expanded": true,
+          "rawText": "Map 3 - Victoires paires/impaires Odd 1,85 Even 1,85",
+          "outcomes": [
+            {
+              "label": "Odd",
+              "displayedLabel": "Odd",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Odd 1,85"
+            },
+            {
+              "label": "Even",
+              "displayedLabel": "Even",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Even 1,85"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-4",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "competition": "LEC 2026 Summer Playoffs",
+      "displayedStart": "17:00 11/09/2026",
+      "participants": ["GIANTX", "Natus Vincere"],
+      "scores": ["-", "-"],
+      "links": [],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "markets": [
+        {
+          "label": "Map 4 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 4 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - Premier à atteindre morts",
+          "expanded": true,
+          "rawText": "Map 4 - Premier à atteindre morts GIANTXNatus Vincere 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,88",
+              "disabled": false,
+              "text": "5 1,88"
+            },
+            {
+              "label": "Natus Vincere 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "5 1,82"
+            },
+            {
+              "label": "GIANTX 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "10 1,90"
+            },
+            {
+              "label": "Natus Vincere 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "10 1,80"
+            },
+            {
+              "label": "GIANTX 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "15 1,90"
+            },
+            {
+              "label": "Natus Vincere 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "15 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - Premier sang",
+          "expanded": true,
+          "rawText": "Map 4 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "GIANTX 1,85"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Natus Vincere 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - Premier Baron",
+          "expanded": true,
+          "rawText": "Map 4 - Premier Baron GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - Premier inhibiteur",
+          "expanded": true,
+          "rawText": "Map 4 - Premier inhibiteur GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - º meurtre",
+          "expanded": true,
+          "rawText": "Map 4 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "Natus Vincere 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "GIANTX 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "Natus Vincere 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "GIANTX 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            },
+            {
+              "label": "Natus Vincere 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - Quadruple meurtre",
+          "expanded": true,
+          "rawText": "Map 4 - Quadruple meurtre Yes 6,30",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "6,30",
+              "disabled": false,
+              "text": "Yes 6,30"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - Quintuple meurtre",
+          "expanded": true,
+          "rawText": "Map 4 - Quintuple meurtre Yes 11,00",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "11,00",
+              "disabled": false,
+              "text": "Yes 11,00"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 - Victoires paires/impaires",
+          "expanded": true,
+          "rawText": "Map 4 - Victoires paires/impaires Odd 1,85 Even 1,85",
+          "outcomes": [
+            {
+              "label": "Odd",
+              "displayedLabel": "Odd",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Odd 1,85"
+            },
+            {
+              "label": "Even",
+              "displayedLabel": "Even",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Even 1,85"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-5",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "competition": "LEC 2026 Summer Playoffs",
+      "displayedStart": "17:00 11/09/2026",
+      "participants": ["GIANTX", "Natus Vincere"],
+      "scores": ["-", "-"],
+      "links": [],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "markets": [
+        {
+          "label": "Map 5 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 5 Gagnant - Two options GIANTX 1,95 Natus Vincere 1,82",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,95",
+              "disabled": false,
+              "text": "GIANTX 1,95"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "Natus Vincere 1,82"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - Premier à atteindre morts",
+          "expanded": true,
+          "rawText": "Map 5 - Premier à atteindre morts GIANTXNatus Vincere 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,88",
+              "disabled": false,
+              "text": "5 1,88"
+            },
+            {
+              "label": "Natus Vincere 5 Kills",
+              "displayedLabel": "5",
+              "oddsText": "1,82",
+              "disabled": false,
+              "text": "5 1,82"
+            },
+            {
+              "label": "GIANTX 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "10 1,90"
+            },
+            {
+              "label": "Natus Vincere 10 Kills",
+              "displayedLabel": "10",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "10 1,80"
+            },
+            {
+              "label": "GIANTX 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "15 1,90"
+            },
+            {
+              "label": "Natus Vincere 15 Kills",
+              "displayedLabel": "15",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "15 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - Premier sang",
+          "expanded": true,
+          "rawText": "Map 5 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "GIANTX 1,85"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Natus Vincere 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - Premier Baron",
+          "expanded": true,
+          "rawText": "Map 5 - Premier Baron GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - Premier inhibiteur",
+          "expanded": true,
+          "rawText": "Map 5 - Premier inhibiteur GIANTX 1,90 Natus Vincere 1,80",
+          "outcomes": [
+            {
+              "label": "GIANTX",
+              "displayedLabel": "GIANTX",
+              "oddsText": "1,90",
+              "disabled": false,
+              "text": "GIANTX 1,90"
+            },
+            {
+              "label": "Natus Vincere",
+              "displayedLabel": "Natus Vincere",
+              "oddsText": "1,80",
+              "disabled": false,
+              "text": "Natus Vincere 1,80"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - º meurtre",
+          "expanded": true,
+          "rawText": "Map 5 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+          "outcomes": [
+            {
+              "label": "GIANTX 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "Natus Vincere 10th Kill",
+              "displayedLabel": "10",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "10 1,85"
+            },
+            {
+              "label": "GIANTX 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "Natus Vincere 20th Kill",
+              "displayedLabel": "20",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "20 1,85"
+            },
+            {
+              "label": "GIANTX 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            },
+            {
+              "label": "Natus Vincere 30th Kill",
+              "displayedLabel": "30",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "30 1,85"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - Quadruple meurtre",
+          "expanded": true,
+          "rawText": "Map 5 - Quadruple meurtre Yes 6,30",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "6,30",
+              "disabled": false,
+              "text": "Yes 6,30"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - Quintuple meurtre",
+          "expanded": true,
+          "rawText": "Map 5 - Quintuple meurtre Yes 11,00",
+          "outcomes": [
+            {
+              "label": "Yes",
+              "displayedLabel": "Yes",
+              "oddsText": "11,00",
+              "disabled": false,
+              "text": "Yes 11,00"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 - Victoires paires/impaires",
+          "expanded": true,
+          "rawText": "Map 5 - Victoires paires/impaires Odd 1,85 Even 1,85",
+          "outcomes": [
+            {
+              "label": "Odd",
+              "displayedLabel": "Odd",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Odd 1,85"
+            },
+            {
+              "label": "Even",
+              "displayedLabel": "Even",
+              "oddsText": "1,85",
+              "disabled": false,
+              "text": "Even 1,85"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -75,6 +75,7 @@ test("keeps desktop navigation complete and keyboard reachable", async ({ page }
   for (const label of [
     "Opportunités",
     "Événements",
+    "Cotes",
     "Paper trading",
     "Modèles & backtests",
     "Données",
@@ -113,7 +114,7 @@ test("changes the theme from the accessible appearance menu", async ({ page }) =
   await openWithStoredTheme(page, "light");
 
   await page.getByRole("button", { name: "Changer le thème" }).click();
-  await page.getByRole("menuitem", { name: "Sombre" }).click();
+  await page.getByRole("menuitemradio", { name: "Sombre" }).click();
 
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect

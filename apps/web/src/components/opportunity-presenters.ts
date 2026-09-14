@@ -73,19 +73,23 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   hour: "2-digit",
   minute: "2-digit",
   month: "short",
+  year: "numeric",
   timeZone: "Europe/Paris",
 });
 
 export function formatDecimal(value: string | number) {
-  return decimalFormatter.format(Number(value));
+  const number = Number(value);
+  return Number.isFinite(number) ? decimalFormatter.format(number) : "Indisponible";
 }
 
 export function formatPercent(value: string | number) {
-  return percentFormatter.format(Number(value));
+  const number = Number(value);
+  return Number.isFinite(number) ? percentFormatter.format(number) : "Indisponible";
 }
 
 export function formatSignedPercent(value: string | number) {
   const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return "Indisponible";
   const formattedValue = percentFormatter.format(Math.abs(numericValue));
   if (numericValue > 0) {
     return `+${formattedValue}`;
@@ -97,11 +101,13 @@ export function formatSignedPercent(value: string | number) {
 }
 
 export function formatDateTime(value: string) {
-  return dateFormatter.format(new Date(value));
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? dateFormatter.format(date) : "Date indisponible";
 }
 
 export function formatTimeUntil(startsAt: string, referenceTime: string) {
   const milliseconds = new Date(startsAt).getTime() - new Date(referenceTime).getTime();
+  if (!Number.isFinite(milliseconds)) return "Échéance indisponible";
   if (milliseconds <= 0) {
     return "Déjà commencé";
   }
@@ -112,6 +118,11 @@ export function formatTimeUntil(startsAt: string, referenceTime: string) {
   }
 
   const hours = Math.floor(totalMinutes / 60);
+  if (hours >= 48) {
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return `Dans ${String(days)} j${remainingHours ? ` ${String(remainingHours)} h` : ""}`;
+  }
   const minutes = totalMinutes % 60;
   return minutes === 0
     ? `Dans ${hours.toString()} h`
@@ -121,7 +132,11 @@ export function formatTimeUntil(startsAt: string, referenceTime: string) {
 export function isAdmissible(opportunity: Opportunity, referenceTime: string) {
   return (
     opportunity.quality.publishable &&
+    ["VALUE", "STRONG_VALUE"].includes(opportunity.value.grade) &&
+    opportunity.quality.sourceFreshness === "fresh" &&
+    !opportunity.book.informationalOnly &&
     opportunity.meta.freshness === "fresh" &&
+    opportunity.book.marketStatus === "open" &&
     opportunity.market.status === "open" &&
     opportunity.event.status === "scheduled" &&
     new Date(opportunity.event.startsAt).getTime() > new Date(referenceTime).getTime()
@@ -189,9 +204,11 @@ export function describeOpportunity(
   ) {
     return "Match déjà commencé : aucune entrée paper possible.";
   }
-  if (opportunity.meta.freshness !== "fresh")
+  if (opportunity.meta.freshness !== "fresh" || opportunity.quality.sourceFreshness !== "fresh")
     return "Fraîcheur insuffisante : actualiser les données avant toute décision.";
-  if (opportunity.market.status !== "open")
+  if (opportunity.book.informationalOnly)
+    return "Cote informative uniquement : aucune entrée paper possible.";
+  if (opportunity.market.status !== "open" || opportunity.book.marketStatus !== "open")
     return "Marché fermé ou suspendu : aucune entrée paper possible.";
   if (isAdmissible(opportunity, referenceTime)) {
     return "Signal admissible : les contrôles de qualité et de fraîcheur sont satisfaits.";
@@ -199,6 +216,8 @@ export function describeOpportunity(
 
   const reasons = opportunity.quality.abstentionReasons ?? [];
   if (reasons.length === 0) {
+    if (!["VALUE", "STRONG_VALUE"].includes(opportunity.value.grade))
+      return "Avantage estimé insuffisant : ce signal reste consultable, mais ne permet pas de créer une décision paper.";
     return "Signal non publiable selon la politique de décision active.";
   }
 

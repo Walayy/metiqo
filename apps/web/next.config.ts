@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  ...(process.env.METIQUO_NEXT_DIST_DIR ? { distDir: process.env.METIQUO_NEXT_DIST_DIR } : {}),
   ...(process.env.NEXT_STANDALONE === "true" ? { output: "standalone" as const } : {}),
   poweredByHeader: false,
   reactStrictMode: true,

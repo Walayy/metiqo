@@ -685,6 +685,14 @@ export type ItemResponsePaperMetricsDto = {
 };
 
 /**
+ * ItemResponse[StakeCollectionStatus]
+ */
+export type ItemResponseStakeCollectionStatus = {
+    data: StakeCollectionStatus;
+    meta: ContractMetadata;
+};
+
+/**
  * JobSummary
  *
  * État public minimal d'un job orchestré.
@@ -1047,6 +1055,55 @@ export type ModelSummary = {
 };
 
 /**
+ * ObservedOddsQuote
+ *
+ * Dernière observation d'une sélection, distincte d'un signal de value.
+ */
+export type ObservedOddsQuote = {
+    /**
+     * Ageseconds
+     */
+    ageSeconds: number;
+    /**
+     * Capturedat
+     */
+    capturedAt: string;
+    /**
+     * Decimalodds
+     */
+    decimalOdds: string;
+    event: ProviderEvent;
+    freshness: FreshnessStatus;
+    /**
+     * Informationalonly
+     */
+    informationalOnly: boolean;
+    /**
+     * Marketlabel
+     */
+    marketLabel: string;
+    marketStatus: MarketStatus;
+    /**
+     * Oddssnapshotid
+     */
+    oddsSnapshotId: string;
+    period: MarketPeriod;
+    /**
+     * Provider
+     */
+    provider: string;
+    providerStatus: ProviderStatus;
+    /**
+     * Providertype
+     */
+    providerType: string;
+    /**
+     * Selectionlabel
+     */
+    selectionLabel: string;
+};
+
+/**
  * OddsCaptureResult
  *
  * Résultat immuable d'une collecte pour un événement fournisseur.
@@ -1398,6 +1455,18 @@ export type PageResponseModelSummary = {
 };
 
 /**
+ * PageResponse[ObservedOddsQuote]
+ */
+export type PageResponseObservedOddsQuote = {
+    /**
+     * Data
+     */
+    data: Array<ObservedOddsQuote>;
+    meta: ContractMetadata;
+    page: PageInfo;
+};
+
+/**
  * PageResponse[OddsSnapshot]
  */
 export type PageResponseOddsSnapshot = {
@@ -1441,6 +1510,18 @@ export type PageResponseProviderHealth = {
      * Data
      */
     data: Array<ProviderHealth>;
+    meta: ContractMetadata;
+    page: PageInfo;
+};
+
+/**
+ * PageResponse[StakePublicEvent]
+ */
+export type PageResponseStakePublicEvent = {
+    /**
+     * Data
+     */
+    data: Array<StakePublicEvent>;
     meta: ContractMetadata;
     page: PageInfo;
 };
@@ -1907,6 +1988,62 @@ export type ReleaseCompliance = {
 };
 
 /**
+ * ScrapedMarket
+ */
+export type ScrapedMarket = {
+    /**
+     * Capturedat
+     */
+    capturedAt: string;
+    /**
+     * Expanded
+     */
+    expanded: boolean;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Outcomes
+     */
+    outcomes: Array<ScrapedOutcome>;
+    /**
+     * Rawtext
+     */
+    rawText: string;
+    /**
+     * Tab
+     */
+    tab: string;
+};
+
+/**
+ * ScrapedOutcome
+ */
+export type ScrapedOutcome = {
+    /**
+     * Decimalodds
+     */
+    decimalOdds: string | null;
+    /**
+     * Displayedlabel
+     */
+    displayedLabel: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Oddstext
+     */
+    oddsText: string;
+    /**
+     * Status
+     */
+    status: 'open' | 'suspended' | 'unavailable';
+};
+
+/**
  * SelectionType
  *
  * Issue normalisée indépendamment du libellé fournisseur.
@@ -1961,6 +2098,87 @@ export type SourceOperationalHealth = {
      */
     snapshotId?: string | null;
     status: FreshnessStatus;
+};
+
+/**
+ * StakeCollectionStatus
+ */
+export type StakeCollectionStatus = {
+    /**
+     * Checkedat
+     */
+    checkedAt: string | null;
+    /**
+     * Detail
+     */
+    detail: string | null;
+    /**
+     * Enabled
+     */
+    enabled: boolean;
+    /**
+     * Eventcount
+     */
+    eventCount: number;
+    /**
+     * Lastsuccessat
+     */
+    lastSuccessAt: string | null;
+    /**
+     * Nextattemptat
+     */
+    nextAttemptAt: string | null;
+    /**
+     * State
+     */
+    state: 'disabled' | 'never_collected' | 'operational' | 'partial' | 'blocked' | 'failed' | 'stale';
+};
+
+/**
+ * StakeEventCapture
+ */
+export type StakeEventCapture = {
+    event: ProviderEvent;
+    /**
+     * Expectedtabs
+     */
+    expectedTabs: Array<string>;
+    /**
+     * Markets
+     */
+    markets: Array<ScrapedMarket>;
+    /**
+     * Observedat
+     */
+    observedAt: string;
+    /**
+     * Sourceurl
+     */
+    sourceUrl: string;
+    /**
+     * Visitedtabs
+     */
+    visitedTabs: Array<string>;
+    /**
+     * Warnings
+     */
+    warnings: Array<string>;
+};
+
+/**
+ * StakePublicEvent
+ */
+export type StakePublicEvent = {
+    /**
+     * Ageseconds
+     */
+    ageSeconds: number;
+    capture: StakeEventCapture;
+    /**
+     * Expiresat
+     */
+    expiresAt: string;
+    freshness: FreshnessStatus;
 };
 
 /**
@@ -2991,6 +3209,110 @@ export type GetModelApiV1ModelsModelVersionIdGetResponses = {
 };
 
 export type GetModelApiV1ModelsModelVersionIdGetResponse = GetModelApiV1ModelsModelVersionIdGetResponses[keyof GetModelApiV1ModelsModelVersionIdGetResponses];
+
+export type ListObservedOddsApiV1OddsQuotesGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Provider
+         */
+        provider?: string | null;
+        /**
+         * Startsfrom
+         */
+        startsFrom?: string | null;
+        /**
+         * Startsto
+         */
+        startsTo?: string | null;
+    };
+    url: '/api/v1/odds/quotes';
+};
+
+export type ListObservedOddsApiV1OddsQuotesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListObservedOddsApiV1OddsQuotesGetError = ListObservedOddsApiV1OddsQuotesGetErrors[keyof ListObservedOddsApiV1OddsQuotesGetErrors];
+
+export type ListObservedOddsApiV1OddsQuotesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PageResponseObservedOddsQuote;
+};
+
+export type ListObservedOddsApiV1OddsQuotesGetResponse = ListObservedOddsApiV1OddsQuotesGetResponses[keyof ListObservedOddsApiV1OddsQuotesGetResponses];
+
+export type EventsApiV1OddsStakeEventsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Startsfrom
+         */
+        startsFrom?: string | null;
+        /**
+         * Startsto
+         */
+        startsTo?: string | null;
+    };
+    url: '/api/v1/odds/stake/events';
+};
+
+export type EventsApiV1OddsStakeEventsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type EventsApiV1OddsStakeEventsGetError = EventsApiV1OddsStakeEventsGetErrors[keyof EventsApiV1OddsStakeEventsGetErrors];
+
+export type EventsApiV1OddsStakeEventsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PageResponseStakePublicEvent;
+};
+
+export type EventsApiV1OddsStakeEventsGetResponse = EventsApiV1OddsStakeEventsGetResponses[keyof EventsApiV1OddsStakeEventsGetResponses];
+
+export type StatusApiV1OddsStakeStatusGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/odds/stake/status';
+};
+
+export type StatusApiV1OddsStakeStatusGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ItemResponseStakeCollectionStatus;
+};
+
+export type StatusApiV1OddsStakeStatusGetResponse = StatusApiV1OddsStakeStatusGetResponses[keyof StatusApiV1OddsStakeStatusGetResponses];
 
 export type ListOpportunitiesApiV1OpportunitiesGetData = {
     body?: never;

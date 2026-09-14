@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { chooseSelectOption } from "./helpers/select.js";
 
 const ADMISSIBLE_SIGNAL = "f31e365e-ab44-53b2-b839-e1b9f2e3625b";
 const VOID_PAPER_BET = "cef9c5cf-d14f-51dc-a417-91909b3088ba";
@@ -16,13 +17,13 @@ test("creates and settles a paper bet from an admissible signal", async ({ page 
   );
 
   const settlement = creation.getByRole("region", { name: "Règlement fictif" });
-  await settlement.getByLabel("Statut").selectOption("lost");
+  await chooseSelectOption(page, settlement.getByRole("combobox", { name: "Statut" }), "Perdu");
   await settlement.getByLabel("P&L fictif").fill("-10");
   await settlement.getByLabel("Motif").fill("Défaite confirmée dans le scénario mock");
   await settlement.getByRole("button", { name: "Enregistrer le règlement fictif" }).click();
-  await expect(creation.getByRole("status").filter({ hasText: "Règlement lost" })).toContainText(
-    /-10,00\s*€/,
-  );
+  await expect(
+    creation.getByRole("status").filter({ hasText: "Règlement enregistré · Perdu" }),
+  ).toContainText(/-10,00\s*€/);
 });
 
 test("shows a versioned paper-bet detail without any real execution", async ({ page }) => {
@@ -30,10 +31,31 @@ test("shows a versioned paper-bet detail without any real execution", async ({ p
 
   await expect(page.getByRole("heading", { level: 1, name: "Paper bet" })).toBeVisible();
   await expect(page.getByRole("note")).toContainText("Aucune exécution réelle");
+  await expect(page.getByRole("group", { name: "Match et sélection", exact: true })).toContainText(
+    "Sélection :",
+  );
   const detail = page.getByRole("region", { name: "Détail du paper bet" });
   await expect(detail).toContainText("Annulé / void");
   await expect(detail).toContainText("lol-match-winner-v1");
   await expect(detail.getByRole("link", { name: "Ouvrir le signal source" })).toBeVisible();
+});
+
+test("keeps the paper decision readable when its source signal is unavailable", async ({
+  page,
+}) => {
+  await page.route("**/api/backend/api/v1/opportunities/*", (route) =>
+    route.fulfill({ status: 404, json: { detail: "Synthetic missing source" } }),
+  );
+  await page.goto(`/paper-trading/${VOID_PAPER_BET}`);
+  await expect(
+    page.getByRole("heading", { name: "Signal source indisponible", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Détail du paper bet", exact: true }),
+  ).toContainText("Annulé / void");
+  await expect(
+    page.getByRole("link", { name: "Retour au paper trading", exact: true }),
+  ).toBeVisible();
 });
 
 test("renders losses as prominently as gains in the P&L summary", async ({ page }) => {

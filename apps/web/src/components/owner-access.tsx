@@ -5,13 +5,15 @@ import { readBackend, requestBackend } from "../lib/backend";
 import type { AuthStatus } from "@metiquo/contracts/types";
 import {
   Button,
+  Input,
   Card,
   CardContent,
-  RemoteLoadingState,
+  ContextPanel,
+  RemotePageLoadingState,
   RemoteRecoverableErrorState,
 } from "@metiquo/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, type ReactNode, type SubmitEventHandler } from "react";
+import { useEffect, useRef, useState, type ReactNode, type SubmitEventHandler } from "react";
 
 const SESSION_KEY = ["owner-session"] as const;
 const AUTH_URL = "/api/backend/api/v1/auth";
@@ -39,6 +41,12 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [credentialsRejected, setCredentialsRejected] = useState(false);
+  const passwordInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (credentialsRejected && !pending) passwordInput.current?.focus();
+  }, [credentialsRejected, pending]);
 
   useEffect(() => {
     if (session.data?.mode === "owner" && !session.data.authenticated) {
@@ -49,16 +57,18 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
   async function login() {
     setPending(true);
     setError(null);
+    setCredentialsRejected(false);
     try {
       const response = await requestBackend(`${AUTH_URL}/login`, {
         method: "POST",
         cache: "no-store",
         credentials: "same-origin",
         headers: { "content-type": "application/json", "X-Metiquo-CSRF": "1" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: username.trim(), password }),
         signal: AbortSignal.timeout(15_000),
       });
       if (!response.ok) {
+        setCredentialsRejected(response.status === 401);
         setError(
           response.status === 401
             ? "Identifiants incorrects. Réessayez."
@@ -76,7 +86,7 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
   }
   const submit: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    void login();
+    if (!pending) void login();
   };
 
   async function logout() {
@@ -103,14 +113,14 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
     }
   }
 
-  if (session.isPending)
-    return <RemoteLoadingState label="Vérification de la connexion" minHeight="32rem" rows={8} />;
+  if (session.isPending) return <RemotePageLoadingState label="Vérification de la connexion" />;
   if (session.isError && session.data?.mode !== "disabled")
     return (
       <RemoteRecoverableErrorState
         title="Connexion indisponible"
         description="Le service de connexion ne répond pas."
         onRetry={() => void session.refetch()}
+        retryDisabled={session.isFetching}
       />
     );
   if (session.data?.mode === "disabled")
@@ -132,16 +142,18 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
   if (session.data?.authenticated)
     return (
       <>
-        <div className="mb-6 flex min-h-11 items-center justify-end gap-4">
-          <span className="text-sm text-ink-secondary">Owner · {session.data.owner?.username}</span>
+        <div className="mb-6 flex min-h-11 min-w-0 flex-wrap items-center justify-end gap-3">
+          <span className="min-w-0 text-sm text-ink-secondary [overflow-wrap:anywhere]">
+            Owner · {session.data.owner?.username}
+          </span>
           <Button disabled={pending} onClick={() => void logout()} variant="outline">
-            Déconnexion
+            {pending ? "Déconnexion…" : "Déconnexion"}
           </Button>
         </div>
         {error && (
-          <p className="mb-4 text-sm text-ink-primary" role="alert">
+          <ContextPanel className="mb-4" role="alert" tone="danger">
             {error}
-          </p>
+          </ContextPanel>
         )}
         {children}
       </>
@@ -149,43 +161,52 @@ export function OwnerAccess({ children }: Readonly<{ children: ReactNode }>) {
 
   return (
     <Card className="mx-auto mt-12 w-full max-w-md">
-      <CardContent className="p-6 sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink-primary">Connexion Owner</h1>
+      <CardContent>
+        <h1 className="ui-page-title">Connexion Owner</h1>
         <p className="mt-2 text-sm text-ink-secondary">
           Connectez-vous pour accéder à votre espace.
         </p>
-        <form className="mt-6 grid gap-5" onSubmit={submit}>
-          <label className="grid gap-2 text-sm font-medium">
+        <form aria-busy={pending} className="mt-6 grid gap-5" onSubmit={submit}>
+          <label className="ui-field">
             Identifiant
-            <input
+            <Input
               autoComplete="username"
-              className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3 outline-none focus-visible:outline-2 focus-visible:outline-focus"
+              autoCapitalize="none"
+              aria-describedby={error ? "owner-login-error" : undefined}
+              aria-invalid={credentialsRejected || undefined}
               maxLength={64}
+              name="username"
               onChange={(event) => {
                 setUsername(event.target.value);
               }}
               required
+              readOnly={pending}
+              spellCheck={false}
               value={username}
             />
           </label>
-          <label className="grid gap-2 text-sm font-medium">
+          <label className="ui-field">
             Mot de passe
-            <input
+            <Input
               autoComplete="current-password"
-              className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3 outline-none focus-visible:outline-2 focus-visible:outline-focus"
+              aria-describedby={error ? "owner-login-error" : undefined}
+              aria-invalid={credentialsRejected || undefined}
               maxLength={1024}
+              name="password"
               onChange={(event) => {
                 setPassword(event.target.value);
               }}
               required
+              readOnly={pending}
+              ref={passwordInput}
               type="password"
               value={password}
             />
           </label>
           {error && (
-            <p className="text-sm text-ink-primary" role="alert">
+            <ContextPanel id="owner-login-error" role="alert" tone="danger">
               {error}
-            </p>
+            </ContextPanel>
           )}
           <Button disabled={pending} type="submit">
             {pending ? "Connexion…" : "Se connecter"}

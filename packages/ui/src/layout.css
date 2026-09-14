@@ -1,0 +1,62 @@
+@layer components {
+  .ui-page-stack {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--metiquo-space-xl);
+  }
+
+  .ui-page-title {
+    font-size: var(--text-title);
+    font-weight: 600;
+    line-height: var(--text-title--line-height);
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .ui-section-title {
+    font-size: var(--text-section);
+    font-weight: 600;
+    line-height: var(--text-section--line-height);
+    letter-spacing: -0.015em;
+  }
+
+  .ui-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--metiquo-ink-secondary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ui-field {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--metiquo-space-sm);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .ui-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--metiquo-space-md);
+    min-inline-size: 0;
+  }
+
+  .ui-content-width {
+    min-inline-size: 0;
+    inline-size: 100%;
+    max-inline-size: 100rem;
+    margin-inline: auto;
+    padding-inline: var(--metiquo-content-gutter);
+  }
+
+  .ui-metadata {
+    font-size: var(--text-metadata);
+    line-height: var(--text-metadata--line-height);
+    color: var(--metiquo-ink-secondary);
+  }
+}

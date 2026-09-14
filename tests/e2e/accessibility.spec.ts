@@ -8,6 +8,8 @@ const PAPER_BET_ID = "cef9c5cf-d14f-51dc-a417-91909b3088ba";
 const keyPages = [
   "/",
   "/events",
+  "/odds",
+  "/settings",
   `/events/${EVENT_ID}`,
   `/opportunities/${SIGNAL_ID}`,
   "/models",

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { chooseSelectOption } from "./helpers/select";
 
 import type { PageResponseOpportunity } from "../../packages/contracts/src/generated/types.gen.js";
 
@@ -108,7 +109,7 @@ test("keeps filters and display choices shareable in the URL", async ({ page }) 
   await expect(page).toHaveURL(/display=cards/);
   await expect(page.getByTestId("opportunity-card-view")).toBeVisible();
 
-  await page.getByLabel("Trier par").selectOption("start-asc");
+  await chooseSelectOption(page, page.getByLabel("Trier par"), "Heure de début");
   await expect(page).toHaveURL(/sort=start-asc/);
 });
 
@@ -162,10 +163,14 @@ test("contains the wide table at an intermediate desktop width", async ({ page }
   );
 
   const tableRegion = page.getByRole("region", {
-    name: "Tableau des opportunités, défilement horizontal disponible",
+    name: "Tableau des opportunités",
   });
   await expect(tableRegion).toBeVisible();
-  expect(await tableRegion.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(
+  expect(await tableRegion.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
     true,
   );
+  await expect(
+    tableRegion.getByRole("row").nth(1).getByRole("link", { name: "Ouvrir le signal" }),
+  ).toBeVisible();
+  await expect(tableRegion.getByRole("row").nth(1)).toContainText("Cote juste");
 });

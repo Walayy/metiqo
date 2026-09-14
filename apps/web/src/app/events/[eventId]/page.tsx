@@ -1,7 +1,9 @@
-import { RemoteLoadingState } from "@metiquo/ui";
+import { RemotePageLoadingState } from "@metiquo/ui";
 import { Suspense } from "react";
 
 import { EventDetail } from "../../../components/event-detail";
+
+export const metadata = { title: "Détail de l’événement · Metiquo" };
 
 type EventDetailPageProperties = Readonly<{
   params: Promise<Readonly<{ eventId: string }>>;
@@ -11,9 +13,7 @@ export default async function EventDetailPage({ params }: EventDetailPagePropert
   const { eventId } = await params;
 
   return (
-    <Suspense
-      fallback={<RemoteLoadingState label="Chargement de l’événement" minHeight="32rem" rows={8} />}
-    >
+    <Suspense fallback={<RemotePageLoadingState label="Chargement de l’événement" />}>
       <EventDetail eventId={eventId} />
     </Suspense>
   );

@@ -36,12 +36,14 @@ from metiquo.api.messages import (
     NOT_FOUND_TITLE,
 )
 from metiquo.api.mutation_routes import build_mutation_router
+from metiquo.api.observed_odds_routes import build_observed_odds_router
 from metiquo.api.paper_routes import build_paper_metrics_router, build_real_paper_router
 from metiquo.api.read_routes import build_read_router
 from metiquo.api.readiness import DatabaseReadinessProbe, ReadinessCheck, ReadinessProbe
 from metiquo.api.real_admin_routes import build_real_admin_router
 from metiquo.api.real_historical_routes import build_real_historical_router
 from metiquo.api.real_model_routes import build_real_model_router
+from metiquo.api.stake_scraping_routes import build_stake_scraping_router
 from metiquo.auth.rate_limit import HttpRateLimiter
 from metiquo.auth.service import AuthError, OwnerAuthService
 from metiquo.canonical.capabilities import CapabilityRegistry
@@ -61,7 +63,9 @@ from metiquo.repositories.postgres_admin import PostgresAdminRepository
 from metiquo.repositories.postgres_canonical import PostgresCanonicalRepository
 from metiquo.repositories.postgres_mapping import PostgresMappingRepository
 from metiquo.repositories.postgres_models import PostgresModelRepository
+from metiquo.repositories.postgres_observed_odds import PostgresObservedOddsRepository
 from metiquo.repositories.postgres_opportunities import PostgresOpportunityRepository
+from metiquo.repositories.postgres_stake_scraping import PostgresStakeScrapingRepository
 from metiquo.services import MockMutationService, ReadService, build_mock_read_service
 from metiquo.services.operational_audit import record_runtime_configuration
 from metiquo.services.operational_status import OperationalStatusService
@@ -245,6 +249,8 @@ def create_app(
     app.state.api_metrics = ApiMetrics()
     app.include_router(_router(resolved_settings, resolved_probe, resolved_clock))
     if resolved_settings.app_data_mode is DataMode.MOCK:
+        app.include_router(build_observed_odds_router(None, resolved_clock, DataMode.MOCK))
+        app.include_router(build_stake_scraping_router(None, resolved_clock, DataMode.MOCK))
         app.include_router(build_paper_metrics_router(None, resolved_clock))
         catalog = build_mock_scenario_catalog(resolved_settings.mock_seed, resolved_clock)
         resolved_service = read_service or build_mock_read_service(catalog)
@@ -280,6 +286,20 @@ def create_app(
             clock=resolved_clock,
         )
         app.state.real_admin_engine = real_engine
+        app.include_router(
+            build_stake_scraping_router(
+                PostgresStakeScrapingRepository(real_engine, resolved_settings, resolved_clock),
+                resolved_clock,
+                DataMode.REAL,
+            )
+        )
+        app.include_router(
+            build_observed_odds_router(
+                PostgresObservedOddsRepository(real_engine, resolved_settings, resolved_clock),
+                resolved_clock,
+                DataMode.REAL,
+            )
+        )
         app.include_router(
             build_paper_metrics_router(
                 PostgresFinancialReportingService(

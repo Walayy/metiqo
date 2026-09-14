@@ -6,6 +6,9 @@ import {
   formatSignedPercent,
   formatAbstentionReasons,
   formatTimeUntil,
+  formatDateTime,
+  formatDecimal,
+  formatPercent,
   isAdmissible,
   matchingOddsSnapshots,
   newerOddsSnapshot,
@@ -128,6 +131,35 @@ function opportunity(overrides: {
 }
 
 describe("opportunity presenters", () => {
+  it("keeps paper admission consistent for non-value, informational and suspended quotes", () => {
+    const candidate = opportunity({
+      conservativeExpectedValue: "0.08",
+      signalId: "candidate",
+      startsAt: "2026-09-04T16:00:00Z",
+    });
+    const variants: Opportunity[] = [
+      { ...candidate, value: { ...candidate.value, grade: "WATCH" } },
+      { ...candidate, book: { ...candidate.book, informationalOnly: true } },
+      { ...candidate, book: { ...candidate.book, marketStatus: "suspended" } },
+      { ...candidate, quality: { ...candidate.quality, sourceFreshness: "stale" } },
+    ];
+    for (const value of variants) {
+      expect(isAdmissible(value, candidate.meta.computedAt)).toBe(false);
+      expect(describeOpportunity(value, candidate.meta.computedAt)).not.toContain(
+        "Signal admissible",
+      );
+    }
+  });
+
+  it("keeps invalid dates and numbers readable and distinguishes historical years", () => {
+    expect(formatDateTime("invalid-date")).toBe("Date indisponible");
+    expect(formatTimeUntil("invalid-date", "2026-09-04T12:00:00Z")).toBe("Échéance indisponible");
+    expect(formatTimeUntil("2026-09-07T14:00:00Z", "2026-09-04T12:00:00Z")).toBe("Dans 3 j 2 h");
+    expect(formatDateTime("2025-09-04T12:00:00Z")).toContain("2025");
+    expect(formatDecimal("NaN")).toBe("Indisponible");
+    expect(formatPercent("Infinity")).toBe("Indisponible");
+    expect(formatSignedPercent("invalid")).toBe("Indisponible");
+  });
   it("sorts by conservative EV by default with a stable signal tie-breaker", () => {
     const lower = opportunity({
       conservativeExpectedValue: "0.04",

@@ -139,6 +139,11 @@ Le package `@metiquo/contracts` génère depuis ce fichier les DTO, le client Fe
 
 ## Frontend et design system
 
+La page **Cotes** (`/odds`) affiche les dernières observations fournisseur, même
+avant leur rapprochement avec Oracle's Elixir. `oe odds-import` archive et importe
+un relevé CSV/JSON dans PostgreSQL. Le [parcours des cotes observées](docs/observed-odds.md)
+décrit la configuration et les preuves de test sur des relevés Stake du 8 septembre 2026. Ces relevés sont figés. Le [collecteur Stake par scraping](docs/stake-public-scraping.md) utilise désormais Patchright et Chromium fenêtré, automatiquement sélectionnés en mode réel avec `ODDS_PROVIDER=auto`. Les [essais réels et limites constatées](docs/stake-patchright-20260908.md) sont documentés. Le [lecteur Chrome/Edge](docs/stake-browser-reader.md) reste une option de transport par fichier local.
+
 L’application `apps/web` utilise Next.js et React avec TypeScript strict. Le package `@metiquo/ui` centralise les tokens de couleur, espacement, typographie, rayon, élévation et durée, ainsi que les primitives accessibles. Le provider TanStack Query est installé à la racine de l’application. Les animations d’interaction passent uniquement par `opacity` ou `transform` et respectent `prefers-reduced-motion`.
 
 Pour travailler sans Docker :

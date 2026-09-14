@@ -31,6 +31,7 @@ from metiquo.operations.backup_repository import (
 )
 from metiquo.operations.backup_tools import BackupError, file_hash
 from metiquo.operations.backup_tools import PostgresTools as PostgresTools
+from metiquo.operations.odds_objects import odds_object_references
 from metiquo.worker.contracts import JobCancelled
 
 
@@ -201,7 +202,7 @@ class BackupService:
             raise BackupError("BACKUP_ENCRYPTION_REQUIRED")
         source_root = settings.object_store_root.resolve()
         source_root.mkdir(parents=True, exist_ok=True)
-        for name in ("raw", "models", "quarantine"):
+        for name in ("raw", "models", "quarantine", "odds"):
             data_root = source_root / name
             if backup_root(settings).is_relative_to(data_root) or data_root.is_relative_to(
                 backup_root(settings)
@@ -261,6 +262,11 @@ class BackupService:
                         row["artifact_hash"],
                         row["artifact_size_bytes"],
                     )
+                for relative, digest in odds_object_references(connection):
+                    path = safe_child(source_root, source_root / relative)
+                    if not path.is_file():
+                        raise BackupError("BACKUP_REQUIRED_OBJECT_INVALID")
+                    references[relative] = (digest, path.stat().st_size)
                 for relative, (digest, size) in references.items():
                     path = safe_child(source_root, source_root / relative)
                     if (
@@ -269,7 +275,7 @@ class BackupService:
                         or path.stat().st_size != size
                     ):
                         raise BackupError("BACKUP_REQUIRED_OBJECT_INVALID")
-                for name in ("raw", "models", "quarantine"):
+                for name in ("raw", "models", "quarantine", "odds"):
                     folder = safe_child(source_root, source_root / name)
                     if not folder.exists():
                         continue

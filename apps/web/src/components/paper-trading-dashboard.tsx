@@ -1,6 +1,6 @@
 "use client";
 
-import { QueryRecovery } from "./query-recovery";
+import { QueryFailure, QueryRecovery } from "./query-recovery";
 
 import { canReadPrevious, readBackend, requestBackend } from "../lib/backend";
 
@@ -14,6 +14,12 @@ import type {
 import {
   Badge,
   Button,
+  Input,
+  Metric,
+  MetricGrid,
+  Select,
+  TechnicalText,
+  Section,
   Card,
   CardContent,
   RemoteDataBoundary,
@@ -21,7 +27,7 @@ import {
   RemoteLoadingState,
   RemoteRecoverableErrorState,
 } from "@metiquo/ui";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BanknoteArrowDown,
   BanknoteArrowUp,
@@ -29,7 +35,7 @@ import {
   CheckCircle2,
   CircleAlert,
   ClipboardPlus,
-  ExternalLink,
+  ArrowRight,
   FileCheck2,
   FlaskConical,
   Scale,
@@ -38,7 +44,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 
-import { formatDateTime } from "./opportunity-presenters";
+import {
+  describeOpportunity,
+  formatDateTime,
+  formatDecimal,
+  isAdmissible,
+} from "./opportunity-presenters";
 import { PaperFinancialReport } from "./paper-financial-report";
 import { RealPaperSettlement } from "./real-paper-settlement";
 
@@ -78,7 +89,7 @@ async function postJson<T>(path: string, body: unknown, key?: string): Promise<T
   return (await response.json()) as T;
 }
 
-function formatMoney(value: string | number, currency: string, signed = false) {
+export function formatMoney(value: string | number, currency: string, signed = false) {
   const amount = Number(value);
   const formatted = new Intl.NumberFormat("fr-FR", {
     currency,
@@ -129,13 +140,13 @@ export function ProfitLoss({ bet }: Readonly<{ bet: PaperBet }>) {
 function PaperCard({ bet, local = false }: Readonly<{ bet: PaperBet; local?: boolean }>) {
   return (
     <Card aria-label={`Paper bet ${bet.paperBetId}`}>
-      <CardContent className="grid h-full gap-4 p-5">
+      <CardContent className="grid h-full gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.12em] text-ink-secondary">
               {local ? "Résultat de cette session" : formatDateTime(bet.placedAt)}
             </p>
-            <p className="mt-1 break-all font-semibold">{bet.paperBetId}</p>
+            <TechnicalText className="mt-1">{bet.paperBetId}</TechnicalText>
           </div>
           <PaperStatusBadge status={bet.status} />
         </div>
@@ -146,7 +157,7 @@ function PaperCard({ bet, local = false }: Readonly<{ bet: PaperBet; local?: boo
           </div>
           <div>
             <dt className="text-xs text-ink-secondary">Cote d’entrée</dt>
-            <dd className="mt-1 font-semibold">{bet.entryOdds}</dd>
+            <dd className="mt-1 font-semibold">{formatDecimal(bet.entryOdds)}</dd>
           </div>
           <div>
             <dt className="text-xs text-ink-secondary">P&L</dt>
@@ -156,17 +167,26 @@ function PaperCard({ bet, local = false }: Readonly<{ bet: PaperBet; local?: boo
           </div>
           <div>
             <dt className="text-xs text-ink-secondary">Règles</dt>
-            <dd className="mt-1 break-words font-semibold">{bet.settlementRulesVersion}</dd>
+            <dd className="mt-1">
+              <TechnicalText>{bet.settlementRulesVersion}</TechnicalText>
+            </dd>
           </div>
         </dl>
-        {!local ? (
-          <Button asChild className="mt-auto" variant="outline">
-            <Link href={`/paper-trading/${encodeURIComponent(bet.paperBetId)}`}>
-              Ouvrir la fiche
-              <ExternalLink aria-hidden="true" className="size-4" />
+        <div className="mt-auto flex flex-wrap gap-2">
+          {!local ? (
+            <Button asChild variant="outline">
+              <Link href={`/paper-trading/${encodeURIComponent(bet.paperBetId)}`}>
+                Ouvrir la fiche
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="ghost">
+            <Link href={`/opportunities/${encodeURIComponent(bet.signalId)}`}>
+              Voir le signal associé
             </Link>
           </Button>
-        ) : null}
+        </div>
       </CardContent>
     </Card>
   );
@@ -177,55 +197,99 @@ function PnlSummary({ bets }: Readonly<{ bets: readonly PaperBet[] }>) {
   const losses = bets.reduce((total, bet) => total + Math.min(Number(bet.profitLoss ?? 0), 0), 0);
   const currency = bets[0]?.currency ?? "EUR";
   return (
-    <section aria-label="Résumé du P&L" className="grid gap-3 sm:grid-cols-3">
-      <Card aria-label="Gains paper">
-        <CardContent className="grid gap-2 p-4">
-          <p className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-ink-secondary">
-            <BanknoteArrowUp aria-hidden="true" className="size-4" /> Gains
-          </p>
-          <p className="text-xl font-semibold text-emerald-700 dark:text-emerald-300">
-            {formatMoney(gains, currency, gains !== 0)}
-          </p>
-        </CardContent>
-      </Card>
-      <Card aria-label="Pertes paper">
-        <CardContent className="grid gap-2 p-4">
-          <p className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-ink-secondary">
-            <BanknoteArrowDown aria-hidden="true" className="size-4" /> Pertes
-          </p>
-          <p className="text-xl font-semibold text-red-700 dark:text-red-300">
-            {formatMoney(losses, currency, losses !== 0)}
-          </p>
-        </CardContent>
-      </Card>
-      <Card aria-label="Solde paper">
-        <CardContent className="grid gap-2 p-4">
-          <p className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-ink-secondary">
-            <Scale aria-hidden="true" className="size-4" /> Solde
-          </p>
-          <p className="text-xl font-semibold">
-            {formatMoney(gains + losses, currency, gains + losses !== 0)}
-          </p>
-        </CardContent>
-      </Card>
+    <section aria-label="Résumé du P&L">
+      <p className="mb-3 text-xs text-ink-secondary">
+        Résumé des décisions affichées sur cette page.
+      </p>
+      <MetricGrid>
+        <Metric
+          aria-label="Gains paper"
+          role="region"
+          emphasis="statistic"
+          label={
+            <span className="flex items-center gap-2">
+              <BanknoteArrowUp aria-hidden="true" className="size-4" /> Gains
+            </span>
+          }
+          value={
+            <span className="text-emerald-700 dark:text-emerald-300">
+              {formatMoney(gains, currency, gains !== 0)}
+            </span>
+          }
+        />
+        <Metric
+          aria-label="Pertes paper"
+          role="region"
+          emphasis="statistic"
+          label={
+            <span className="flex items-center gap-2">
+              <BanknoteArrowDown aria-hidden="true" className="size-4" /> Pertes
+            </span>
+          }
+          value={
+            <span className="text-red-700 dark:text-red-300">
+              {formatMoney(losses, currency, losses !== 0)}
+            </span>
+          }
+        />
+        <Metric
+          aria-label="Solde paper"
+          role="region"
+          emphasis="statistic"
+          label={
+            <span className="flex items-center gap-2">
+              <Scale aria-hidden="true" className="size-4" /> Solde
+            </span>
+          }
+          value={formatMoney(gains + losses, currency, gains + losses !== 0)}
+        />
+      </MetricGrid>
     </section>
   );
 }
 
-function SettlementForm({ bet }: Readonly<{ bet: PaperBet }>) {
+export function SettlementForm({ bet }: Readonly<{ bet: PaperBet }>) {
+  const queryClient = useQueryClient();
+  const identity = useRef({ payload: "", key: "" });
   const [status, setStatus] = useState<"lost" | "push" | "void" | "won">("won");
-  const [profitLoss, setProfitLoss] = useState("10");
+  const [profitLoss, setProfitLoss] = useState(
+    (Number(bet.stakeAmount) * (Number(bet.entryOdds) - 1)).toFixed(2),
+  );
   const [reason, setReason] = useState("");
   const settlement = useMutation({
-    mutationFn: () =>
-      postJson<ItemResponsePaperBet>("/api/v1/admin/paper-bets/settle", {
+    mutationFn: () => {
+      const body = {
         paperBetId: bet.paperBetId,
         profitLoss,
         reason: reason.trim(),
         status,
-      }),
+      };
+      const payload = JSON.stringify(body);
+      if (identity.current.payload !== payload)
+        identity.current = { payload, key: crypto.randomUUID() };
+      return postJson<ItemResponsePaperBet>(
+        "/api/v1/admin/paper-bets/settle",
+        body,
+        identity.current.key,
+      );
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["paper-bets"] }),
+        queryClient.invalidateQueries({ queryKey: ["paper-bet", bet.paperBetId] }),
+        queryClient.invalidateQueries({ queryKey: ["paper-metrics"] }),
+      ]);
+    },
   });
-  const canSubmit = reason.trim().length > 0 && profitLoss.trim().length > 0;
+  const validAmount = profitLoss.trim().length > 0 && Number.isFinite(Number(profitLoss));
+  const coherentAmount =
+    validAmount &&
+    (status === "won"
+      ? Number(profitLoss) > 0
+      : status === "lost"
+        ? Number(profitLoss) < 0
+        : Number(profitLoss) === 0);
+  const canSubmit = reason.trim().length > 0 && coherentAmount;
 
   if (settlement.data) {
     return (
@@ -235,7 +299,9 @@ function SettlementForm({ bet }: Readonly<{ bet: PaperBet }>) {
           className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/30"
           role="status"
         >
-          <p className="font-semibold">Règlement {settlement.data.data.status}</p>
+          <p className="font-semibold">
+            Règlement enregistré · {statusLabels[settlement.data.data.status]}
+          </p>
           <p className="mt-1">
             <ProfitLoss bet={settlement.data.data} /> · {settlement.data.data.settlementReason}
           </p>
@@ -246,71 +312,97 @@ function SettlementForm({ bet }: Readonly<{ bet: PaperBet }>) {
   }
 
   return (
-    <section aria-label="Règlement fictif" className="grid gap-3 rounded-lg border p-4">
+    <Section aria-label="Règlement fictif">
       <h3 className="font-semibold">Régler cette décision fictive</h3>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="grid gap-1 text-sm">
-          <span className="font-semibold">Statut</span>
-          <select
-            className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3"
-            onChange={(event) => {
-              setStatus(event.currentTarget.value as typeof status);
-            }}
-            value={status}
-          >
-            <option value="won">Gagné</option>
-            <option value="lost">Perdu</option>
-            <option value="push">Push</option>
-            <option value="void">Void</option>
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="font-semibold">P&L fictif</span>
-          <input
-            className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3"
-            inputMode="decimal"
-            onChange={(event) => {
-              setProfitLoss(event.currentTarget.value);
-            }}
-            type="number"
-            value={profitLoss}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="font-semibold">Motif</span>
-          <input
-            className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3"
-            onChange={(event) => {
-              setReason(event.currentTarget.value);
-            }}
-            placeholder="Résultat vérifié"
-            value={reason}
-          />
-        </label>
-      </div>
-      <Button
-        disabled={!canSubmit || settlement.isPending}
-        onClick={() => {
-          settlement.mutate();
+      <form
+        className="grid gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (canSubmit && !settlement.isPending) settlement.mutate();
         }}
       >
-        <FileCheck2 aria-hidden="true" className="size-4" />
-        {settlement.isPending ? "Règlement…" : "Enregistrer le règlement fictif"}
-      </Button>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="ui-field">
+            <span className="font-semibold">Statut</span>
+            <Select
+              aria-label="Statut"
+              disabled={settlement.isPending}
+              onValueChange={(value) => {
+                setStatus(value as typeof status);
+                setProfitLoss(
+                  value === "won"
+                    ? (Number(bet.stakeAmount) * (Number(bet.entryOdds) - 1)).toFixed(2)
+                    : value === "lost"
+                      ? (-Number(bet.stakeAmount)).toFixed(2)
+                      : "0.00",
+                );
+              }}
+              value={status}
+            >
+              <option value="won">Gagné</option>
+              <option value="lost">Perdu</option>
+              <option value="push">Égalité / push</option>
+              <option value="void">Annulé / void</option>
+            </Select>
+          </label>
+          <label className="ui-field">
+            <span className="font-semibold">P&L fictif</span>
+            <Input
+              aria-describedby="paper-settlement-amount-hint"
+              aria-invalid={!coherentAmount || undefined}
+              disabled={settlement.isPending}
+              inputMode="decimal"
+              onChange={(event) => {
+                setProfitLoss(event.currentTarget.value);
+              }}
+              type="number"
+              required
+              step="0.01"
+              value={profitLoss}
+            />
+          </label>
+          <label className="ui-field">
+            <span className="font-semibold">Motif</span>
+            <Input
+              disabled={settlement.isPending}
+              onChange={(event) => {
+                setReason(event.currentTarget.value);
+              }}
+              placeholder="Résultat vérifié"
+              required
+              value={reason}
+            />
+          </label>
+        </div>
+        <p className="text-xs text-ink-secondary" id="paper-settlement-amount-hint">
+          {status === "won"
+            ? "Le gain net doit être positif."
+            : status === "lost"
+              ? "La perte doit être négative."
+              : "Une égalité ou une annulation restitue la mise : P&L nul."}{" "}
+          Montant fictif en {bet.currency}. Un motif est obligatoire.
+        </p>
+        <Button disabled={!canSubmit || settlement.isPending} type="submit">
+          <FileCheck2 aria-hidden="true" className="size-4" />
+          {settlement.isPending ? "Règlement…" : "Enregistrer le règlement fictif"}
+        </Button>
+      </form>
       {settlement.isError ? (
         <RemoteRecoverableErrorState
           compact
           description={settlement.error.message}
+          retryDisabled={!canSubmit || settlement.isPending}
           onRetry={() => {
             settlement.mutate();
           }}
         />
       ) : null}
-    </section>
+    </Section>
   );
 }
 
 function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
+  const queryClient = useQueryClient();
   const identity = useRef({ payload: "", key: "" });
   const [stakeAmount, setStakeAmount] = useState("10");
   const opportunity = useQuery({
@@ -334,15 +426,25 @@ function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
         identity.current = { payload, key: crypto.randomUUID() };
       return postJson<ItemResponsePaperBet>("/api/v1/paper-bets", body, identity.current.key);
     },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["paper-bets"] }),
+        queryClient.invalidateQueries({ queryKey: ["paper-metrics"] }),
+      ]);
+    },
   });
   const selected = opportunity.data?.data;
   const publishable =
-    selected?.quality.publishable === true &&
-    ["VALUE", "STRONG_VALUE"].includes(selected.value.grade);
+    selected !== undefined &&
+    isAdmissible(selected, opportunity.data?.meta.computedAt ?? new Date(0).toISOString());
+  const validStake =
+    stakeAmount.trim().length > 0 &&
+    Number.isFinite(Number(stakeAmount)) &&
+    Number(stakeAmount) >= 0.01;
 
   return (
-    <Card aria-label="Créer une décision paper">
-      <CardContent className="grid gap-4 p-5 sm:p-6">
+    <Card aria-label="Créer une décision paper" id="paper-create" tabIndex={-1}>
+      <CardContent className="grid gap-4">
         <div className="flex items-center gap-3">
           <span
             aria-hidden="true"
@@ -366,19 +468,32 @@ function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
             .
           </div>
         ) : opportunity.isError ? (
-          <RemoteRecoverableErrorState onRetry={() => void opportunity.refetch()} />
+          <div className="grid justify-items-start gap-3">
+            <QueryFailure
+              description="Le signal sélectionné n’a pas pu être chargé."
+              missingDescription="Ce signal n’est plus disponible. Choisissez un autre signal depuis les opportunités."
+              missingTitle="Signal introuvable"
+              queries={[opportunity]}
+            />
+            <Button asChild variant="outline">
+              <Link href="/">Choisir un autre signal</Link>
+            </Button>
+          </div>
         ) : opportunity.isPending ? (
           <RemoteLoadingState minHeight="10rem" rows={3} />
         ) : selected ? (
-          <div className="grid gap-4">
+          <div className="grid min-w-0 gap-4 [overflow-wrap:anywhere]">
             <div className="grid gap-2 rounded-lg bg-surface-muted p-4 text-sm">
               <p className="font-semibold">
                 {selected.event.teamA} — {selected.event.teamB}
               </p>
               <p>
-                Cote figée {selected.book.decimalOdds} · sélection {selected.market.selectionLabel}
+                Cote figée {formatDecimal(selected.book.decimalOdds)} · sélection{" "}
+                {selected.market.selectionLabel}
               </p>
-              <p className="break-all text-xs text-ink-secondary">Signal {selected.signalId}</p>
+              <p className="text-xs text-ink-secondary">
+                Signal <TechnicalText>{selected.signalId}</TechnicalText>
+              </p>
             </div>
             {!publishable ? (
               <div
@@ -386,36 +501,66 @@ function CreationPanel({ signalId }: Readonly<{ signalId: string | null }>) {
                 role="alert"
               >
                 <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-                Signal non publiable : la création paper reste bloquée.
+                {describeOpportunity(selected, opportunity.data.meta.computedAt)}
               </div>
             ) : null}
-            <label className="grid max-w-xs gap-1 text-sm">
-              <span className="font-semibold">Mise fictive (EUR)</span>
-              <input
-                className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3"
-                inputMode="decimal"
-                min="0.01"
-                onChange={(event) => {
-                  setStakeAmount(event.currentTarget.value);
-                }}
-                step="0.01"
-                type="number"
-                value={stakeAmount}
-              />
-            </label>
-            <Button
-              disabled={!publishable || creation.isPending || Number(stakeAmount) <= 0}
-              onClick={() => {
-                creation.mutate();
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="ghost" size="small">
+                <Link href={`/opportunities/${encodeURIComponent(selected.signalId)}`}>
+                  Revoir le signal
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="small">
+                <Link href="/">Choisir un autre signal</Link>
+              </Button>
+            </div>
+            <form
+              className="grid justify-items-start gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (publishable && validStake && !creation.isPending && !creation.data)
+                  creation.mutate();
               }}
             >
-              <FlaskConical aria-hidden="true" className="size-4" />
-              {creation.isPending ? "Création…" : "Créer le paper bet"}
-            </Button>
+              <label className="ui-field w-full max-w-xs">
+                <span className="font-semibold">Mise fictive (EUR)</span>
+                <Input
+                  aria-describedby="paper-stake-hint"
+                  aria-invalid={!validStake || undefined}
+                  disabled={!publishable || creation.isPending || Boolean(creation.data)}
+                  inputMode="decimal"
+                  min="0.01"
+                  onChange={(event) => {
+                    setStakeAmount(event.currentTarget.value);
+                  }}
+                  step="0.01"
+                  required
+                  type="number"
+                  value={stakeAmount}
+                />
+              </label>
+              <p className="text-xs text-ink-secondary" id="paper-stake-hint">
+                Saisissez une mise fictive d’au moins 0,01 €.
+              </p>
+              <Button
+                disabled={
+                  !publishable || creation.isPending || !validStake || Boolean(creation.data)
+                }
+                type="submit"
+              >
+                <FlaskConical aria-hidden="true" className="size-4" />
+                {creation.isPending
+                  ? "Création…"
+                  : creation.data
+                    ? "Paper bet créé"
+                    : "Créer le paper bet"}
+              </Button>
+            </form>
             {creation.isError ? (
               <RemoteRecoverableErrorState
                 compact
                 description={creation.error.message}
+                retryDisabled={!publishable || !validStake || creation.isPending}
                 onRetry={() => {
                   creation.mutate();
                 }}
@@ -453,6 +598,7 @@ export function PaperTradingDashboard() {
   const signalId =
     signalIdParameter === undefined || signalIdParameter.length === 0 ? null : signalIdParameter;
   const paperBets = useQuery({
+    placeholderData: keepPreviousData,
     queryFn: ({ signal }) =>
       getJson<PageResponsePaperBet>(
         `/api/v1/paper-bets?offset=${String(offset)}&limit=100`,
@@ -464,20 +610,30 @@ export function PaperTradingDashboard() {
   const bets = paperBets.data?.data ?? [];
 
   return (
-    <div className="grid gap-6 sm:gap-8">
+    <div className="ui-page-stack">
       <header className="grid gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-          Simulation isolée
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Paper trading</h1>
+        <p className="ui-eyebrow">Simulation isolée</p>
+        <h1 className="ui-page-title">Paper trading</h1>
         <p className="max-w-3xl text-sm leading-6 text-ink-secondary sm:text-base">
           Décisions simulées, règlement et performance. Aucune mise n’est envoyée à un bookmaker et
           aucun argent réel n’est engagé.
         </p>
       </header>
 
+      <nav aria-label="Sections du paper trading" className="ui-toolbar">
+        <Button asChild size="small" variant="outline">
+          <a href="#paper-create">Création</a>
+        </Button>
+        <Button asChild size="small" variant="outline">
+          <a href="#paper-history">Historique</a>
+        </Button>
+        <Button asChild size="small" variant="outline">
+          <a href="#paper-report">Rapport financier</a>
+        </Button>
+      </nav>
+
       <div
-        className="flex items-start gap-3 rounded-xl border border-accent bg-accent-soft p-4 text-sm leading-6"
+        className="flex items-start gap-3 rounded-xl border border-border-subtle bg-accent-soft p-4 text-sm leading-6"
         role="note"
       >
         <FlaskConical aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
@@ -485,19 +641,26 @@ export function PaperTradingDashboard() {
         réel n’est engagé.
       </div>
 
-      <CreationPanel signalId={signalId} />
-      <PaperFinancialReport />
+      <CreationPanel key={signalId ?? "no-signal"} signalId={signalId} />
 
-      <section aria-labelledby="paper-history" className="grid gap-4">
+      <section
+        aria-labelledby="paper-history-title"
+        className="grid gap-4"
+        id="paper-history"
+        tabIndex={-1}
+      >
         <div className="flex items-center gap-3">
           <ChartNoAxesCombined aria-hidden="true" className="size-5 text-ink-secondary" />
-          <h2 className="text-xl font-semibold" id="paper-history">
+          <h2 className="ui-section-title" id="paper-history-title">
             Historique et P&L
           </h2>
         </div>
         <QueryRecovery queries={[paperBets]} />
         {paperBets.isError && !canReadPrevious(paperBets) ? (
-          <RemoteRecoverableErrorState onRetry={() => void paperBets.refetch()} />
+          <RemoteRecoverableErrorState
+            onRetry={() => void paperBets.refetch()}
+            retryDisabled={paperBets.isFetching}
+          />
         ) : (
           <RemoteDataBoundary
             isLoading={paperBets.isPending}
@@ -513,38 +676,71 @@ export function PaperTradingDashboard() {
                   ))}
                 </div>
               ) : (
-                <RemoteEmptyState description="Aucune décision paper dans ce mode." />
+                <RemoteEmptyState
+                  title={offset > 0 ? "Aucune décision sur cette page" : "Aucune décision paper"}
+                  description={
+                    offset > 0
+                      ? "Revenez à la première page pour retrouver les décisions disponibles."
+                      : "Créez votre première décision fictive depuis un signal admissible pour suivre sa performance ici."
+                  }
+                  action={
+                    offset > 0 ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setOffset(0);
+                        }}
+                      >
+                        Revenir à la première page
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline">
+                        <Link href="/">Voir les opportunités</Link>
+                      </Button>
+                    )
+                  }
+                />
               )}
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  disabled={offset === 0}
-                  onClick={() => {
-                    setOffset(Math.max(0, offset - 100));
-                  }}
+              {paperBets.data && (paperBets.data.page.total > 100 || offset > 0) ? (
+                <nav
+                  aria-label="Pagination des décisions paper"
+                  className="flex flex-wrap items-center justify-between gap-3"
                 >
-                  Page précédente
-                </Button>
-                <span className="text-sm">
-                  {paperBets.data?.page.total ?? 0} décisions · page {Math.floor(offset / 100) + 1}
-                </span>
-                <Button
-                  variant="outline"
-                  disabled={offset + 100 >= (paperBets.data?.page.total ?? 0)}
-                  onClick={() => {
-                    setOffset(offset + 100);
-                  }}
-                >
-                  Page suivante
-                </Button>
-              </div>
+                  <Button
+                    variant="outline"
+                    disabled={offset === 0 || paperBets.isFetching}
+                    onClick={() => {
+                      setOffset(Math.max(0, offset - 100));
+                    }}
+                  >
+                    Page précédente
+                  </Button>
+                  <span className="text-sm text-ink-secondary" role="status">
+                    {paperBets.data.page.total} décisions · page{" "}
+                    {Math.floor(paperBets.data.page.offset / 100) + 1}
+                    {" sur "}
+                    {Math.max(1, Math.ceil(paperBets.data.page.total / 100))}
+                  </span>
+                  <Button
+                    variant="outline"
+                    disabled={offset + 100 >= paperBets.data.page.total || paperBets.isFetching}
+                    onClick={() => {
+                      setOffset(offset + 100);
+                    }}
+                  >
+                    Page suivante
+                  </Button>
+                </nav>
+              ) : null}
             </div>
           </RemoteDataBoundary>
         )}
       </section>
 
+      <PaperFinancialReport />
+
       <Card aria-label="Statuts paper supportés">
-        <CardContent className="grid gap-3 p-5">
+        <CardContent className="grid gap-3">
           <h2 className="font-semibold">Statuts supportés</h2>
           <div className="flex flex-wrap gap-2">
             {(["open", "won", "lost", "push", "void", "pending_review"] as const).map((status) => (

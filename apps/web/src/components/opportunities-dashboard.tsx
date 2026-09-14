@@ -18,8 +18,19 @@ import type {
 import {
   Badge,
   Button,
+  IconButton,
+  Input,
+  InlineValues,
+  Metric,
+  Select,
+  ToggleGroup,
   Card,
   CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableCellContent,
+  TableRow,
   RemoteDataBoundary,
   RemoteEmptyState,
   RemoteLoadingState,
@@ -32,16 +43,18 @@ import {
   ArrowRight,
   ArrowUp,
   CheckCircle2,
+  ChevronDown,
   CircleAlert,
   Clock3,
   LayoutGrid,
   Search,
+  SlidersHorizontal,
   TableProperties,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode, SubmitEventHandler } from "react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   describeOpportunity,
@@ -53,11 +66,10 @@ import {
   freshnessLabels,
   gradeLabels,
   isAdmissible,
-  latestMatchingOddsSnapshot,
-  newerOddsSnapshot,
   sortOpportunities,
   type OpportunitySort,
 } from "./opportunity-presenters";
+import { OddsObservation } from "./odds-observation";
 
 const API_PROXY_BASE_URL = "/api/backend";
 const ODDS_REFRESH_INTERVAL_MS = 30_000;
@@ -130,7 +142,11 @@ function searchHref(current: URLSearchParams, updates: Readonly<Record<string, s
 }
 
 function buildOpportunityQuery(searchParameters: URLSearchParams): OpportunityQuery {
-  const query: OpportunityQuery = { limit: 100, offset: 0 };
+  const offset = Number(searchParameters.get("offset") ?? 0);
+  const query: OpportunityQuery = {
+    limit: 100,
+    offset: Number.isSafeInteger(offset) && offset >= 0 ? Math.floor(offset / 100) * 100 : 0,
+  };
   const competition = searchParameters.get("competition")?.trim();
   const team = searchParameters.get("team")?.trim();
   const grade = parseGrade(searchParameters.get("grade"));
@@ -147,26 +163,41 @@ function MetricCard({
   detail,
   icon,
   label,
+  mobileWide = false,
   value,
-}: Readonly<{ detail: string; icon: ReactNode; label: string; value: ReactNode }>) {
+}: Readonly<{
+  detail: string;
+  icon: ReactNode;
+  label: string;
+  mobileWide?: boolean;
+  value: ReactNode;
+}>) {
   return (
-    <Card aria-label={label} className="overflow-hidden">
-      <CardContent className="grid min-h-36 grid-cols-[1fr_auto] gap-4 p-5">
-        <div className="grid content-between gap-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-secondary">
-            {label}
-          </p>
-          <div>
-            <p className="text-2xl font-semibold tracking-tight">{value}</p>
-            <p className="mt-1 text-xs leading-5 text-ink-secondary">{detail}</p>
-          </div>
+    <Card
+      aria-label={label}
+      className={`max-md:rounded-none max-md:border-0 max-md:bg-transparent ${mobileWide ? "max-md:col-span-2" : ""}`}
+    >
+      <CardContent className="max-md:p-0">
+        <div>
+          <Metric
+            className={
+              mobileWide
+                ? "max-md:py-0 max-md:[&_.ui-metric-definition]:grid-cols-[1fr_auto] max-md:[&_.ui-metric-definition]:items-baseline max-md:[&_.ui-metric-detail]:col-span-2"
+                : "max-md:py-0"
+            }
+            emphasis="statistic"
+            detail={detail}
+            label={
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden="true" className="hidden md:inline [&_svg]:size-4">
+                  {icon}
+                </span>
+                {label}
+              </span>
+            }
+            value={value}
+          />
         </div>
-        <span
-          aria-hidden="true"
-          className="grid size-10 place-items-center rounded-lg bg-surface-muted text-ink-secondary"
-        >
-          {icon}
-        </span>
       </CardContent>
     </Card>
   );
@@ -176,6 +207,13 @@ function providerSummary(providers: readonly ProviderHealth[] | undefined) {
   if (!providers) {
     return { detail: "Vérification en cours", label: "Vérification", tone: "text-ink-secondary" };
   }
+  if (providers.length === 0) {
+    return {
+      detail: "Aucune source déclarée",
+      label: "Non disponible",
+      tone: "text-ink-secondary",
+    };
+  }
   if (providers.some((provider) => provider.status === "unavailable")) {
     return {
       detail: "Au moins une source indisponible",
@@ -183,7 +221,27 @@ function providerSummary(providers: readonly ProviderHealth[] | undefined) {
       tone: "text-red-700 dark:text-red-300",
     };
   }
-  if (providers.some((provider) => provider.status === "degraded")) {
+  if (providers.every((provider) => provider.status === "disabled")) {
+    return {
+      detail: "Toutes les sources sont désactivées",
+      label: "Désactivée",
+      tone: "text-ink-secondary",
+    };
+  }
+  if (providers.some((provider) => provider.status === "disabled")) {
+    return {
+      detail: "Au moins une source est désactivée",
+      label: "Partielle",
+      tone: "text-amber-700 dark:text-amber-300",
+    };
+  }
+  if (
+    providers.some(
+      (provider) =>
+        provider.status === "degraded" ||
+        (provider.freshness != null && provider.freshness !== "fresh"),
+    )
+  ) {
     return {
       detail: "Dernier snapshot valide conservé",
       label: "Dégradée",
@@ -195,6 +253,15 @@ function providerSummary(providers: readonly ProviderHealth[] | undefined) {
     label: "Opérationnelle",
     tone: "text-emerald-700 dark:text-emerald-300",
   };
+}
+
+function snapshotAge(capturedAt: string, referenceTime: string) {
+  const age = Math.max(0, Math.floor((Date.parse(referenceTime) - Date.parse(capturedAt)) / 1000));
+  if (!Number.isFinite(age)) return "Non disponible";
+  if (age < 60) return "À l’instant";
+  if (age < 3600) return `Il y a ${String(Math.floor(age / 60))} min`;
+  if (age < 86400) return `Il y a ${String(Math.floor(age / 3600))} h`;
+  return `Il y a ${String(Math.floor(age / 86400))} j`;
 }
 
 function GradeBadge({ grade }: Readonly<{ grade: ValueGrade }>) {
@@ -215,12 +282,15 @@ function GradeBadge({ grade }: Readonly<{ grade: ValueGrade }>) {
 
 function FreshnessBadge({ freshness }: Readonly<{ freshness: FreshnessStatus }>) {
   const fresh = freshness === "fresh";
+  const blocked = freshness === "failed" || freshness === "quarantined";
   return (
     <Badge
       className={
         fresh
           ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
-          : "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+          : blocked
+            ? "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+            : "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
       }
     >
       {fresh ? (
@@ -256,63 +326,6 @@ function SignedMetric({ value }: Readonly<{ value: string }>) {
   );
 }
 
-function oddsMovement(opportunity: Opportunity, history: readonly OddsSnapshot[] | undefined) {
-  if (!history) {
-    return { label: "Vérification…", tone: "text-ink-secondary" };
-  }
-  const latest = latestMatchingOddsSnapshot(opportunity, history);
-  if (!latest) {
-    return { label: "Indisponible", tone: "text-ink-secondary" };
-  }
-  if (!newerOddsSnapshot(opportunity, history)) {
-    return { label: "→ Snapshot du signal", tone: "text-ink-secondary" };
-  }
-
-  const difference = Number(latest.decimalOdds) - Number(opportunity.book.decimalOdds);
-  const prefix = `Cote mise à jour · ${formatDecimal(latest.decimalOdds)} · `;
-  if (Math.abs(difference) < 0.005) {
-    return { label: `${prefix}→ Stable`, tone: "text-ink-secondary" };
-  }
-  if (difference > 0) {
-    return {
-      label: `${prefix}↑ Hausse ${formatDecimal(Math.abs(difference))}`,
-      tone: "text-emerald-700 dark:text-emerald-300",
-    };
-  }
-  return {
-    label: `${prefix}↓ Baisse ${formatDecimal(Math.abs(difference))}`,
-    tone: "text-red-700 dark:text-red-300",
-  };
-}
-
-type OpportunityViewProperties = Readonly<{
-  history: readonly OddsSnapshot[] | undefined;
-  opportunity: Opportunity;
-  referenceTime: string;
-}>;
-
-function OddsCell({
-  history,
-  opportunity,
-}: Pick<OpportunityViewProperties, "history" | "opportunity">) {
-  const movement = oddsMovement(opportunity, history);
-
-  return (
-    <div
-      aria-label={`Cote observée pour ${opportunity.event.teamA} contre ${opportunity.event.teamB}`}
-      aria-live="polite"
-      aria-atomic="true"
-      role="status"
-      className="grid gap-1"
-    >
-      <span className="font-semibold tabular-nums">
-        {formatDecimal(opportunity.book.decimalOdds)}
-      </span>
-      <span className={`text-[0.7rem] font-medium ${movement.tone}`}>{movement.label}</span>
-    </div>
-  );
-}
-
 function Explanation({
   opportunity,
   referenceTime,
@@ -339,122 +352,105 @@ function OpportunityTable({
   referenceTime: string;
 }>) {
   return (
-    <div
-      aria-label="Tableau des opportunités, défilement horizontal disponible"
-      className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border-subtle bg-surface-raised shadow-panel outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-      role="region"
-      tabIndex={0}
+    <Table
+      aria-label="Tableau des opportunités"
+      columns={[
+        { label: "Match", variant: "identity", weight: 2.4 },
+        { label: "Marché", variant: "text", weight: 1.5 },
+        { label: "Cote", variant: "detail", weight: 1.9 },
+        { label: "P. marché sans marge", variant: "number", weight: 1 },
+        { label: "Modèle", variant: "number", weight: 1.5 },
+        { label: "EV prudente", variant: "number", weight: 1.2 },
+        { label: "Fraîcheur", variant: "status", weight: 1.1 },
+        { label: "Détail", variant: "action", weight: 1.4 },
+      ]}
     >
-      <table className="w-full min-w-[92rem] border-collapse text-left text-xs">
-        <caption className="sr-only">
-          Opportunités classées selon l’EV prudente et leurs données de décision
-        </caption>
-        <thead className="border-b border-border-subtle bg-surface-muted text-ink-secondary">
-          <tr>
-            {[
-              "Début",
-              "Ligue",
-              "Match",
-              "Marché",
-              "Sélection",
-              "Cote",
-              "Cote juste",
-              "P. marché sans marge",
-              "P. modèle",
-              "Edge",
-              "EV prudente",
-              "Confiance",
-              "Fraîcheur",
-              "Détail",
-            ].map((label) => (
-              <th className="whitespace-nowrap px-3 py-3 font-semibold" key={label} scope="col">
-                {label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border-subtle">
-          {opportunities.map((opportunity, index) => (
-            <tr
-              className="align-top transition-colors hover:bg-surface-muted/70"
-              data-signal-id={opportunity.signalId}
-              key={opportunity.signalId}
-            >
-              <td className="whitespace-nowrap px-3 py-4">
-                <span className="block font-semibold">
-                  {formatDateTime(opportunity.event.startsAt)}
-                </span>
-                <span className="mt-1 block text-ink-secondary">
-                  {formatTimeUntil(opportunity.event.startsAt, referenceTime)}
-                </span>
-              </td>
-              <td className="whitespace-nowrap px-3 py-4 text-ink-secondary">
-                {opportunity.event.competition}
-              </td>
-              <td className="min-w-44 px-3 py-4 font-semibold">
-                <Link
-                  className="rounded underline decoration-border-strong underline-offset-4 outline-none hover:decoration-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                  href={`/events/${encodeURIComponent(opportunity.event.eventId)}`}
-                >
-                  {opportunity.event.teamA}
-                  <span className="mx-1.5 text-ink-secondary">vs</span>
-                  {opportunity.event.teamB}
-                </Link>
-              </td>
-              <td className="whitespace-nowrap px-3 py-4 text-ink-secondary">Vainqueur · Série</td>
-              <td className="whitespace-nowrap px-3 py-4 font-medium">
-                {opportunity.market.selectionLabel}
-              </td>
-              <td className="px-3 py-4">
-                <OddsCell history={histories[index]} opportunity={opportunity} />
-              </td>
-              <td className="px-3 py-4 font-medium tabular-nums">
-                {formatDecimal(opportunity.value.fairOdds)}
-              </td>
-              <td className="px-3 py-4 tabular-nums">
-                {opportunity.book.noVigProbability === null
-                  ? "Non calculée"
-                  : formatPercent(opportunity.book.noVigProbability)}
-              </td>
-              <td className="px-3 py-4 tabular-nums">
-                {formatPercent(opportunity.model.probability)}
-              </td>
-              <td className="px-3 py-4">
-                <SignedMetric value={opportunity.value.edge} />
-              </td>
-              <td className="px-3 py-4">
-                <div className="grid gap-2">
-                  <SignedMetric value={opportunity.value.conservativeExpectedValue} />
-                  <GradeBadge grade={opportunity.value.grade} />
-                </div>
-              </td>
-              <td className="px-3 py-4 font-medium tabular-nums">
-                {formatPercent(opportunity.model.confidence)}
-              </td>
-              <td className="px-3 py-4">
-                <FreshnessBadge freshness={opportunity.meta.freshness} />
-              </td>
-              <td className="px-3 py-4">
-                <div className="grid gap-3">
-                  <Button asChild size="small" variant="outline">
-                    <Link href={`/opportunities/${encodeURIComponent(opportunity.signalId)}`}>
-                      Ouvrir le signal
-                    </Link>
-                  </Button>
-                  <Explanation opportunity={opportunity} referenceTime={referenceTime} />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <TableBody>
+        {opportunities.map((opportunity, index) => (
+          <TableRow data-signal-id={opportunity.signalId} key={opportunity.signalId}>
+            <TableCell label="Match" variant="identity">
+              <TableCellContent
+                primary={
+                  <Link
+                    className="rounded underline decoration-border-strong underline-offset-4 outline-none hover:decoration-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                    href={`/events/${encodeURIComponent(opportunity.event.eventId)}`}
+                  >
+                    <InlineValues
+                      items={[opportunity.event.teamA, opportunity.event.teamB]}
+                      separator="vs"
+                    />
+                  </Link>
+                }
+                secondary={
+                  <>
+                    <p>{opportunity.event.competition}</p>
+                    <p>{formatDateTime(opportunity.event.startsAt)}</p>
+                    <p>{formatTimeUntil(opportunity.event.startsAt, referenceTime)}</p>
+                  </>
+                }
+              />
+            </TableCell>
+            <TableCell label="Marché">
+              <TableCellContent
+                primary={opportunity.market.selectionLabel}
+                secondary="Vainqueur · Série"
+              />
+            </TableCell>
+            <TableCell label="Cote" variant="detail">
+              <OddsObservation history={histories[index]} opportunity={opportunity} />
+            </TableCell>
+            <TableCell label="P. marché sans marge" variant="number">
+              {opportunity.book.noVigProbability === null
+                ? "Non calculée"
+                : formatPercent(opportunity.book.noVigProbability)}
+            </TableCell>
+            <TableCell label="Modèle" variant="number">
+              <TableCellContent
+                primary={<>P. modèle {formatPercent(opportunity.model.probability)}</>}
+                secondary={
+                  <>
+                    <p>Cote juste {formatDecimal(opportunity.value.fairOdds)}</p>
+                    <p>Confiance {formatPercent(opportunity.model.confidence)}</p>
+                  </>
+                }
+              />
+            </TableCell>
+            <TableCell label="EV prudente" variant="number">
+              <TableCellContent
+                primary={<SignedMetric value={opportunity.value.conservativeExpectedValue} />}
+                secondary={
+                  <>
+                    <p>
+                      Edge <SignedMetric value={opportunity.value.edge} />
+                    </p>
+                    <GradeBadge grade={opportunity.value.grade} />
+                  </>
+                }
+              />
+            </TableCell>
+            <TableCell label="Fraîcheur" variant="status">
+              <FreshnessBadge freshness={opportunity.meta.freshness} />
+            </TableCell>
+            <TableCell label="Détail" variant="action">
+              <div className="grid justify-items-start gap-2">
+                <Button asChild size="small" variant="outline">
+                  <Link href={`/opportunities/${encodeURIComponent(opportunity.signalId)}`}>
+                    Ouvrir le signal
+                  </Link>
+                </Button>
+                <Explanation opportunity={opportunity} referenceTime={referenceTime} />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
 function DataPoint({ label, value }: Readonly<{ label: string; value: ReactNode }>) {
   return (
-    <div className="grid gap-1">
+    <div className="grid min-w-0 gap-1 [overflow-wrap:anywhere]">
       <dt className="text-xs text-ink-secondary">{label}</dt>
       <dd className="m-0 text-sm font-semibold">{value}</dd>
     </div>
@@ -478,9 +474,9 @@ function OpportunityCards({
           data-signal-id={opportunity.signalId}
           key={opportunity.signalId}
         >
-          <CardContent className="grid gap-5 p-5 sm:p-6">
+          <CardContent className="grid gap-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-secondary">
                   {opportunity.event.competition}
                 </p>
@@ -489,8 +485,10 @@ function OpportunityCards({
                     className="rounded underline decoration-border-strong underline-offset-4 outline-none hover:decoration-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                     href={`/events/${encodeURIComponent(opportunity.event.eventId)}`}
                   >
-                    {opportunity.event.teamA} <span className="text-ink-secondary">vs</span>{" "}
-                    {opportunity.event.teamB}
+                    <InlineValues
+                      items={[opportunity.event.teamA, opportunity.event.teamB]}
+                      separator="vs"
+                    />
                   </Link>
                 </h2>
                 <p className="mt-1 text-xs text-ink-secondary">
@@ -503,7 +501,7 @@ function OpportunityCards({
             <dl className="grid grid-cols-2 gap-x-5 gap-y-4 border-y border-border-subtle py-4 sm:grid-cols-4">
               <DataPoint
                 label="Cote"
-                value={<OddsCell history={histories[index]} opportunity={opportunity} />}
+                value={<OddsObservation history={histories[index]} opportunity={opportunity} />}
               />
               <DataPoint label="Cote juste" value={formatDecimal(opportunity.value.fairOdds)} />
               <DataPoint
@@ -564,6 +562,10 @@ export function OpportunitiesDashboard() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParameters = useSearchParams();
+  const [draftGrade, setDraftGrade] = useState(parseGrade(searchParameters.get("grade")) ?? "");
+  const [draftFreshness, setDraftFreshness] = useState(
+    parseFreshness(searchParameters.get("freshness")) ?? "",
+  );
   const currentSearchParameters = useMemo(
     () => new URLSearchParams(searchParameters.toString()),
     [searchParameters],
@@ -577,6 +579,18 @@ export function OpportunitiesDashboard() {
     () => buildOpportunityQuery(currentSearchParameters),
     [currentSearchParameters],
   );
+  const activeFilterCount = [query.competition, query.team, query.grade, query.freshness].filter(
+    Boolean,
+  ).length;
+  const hasFilters = activeFilterCount > 0;
+  const [filtersExpanded, setFiltersExpanded] = useState(hasFilters);
+  const clearedFiltersHref = searchHref(currentSearchParameters, {
+    competition: null,
+    team: null,
+    grade: null,
+    freshness: null,
+    offset: null,
+  });
 
   const opportunitiesQuery = useQuery({
     placeholderData: keepPreviousData,
@@ -619,11 +633,20 @@ export function OpportunitiesDashboard() {
       refetchInterval: ODDS_REFRESH_INTERVAL_MS,
     })),
   });
-  const histories = historyQueries.map((historyQuery) => historyQuery.data?.data);
+  const histories = historyQueries.map((historyQuery) =>
+    historyQuery.isError && !canReadPrevious(historyQuery) ? [] : historyQuery.data?.data,
+  );
+  const historyErrors = historyQueries.filter((historyQuery) => historyQuery.isError);
   const historyRefreshing = historyQueries.some(
     (historyQuery) => historyQuery.isFetching && !historyQuery.isPending,
   );
-  const sourceSummary = providerSummary(providersQuery.data?.data);
+  const sourceSummary = providersQuery.isError
+    ? {
+        detail: "Le contrôle des sources est indisponible",
+        label: "À vérifier",
+        tone: "text-amber-700 dark:text-amber-300",
+      }
+    : providerSummary(providersQuery.data?.data);
   const latestUpdate = response?.data.reduce<string | undefined>((latest, opportunity) => {
     if (!latest || opportunity.book.capturedAt > latest) return opportunity.book.capturedAt;
     return latest;
@@ -636,6 +659,7 @@ export function OpportunitiesDashboard() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const next = new URLSearchParams(currentSearchParameters);
+    next.delete("offset");
     for (const key of ["competition", "team", "grade", "freshness"] as const) {
       const entry = formData.get(key);
       const value = typeof entry === "string" ? entry.trim() : "";
@@ -648,7 +672,9 @@ export function OpportunitiesDashboard() {
 
   useEffect(() => {
     // Follow shared URLs and browser history without unmounting the focused control.
-    for (const name of ["competition", "team", "grade", "freshness"]) {
+    setDraftGrade(parseGrade(currentSearchParameters.get("grade")) ?? "");
+    setDraftFreshness(parseFreshness(currentSearchParameters.get("freshness")) ?? "");
+    for (const name of ["competition", "team"]) {
       const control = filterForm.current?.elements.namedItem(name);
       if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement) {
         control.value = currentSearchParameters.get(name) ?? "";
@@ -656,28 +682,31 @@ export function OpportunitiesDashboard() {
     }
   }, [currentSearchParameters]);
 
+  useEffect(() => {
+    // Shared filtered URLs reveal their controls on mobile as well as on desktop.
+    if (hasFilters) setFiltersExpanded(true);
+  }, [hasFilters]);
+
   return (
-    <div className="grid min-w-0 gap-7">
+    <div className="ui-page-stack">
       <header className="flex flex-wrap items-end justify-between gap-5">
         <div className="grid max-w-3xl gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent-strong">
-            Décisions pré-match
-          </p>
-          <h1 className="text-title text-balance font-semibold tracking-tight">Opportunités</h1>
+          <p className="ui-eyebrow">Décisions pré-match</p>
+          <h1 className="ui-page-title">Opportunités</h1>
           <p className="text-body max-w-2xl text-ink-secondary">
             Comparez le prix du marché au modèle avec une lecture prudente de l’incertitude. Analyse
             et paper trading uniquement.
           </p>
         </div>
-        <Badge className="border-accent bg-accent-soft text-ink-primary">
+        <Badge className="hidden border-border-subtle bg-accent-soft text-ink-primary md:inline-flex">
           {sort === "start-asc" ? "Tri par heure de début" : "Tri par EV prudente"}
         </Badge>
       </header>
 
       <Card aria-labelledby="filters-title">
-        <CardContent className="grid gap-5 p-5 sm:p-6">
+        <CardContent className="grid gap-4 max-md:p-3 md:gap-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
+            <div className="hidden md:block">
               <h2 className="font-semibold" id="filters-title">
                 Filtres rapides
               </h2>
@@ -685,22 +714,45 @@ export function OpportunitiesDashboard() {
                 Les critères actifs sont conservés dans l’URL pour partager cette vue.
               </p>
             </div>
-            <div aria-label="Périmètre des signaux" className="flex gap-2" role="group">
+            <Button
+              aria-controls="opportunity-filter-fields"
+              aria-expanded={filtersExpanded}
+              className="w-full justify-between md:hidden"
+              onClick={() => {
+                setFiltersExpanded((expanded) => !expanded);
+              }}
+              variant="outline"
+            >
+              <span className="inline-flex items-center gap-2">
+                <SlidersHorizontal aria-hidden="true" className="size-4" />
+                Filtres{" "}
+                <span className="text-xs">
+                  ({activeFilterCount} actif{activeFilterCount === 1 ? "" : "s"})
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className={`size-4 ${filtersExpanded ? "rotate-180" : ""}`}
+              />
+            </Button>
+            <div aria-label="Périmètre des signaux" className="flex flex-wrap gap-2" role="group">
               <Button
                 asChild
                 size="small"
-                variant={eligibility === "admissible" ? "primary" : "outline"}
+                variant={eligibility === "admissible" ? "secondary" : "ghost"}
               >
                 <Link
-                  href={searchHref(currentSearchParameters, { eligibility: null })}
+                  aria-current={eligibility === "admissible" ? "true" : undefined}
+                  href={searchHref(currentSearchParameters, { eligibility: null, offset: null })}
                   scroll={false}
                 >
                   Admissibles
                 </Link>
               </Button>
-              <Button asChild size="small" variant={eligibility === "all" ? "primary" : "outline"}>
+              <Button asChild size="small" variant={eligibility === "all" ? "secondary" : "ghost"}>
                 <Link
-                  href={searchHref(currentSearchParameters, { eligibility: "all" })}
+                  aria-current={eligibility === "all" ? "true" : undefined}
+                  href={searchHref(currentSearchParameters, { eligibility: "all", offset: null })}
                   scroll={false}
                 >
                   Tous les signaux
@@ -709,73 +761,81 @@ export function OpportunitiesDashboard() {
             </div>
           </div>
 
-          <form
-            className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_0.9fr_0.9fr_auto_auto] xl:items-end"
-            ref={filterForm}
-            onSubmit={applyFilters}
+          <div
+            id="opportunity-filter-fields"
+            className={`${filtersExpanded ? "block" : "hidden"} md:block`}
           >
-            <label className="grid gap-1.5 text-xs font-semibold" htmlFor="competition-filter">
-              Ligue
-              <input
-                className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3 text-sm font-normal outline-none placeholder:text-ink-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                defaultValue={searchParameters.get("competition") ?? ""}
-                id="competition-filter"
-                name="competition"
-                placeholder="Ex. Ligue Démo 02"
-              />
-            </label>
-            <label className="grid gap-1.5 text-xs font-semibold" htmlFor="team-filter">
-              Équipe
-              <input
-                className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3 text-sm font-normal outline-none placeholder:text-ink-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                defaultValue={searchParameters.get("team") ?? ""}
-                id="team-filter"
-                name="team"
-                placeholder="Ex. Aurore"
-              />
-            </label>
-            <label className="grid gap-1.5 text-xs font-semibold" htmlFor="grade-filter">
-              Grade
-              <select
-                className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3 text-sm font-normal outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                defaultValue={searchParameters.get("grade") ?? ""}
-                id="grade-filter"
-                name="grade"
-              >
-                <option value="">Tous</option>
-                {Object.entries(gradeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1.5 text-xs font-semibold" htmlFor="freshness-filter">
-              Fraîcheur
-              <select
-                className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3 text-sm font-normal outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                defaultValue={searchParameters.get("freshness") ?? ""}
-                id="freshness-filter"
-                name="freshness"
-              >
-                <option value="">Toutes</option>
-                {Object.entries(freshnessLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button className="w-full" type="submit">
-              <Search aria-hidden="true" className="size-4" />
-              Appliquer
-            </Button>
-            <Button asChild className="w-full" variant="ghost">
-              <Link href="/" scroll={false}>
-                Effacer
-              </Link>
-            </Button>
-          </form>
+            <p className="mb-3 text-xs text-ink-secondary md:hidden" role="status">
+              {hasFilters
+                ? `${String(activeFilterCount)} filtre${activeFilterCount === 1 ? "" : "s"} appliqué${activeFilterCount === 1 ? "" : "s"}. Modifiez les critères puis appliquez les changements.`
+                : "Aucun filtre appliqué. Choisissez vos critères puis appliquez-les."}
+            </p>
+            <form
+              className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_0.9fr_0.9fr_auto_auto] xl:items-end"
+              ref={filterForm}
+              onSubmit={applyFilters}
+            >
+              <label className="ui-field" htmlFor="competition-filter">
+                Ligue
+                <Input
+                  defaultValue={searchParameters.get("competition") ?? ""}
+                  id="competition-filter"
+                  name="competition"
+                  placeholder="Ex. Ligue Démo 02"
+                />
+              </label>
+              <label className="ui-field" htmlFor="team-filter">
+                Équipe
+                <Input
+                  defaultValue={searchParameters.get("team") ?? ""}
+                  id="team-filter"
+                  name="team"
+                  placeholder="Ex. Aurore"
+                />
+              </label>
+              <label className="ui-field" htmlFor="grade-filter">
+                Grade
+                <Select
+                  value={draftGrade}
+                  onValueChange={setDraftGrade}
+                  id="grade-filter"
+                  name="grade"
+                >
+                  <option value="">Tous</option>
+                  {Object.entries(gradeLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <label className="ui-field" htmlFor="freshness-filter">
+                Fraîcheur
+                <Select
+                  value={draftFreshness}
+                  onValueChange={setDraftFreshness}
+                  id="freshness-filter"
+                  name="freshness"
+                >
+                  <option value="">Toutes</option>
+                  {Object.entries(freshnessLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <Button type="submit">
+                <Search aria-hidden="true" className="size-4" />
+                Appliquer
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href={clearedFiltersHref} scroll={false}>
+                  Effacer
+                </Link>
+              </Button>
+            </form>
+          </div>
         </CardContent>
       </Card>
 
@@ -790,14 +850,18 @@ export function OpportunitiesDashboard() {
         <QueryRecovery queries={[opportunitiesQuery]} />
         {opportunitiesQuery.isError && !canReadPrevious(opportunitiesQuery) ? (
           <RemoteRecoverableErrorState
-            description="Les opportunités n’ont pas pu être chargées. Aucun détail technique sensible n’est affiché."
+            description="Les opportunités n’ont pas pu être chargées. Réessayez pour retrouver vos résultats et vos filtres."
             onRetry={() => {
               void opportunitiesQuery.refetch();
             }}
+            retryDisabled={opportunitiesQuery.isFetching}
           />
         ) : response ? (
           <div className="grid min-w-0 gap-6">
-            <section aria-label="Résumé du dashboard" className="grid gap-4 md:grid-cols-3">
+            <section
+              aria-label="Résumé du dashboard"
+              className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-border-subtle py-3 md:grid-cols-3 md:gap-4 md:border-0 md:p-0"
+            >
               <MetricCard
                 detail={sourceSummary.detail}
                 icon={
@@ -808,10 +872,15 @@ export function OpportunitiesDashboard() {
                   )
                 }
                 label="Santé des sources"
+                mobileWide
                 value={<span className={sourceSummary.tone}>{sourceSummary.label}</span>}
               />
               <MetricCard
-                detail={`${response.page.total.toString()} signal${response.page.total === 1 ? " évalué" : "s évalués"}`}
+                detail={
+                  response.page.total > response.data.length
+                    ? `Sur cette page · ${String(response.data.length)} signaux évalués sur ${String(response.page.total)}`
+                    : `${response.page.total.toString()} ${response.page.total === 1 ? "signal évalué" : "signaux évalués"}`
+                }
                 icon={<TableProperties className="size-5" />}
                 label="Opportunités admissibles"
                 value={admissibleCount}
@@ -822,16 +891,20 @@ export function OpportunitiesDashboard() {
                 }
                 icon={<Clock3 className="size-5" />}
                 label="Dernière mise à jour"
-                value={
-                  latestUpdate
-                    ? formatTimeUntil(latestUpdate, referenceTime).replace(
-                        "Déjà commencé",
-                        "À l’instant",
-                      )
-                    : "—"
-                }
+                value={latestUpdate ? snapshotAge(latestUpdate, referenceTime) : "—"}
               />
             </section>
+
+            <QueryRecovery queries={[providersQuery]} />
+            {providersQuery.isError && !canReadPrevious(providersQuery) ? (
+              <RemoteRecoverableErrorState
+                compact
+                title="Santé des sources indisponible"
+                description="Le contrôle des sources n’a pas pu être chargé."
+                onRetry={() => void providersQuery.refetch()}
+                retryDisabled={providersQuery.isFetching}
+              />
+            ) : null}
 
             {hasStaleData ? (
               <RemoteStaleState
@@ -839,11 +912,22 @@ export function OpportunitiesDashboard() {
                 title="Données anciennes — décision bloquée"
               />
             ) : null}
+            {historyErrors.length > 0 ? (
+              <RemoteRecoverableErrorState
+                compact
+                title="Historique des cotes indisponible"
+                description="La cote du signal reste visible. Les dernières observations n’ont pas pu être vérifiées pour certains matchs."
+                onRetry={() =>
+                  void Promise.all(historyErrors.map((historyQuery) => historyQuery.refetch()))
+                }
+                retryDisabled={historyErrors.some((historyQuery) => historyQuery.isFetching)}
+              />
+            ) : null}
 
             <section aria-labelledby="results-title" className="grid min-w-0 gap-4">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-semibold tracking-tight" id="results-title">
+                  <h2 className="ui-section-title" id="results-title">
                     {eligibility === "admissible" ? "Opportunités admissibles" : "Tous les signaux"}
                   </h2>
                   <p
@@ -854,18 +938,23 @@ export function OpportunitiesDashboard() {
                     aria-atomic="true"
                   >
                     {`${visibleOpportunities.length.toString()} résultat${visibleOpportunities.length === 1 ? "" : "s"}`}
+                    {response.page.total > 100 ? " sur cette page" : ""}
                   </p>
+                  {response.page.total > 100 ? (
+                    <p className="mt-1 text-xs leading-5 text-ink-secondary">
+                      Le tri et l’admission s’appliquent aux signaux de la page affichée.
+                    </p>
+                  ) : null}
                 </div>
-                <div className="flex flex-wrap items-end gap-3">
-                  <label className="grid gap-1.5 text-xs font-semibold" htmlFor="sort-order">
+                <div className="ui-toolbar">
+                  <label className="ui-field" htmlFor="sort-order">
                     Trier par
-                    <select
-                      className="min-h-10 rounded-md border border-border-strong bg-surface-raised px-3 text-sm font-normal outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                    <Select
                       id="sort-order"
-                      onChange={(event) => {
+                      onValueChange={(value) => {
                         router.replace(
                           searchHref(currentSearchParameters, {
-                            sort: event.target.value === "start-asc" ? "start-asc" : null,
+                            sort: value === "start-asc" ? "start-asc" : null,
                           }),
                           { scroll: false },
                         );
@@ -874,56 +963,75 @@ export function OpportunitiesDashboard() {
                     >
                       <option value="conservative-ev-desc">EV prudente décroissante</option>
                       <option value="start-asc">Heure de début</option>
-                    </select>
+                    </Select>
                   </label>
-                  <div aria-label="Mode d’affichage" className="flex gap-1" role="group">
-                    <Button
-                      aria-label="Vue tableau"
-                      asChild
-                      size="icon"
-                      variant={display === "table" ? "primary" : "outline"}
-                    >
+                  <ToggleGroup aria-label="Mode d’affichage">
+                    <IconButton aria-label="Vue tableau" asChild active={display === "table"}>
                       <Link
+                        aria-current={display === "table" ? "true" : undefined}
                         href={searchHref(currentSearchParameters, { display: null })}
                         scroll={false}
                       >
                         <TableProperties aria-hidden="true" className="size-4" />
                       </Link>
-                    </Button>
-                    <Button
-                      aria-label="Vue cartes"
-                      asChild
-                      size="icon"
-                      variant={display === "cards" ? "primary" : "outline"}
-                    >
+                    </IconButton>
+                    <IconButton aria-label="Vue cartes" asChild active={display === "cards"}>
                       <Link
+                        aria-current={display === "cards" ? "true" : undefined}
                         href={searchHref(currentSearchParameters, { display: "cards" })}
                         scroll={false}
                       >
                         <LayoutGrid aria-hidden="true" className="size-4" />
                       </Link>
-                    </Button>
-                  </div>
+                    </IconButton>
+                  </ToggleGroup>
                 </div>
               </div>
-
-              {display === "table" && visibleOpportunities.length > 0 ? (
-                <p className="text-xs text-ink-secondary xl:hidden">
-                  Faites défiler le tableau horizontalement pour consulter toutes les mesures.
-                </p>
-              ) : null}
 
               {visibleOpportunities.length === 0 ? (
                 <RemoteEmptyState
                   action={
                     <Button asChild size="small" variant="outline">
-                      <Link href="/" scroll={false}>
-                        Réinitialiser les filtres
+                      <Link
+                        href={
+                          (query.offset ?? 0) > 0
+                            ? searchHref(currentSearchParameters, { offset: null })
+                            : response.data.length > 0 && eligibility === "admissible"
+                              ? searchHref(currentSearchParameters, { eligibility: "all" })
+                              : hasFilters
+                                ? clearedFiltersHref
+                                : "/data"
+                        }
+                        scroll={false}
+                      >
+                        {(query.offset ?? 0) > 0
+                          ? "Revenir à la première page"
+                          : response.data.length > 0 && eligibility === "admissible"
+                            ? "Voir les signaux écartés"
+                            : hasFilters
+                              ? "Réinitialiser les filtres"
+                              : "Vérifier les sources de données"}
                       </Link>
                     </Button>
                   }
-                  description="Aucun signal ne satisfait à la fois les critères actifs et la politique d’admission prudente."
-                  title="Aucune opportunité admissible"
+                  description={
+                    response.data.length === 0 && (query.offset ?? 0) > 0
+                      ? "Cette page ne contient aucun signal. Revenez à la première page en conservant vos filtres."
+                      : response.data.length === 0 && !hasFilters
+                        ? "Aucun signal n’a encore été calculé dans ce mode. Vérifiez les sources de données pour alimenter les opportunités."
+                        : eligibility === "admissible"
+                          ? "Aucun signal ne satisfait à la fois les critères actifs et la politique d’admission prudente."
+                          : "Aucun signal ne correspond aux filtres sélectionnés."
+                  }
+                  title={
+                    response.data.length === 0 && (query.offset ?? 0) > 0
+                      ? "Aucun signal sur cette page"
+                      : response.data.length === 0 && !hasFilters
+                        ? "Aucun signal disponible"
+                        : eligibility === "admissible"
+                          ? "Aucune opportunité admissible"
+                          : "Aucun signal"
+                  }
                 />
               ) : display === "cards" ? (
                 <OpportunityCards
@@ -938,6 +1046,49 @@ export function OpportunitiesDashboard() {
                   referenceTime={referenceTime}
                 />
               )}
+              {response.page.total > 100 || (query.offset ?? 0) > 0 ? (
+                <nav
+                  aria-label="Pagination des opportunités"
+                  className="flex flex-wrap items-center justify-between gap-3"
+                >
+                  <Button
+                    disabled={(query.offset ?? 0) === 0 || opportunitiesQuery.isFetching}
+                    onClick={() => {
+                      router.replace(
+                        searchHref(currentSearchParameters, {
+                          offset:
+                            (query.offset ?? 0) <= 100 ? null : String((query.offset ?? 0) - 100),
+                        }),
+                        { scroll: false },
+                      );
+                    }}
+                    variant="outline"
+                  >
+                    Page précédente
+                  </Button>
+                  <p className="text-sm text-ink-secondary" role="status">
+                    Page {Math.floor(response.page.offset / 100) + 1} sur{" "}
+                    {Math.max(1, Math.ceil(response.page.total / 100))}
+                  </p>
+                  <Button
+                    disabled={
+                      (query.offset ?? 0) + 100 >= response.page.total ||
+                      opportunitiesQuery.isFetching
+                    }
+                    onClick={() => {
+                      router.replace(
+                        searchHref(currentSearchParameters, {
+                          offset: String((query.offset ?? 0) + 100),
+                        }),
+                        { scroll: false },
+                      );
+                    }}
+                    variant="outline"
+                  >
+                    Page suivante
+                  </Button>
+                </nav>
+              ) : null}
             </section>
           </div>
         ) : null}

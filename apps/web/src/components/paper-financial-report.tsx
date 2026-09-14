@@ -4,7 +4,14 @@ import { canReadPrevious, readBackend } from "../lib/backend";
 import { QueryRecovery } from "./query-recovery";
 
 import type { ItemResponsePaperMetricsDto } from "@metiquo/contracts/types";
-import { Card, CardContent, RemoteRecoverableErrorState, RemoteSkeleton } from "@metiquo/ui";
+import {
+  Button,
+  Metric,
+  MetricGrid,
+  RemoteEmptyState,
+  RemoteLoadingState,
+  RemoteRecoverableErrorState,
+} from "@metiquo/ui";
 import { useQuery } from "@tanstack/react-query";
 
 import { formatDateTime } from "./opportunity-presenters";
@@ -42,96 +49,130 @@ export function PaperFinancialReport() {
   });
   if (report.isError && !canReadPrevious(report))
     return (
-      <RemoteRecoverableErrorState
-        description={report.error.message}
-        onRetry={() => void report.refetch()}
-      />
+      <section
+        aria-label="Rapport financier"
+        id="paper-report"
+        tabIndex={-1}
+        aria-busy={report.isFetching}
+        className="grid min-w-0 gap-4"
+      >
+        <h2 className="ui-section-title">Métriques financières · EUR</h2>
+        <RemoteRecoverableErrorState
+          title="Rapport financier indisponible"
+          description={report.error.message}
+          onRetry={() => void report.refetch()}
+          retryDisabled={report.isFetching}
+        />
+      </section>
     );
   const value = report.data?.data;
+  if (report.isPending || !value?.reportId || !report.data) {
+    return (
+      <section
+        aria-label="Rapport financier"
+        id="paper-report"
+        tabIndex={-1}
+        aria-busy={report.isFetching}
+        className="grid min-w-0 gap-4"
+      >
+        <QueryRecovery queries={[report]} />
+        <h2 className="ui-section-title">Métriques financières · EUR</h2>
+        {report.isPending ? (
+          <RemoteLoadingState label="Chargement du rapport financier" minHeight="9rem" rows={3} />
+        ) : (
+          <RemoteEmptyState
+            title="Aucun rapport financier"
+            description="Aucun rapport calculé dans ce mode. ROI et CLV indisponibles. Les décisions enregistrées restent consultables dans l’historique."
+            action={
+              <Button asChild variant="outline" size="small">
+                <a href="#paper-history">Consulter l’historique</a>
+              </Button>
+            }
+          />
+        )}
+      </section>
+    );
+  }
   return (
-    <section aria-label="Rapport financier" aria-busy={report.isPending} className="grid gap-4">
+    <section
+      aria-label="Rapport financier"
+      id="paper-report"
+      tabIndex={-1}
+      aria-busy={report.isFetching}
+      className="grid min-w-0 gap-4"
+    >
       <QueryRecovery queries={[report]} />
-      <h2 className="text-xl font-semibold">Métriques financières · EUR</h2>
+      <h2 className="ui-section-title">Métriques financières · EUR</h2>
       <p
         className="min-h-15 text-sm leading-5 text-ink-secondary sm:min-h-10 xl:min-h-5"
         role="status"
       >
-        {report.isPending ? (
-          "Chargement du rapport…"
-        ) : !value?.reportId || !report.data ? (
-          "Aucun rapport calculé dans ce mode. ROI et CLV indisponibles."
-        ) : (
-          <>
-            {report.data.meta.dataMode === "mock" ? "MOCK · " : "RÉEL · "}
-            {value.bets} paris · {value.signals} signaux · {value.pendingReview} en revue · calculé
-            le {formatDateTime(value.computedAt ?? "")}{" "}
-            {report.data.meta.freshness === "stale" ? "· rapport à actualiser" : ""}
-          </>
-        )}
+        {report.data.meta.dataMode === "mock" ? "SIMULÉ · " : "RÉEL · "}
+        {value.bets ?? "—"} paris · {value.signals ?? "—"} signaux · {value.pendingReview ?? "—"} en
+        revue · calculé le {formatDateTime(value.computedAt ?? report.data.meta.computedAt)}{" "}
+        {report.data.meta.freshness !== "fresh" ? "· rapport à actualiser" : ""}
       </p>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <MetricGrid>
         {metrics.map(([key, label, format]) => {
-          const estimate = value?.reportId ? value.estimates?.[key] : undefined;
-          const number = estimate?.value == null ? null : Number(estimate.value);
+          const estimate = value.estimates?.[key];
+          const rawNumber = estimate?.value == null ? null : Number(estimate.value);
+          const number = rawNumber !== null && Number.isFinite(rawNumber) ? rawNumber : null;
           const rendered =
             number == null
               ? "Indisponible"
               : new Intl.NumberFormat("fr-FR", {
                   maximumFractionDigits: 2,
                   ...(format === "money"
-                    ? { style: "currency", currency: value?.currency ?? "EUR" }
+                    ? { style: "currency", currency: value.currency }
                     : format === "percent"
                       ? { style: "percent" }
                       : {}),
                 }).format(number);
           return (
-            <Card key={key} aria-label={label}>
-              <CardContent className="grid content-start gap-2 p-4">
-                <p className="min-h-10 text-sm leading-5 text-ink-secondary">{label}</p>
-                {report.isPending ? (
-                  <RemoteSkeleton height="1.75rem" width="65%" />
+            <Metric
+              key={key}
+              aria-label={label}
+              role="region"
+              className="border-t border-border-subtle"
+              emphasis="statistic"
+              label={label}
+              value={
+                <span
+                  className={
+                    number !== null && number < 0 ? "text-red-700 dark:text-red-300" : undefined
+                  }
+                >
+                  {rendered}
+                </span>
+              }
+              detail={
+                estimate ? (
+                  <span>
+                    n = {estimate.sampleSize}
+                    {estimate.unavailableReason ? " · échantillon ou preuve insuffisant" : ""}
+                  </span>
                 ) : (
-                  <p
-                    className={`text-xl leading-7 font-semibold ${number !== null && number < 0 ? "text-red-700 dark:text-red-300" : ""}`}
-                  >
-                    {rendered}
-                  </p>
-                )}
-                <div className="min-h-8 text-xs leading-4 text-ink-secondary">
-                  {report.isPending ? (
-                    <RemoteSkeleton width="45%" />
-                  ) : estimate ? (
-                    <p>
-                      n = {estimate.sampleSize}
-                      {estimate.unavailableReason ? " · échantillon ou preuve insuffisant" : ""}
-                    </p>
-                  ) : (
-                    <p>Échantillon indisponible</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  "Échantillon indisponible"
+                )
+              }
+            />
           );
         })}
-      </div>
+      </MetricGrid>
       <p className="text-xs leading-5 text-ink-secondary">
         Le CLV est un proxy des prix observés. L’intervalle utilise des blocs de jours UTC ; les
         réévaluations d’entrée ne sont pas des événements indépendants. Les rapports antérieurs
         restent conservés après correction.
       </p>
-      <div className="min-h-10 text-sm leading-5 sm:min-h-5">
-        {value?.reportId ? (
+      <div className="flex min-h-[var(--metiquo-control-height)] items-start text-sm leading-5">
+        <Button asChild variant="outline" size="small">
           <a
-            className="font-semibold underline"
-            href={`/api/backend/api/v1/paper-reports/${value.reportId}`}
+            download={`rapport-paper-${value.reportId}.json`}
+            href={`/api/backend/api/v1/paper-reports/${encodeURIComponent(value.reportId)}`}
           >
             Télécharger le rapport complet et son audit
           </a>
-        ) : (
-          <span className="text-ink-secondary">
-            Le téléchargement sera disponible après le calcul d’un rapport.
-          </span>
-        )}
+        </Button>
       </div>
     </section>
   );

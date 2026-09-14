@@ -2,32 +2,29 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, MouseEvent } from "react";
 
 import { cn } from "./lib/cn";
 
-const buttonVariants = cva(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-interaction ease-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none active:translate-y-px motion-reduce:active:translate-y-0",
-  {
-    defaultVariants: {
-      size: "default",
-      variant: "primary",
+const buttonVariants = cva("metiquo-button", {
+  defaultVariants: {
+    size: "default",
+    variant: "primary",
+  },
+  variants: {
+    size: {
+      default: "metiquo-button--default",
+      icon: "metiquo-button--icon",
+      small: "metiquo-button--small",
     },
-    variants: {
-      size: {
-        default: "min-h-11 px-4",
-        icon: "size-11 p-0",
-        small: "min-h-9 px-3",
-      },
-      variant: {
-        ghost: "bg-transparent text-ink-secondary hover:bg-surface-muted hover:text-ink-primary",
-        outline:
-          "border border-border-strong bg-surface-raised text-ink-primary hover:border-accent hover:bg-accent-soft",
-        primary: "bg-accent text-accent-contrast shadow-sm hover:bg-accent-strong",
-      },
+    variant: {
+      ghost: "metiquo-button--ghost",
+      outline: "metiquo-button--outline",
+      primary: "metiquo-button--primary",
+      secondary: "metiquo-button--secondary",
     },
   },
-);
+});
 
 export type ButtonProperties = ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof buttonVariants> & {
@@ -37,18 +34,73 @@ export type ButtonProperties = ButtonHTMLAttributes<HTMLButtonElement> &
 export function Button({
   asChild = false,
   className,
+  disabled,
+  onClickCapture,
   size,
   type = "button",
   variant,
   ...properties
 }: ButtonProperties) {
   const classes = cn(buttonVariants({ size, variant }), className);
-
-  if (asChild) {
-    return <Slot className={classes} {...properties} />;
+  function captureClick(event: MouseEvent<HTMLButtonElement>) {
+    if (
+      disabled ||
+      properties["aria-disabled"] === true ||
+      properties["aria-disabled"] === "true"
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    onClickCapture?.(event);
   }
 
-  return <button className={classes} type={type} {...properties} />;
+  if (asChild) {
+    return (
+      <Slot
+        className={classes}
+        {...properties}
+        aria-disabled={disabled ? true : properties["aria-disabled"]}
+        onClickCapture={captureClick}
+        tabIndex={disabled ? -1 : properties.tabIndex}
+      />
+    );
+  }
+
+  return (
+    <button
+      className={classes}
+      disabled={disabled}
+      onClickCapture={captureClick}
+      type={type}
+      {...properties}
+    />
+  );
+}
+
+export type IconButtonProperties = Omit<ButtonProperties, "size"> & {
+  active?: boolean;
+  "aria-label": string;
+};
+
+export function IconButton({
+  active,
+  asChild,
+  className,
+  variant = "ghost",
+  ...properties
+}: IconButtonProperties) {
+  return (
+    <Button
+      {...(asChild === undefined ? {} : { asChild })}
+      aria-pressed={asChild ? undefined : active}
+      className={cn("metiquo-icon-button", className)}
+      data-active={active ? true : undefined}
+      size="icon"
+      variant={variant}
+      {...properties}
+    />
+  );
 }
 
 export { buttonVariants };

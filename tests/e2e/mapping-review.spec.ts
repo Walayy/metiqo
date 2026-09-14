@@ -9,6 +9,10 @@ test("keeps an ambiguous raw event blocked and previews each candidate", async (
   await expect(queue).toContainText("mock-event-ambiguous_mapping");
   await expect(queue).toContainText("Participants proches");
   await expect(queue.getByRole("region", { name: "Aperçu d’impact" })).toContainText(
+    "Aucun candidat sélectionné",
+  );
+  await queue.getByRole("radio").first().check();
+  await expect(queue.getByRole("region", { name: "Aperçu d’impact" })).toContainText(
     "Aurore 05 — Bastion 05",
   );
   await expect(queue.getByRole("region", { name: "Aperçu d’impact" })).toContainText(
@@ -43,6 +47,7 @@ test("creates a dated alias and records an explicit approval", async ({ page }) 
   await page.goto("/admin");
 
   const queue = page.getByRole("region", { name: "File de mapping" });
+  await queue.getByRole("radio").first().check();
   await queue.getByLabel("Alias brut").fill("Aurore 05 historique");
   await queue.getByRole("button", { name: "Créer l’alias daté" }).click();
   await expect(queue.getByRole("status").filter({ hasText: "Alias créé et daté" })).toContainText(

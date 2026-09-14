@@ -7,6 +7,12 @@ html {
   background: var(--color-surface-canvas);
   color: var(--color-ink-primary);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  word-break: normal;
+  overflow-wrap: normal;
+  -webkit-font-smoothing: antialiased;
+  scroll-padding-block-start: 5rem;
 }
 
 body {
@@ -24,6 +30,12 @@ body {
   box-sizing: border-box;
 }
 
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-block-start: 1rem;
+  }
+}
+
 :where(a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
@@ -36,7 +48,7 @@ body {
 }
 
 :where(input:not([type="radio"]):not([type="checkbox"]), select, textarea) {
-  min-block-size: 2.75rem;
+  min-block-size: var(--metiquo-control-height);
 }
 
 @media (prefers-reduced-motion: reduce) {

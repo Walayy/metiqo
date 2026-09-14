@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 
-from metiquo.config import Settings
+from metiquo.config import OddsProvider, Settings
 from metiquo.db.ops_models import JobRecord
 from metiquo.db.raw_models import Snapshot, SourceCatalog
 from metiquo.foundation.locks import ResourceBusy, oe_scope, resource_lock
@@ -27,6 +27,8 @@ class SchedulePolicy:
     alerts_seconds: int = 300
     backup_seconds: int = 86400
     backups_enabled: bool = True
+    stake_enabled: bool = False
+    stake_seconds: int = 60
 
     def __post_init__(self) -> None:
         if not 2014 <= self.current_year <= 2200 or not 1 <= self.closed_months <= 12:
@@ -39,6 +41,7 @@ class SchedulePolicy:
                 self.report_seconds,
                 self.alerts_seconds,
                 self.backup_seconds,
+                self.stake_seconds,
             )
             < 60
         ):
@@ -57,6 +60,8 @@ class SchedulePolicy:
             settings.alert_interval_seconds,
             settings.backup_interval_seconds,
             settings.backup_enabled,
+            settings.odds_provider is OddsProvider.STAKE_PUBLIC,
+            settings.stake_scrape_interval_seconds,
         )
 
 
@@ -108,6 +113,10 @@ def planned_jobs(
     )
     if policy.backups_enabled:
         jobs.append(PlannedJob("ops.backup", "ops:backup", {}, slot(policy.backup_seconds)))
+    if policy.stake_enabled:
+        jobs.append(
+            PlannedJob("odds.stake_scrape", "odds:stake-public", {}, slot(policy.stake_seconds))
+        )
     return tuple(jobs)
 
 

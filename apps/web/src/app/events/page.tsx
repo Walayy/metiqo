@@ -1,13 +1,13 @@
-import { RemoteLoadingState } from "@metiquo/ui";
+import { RemotePageLoadingState } from "@metiquo/ui";
 import { Suspense } from "react";
 
 import { EventsExplorer } from "../../components/events-explorer";
 
+export const metadata = { title: "Événements · Metiquo" };
+
 export default function EventsPage() {
   return (
-    <Suspense
-      fallback={<RemoteLoadingState label="Chargement des événements" minHeight="32rem" rows={8} />}
-    >
+    <Suspense fallback={<RemotePageLoadingState label="Chargement des événements" />}>
       <EventsExplorer />
     </Suspense>
   );

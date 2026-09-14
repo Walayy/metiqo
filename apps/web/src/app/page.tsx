@@ -1,13 +1,13 @@
 import { Suspense } from "react";
-import { RemoteLoadingState } from "@metiquo/ui";
+import { RemotePageLoadingState } from "@metiquo/ui";
 
 import { OpportunitiesDashboard } from "../components/opportunities-dashboard";
 
+export const metadata = { title: "Opportunités · Metiquo" };
+
 export default function HomePage() {
   return (
-    <Suspense
-      fallback={<RemoteLoadingState label="Chargement du dashboard" minHeight="32rem" rows={8} />}
-    >
+    <Suspense fallback={<RemotePageLoadingState label="Chargement du dashboard" />}>
       <OpportunitiesDashboard />
     </Suspense>
   );

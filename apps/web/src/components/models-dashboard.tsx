@@ -18,12 +18,22 @@ import {
   Button,
   Card,
   CardContent,
+  Metric,
+  Select,
+  TitledCard as Panel,
+  TechnicalText,
+  Table,
+  TableBody,
+  TableCell,
+  TableCellContent,
+  TableRow,
   RemoteDataBoundary,
   RemoteEmptyState,
   RemoteLoadingState,
+  RemotePageLoadingState,
   RemoteRecoverableErrorState,
 } from "@metiquo/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   CalendarRange,
@@ -35,9 +45,11 @@ import {
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 import { formatDateTime, formatDecimal } from "./opportunity-presenters";
+import { nextPageOffset, PagedResults } from "./paged-results";
 
 async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await readBackend(`/api/backend${path}`, {
@@ -57,7 +69,7 @@ async function runModelAction(
   const endpoint =
     request.action === "train"
       ? "/api/v1/admin/models/train"
-      : `/api/v1/admin/models/${request.modelVersionId}/${request.action}`;
+      : `/api/v1/admin/models/${encodeURIComponent(request.modelVersionId)}/${request.action}`;
   const body =
     request.action === "train"
       ? { gameTitle: "lol", marketType: "MATCH_WINNER" }
@@ -86,41 +98,27 @@ async function runModelAction(
   return (await response.json()) as ItemResponseModelSummary | ItemResponseJobSummary;
 }
 
-function Panel({
-  children,
-  icon,
-  title,
-}: Readonly<{ children: ReactNode; icon: ReactNode; title: string }>) {
-  return (
-    <Card aria-label={title}>
-      <CardContent className="grid gap-4 p-5 sm:p-6">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="grid size-9 place-items-center rounded-lg bg-surface-muted text-ink-secondary"
-          >
-            {icon}
-          </span>
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        </div>
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
 function metricLabel(metric: string) {
   if (metric === "log_loss") return "Log loss";
   if (metric === "brier") return "Score de Brier";
   return metric.replaceAll("_", " ");
 }
 
+function metricValue(value: string | number | undefined) {
+  return value === undefined || !Number.isFinite(Number(value)) ? "N/D" : formatDecimal(value);
+}
+
 function MetricComparison({ model, metric }: Readonly<{ model: ModelSummary; metric: string }>) {
-  const value = Number(model.metrics[metric] ?? 0);
+  const modelValue = model.metrics[metric];
+  const value =
+    modelValue === undefined || !Number.isFinite(Number(modelValue)) ? null : Number(modelValue);
   const baselineValue = model.baselineMetrics[metric];
-  const baseline = baselineValue === undefined ? null : Number(baselineValue);
-  const summary = `${metricLabel(metric)} : modèle ${formatDecimal(value)}, baseline ${baseline === null ? "non disponible" : formatDecimal(baseline)}. Une valeur plus basse est préférable.`;
-  const maximum = Math.max(value, baseline ?? 0, 0.01);
+  const baseline =
+    baselineValue === undefined || !Number.isFinite(Number(baselineValue))
+      ? null
+      : Number(baselineValue);
+  const summary = `${metricLabel(metric)} : modèle ${value === null ? "non disponible" : formatDecimal(value)}, baseline ${baseline === null ? "non disponible" : formatDecimal(baseline)}.${metric === "log_loss" || metric === "brier" ? " Une valeur plus basse est préférable." : ""}`;
+  const maximum = Math.max(value ?? 0, baseline ?? 0, 0.01);
 
   return (
     <figure className="grid gap-2 rounded-lg border border-border-subtle p-4">
@@ -134,12 +132,17 @@ function MetricComparison({ model, metric }: Readonly<{ model: ModelSummary; met
         ).map(([label, rawValue, tone]) => {
           const numericValue = rawValue ?? 0;
           return (
-            <div className="grid grid-cols-[5rem_1fr_auto] items-center gap-2 text-xs" key={label}>
+            <div
+              className="grid min-w-0 grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2 text-xs"
+              key={label}
+            >
               <span>{label}</span>
               <span className="h-2 overflow-hidden rounded-full bg-surface-muted">
                 <span
                   className={`block h-full rounded-full ${tone}`}
-                  style={{ width: `${Math.max((numericValue / maximum) * 100, 2).toFixed(2)}%` }}
+                  style={{
+                    width: `${Math.max(0, Math.min((numericValue / maximum) * 100, 100)).toFixed(2)}%`,
+                  }}
                 />
               </span>
               <span className="font-semibold tabular-nums">
@@ -155,14 +158,25 @@ function MetricComparison({ model, metric }: Readonly<{ model: ModelSummary; met
 }
 
 function ModelCard({
+  error,
   isPending,
   model,
   onAction,
+  pendingAction,
 }: Readonly<{
+  error?: string | undefined;
   isPending: boolean;
   model: ModelSummary;
   onAction: (request: ModelAction) => void;
+  pendingAction?: ModelAction | undefined;
 }>) {
+  const actionForModel =
+    isPending &&
+    pendingAction &&
+    "modelVersionId" in pendingAction &&
+    pendingAction.modelVersionId === model.modelVersionId
+      ? pendingAction.action
+      : null;
   const badgeTone =
     model.status === "champion"
       ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
@@ -171,50 +185,41 @@ function ModelCard({
         : "border-border-strong bg-surface-muted text-ink-secondary";
   return (
     <Card aria-label={`Modèle ${model.modelVersion}`}>
-      <CardContent className="grid h-full gap-4 p-5">
+      <CardContent className="grid h-full gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.12em] text-ink-secondary">
-              {model.algorithm}
-            </p>
-            <h3 className="mt-1 break-all font-semibold">{model.modelVersion}</h3>
+          <div className="min-w-0 [overflow-wrap:anywhere]">
+            <h3 className="font-semibold">
+              <TechnicalText className="text-sm text-ink-primary">
+                {model.modelVersion}
+              </TechnicalText>
+            </h3>
           </div>
           <Badge className={badgeTone}>
-            <CheckCircle2 aria-hidden="true" className="mr-1 size-3.5" />
+            {model.status === "champion" ? (
+              <CheckCircle2 aria-hidden="true" className="mr-1 size-3.5" />
+            ) : null}
             {model.status}
           </Badge>
         </div>
         <dl className="grid grid-cols-2 gap-3 text-sm">
           <div>
             <dt className="text-xs text-ink-secondary">Log loss</dt>
-            <dd className="mt-1 font-semibold">{formatDecimal(model.metrics.log_loss ?? 0)}</dd>
+            <dd className="mt-1 font-semibold">{metricValue(model.metrics.log_loss)}</dd>
           </div>
           <div>
             <dt className="text-xs text-ink-secondary">Brier / calibration</dt>
-            <dd className="mt-1 font-semibold">{formatDecimal(model.metrics.brier ?? 0)}</dd>
+            <dd className="mt-1 font-semibold">{metricValue(model.metrics.brier)}</dd>
           </div>
-          <div>
+          <div className="col-span-2">
             <dt className="text-xs text-ink-secondary">Marché</dt>
             <dd className="mt-1 font-semibold">Vainqueur du match</dd>
           </div>
-          <div>
-            <dt className="text-xs text-ink-secondary">Features</dt>
-            <dd className="mt-1 font-semibold">{model.featureVersion}</dd>
-          </div>
         </dl>
-        <div className="rounded-lg border border-border-subtle p-3 text-xs leading-5">
-          <p className="font-semibold">Version exacte de prédiction</p>
-          <p className="mt-1 break-all font-mono text-ink-secondary">{model.modelVersionId}</p>
-        </div>
-        <div className="mt-auto rounded-lg bg-surface-muted p-3 text-xs leading-5 text-ink-secondary">
-          <p className="font-semibold text-ink-primary">Promotion</p>
-          <p>{model.promotionReason ?? "Aucune promotion enregistrée"}</p>
-          {model.promotedAt ? <p>{formatDateTime(model.promotedAt)}</p> : null}
-        </div>
         {model.status === "candidate" || model.status === "champion" ? (
           <div className="flex flex-wrap gap-2">
             {model.status === "candidate" ? (
               <Button
+                aria-busy={actionForModel === "promote"}
                 disabled={isPending}
                 onClick={() => {
                   onAction({ action: "promote", modelVersionId: model.modelVersionId });
@@ -222,10 +227,11 @@ function ModelCard({
                 size="small"
               >
                 <ShieldCheck aria-hidden="true" className="size-4" />
-                Promouvoir
+                {actionForModel === "promote" ? "Promotion…" : "Promouvoir"}
               </Button>
             ) : null}
             <Button
+              aria-busy={actionForModel === "retire"}
               disabled={isPending}
               onClick={() => {
                 onAction({ action: "retire", modelVersionId: model.modelVersionId });
@@ -233,10 +239,47 @@ function ModelCard({
               size="small"
               variant="outline"
             >
-              Retirer
+              {actionForModel === "retire" ? "Retrait…" : "Retirer"}
             </Button>
           </div>
         ) : null}
+        {error ? (
+          <p className="text-sm text-red-700 dark:text-red-300" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <details className="min-w-0 border-t border-border-subtle pt-3 text-xs leading-5">
+          <summary className="cursor-pointer rounded font-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">
+            Traçabilité et promotion
+          </summary>
+          <dl className="mt-3 grid min-w-0 gap-3 text-ink-secondary">
+            <div>
+              <dt>Algorithme</dt>
+              <dd className="font-medium text-ink-primary [overflow-wrap:anywhere]">
+                {model.algorithm}
+              </dd>
+            </div>
+            <div>
+              <dt>Features</dt>
+              <dd>
+                <TechnicalText>{model.featureVersion}</TechnicalText>
+              </dd>
+            </div>
+            <div>
+              <dt>Version exacte de prédiction</dt>
+              <dd>
+                <TechnicalText>{model.modelVersionId}</TechnicalText>
+              </dd>
+            </div>
+            <div>
+              <dt>Promotion</dt>
+              <dd className="[overflow-wrap:anywhere]">
+                {model.promotionReason ?? "Aucune promotion enregistrée"}
+              </dd>
+              {model.promotedAt ? <dd>{formatDateTime(model.promotedAt)}</dd> : null}
+            </div>
+          </dl>
+        </details>
       </CardContent>
     </Card>
   );
@@ -249,60 +292,58 @@ function BacktestTable({
   const versions = new Map(models.map((model) => [model.modelVersionId, model.modelVersion]));
 
   return (
-    <div
+    <Table
       aria-label="Performance temporelle des backtests"
-      className="max-w-full overflow-x-auto rounded-lg border border-border-subtle"
-      role="region"
-      tabIndex={0}
+      columns={[
+        { label: "Version", variant: "technical", weight: 1.8 },
+        { label: "Période walk-forward", variant: "date", weight: 1.7 },
+        { label: "Échantillon", variant: "number", weight: 1.2 },
+        { label: "Log loss", variant: "number" },
+        { label: "Baseline", variant: "number" },
+        { label: "Brier", variant: "number" },
+        { label: "Test final", variant: "status" },
+        { label: "Segment", variant: "text" },
+      ]}
     >
-      <table className="w-full min-w-[64rem] border-collapse text-left text-xs">
-        <thead className="bg-surface-muted text-ink-secondary">
-          <tr>
-            {[
-              "Version",
-              "Période walk-forward",
-              "Échantillon",
-              "Log loss",
-              "Baseline",
-              "Brier",
-              "Test final",
-              "Segment",
-            ].map((label) => (
-              <th className="px-3 py-3 font-semibold" key={label} scope="col">
-                {label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border-subtle">
-          {backtests.map((backtest) => (
-            <tr key={backtest.backtestId}>
-              <td className="max-w-52 break-all px-3 py-3 font-semibold">
-                {versions.get(backtest.modelVersionId) ?? backtest.modelVersionId}
-              </td>
-              <td className="whitespace-nowrap px-3 py-3">
-                {formatDateTime(backtest.startsAt)} – {formatDateTime(backtest.endsAt)}
-              </td>
-              <td className="px-3 py-3">
-                <span className="font-semibold">{backtest.sampleCount.toString()}</span>
-                {backtest.sampleCount < 500 ? (
-                  <span className="mt-1 block text-amber-700 dark:text-amber-300">
-                    ⚠ Faible échantillon
-                  </span>
-                ) : null}
-              </td>
-              <td className="px-3 py-3">{formatDecimal(backtest.metrics.log_loss ?? 0)}</td>
-              <td className="px-3 py-3">{formatDecimal(backtest.baselineMetrics.log_loss ?? 0)}</td>
-              <td className="px-3 py-3">{formatDecimal(backtest.metrics.brier ?? 0)}</td>
-              <td className="px-3 py-3">
-                {backtest.finalTestUntouched ? "Préservé" : "Non préservé"}
-              </td>
-              <td className="px-3 py-3">Game winner · global</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <TableBody>
+        {backtests.map((backtest) => (
+          <TableRow key={backtest.backtestId}>
+            <TableCell label="Version" variant="technical">
+              {versions.get(backtest.modelVersionId) ?? backtest.modelVersionId}
+            </TableCell>
+            <TableCell label="Période walk-forward" variant="date">
+              <TableCellContent
+                primary={formatDateTime(backtest.startsAt)}
+                secondary={<>au {formatDateTime(backtest.endsAt)}</>}
+              />
+            </TableCell>
+            <TableCell label="Échantillon" variant="number">
+              <TableCellContent
+                primary={backtest.sampleCount.toString()}
+                secondary={
+                  backtest.sampleCount < 500 ? (
+                    <span className="text-amber-700 dark:text-amber-300">⚠ Faible échantillon</span>
+                  ) : null
+                }
+              />
+            </TableCell>
+            <TableCell label="Log loss" variant="number">
+              {metricValue(backtest.metrics.log_loss)}
+            </TableCell>
+            <TableCell label="Baseline" variant="number">
+              {metricValue(backtest.baselineMetrics.log_loss)}
+            </TableCell>
+            <TableCell label="Brier" variant="number">
+              {metricValue(backtest.metrics.brier)}
+            </TableCell>
+            <TableCell label="Test final" variant="status">
+              {backtest.finalTestUntouched ? "Préservé" : "Non préservé"}
+            </TableCell>
+            <TableCell label="Segment">Game winner · global</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -310,12 +351,13 @@ export function ModelsDashboard() {
   const queryClient = useQueryClient();
   const trainingKey = useRef<string | null>(null);
   const [submittedJob, setSubmittedJob] = useState<JobSummary | null>(null);
+  const [comparisonModelId, setComparisonModelId] = useState("");
   const trainingQuery = useQuery({
     enabled: submittedJob !== null,
     queryKey: ["training-job", submittedJob?.jobId],
     queryFn: ({ signal }) =>
       fetchResource<ItemResponseJobSummary>(
-        `/api/v1/admin/jobs/${submittedJob?.jobId ?? ""}`,
+        `/api/v1/admin/jobs/${encodeURIComponent(submittedJob?.jobId ?? "")}`,
         signal,
       ),
     refetchInterval: (query) => {
@@ -337,27 +379,44 @@ export function ModelsDashboard() {
       void queryClient.invalidateQueries({ queryKey: ["backtests"] });
     }
   }, [queryClient, training?.jobId, training?.status]);
-  const modelsQuery = useQuery({
-    queryFn: ({ signal }) =>
-      fetchResource<PageResponseModelSummary>("/api/v1/models?offset=0&limit=100", signal),
+  const modelsQuery = useInfiniteQuery({
+    initialPageParam: 0,
+    getNextPageParam: nextPageOffset,
+    queryFn: ({ signal, pageParam }) =>
+      fetchResource<PageResponseModelSummary>(
+        `/api/v1/models?offset=${String(pageParam)}&limit=100`,
+        signal,
+      ),
     queryKey: ["models"],
+    select: ({ pages }) =>
+      ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as PageResponseModelSummary,
   });
-  const backtestsQuery = useQuery({
-    queryFn: ({ signal }) =>
-      fetchResource<PageResponseBacktestSummary>("/api/v1/backtests?offset=0&limit=100", signal),
+  const backtestsQuery = useInfiniteQuery({
+    initialPageParam: 0,
+    getNextPageParam: nextPageOffset,
+    queryFn: ({ signal, pageParam }) =>
+      fetchResource<PageResponseBacktestSummary>(
+        `/api/v1/backtests?offset=${String(pageParam)}&limit=100`,
+        signal,
+      ),
     queryKey: ["backtests"],
+    select: ({ pages }) =>
+      ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as PageResponseBacktestSummary,
   });
-  const isPending = modelsQuery.isPending || backtestsQuery.isPending;
-  const isFetching = modelsQuery.isFetching || backtestsQuery.isFetching;
-  const isError = modelsQuery.isError || backtestsQuery.isError;
+  const isPending = modelsQuery.isPending;
+  const isFetching = modelsQuery.isFetching;
+  const isError = modelsQuery.isError;
   const models = modelsQuery.data?.data ?? [];
-  const backtests = backtestsQuery.data?.data ?? [];
+  const backtests = canReadPrevious(backtestsQuery) ? (backtestsQuery.data?.data ?? []) : [];
   const champions = models.filter((model) => model.status === "champion");
   const challengers = models.filter((model) => model.status === "candidate");
   const inactive = models.filter(
     (model) => model.status === "blocked" || model.status === "retired",
   );
-  const referenceModel = champions.at(0) ?? models.at(0);
+  const referenceModel =
+    models.find((model) => model.modelVersionId === comparisonModelId) ??
+    champions.at(0) ??
+    models.at(0);
   const action = useMutation({
     mutationFn: (request: ModelAction) =>
       runModelAction(
@@ -380,27 +439,26 @@ export function ModelsDashboard() {
   });
 
   return (
-    <div className="grid min-w-0 gap-7">
+    <div className="ui-page-stack">
       <header className="grid max-w-3xl gap-2">
-        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent-strong">
+        <p className="flex items-center gap-2 ui-eyebrow">
           <Activity aria-hidden="true" className="size-4" />
           Validation hors échantillon
         </p>
-        <h1 className="text-title text-balance font-semibold tracking-tight">
-          Modèles & backtests
-        </h1>
+        <h1 className="ui-page-title">Modèles & backtests</h1>
         <p className="text-body max-w-2xl text-ink-secondary">
           Versions traçables, calibration, baselines et validation walk-forward. Une métrique plus
           basse n’efface jamais l’incertitude d’échantillonnage.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <Button
+            aria-busy={(action.isPending && action.variables.action === "train") || trainingPending}
             disabled={action.isPending || trainingPending}
             onClick={() => {
               action.mutate({ action: "train" });
             }}
           >
-            {action.isPending || trainingPending ? (
+            {(action.isPending && action.variables.action === "train") || trainingPending ? (
               <RefreshCw
                 aria-hidden="true"
                 className="size-4 animate-spin motion-reduce:animate-none"
@@ -423,7 +481,7 @@ export function ModelsDashboard() {
             <p
               aria-label="Entraînement"
               aria-live="polite"
-              className="text-sm text-ink-secondary"
+              className="min-w-0 text-sm text-ink-secondary [overflow-wrap:anywhere]"
               role="status"
             >
               Entraînement ·{" "}
@@ -443,7 +501,7 @@ export function ModelsDashboard() {
             </p>
           ) : null}
           {trainingQuery.isError ? (
-            <div className="flex items-center gap-2 text-sm" role="alert">
+            <div className="flex flex-wrap items-center gap-2 text-sm" role="alert">
               Suivi de l’entraînement indisponible.
               <Button
                 disabled={trainingQuery.isFetching}
@@ -455,7 +513,7 @@ export function ModelsDashboard() {
               </Button>
             </div>
           ) : null}
-          {action.error ? (
+          {action.error && action.variables.action === "train" ? (
             <p className="text-sm text-red-700 dark:text-red-300" role="alert">
               {action.error.message}
             </p>
@@ -467,13 +525,14 @@ export function ModelsDashboard() {
         className="min-w-0"
         isLoading={isPending && !isError}
         isRefetching={isFetching && !isPending}
-        loadingFallback={<RemoteLoadingState label="Chargement des modèles" rows={8} />}
+        loadingFallback={<RemotePageLoadingState label="Chargement des modèles" rows={8} />}
       >
-        <QueryRecovery queries={[modelsQuery, backtestsQuery]} />
-        {isError && ![modelsQuery, backtestsQuery].every(canReadPrevious) ? (
+        <QueryRecovery queries={[modelsQuery]} />
+        {isError && !canReadPrevious(modelsQuery) ? (
           <RemoteRecoverableErrorState
-            description="Le registre ou les backtests ne répondent pas."
-            onRetry={() => void Promise.all([modelsQuery.refetch(), backtestsQuery.refetch()])}
+            description="Le registre des modèles ne répond pas. Les backtests restent consultables ci-dessous."
+            onRetry={() => void modelsQuery.refetch()}
+            retryDisabled={isFetching}
           />
         ) : models.length === 0 ? (
           <RemoteEmptyState
@@ -482,56 +541,166 @@ export function ModelsDashboard() {
           />
         ) : (
           <div className="grid min-w-0 gap-6">
-            <section aria-label="Résumé des modèles" className="grid gap-4 sm:grid-cols-3">
+            <section
+              aria-label="Résumé des modèles"
+              className="grid grid-cols-3 gap-2 sm:gap-4 max-sm:[&_.ui-metric-label]:text-xs max-sm:[&_.ui-metric-label]:whitespace-nowrap"
+            >
               <Card aria-label="Champions">
-                <CardContent className="flex items-center justify-between gap-4 p-5">
+                <CardContent className="flex items-center justify-between gap-2 p-2 sm:gap-4 sm:p-6">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.12em] text-ink-secondary">
-                      Champions
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">{champions.length.toString()}</p>
+                    <Metric
+                      emphasis="statistic"
+                      label="Champions"
+                      value={champions.length.toString()}
+                    />
                   </div>
-                  <ShieldCheck aria-hidden="true" className="size-5 text-ink-secondary" />
+                  <ShieldCheck
+                    aria-hidden="true"
+                    className="hidden size-5 text-ink-secondary sm:block"
+                  />
                 </CardContent>
               </Card>
               <Card aria-label="Challengers">
-                <CardContent className="flex items-center justify-between gap-4 p-5">
+                <CardContent className="flex items-center justify-between gap-2 p-2 sm:gap-4 sm:p-6">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.12em] text-ink-secondary">
-                      Challengers
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">{challengers.length.toString()}</p>
+                    <Metric
+                      emphasis="statistic"
+                      label="Challengers"
+                      value={challengers.length.toString()}
+                    />
                   </div>
-                  <GitCompareArrows aria-hidden="true" className="size-5 text-ink-secondary" />
+                  <GitCompareArrows
+                    aria-hidden="true"
+                    className="hidden size-5 text-ink-secondary sm:block"
+                  />
                 </CardContent>
               </Card>
               <Card aria-label="Backtests">
-                <CardContent className="flex items-center justify-between gap-4 p-5">
+                <CardContent className="flex items-center justify-between gap-2 p-2 sm:gap-4 sm:p-6">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.12em] text-ink-secondary">
-                      Backtests
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">{backtests.length.toString()}</p>
+                    <Metric
+                      emphasis="statistic"
+                      label="Backtests"
+                      value={
+                        backtestsQuery.isPending
+                          ? "…"
+                          : canReadPrevious(backtestsQuery)
+                            ? backtests.length.toString()
+                            : "N/D"
+                      }
+                    />
                   </div>
-                  <CalendarRange aria-hidden="true" className="size-5 text-ink-secondary" />
+                  <CalendarRange
+                    aria-hidden="true"
+                    className="hidden size-5 text-ink-secondary sm:block"
+                  />
                 </CardContent>
               </Card>
             </section>
 
-            <Panel icon={<ShieldCheck className="size-4.5" />} title="Champions actifs">
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {champions.map((model) => (
-                  <ModelCard
-                    isPending={action.isPending}
-                    key={model.modelVersionId}
-                    model={model}
-                    onAction={action.mutate}
+            <nav aria-label="Sections des modèles" className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <a href="#model-calibration">Calibration</a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="#model-champions">Champions</a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="#model-challengers">Challengers</a>
+              </Button>
+              {inactive.length > 0 ? (
+                <Button asChild variant="outline">
+                  <a href="#model-inactive">Versions inactives</a>
+                </Button>
+              ) : null}
+              <Button asChild variant="outline">
+                <a href="#model-capabilities">Capacités</a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="#model-backtests">Backtests</a>
+              </Button>
+            </nav>
+
+            {referenceModel ? (
+              <Panel
+                id="model-calibration"
+                className="scroll-mt-24"
+                tabIndex={-1}
+                icon={<ChartColumnIncreasing className="size-4.5" />}
+                title="Calibration et comparaison aux baselines"
+              >
+                <label className="ui-field max-w-xl" htmlFor="comparison-model">
+                  <span>Version affichée</span>
+                  <Select
+                    id="comparison-model"
+                    value={referenceModel.modelVersionId}
+                    onValueChange={setComparisonModelId}
+                  >
+                    {models.map((model) => (
+                      <option key={model.modelVersionId} value={model.modelVersionId}>
+                        {model.modelVersion} · {model.status}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+                {Object.keys(referenceModel.metrics).length === 0 ? (
+                  <RemoteEmptyState
+                    compact
+                    title="Métriques indisponibles"
+                    description="Aucune mesure de performance n’est enregistrée pour cette version."
                   />
-                ))}
-              </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {Object.keys(referenceModel.metrics).map((metric) => (
+                      <MetricComparison key={metric} metric={metric} model={referenceModel} />
+                    ))}
+                  </div>
+                )}
+              </Panel>
+            ) : null}
+
+            <Panel
+              id="model-champions"
+              className="scroll-mt-24"
+              tabIndex={-1}
+              icon={<ShieldCheck className="size-4.5" />}
+              title="Champions actifs"
+            >
+              {champions.length === 0 ? (
+                <RemoteEmptyState
+                  compact
+                  title="Aucun champion actif"
+                  description="Aucun modèle n’est actuellement promu pour produire les prédictions."
+                />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {champions.map((model) => (
+                    <ModelCard
+                      error={
+                        action.error &&
+                        "modelVersionId" in action.variables &&
+                        action.variables.modelVersionId === model.modelVersionId
+                          ? action.error.message
+                          : undefined
+                      }
+                      isPending={action.isPending}
+                      key={model.modelVersionId}
+                      model={model}
+                      onAction={action.mutate}
+                      pendingAction={action.variables}
+                    />
+                  ))}
+                </div>
+              )}
             </Panel>
 
-            <Panel icon={<GitCompareArrows className="size-4.5" />} title="Challengers">
+            <Panel
+              id="model-challengers"
+              className="scroll-mt-24"
+              tabIndex={-1}
+              icon={<GitCompareArrows className="size-4.5" />}
+              title="Challengers"
+            >
               {challengers.length === 0 ? (
                 <p className="rounded-lg border border-border-subtle bg-surface-muted p-4 text-sm text-ink-secondary">
                   Aucun challenger n’est enregistré. Aucune comparaison artificielle n’est créée.
@@ -540,10 +709,18 @@ export function ModelsDashboard() {
                 <div className="grid gap-4 md:grid-cols-2">
                   {challengers.map((model) => (
                     <ModelCard
+                      error={
+                        action.error &&
+                        "modelVersionId" in action.variables &&
+                        action.variables.modelVersionId === model.modelVersionId
+                          ? action.error.message
+                          : undefined
+                      }
                       isPending={action.isPending}
                       key={model.modelVersionId}
                       model={model}
                       onAction={action.mutate}
+                      pendingAction={action.variables}
                     />
                   ))}
                 </div>
@@ -552,58 +729,62 @@ export function ModelsDashboard() {
 
             {inactive.length > 0 ? (
               <Panel
+                id="model-inactive"
+                className="scroll-mt-24"
+                tabIndex={-1}
                 icon={<CircleAlert className="size-4.5" />}
                 title="Versions bloquées et retirées"
               >
                 <div className="grid gap-4 md:grid-cols-2">
                   {inactive.map((model) => (
                     <ModelCard
+                      error={
+                        action.error &&
+                        "modelVersionId" in action.variables &&
+                        action.variables.modelVersionId === model.modelVersionId
+                          ? action.error.message
+                          : undefined
+                      }
                       isPending={action.isPending}
                       key={model.modelVersionId}
                       model={model}
                       onAction={action.mutate}
+                      pendingAction={action.variables}
                     />
                   ))}
                 </div>
               </Panel>
             ) : null}
 
-            {referenceModel ? (
-              <Panel
-                icon={<ChartColumnIncreasing className="size-4.5" />}
-                title="Calibration et comparaison aux baselines"
-              >
-                <p className="text-sm text-ink-secondary">
-                  Version affichée :{" "}
-                  <strong className="text-ink-primary">{referenceModel.modelVersion}</strong>
+            {modelsQuery.hasNextPage ? (
+              <div className="grid gap-2">
+                <PagedResults label="de modèles" query={modelsQuery} />
+                <p className="text-xs text-ink-secondary">
+                  Les résumés portent sur les versions affichées.
                 </p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {Object.keys(referenceModel.metrics).map((metric) => (
-                    <MetricComparison key={metric} metric={metric} model={referenceModel} />
-                  ))}
-                </div>
-              </Panel>
+              </div>
             ) : null}
 
             <Panel
-              icon={<CalendarRange className="size-4.5" />}
-              title="Performance temporelle et segments"
+              id="model-capabilities"
+              className="scroll-mt-24"
+              tabIndex={-1}
+              icon={<CheckCircle2 className="size-4.5" />}
+              title="Capacité des marchés"
             >
-              <BacktestTable backtests={backtests} models={models} />
-              {backtests.some((backtest) => backtest.sampleCount < 500) ? (
-                <p className="flex gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
-                  <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-                  Les backtests de moins de 500 observations sont signalés comme faible échantillon
-                  et ne suffisent pas, seuls, à une promotion.
-                </p>
-              ) : null}
-            </Panel>
-
-            <Panel icon={<CheckCircle2 className="size-4.5" />} title="Capacité des marchés">
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
-                  <p className="font-semibold">✓ Vainqueur du match</p>
-                  <p className="mt-1 text-xs">Capacité contractuelle active : MATCH_WINNER.</p>
+                <div className="rounded-lg border border-border-subtle p-4 text-sm">
+                  <p className="font-semibold">Vainqueur du match</p>
+                  <p className="mt-1 text-xs text-ink-secondary">
+                    Marché pris en charge : MATCH_WINNER. Sa disponibilité dépend de la validation
+                    des données, du modèle et des cotes du snapshot.
+                  </p>
+                  <Link
+                    className="mt-2 inline-block text-xs underline underline-offset-4"
+                    href="/data"
+                  >
+                    Vérifier les capacités par snapshot
+                  </Link>
                 </div>
                 <div className="rounded-lg border border-border-subtle p-4 text-sm text-ink-secondary">
                   <p className="font-semibold text-ink-primary">○ Autres marchés LoL</p>
@@ -616,6 +797,51 @@ export function ModelsDashboard() {
           </div>
         )}
       </RemoteDataBoundary>
+
+      <Panel
+        id="model-backtests"
+        className="scroll-mt-24"
+        tabIndex={-1}
+        icon={<CalendarRange className="size-4.5" />}
+        title="Performance temporelle et segments"
+      >
+        <QueryRecovery queries={[backtestsQuery]} />
+        {backtestsQuery.isError && !canReadPrevious(backtestsQuery) ? (
+          <RemoteRecoverableErrorState
+            title="Backtests indisponibles"
+            description="L’historique des validations peut être rechargé indépendamment du registre des modèles."
+            onRetry={() => void backtestsQuery.refetch()}
+            retryDisabled={backtestsQuery.isFetching}
+          />
+        ) : (
+          <RemoteDataBoundary
+            isLoading={backtestsQuery.isPending}
+            isRefetching={backtestsQuery.isFetching && !backtestsQuery.isPending}
+            loadingFallback={<RemoteLoadingState label="Chargement des backtests" rows={4} />}
+          >
+            {backtests.length === 0 ? (
+              <RemoteEmptyState
+                compact
+                title="Aucun backtest"
+                description="Les résultats apparaîtront après la validation d’une version."
+              />
+            ) : (
+              <BacktestTable
+                backtests={backtests}
+                models={canReadPrevious(modelsQuery) ? models : []}
+              />
+            )}
+            <PagedResults label="de backtests" query={backtestsQuery} />
+            {backtests.some((backtest) => backtest.sampleCount < 500) ? (
+              <p className="flex gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                Les backtests de moins de 500 observations sont signalés comme faible échantillon et
+                ne suffisent pas, seuls, à une promotion.
+              </p>
+            ) : null}
+          </RemoteDataBoundary>
+        )}
+      </Panel>
     </div>
   );
 }

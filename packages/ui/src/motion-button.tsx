@@ -15,22 +15,25 @@ type MotionButtonProperties = Omit<
 
 export function MotionButton({
   className,
+  disabled,
   type = "button",
   variant = "primary",
   ...properties
 }: MotionButtonProperties) {
   const shouldReduceMotion = useReducedMotion();
-  const interaction = shouldReduceMotion
-    ? { transition: { duration: 0 } }
-    : {
-        transition: { duration: 0.16 },
-        whileHover: { y: -1 },
-        whileTap: { scale: 0.98 },
-      };
+  const interaction =
+    shouldReduceMotion || disabled
+      ? { transition: { duration: 0 } }
+      : {
+          transition: { duration: 0.16 },
+          whileHover: { y: -1 },
+          whileTap: { scale: 0.98 },
+        };
 
   return (
     <motion.button
       className={cn(buttonVariants({ variant }), className)}
+      disabled={disabled}
       {...interaction}
       type={type}
       {...properties}

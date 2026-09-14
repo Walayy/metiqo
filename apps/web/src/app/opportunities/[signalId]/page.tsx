@@ -1,7 +1,9 @@
-import { RemoteLoadingState } from "@metiquo/ui";
+import { RemotePageLoadingState } from "@metiquo/ui";
 import { Suspense } from "react";
 
 import { SignalDetail } from "../../../components/signal-detail";
+
+export const metadata = { title: "Détail du signal · Metiquo" };
 
 type SignalDetailPageProperties = Readonly<{
   params: Promise<Readonly<{ signalId: string }>>;
@@ -11,9 +13,7 @@ export default async function SignalDetailPage({ params }: SignalDetailPagePrope
   const { signalId } = await params;
 
   return (
-    <Suspense
-      fallback={<RemoteLoadingState label="Chargement du signal" minHeight="32rem" rows={8} />}
-    >
+    <Suspense fallback={<RemotePageLoadingState label="Chargement du signal" />}>
       <SignalDetail signalId={signalId} />
     </Suspense>
   );

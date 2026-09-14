@@ -24,7 +24,7 @@ test("enforces CSP without blocking navigation, theme or admin mutations", async
   expect(scriptNonces.length).toBeGreaterThan(0);
   expect(scriptNonces.every((value) => value === nonce)).toBe(true);
   await page.getByRole("button", { name: "Changer le thème" }).click();
-  await page.getByRole("menuitem", { name: "Sombre" }).click();
+  await page.getByRole("menuitemradio", { name: "Sombre" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.getByRole("link", { name: "Administration", exact: true }).click();
   await expect(

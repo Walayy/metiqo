@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   CardContent,
+  TechnicalText,
   RemoteSkeleton,
   RemoteRecoverableErrorState,
 } from "@metiquo/ui";
@@ -36,6 +37,18 @@ function Measurements({
   pending?: boolean;
   dataMode?: string;
 }>) {
+  if (!pending && dataMode === "mock" && !operations) {
+    return (
+      <div className="grid gap-2 text-sm leading-6 text-ink-secondary" role="status">
+        <p className="font-medium text-ink-primary">
+          Les mesures opérationnelles réelles sont disponibles en mode réel.
+        </p>
+        <p>
+          Le mode de démonstration ne mesure pas les jobs, sauvegardes et latences de production.
+        </p>
+      </div>
+    );
+  }
   const { source, model, metrics, backups } = operations ?? {};
   const states = [
     {
@@ -97,18 +110,26 @@ function Measurements({
       <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {states.map((state) => (
           <div
-            className="grid content-start gap-1 rounded-lg border border-border-subtle p-3"
+            className="grid min-w-0 content-start gap-1 border-t border-border-subtle py-3"
             key={state.name}
           >
             <dt className="text-xs leading-4 text-ink-secondary">{state.name}</dt>
             <dd className="min-h-5 text-sm leading-5 font-semibold">
-              {pending ? <RemoteSkeleton height="1.25rem" width="65%" /> : state.status}
+              {pending ? <RemoteSkeleton height="1lh" width="65%" /> : state.status}
             </dd>
             <dd className="min-h-8 text-xs leading-4 text-ink-secondary">
-              {pending ? <RemoteSkeleton width="90%" /> : state.detail}
-            </dd>
-            <dd className="min-h-4 break-all text-xs leading-4 text-ink-secondary">
-              {pending ? <RemoteSkeleton width="45%" /> : state.reason}
+              {pending ? (
+                <RemoteSkeleton height="2lh" width="90%" />
+              ) : (
+                <>
+                  {state.detail}
+                  {state.reason ? (
+                    <TechnicalText className="block" style={{ lineHeight: "inherit" }}>
+                      {state.reason}
+                    </TechnicalText>
+                  ) : null}
+                </>
+              )}
             </dd>
           </div>
         ))}
@@ -162,17 +183,25 @@ export function OperationalStatusPanel() {
     },
   });
   return (
-    <Card aria-label="État opérationnel">
-      <CardContent className="grid content-start gap-4 p-5 sm:p-6">
+    <Card aria-label="État opérationnel" aria-busy={status.isFetching}>
+      <CardContent className="grid content-start gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold tracking-tight">État opérationnel</h2>
-          <Button disabled={status.isFetching} onClick={() => void status.refetch()}>
-            Actualiser l’état
+          <Button
+            aria-busy={status.isFetching}
+            disabled={status.isFetching}
+            onClick={() => void status.refetch()}
+            variant="outline"
+          >
+            {status.isFetching ? "Actualisation…" : "Actualiser l’état"}
           </Button>
         </div>
         <QueryRecovery queries={[status]} />
         {status.isError && !canReadPrevious(status) ? (
-          <RemoteRecoverableErrorState onRetry={() => void status.refetch()} />
+          <RemoteRecoverableErrorState
+            onRetry={() => void status.refetch()}
+            retryDisabled={status.isFetching}
+          />
         ) : (
           <Measurements
             operations={status.data?.operations ?? null}
@@ -181,7 +210,7 @@ export function OperationalStatusPanel() {
           />
         )}
         <p className="flex min-h-6 flex-wrap items-center gap-2 text-xs text-ink-secondary">
-          {status.data ? (
+          {status.data && canReadPrevious(status) ? (
             <>
               <Badge>{status.data.dataMode}</Badge>Mesure du{" "}
               {formatDateTime(status.data.generatedAt)}

@@ -1,0 +1,36 @@
+{
+  "checkedOn": "2026-09-08",
+  "sourceMode": "browser DOM to local JSON file",
+  "unitSuite": {
+    "passed": 547,
+    "skipped": 1,
+    "integrationDeselected": 172,
+    "durationSeconds": 29.62,
+    "environment": "Isolated working directory, project PYTHONPATH, unchanged config/security-policy.json copied from repository; no local .env."
+  },
+  "chromiumSuite": {
+    "passed": 19,
+    "unitDeselected": 55,
+    "durationSeconds": 127.81,
+    "installedExtensionCases": 3,
+    "pages": "Recorded public DOM replayed via Playwright routing in isolated Chromium profiles; not a live user-profile extension test."
+  },
+  "postgresqlSuite": {
+    "passed": 6,
+    "durationSeconds": 27.65,
+    "database": "Disposable PostgreSQL 18.3; includes file-mode recovery after network backoff."
+  },
+  "staticChecks": {
+    "ruff": "passed",
+    "mypy": "passed: 457 source files",
+    "prettier": "passed: modified browser files and documentation",
+    "cspell": "passed: targeted documentation"
+  },
+  "liveDOM": "stake-browser-dom-20260908.json",
+  "liveImport": "stake-browser-import-20260908.json",
+  "remaining": [
+    "Load unpacked extension in the user's normal Chrome or Edge profile and verify normal Stake access there.",
+    "Configure the downloaded file path in the real worker environment.",
+    "The previous Next server startup auto-review denial remains unresolved."
+  ]
+}

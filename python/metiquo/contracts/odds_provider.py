@@ -35,7 +35,7 @@ class ProviderEvent(ContractModel):
     best_of: int | None = Field(default=None, alias="bestOf", ge=1, le=9)
     status: EventStatus
     collected_at: UtcDateTime = Field(alias="collectedAt")
-    source_reference: VersionText = Field(alias="sourceReference")
+    source_reference: NonEmptyText = Field(alias="sourceReference", max_length=512)
 
     @model_validator(mode="after")
     def participants_are_distinct(self) -> Self:

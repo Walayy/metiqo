@@ -14,3 +14,5 @@ packages/contracts/src/generated/
 config/oracles_elixir_sources.yml
 # Raw CI evidence is archived byte-for-byte and verified by SHA-256.
 docs/evidence/qa-007/*/proofs/
+# Generated from the Python scraper; equality is checked in tests.
+browser/stake-reader/extract-dom.js

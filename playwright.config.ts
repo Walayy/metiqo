@@ -2,6 +2,8 @@ import { defineConfig } from "@playwright/test";
 
 const apiUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8000";
 const baseUrl = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
+const apiPort = Number(new URL(apiUrl).port || "8000");
+const webPort = Number(new URL(baseUrl).port || "3000");
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -14,8 +16,7 @@ export default defineConfig({
   snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}",
   webServer: [
     {
-      command:
-        "uv run --frozen uvicorn metiquo.api.app:create_app --factory --host 127.0.0.1 --port 8000",
+      command: `uv run --frozen uvicorn metiquo.api.app:create_app --factory --host 127.0.0.1 --port ${String(apiPort)}`,
       env: {
         APP_DATA_MODE: "mock",
         APP_ENV: "test",
@@ -30,7 +31,8 @@ export default defineConfig({
       url: `${apiUrl}/health`,
     },
     {
-      command: "pnpm --filter @metiquo/web build && pnpm --filter @metiquo/web start",
+      command: `pnpm --filter @metiquo/web build && pnpm --filter @metiquo/web start --hostname 127.0.0.1 --port ${String(webPort)}`,
+      env: { API_BASE_URL: apiUrl, APP_DATA_MODE: "mock" },
       reuseExistingServer: process.env.CI !== "true",
       timeout: 120_000,
       url: `${baseUrl}/health`,

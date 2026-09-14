@@ -1,5 +1,7 @@
 import { PaperBetDetail } from "../../../components/paper-bet-detail";
 
+export const metadata = { title: "Décision paper · Metiquo" };
+
 type PaperBetDetailPageProperties = Readonly<{
   params: Promise<Readonly<{ paperBetId: string }>>;
 }>;

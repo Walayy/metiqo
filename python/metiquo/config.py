@@ -6,7 +6,7 @@ from decimal import Decimal
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -56,8 +56,10 @@ class ObjectStoreBackend(StrEnum):
 class OddsProvider(StrEnum):
     """Providers de cotes activables à ce stade."""
 
+    AUTO = "auto"
     DISABLED = "disabled"
     MOCK = "mock"
+    STAKE_PUBLIC = "stake_public"
 
 
 class Settings(BaseSettings):
@@ -134,8 +136,18 @@ class Settings(BaseSettings):
     backup_pg_dump_binary: str = "pg_dump"
     backup_pg_restore_binary: str = "pg_restore"
 
-    odds_provider: OddsProvider = OddsProvider.MOCK
+    odds_provider: OddsProvider = OddsProvider.AUTO
     odds_max_age_seconds: int = Field(default=90, gt=0)
+    stake_scrape_interval_seconds: int = Field(default=60, ge=60, le=86400)
+    stake_scrape_timeout_seconds: int = Field(default=600, ge=10, le=1800)
+    stake_scrape_max_events: int = Field(default=40, ge=1, le=100)
+    stake_scrape_concurrency: int = Field(default=2, ge=1, le=3)
+    stake_scrape_navigation_interval_seconds: float = Field(default=5.0, ge=1, le=60)
+    stake_scrape_backoff_seconds: int = Field(default=600, ge=60, le=86400)
+    stake_browser_channel: Literal["chromium", "chrome", "msedge"] = "chromium"
+    stake_browser_engine: Literal["patchright", "playwright"] = "patchright"
+    stake_browser_headless: bool = False
+    stake_browser_capture_file: Path | None = None
     odds_provider_max_age_seconds: dict[str, PositiveSeconds] = Field(default_factory=dict)
     odds_market_max_age_seconds: dict[MarketType, PositiveSeconds] = Field(default_factory=dict)
     odds_phase_max_age_seconds: dict[OddsPhase, PositiveSeconds] = Field(default_factory=dict)
@@ -298,6 +310,14 @@ class Settings(BaseSettings):
     def validate_modes(self) -> Self:
         """Empêcher les configurations ambiguës et le mélange mock/réel."""
 
+        if self.odds_provider is OddsProvider.AUTO:
+            object.__setattr__(
+                self,
+                "odds_provider",
+                OddsProvider.STAKE_PUBLIC
+                if self.app_data_mode is DataMode.REAL
+                else OddsProvider.MOCK,
+            )
         if self.oe_allow_stale and self.oe_require_fresh:
             raise ValueError(
                 "OE_ALLOW_STALE et OE_REQUIRE_FRESH ne peuvent pas être vrais ensemble"

@@ -1,0 +1,353 @@
+{
+  "checkedAt": "2026-09-08T21:16:27.286095+00:00",
+  "origin": "http://localhost:3000",
+  "dataMode": "real",
+  "services": {
+    "api": {
+      "state": "running",
+      "health": "healthy",
+      "image": "metiquo-api:local",
+      "imageId": "sha256:20faadfa8115900510e27b72b873006a1f85d985ebaa59c33b977e6c3216d222",
+      "matchesBuiltImage": true,
+      "restartPolicy": "unless-stopped",
+      "mode": "real"
+    },
+    "worker": {
+      "state": "running",
+      "health": "healthy",
+      "image": "metiquo-worker:local",
+      "imageId": "sha256:857b6c38969e47f736f7c17d3af83a6af029098cc2588faec23329a6ad061f9e",
+      "matchesBuiltImage": true,
+      "restartPolicy": "unless-stopped",
+      "mode": "real"
+    },
+    "web": {
+      "state": "running",
+      "health": "healthy",
+      "image": "metiquo-web:local",
+      "imageId": "sha256:6b50ea71c4b94ea87267b6d7f9d7f709922fcc5d771523555bdfb69afde5e609",
+      "matchesBuiltImage": true,
+      "restartPolicy": "unless-stopped",
+      "mode": "real"
+    },
+    "postgres": {
+      "state": "running",
+      "health": "healthy",
+      "image": "metiquo-postgres:local",
+      "imageId": "sha256:edd9c79818883646d2cb3c2ef87551eaba753751b39657eb6db2e133bb774853",
+      "matchesBuiltImage": true,
+      "restartPolicy": "unless-stopped",
+      "mode": null
+    }
+  },
+  "health": {
+    "status": "ok"
+  },
+  "ready": {
+    "status": "ready",
+    "dependencies": {
+      "database": {
+        "status": "available",
+        "reasonCode": null
+      }
+    }
+  },
+  "stakeStatus": {
+    "data": {
+      "enabled": true,
+      "state": "operational",
+      "checkedAt": "2026-09-08T21:16:24.371363Z",
+      "lastSuccessAt": "2026-09-08T21:16:24.045927Z",
+      "nextAttemptAt": "2026-09-08T21:17:24.371363Z",
+      "detail": null,
+      "eventCount": 12
+    },
+    "meta": {
+      "dataMode": "real",
+      "freshness": "fresh",
+      "asOf": "2026-09-08T21:16:24.371363Z",
+      "computedAt": "2026-09-08T21:16:26.317543Z",
+      "appVersion": "0.1.0"
+    }
+  },
+  "eventCount": 12,
+  "total": 12,
+  "marketCount": 796,
+  "selectionCount": 2570,
+  "freshnessCounts": {
+    "fresh": 12
+  },
+  "events": [
+    {
+      "id": "826927",
+      "participants": ["Nongshim Esports Academy", "DN SOOPers Challengers"],
+      "startsAt": "2026-09-09T08:00:00Z",
+      "observedAt": "2026-09-08T21:15:53.389613Z",
+      "markets": 231,
+      "freshness": "fresh",
+      "ageSeconds": 48
+    },
+    {
+      "id": "826987",
+      "participants": ["NRG Esports", "Maryville University"],
+      "startsAt": "2026-09-09T21:00:00Z",
+      "observedAt": "2026-09-08T21:16:04.665403Z",
+      "markets": 15,
+      "freshness": "fresh",
+      "ageSeconds": 23
+    },
+    {
+      "id": "822193",
+      "participants": ["GIANTX", "Natus Vincere"],
+      "startsAt": "2026-09-11T15:00:00Z",
+      "observedAt": "2026-09-08T21:15:16.859829Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 71
+    },
+    {
+      "id": "823841",
+      "participants": ["Hanwha Life Esports", "T1 Esports"],
+      "startsAt": "2026-09-12T05:00:00Z",
+      "observedAt": "2026-09-08T21:15:27.796934Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 61
+    },
+    {
+      "id": "826446",
+      "participants": ["Anyone's Legend", "Invictus Gaming"],
+      "startsAt": "2026-09-12T09:00:00Z",
+      "observedAt": "2026-09-08T21:15:32.856712Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 55
+    },
+    {
+      "id": "819250",
+      "participants": ["G2 NORD", "BIG"],
+      "startsAt": "2026-09-12T12:00:00Z",
+      "observedAt": "2026-09-08T21:16:00.063062Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 29
+    },
+    {
+      "id": "822195",
+      "participants": ["Team Vitality", "Movistar KOI"],
+      "startsAt": "2026-09-12T15:00:00Z",
+      "observedAt": "2026-09-08T21:15:22.095552Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 66
+    },
+    {
+      "id": "826336",
+      "participants": ["LOS", "FURIA Esports"],
+      "startsAt": "2026-09-12T16:00:00Z",
+      "observedAt": "2026-09-08T21:16:11.594251Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 17
+    },
+    {
+      "id": "824269",
+      "participants": ["Cloud9", "Shopify Rebellion"],
+      "startsAt": "2026-09-12T20:00:00Z",
+      "observedAt": "2026-09-08T21:15:41.624468Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 46
+    },
+    {
+      "id": "826339",
+      "participants": ["LOUD", "paiN Gaming"],
+      "startsAt": "2026-09-13T16:00:00Z",
+      "observedAt": "2026-09-08T21:16:21.270846Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 10
+    },
+    {
+      "id": "824271",
+      "participants": ["Sentinels", "FlyQuest"],
+      "startsAt": "2026-09-13T20:00:00Z",
+      "observedAt": "2026-09-08T21:15:49.995815Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 38
+    },
+    {
+      "id": "825431",
+      "participants": ["RED Canids", "Keyd Stars"],
+      "startsAt": "2026-09-19T16:00:00Z",
+      "observedAt": "2026-09-08T21:16:24.045927Z",
+      "markets": 55,
+      "freshness": "fresh",
+      "ageSeconds": 4
+    }
+  ],
+  "systemStatus": {
+    "status": "degraded",
+    "apiVersion": "0.1.0",
+    "dataMode": "real",
+    "generatedAt": "2026-09-08T21:16:27.399943Z",
+    "dependencies": {
+      "database": {
+        "status": "available",
+        "reasonCode": null
+      }
+    },
+    "operations": {
+      "readsAvailable": false,
+      "source": {
+        "status": "failed",
+        "snapshotId": null,
+        "asOf": null,
+        "ageSeconds": null,
+        "reasonCode": "SOURCE_CATALOG_MISSING"
+      },
+      "model": {
+        "status": "missing",
+        "modelVersionId": null,
+        "trainedAt": null,
+        "trainingCutoff": null,
+        "ageSeconds": null
+      },
+      "mappingBacklog": 0,
+      "jobCounts": {
+        "succeeded": 48,
+        "failed": 5,
+        "cancelled": 1,
+        "queued": 0,
+        "running": 0,
+        "dead": 0
+      },
+      "backups": {
+        "status": "fresh",
+        "lastSuccessAt": "2026-09-08T20:35:27.605451Z",
+        "lastFailureAt": null,
+        "errorCode": null
+      },
+      "metrics": {
+        "databaseScope": "retained_history",
+        "meanJobDurationSeconds": 25.074388333333335,
+        "measuredJobCount": 54,
+        "jobFailures": 5,
+        "processedRows": 0,
+        "anomalies": 0,
+        "blockingAnomalies": 0,
+        "signals": {
+          "VALUE": 0,
+          "NO_EDGE": 0,
+          "BLOCKED": 0
+        },
+        "api": {
+          "scope": "current_api_process",
+          "requestCount": 67,
+          "failureCount": 0,
+          "meanLatencyMs": 8.330656328651648
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Historical annual source not catalogued",
+    "No training dataset or champion model",
+    "APP_CODE_COMMIT absent: modified uncommitted source tree"
+  ],
+  "sourceFileSha256": {
+    "stake_assets.py": "d57e8f6f07979a2cb0bc0b36bc0b1baf21c7eeaca3c3902c9e5b8a7ea9a84752",
+    "stake_browser.py": "4ab26d60b9caccf3ad72452ca069842745fb89c57f8b8e153903fb1981e7d2d6",
+    "stake_runtime.py": "42909bcf6101e29eea6eed73379e567c570780b26e05afec34ffc56a6b1cab92",
+    "stake_discovery.py": "6cc393a9308a96939a858d7be73353250cd942ff07e79ab27c8adc712068cf42"
+  },
+  "tests": {
+    "pythonStake": 71,
+    "postgresqlHandlerIntegration": 1,
+    "settingsE2EWithAxe": 2,
+    "realUiRoutes": 8,
+    "stakeUi": {
+      "events": [
+        "826927",
+        "826987",
+        "822193",
+        "823841",
+        "826446",
+        "819250",
+        "822195",
+        "826336",
+        "824269",
+        "826339",
+        "824271",
+        "825431"
+      ],
+      "tabs": 72,
+      "markets": 796,
+      "outcomes": 2570,
+      "pages": 3
+    }
+  },
+  "navigation": [
+    {
+      "timestamp": "2026-09-08T21:15:10.178852Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:15.376571Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822195-team-vitality-movistar-koi",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:20.376565Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/lck-2026-season-playoffs-t3/823841-hanwha-life-esports-t1-esports",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:25.908861Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/lpl-2026-grand-finals-t3/826446-anyone-s-legend-invictus-gaming",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:30.694135Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/lck-cl-2026-season-playoffs-t5/826927-nongshim-esports-academy-dn-soopers-challengers",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:35.597595Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/824269-cloud9-shopify-rebellion",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:44.335010Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/824271-sentinels-flyquest",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:52.421668Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/prm-1st-division-2026-summer-playoffs-t6/819250-g2-nord-big",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:15:58.007215Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/nacl-2026-summer-playoffs-t8/826987-nrg-esports-maryville-university",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:16:02.813811Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/826336-los-furia-esports",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:16:08.463368Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/826339-loud-pain-gaming",
+      "status_code": 200
+    },
+    {
+      "timestamp": "2026-09-08T21:16:16.311306Z",
+      "route": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/825431-red-canids-keyd-stars",
+      "status_code": 200
+    }
+  ]
+}

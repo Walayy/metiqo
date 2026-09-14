@@ -1,0 +1,4899 @@
+{
+  "checkedAt": "2026-09-08T20:17:30.334307+00:00",
+  "engine": "patchright==1.62.3",
+  "channel": "chromium",
+  "headless": false,
+  "mode": "real",
+  "provider": "stake_public",
+  "syntheticData": false,
+  "httpTransport": "ASGI in-process; no Next server",
+  "navigation": [
+    {
+      "at": "2026-09-08T20:17:03.944176+00:00",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lck-2026-season-playoffs-t3/823841-hanwha-life-esports-t1-esports",
+      "status": 200,
+      "challenge": null,
+      "retryAfter": null
+    },
+    {
+      "at": "2026-09-08T20:17:08.806258+00:00",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+      "status": 200,
+      "challenge": null,
+      "retryAfter": null
+    },
+    {
+      "at": "2026-09-08T20:17:16.709205+00:00",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lpl-2026-grand-finals-t3/826446-anyone-s-legend-invictus-gaming",
+      "status": 200,
+      "challenge": null,
+      "retryAfter": null
+    }
+  ],
+  "result": {
+    "command": "odds-scrape",
+    "collectionMode": "public_scrape",
+    "state": "operational",
+    "runId": "2d974dcc-350b-411b-aa46-dd0f21d57857",
+    "events": 3,
+    "discoveredEvents": 3,
+    "markets": 165,
+    "outcomes": 462,
+    "insertedSnapshots": 36,
+    "detail": null,
+    "nextAttemptAt": "2026-09-08T20:18:29.408249+00:00"
+  },
+  "httpStatus": 200,
+  "http": {
+    "data": [
+      {
+        "capture": {
+          "event": {
+            "providerEventId": "822193",
+            "gameTitle": "lol",
+            "competition": "LEC 2026 Summer Playoffs",
+            "participants": ["GIANTX", "Natus Vincere"],
+            "startsAt": "2026-09-11T15:00:00Z",
+            "bestOf": null,
+            "status": "scheduled",
+            "collectedAt": "2026-09-08T20:17:29.123467Z",
+            "sourceReference": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere"
+          },
+          "sourceUrl": "https://stake.bet/fr/sports/league-of-legends/international-1/lec-2026-summer-playoffs-t3/822193-giantx-natus-vincere",
+          "observedAt": "2026-09-08T20:17:29.123578Z",
+          "expectedTabs": [
+            "tab-main",
+            "tab-map-1",
+            "tab-map-2",
+            "tab-map-3",
+            "tab-map-4",
+            "tab-map-5"
+          ],
+          "visitedTabs": [
+            "tab-main",
+            "tab-map-1",
+            "tab-map-2",
+            "tab-map-3",
+            "tab-map-4",
+            "tab-map-5"
+          ],
+          "markets": [
+            {
+              "label": "Vainqueur du match - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Vainqueur du match - Two options GIANTX 2,05 Natus Vincere 1,78",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "2,05",
+                  "decimalOdds": "2.05",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Handicap de la carte",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Handicap de la carte GIANTXNatus Vincere -2.5 7,50 2.5 1,08 -1.5 3,30 1.5 1,32 1.5 1,45 -1.5 2,70 2.5 1,13 -2.5 5,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX (-2.5)",
+                  "displayedLabel": "-2.5",
+                  "oddsText": "7,50",
+                  "decimalOdds": "7.50",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere (2.5)",
+                  "displayedLabel": "2.5",
+                  "oddsText": "1,08",
+                  "decimalOdds": "1.08",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX (-1.5)",
+                  "displayedLabel": "-1.5",
+                  "oddsText": "3,30",
+                  "decimalOdds": "3.30",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere (1.5)",
+                  "displayedLabel": "1.5",
+                  "oddsText": "1,32",
+                  "decimalOdds": "1.32",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX (1.5)",
+                  "displayedLabel": "1.5",
+                  "oddsText": "1,45",
+                  "decimalOdds": "1.45",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere (-1.5)",
+                  "displayedLabel": "-1.5",
+                  "oddsText": "2,70",
+                  "decimalOdds": "2.70",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX (2.5)",
+                  "displayedLabel": "2.5",
+                  "oddsText": "1,13",
+                  "decimalOdds": "1.13",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere (-2.5)",
+                  "displayedLabel": "-2.5",
+                  "oddsText": "5,80",
+                  "decimalOdds": "5.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Nombre de maps",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Nombre de maps Plus deMoins de 3.5 1,28 3.5 3,30 4.5 2,40 4.5 1,50",
+              "outcomes": [
+                {
+                  "label": "Over 3.5",
+                  "displayedLabel": "3.5",
+                  "oddsText": "1,28",
+                  "decimalOdds": "1.28",
+                  "status": "open"
+                },
+                {
+                  "label": "Under 3.5",
+                  "displayedLabel": "3.5",
+                  "oddsText": "3,30",
+                  "decimalOdds": "3.30",
+                  "status": "open"
+                },
+                {
+                  "label": "Over 4.5",
+                  "displayedLabel": "4.5",
+                  "oddsText": "2,40",
+                  "decimalOdds": "2.40",
+                  "status": "open"
+                },
+                {
+                  "label": "Under 4.5",
+                  "displayedLabel": "4.5",
+                  "oddsText": "1,50",
+                  "decimalOdds": "1.50",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Gagne au moins un map",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Gagne au moins un map Natus Vincere Oui 1,06 Non 7,00 GIANTX Oui 1,12 Non 5,30",
+              "outcomes": [
+                {
+                  "label": "Yes Natus Vincere",
+                  "displayedLabel": "Oui",
+                  "oddsText": "1,06",
+                  "decimalOdds": "1.06",
+                  "status": "open"
+                },
+                {
+                  "label": "No Natus Vincere",
+                  "displayedLabel": "Non",
+                  "oddsText": "7,00",
+                  "decimalOdds": "7.00",
+                  "status": "open"
+                },
+                {
+                  "label": "Yes GIANTX",
+                  "displayedLabel": "Oui",
+                  "oddsText": "1,12",
+                  "decimalOdds": "1.12",
+                  "status": "open"
+                },
+                {
+                  "label": "No GIANTX",
+                  "displayedLabel": "Non",
+                  "oddsText": "5,30",
+                  "decimalOdds": "5.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Résultat final",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Résultat final Slider Tout 0:3 5,30 1:3 4,00 3:1 4,80 3:0 7,00 2:3 4,40 3:2 4,40",
+              "outcomes": [
+                {
+                  "label": "0:3",
+                  "displayedLabel": "0:3",
+                  "oddsText": "5,30",
+                  "decimalOdds": "5.30",
+                  "status": "open"
+                },
+                {
+                  "label": "1:3",
+                  "displayedLabel": "1:3",
+                  "oddsText": "4,00",
+                  "decimalOdds": "4.00",
+                  "status": "open"
+                },
+                {
+                  "label": "3:1",
+                  "displayedLabel": "3:1",
+                  "oddsText": "4,80",
+                  "decimalOdds": "4.80",
+                  "status": "open"
+                },
+                {
+                  "label": "3:0",
+                  "displayedLabel": "3:0",
+                  "oddsText": "7,00",
+                  "decimalOdds": "7.00",
+                  "status": "open"
+                },
+                {
+                  "label": "2:3",
+                  "displayedLabel": "2:3",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                },
+                {
+                  "label": "3:2",
+                  "displayedLabel": "3:2",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Map 1 Gagnant - Two options GIANTX 1,98 Natus Vincere 1,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,98",
+                  "decimalOdds": "1.98",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Map 2 Gagnant - Two options GIANTX 1,98 Natus Vincere 1,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,98",
+                  "decimalOdds": "1.98",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Map 3 Gagnant - Two options GIANTX 1,98 Natus Vincere 1,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,98",
+                  "decimalOdds": "1.98",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Map 4 Gagnant - Two options GIANTX 1,92 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:18.559446Z",
+              "expanded": true,
+              "rawText": "Map 5 Gagnant - Two options GIANTX 1,92 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 Gagnant - Two options",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 Gagnant - Two options GIANTX 1,98 Natus Vincere 1,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,98",
+                  "decimalOdds": "1.98",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier à atteindre morts",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier à atteindre morts GIANTXNatus Vincere 5 1,90 5 1,80 10 1,92 10 1,78 15 1,92 15 1,78",
+              "outcomes": [
+                {
+                  "label": "GIANTX 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier sang",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier Baron",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier Baron GIANTX 1,92 Natus Vincere 1,78",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier inhibiteur",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier inhibiteur GIANTX 1,95 Natus Vincere 1,75",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - º meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,88 20 1,82 30 1,88 30 1,82",
+              "outcomes": [
+                {
+                  "label": "GIANTX 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Quadruple meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Quintuple meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Victoires paires/impaires",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:22.045931Z",
+              "expanded": true,
+              "rawText": "Map 1 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 Gagnant - Two options",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 Gagnant - Two options GIANTX 1,98 Natus Vincere 1,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,98",
+                  "decimalOdds": "1.98",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier à atteindre morts",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier à atteindre morts GIANTXNatus Vincere 5 1,90 5 1,80 10 1,92 10 1,78 15 1,92 15 1,78",
+              "outcomes": [
+                {
+                  "label": "GIANTX 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier sang",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier Baron",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier Baron GIANTX 1,92 Natus Vincere 1,78",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier inhibiteur",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier inhibiteur GIANTX 1,95 Natus Vincere 1,75",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - º meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,88 20 1,82 30 1,88 30 1,82",
+              "outcomes": [
+                {
+                  "label": "GIANTX 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Quadruple meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Quintuple meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Victoires paires/impaires",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:25.213714Z",
+              "expanded": true,
+              "rawText": "Map 2 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 Gagnant - Two options",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 Gagnant - Two options GIANTX 1,98 Natus Vincere 1,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,98",
+                  "decimalOdds": "1.98",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier à atteindre morts",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier à atteindre morts GIANTXNatus Vincere 5 1,90 5 1,80 10 1,92 10 1,78 15 1,92 15 1,78",
+              "outcomes": [
+                {
+                  "label": "GIANTX 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier sang",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier Baron",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier Baron GIANTX 1,92 Natus Vincere 1,78",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier inhibiteur",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier inhibiteur GIANTX 1,95 Natus Vincere 1,75",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - º meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,88 20 1,82 30 1,88 30 1,82",
+              "outcomes": [
+                {
+                  "label": "GIANTX 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Quadruple meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Quintuple meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Victoires paires/impaires",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:27.542482Z",
+              "expanded": true,
+              "rawText": "Map 3 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 Gagnant - Two options",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 Gagnant - Two options GIANTX 1,92 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier à atteindre morts",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier à atteindre morts GIANTXNatus Vincere 5 1,85 5 1,85 10 1,88 10 1,82 15 1,88 15 1,82",
+              "outcomes": [
+                {
+                  "label": "GIANTX 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier sang",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier Baron",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier Baron GIANTX 1,88 Natus Vincere 1,82",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier inhibiteur",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier inhibiteur GIANTX 1,90 Natus Vincere 1,80",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - º meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Quadruple meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Quintuple meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Victoires paires/impaires",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:28.315090Z",
+              "expanded": true,
+              "rawText": "Map 4 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 Gagnant - Two options",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 Gagnant - Two options GIANTX 1,92 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier à atteindre morts",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier à atteindre morts GIANTXNatus Vincere 5 1,85 5 1,85 10 1,85 10 1,85 15 1,88 15 1,82",
+              "outcomes": [
+                {
+                  "label": "GIANTX 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier sang",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier sang GIANTX 1,85 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier Baron",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier Baron GIANTX 1,85 Natus Vincere 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier inhibiteur",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier inhibiteur GIANTX 1,88 Natus Vincere 1,82",
+              "outcomes": [
+                {
+                  "label": "GIANTX",
+                  "displayedLabel": "GIANTX",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere",
+                  "displayedLabel": "Natus Vincere",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - º meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - º meurtre GIANTXNatus Vincere 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+              "outcomes": [
+                {
+                  "label": "GIANTX 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "GIANTX 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Natus Vincere 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Quadruple meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Quintuple meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Victoires paires/impaires",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:29.123173Z",
+              "expanded": true,
+              "rawText": "Map 5 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            }
+          ],
+          "warnings": []
+        },
+        "ageSeconds": 11,
+        "expiresAt": "2026-09-08T20:18:48.559446Z",
+        "freshness": "fresh"
+      },
+      {
+        "capture": {
+          "event": {
+            "providerEventId": "823841",
+            "gameTitle": "lol",
+            "competition": "LCK 2026 Season Playoffs",
+            "participants": ["Hanwha Life Esports", "T1 Esports"],
+            "startsAt": "2026-09-12T05:00:00Z",
+            "bestOf": null,
+            "status": "scheduled",
+            "collectedAt": "2026-09-08T20:17:16.177788Z",
+            "sourceReference": "https://stake.bet/fr/sports/league-of-legends/international-1/lck-2026-season-playoffs-t3/823841-hanwha-life-esports-t1-esports"
+          },
+          "sourceUrl": "https://stake.bet/fr/sports/league-of-legends/international-1/lck-2026-season-playoffs-t3/823841-hanwha-life-esports-t1-esports",
+          "observedAt": "2026-09-08T20:17:16.177922Z",
+          "expectedTabs": [
+            "tab-main",
+            "tab-map-1",
+            "tab-map-2",
+            "tab-map-3",
+            "tab-map-4",
+            "tab-map-5"
+          ],
+          "visitedTabs": [
+            "tab-main",
+            "tab-map-1",
+            "tab-map-2",
+            "tab-map-3",
+            "tab-map-4",
+            "tab-map-5"
+          ],
+          "markets": [
+            {
+              "label": "Vainqueur du match - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Vainqueur du match - Two options Hanwha Life Esports 1,58 T1 Esports 2,40",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,58",
+                  "decimalOdds": "1.58",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,40",
+                  "decimalOdds": "2.40",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Handicap de la carte",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Handicap de la carte Hanwha Life EsportsT1 Esports -2.5 4,80 2.5 1,17 -1.5 2,25 1.5 1,62 1.5 1,20 -1.5 4,40 2.5 1,05 -2.5 9,00",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports (-2.5)",
+                  "displayedLabel": "-2.5",
+                  "oddsText": "4,80",
+                  "decimalOdds": "4.80",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports (2.5)",
+                  "displayedLabel": "2.5",
+                  "oddsText": "1,17",
+                  "decimalOdds": "1.17",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports (-1.5)",
+                  "displayedLabel": "-1.5",
+                  "oddsText": "2,25",
+                  "decimalOdds": "2.25",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports (1.5)",
+                  "displayedLabel": "1.5",
+                  "oddsText": "1,62",
+                  "decimalOdds": "1.62",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports (1.5)",
+                  "displayedLabel": "1.5",
+                  "oddsText": "1,20",
+                  "decimalOdds": "1.20",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports (-1.5)",
+                  "displayedLabel": "-1.5",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports (2.5)",
+                  "displayedLabel": "2.5",
+                  "oddsText": "1,05",
+                  "decimalOdds": "1.05",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports (-2.5)",
+                  "displayedLabel": "-2.5",
+                  "oddsText": "9,00",
+                  "decimalOdds": "9.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Nombre de maps",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Nombre de maps Plus deMoins de 3.5 1,28 3.5 3,30 4.5 2,35 4.5 1,52",
+              "outcomes": [
+                {
+                  "label": "Over 3.5",
+                  "displayedLabel": "3.5",
+                  "oddsText": "1,28",
+                  "decimalOdds": "1.28",
+                  "status": "open"
+                },
+                {
+                  "label": "Under 3.5",
+                  "displayedLabel": "3.5",
+                  "oddsText": "3,30",
+                  "decimalOdds": "3.30",
+                  "status": "open"
+                },
+                {
+                  "label": "Over 4.5",
+                  "displayedLabel": "4.5",
+                  "oddsText": "2,35",
+                  "decimalOdds": "2.35",
+                  "status": "open"
+                },
+                {
+                  "label": "Under 4.5",
+                  "displayedLabel": "4.5",
+                  "oddsText": "1,52",
+                  "decimalOdds": "1.52",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Gagne au moins un map",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Gagne au moins un map T1 Esports Oui 1,17 Non 4,40 Hanwha Life Esports Oui 1,04 Non 8,00",
+              "outcomes": [
+                {
+                  "label": "Yes T1 Esports",
+                  "displayedLabel": "Oui",
+                  "oddsText": "1,17",
+                  "decimalOdds": "1.17",
+                  "status": "open"
+                },
+                {
+                  "label": "No T1 Esports",
+                  "displayedLabel": "Non",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                },
+                {
+                  "label": "Yes Hanwha Life Esports",
+                  "displayedLabel": "Oui",
+                  "oddsText": "1,04",
+                  "decimalOdds": "1.04",
+                  "status": "open"
+                },
+                {
+                  "label": "No Hanwha Life Esports",
+                  "displayedLabel": "Non",
+                  "oddsText": "8,00",
+                  "decimalOdds": "8.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Résultat final",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Résultat final Slider Tout 0:3 8,00 1:3 5,80 3:1 3,80 3:0 4,40 2:3 4,40 3:2 3,80",
+              "outcomes": [
+                {
+                  "label": "0:3",
+                  "displayedLabel": "0:3",
+                  "oddsText": "8,00",
+                  "decimalOdds": "8.00",
+                  "status": "open"
+                },
+                {
+                  "label": "1:3",
+                  "displayedLabel": "1:3",
+                  "oddsText": "5,80",
+                  "decimalOdds": "5.80",
+                  "status": "open"
+                },
+                {
+                  "label": "3:1",
+                  "displayedLabel": "3:1",
+                  "oddsText": "3,80",
+                  "decimalOdds": "3.80",
+                  "status": "open"
+                },
+                {
+                  "label": "3:0",
+                  "displayedLabel": "3:0",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                },
+                {
+                  "label": "2:3",
+                  "displayedLabel": "2:3",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                },
+                {
+                  "label": "3:2",
+                  "displayedLabel": "3:2",
+                  "oddsText": "3,80",
+                  "decimalOdds": "3.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Map 1 Gagnant - Two options Hanwha Life Esports 1,68 T1 Esports 2,15",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,68",
+                  "decimalOdds": "1.68",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,15",
+                  "decimalOdds": "2.15",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Map 2 Gagnant - Two options Hanwha Life Esports 1,68 T1 Esports 2,15",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,68",
+                  "decimalOdds": "1.68",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,15",
+                  "decimalOdds": "2.15",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Map 3 Gagnant - Two options Hanwha Life Esports 1,68 T1 Esports 2,15",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,68",
+                  "decimalOdds": "1.68",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,15",
+                  "decimalOdds": "2.15",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Map 4 Gagnant - Two options Hanwha Life Esports 1,70 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,70",
+                  "decimalOdds": "1.70",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:10.614382Z",
+              "expanded": true,
+              "rawText": "Map 5 Gagnant - Two options Hanwha Life Esports 1,78 T1 Esports 2,00",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 Gagnant - Two options",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 Gagnant - Two options Hanwha Life Esports 1,68 T1 Esports 2,15",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,68",
+                  "decimalOdds": "1.68",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,15",
+                  "decimalOdds": "2.15",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier à atteindre morts",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier à atteindre morts Hanwha Life EsportsT1 Esports 5 1,72 5 2,00 10 1,65 10 2,10 15 1,65 15 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,72",
+                  "decimalOdds": "1.72",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier sang",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier sang Hanwha Life Esports 1,80 T1 Esports 1,90",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier Baron",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier Baron Hanwha Life Esports 1,65 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier inhibiteur",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier inhibiteur Hanwha Life Esports 1,65 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - º meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - º meurtre Hanwha Life EsportsT1 Esports 10 1,78 10 1,92 20 1,75 20 1,95 30 1,75 30 1,95",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Quadruple meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Quintuple meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Victoires paires/impaires",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:12.007871Z",
+              "expanded": true,
+              "rawText": "Map 1 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 Gagnant - Two options",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 Gagnant - Two options Hanwha Life Esports 1,68 T1 Esports 2,15",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,68",
+                  "decimalOdds": "1.68",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,15",
+                  "decimalOdds": "2.15",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier à atteindre morts",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier à atteindre morts Hanwha Life EsportsT1 Esports 5 1,72 5 2,00 10 1,65 10 2,10 15 1,65 15 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,72",
+                  "decimalOdds": "1.72",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier sang",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier sang Hanwha Life Esports 1,80 T1 Esports 1,90",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier Baron",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier Baron Hanwha Life Esports 1,65 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier inhibiteur",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier inhibiteur Hanwha Life Esports 1,65 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - º meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - º meurtre Hanwha Life EsportsT1 Esports 10 1,78 10 1,92 20 1,75 20 1,95 30 1,75 30 1,95",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Quadruple meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Quintuple meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Victoires paires/impaires",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:13.234232Z",
+              "expanded": true,
+              "rawText": "Map 2 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 Gagnant - Two options",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 Gagnant - Two options Hanwha Life Esports 1,68 T1 Esports 2,15",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,68",
+                  "decimalOdds": "1.68",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,15",
+                  "decimalOdds": "2.15",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier à atteindre morts",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier à atteindre morts Hanwha Life EsportsT1 Esports 5 1,72 5 2,00 10 1,65 10 2,10 15 1,65 15 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,72",
+                  "decimalOdds": "1.72",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier sang",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier sang Hanwha Life Esports 1,80 T1 Esports 1,90",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier Baron",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier Baron Hanwha Life Esports 1,65 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier inhibiteur",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier inhibiteur Hanwha Life Esports 1,65 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - º meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - º meurtre Hanwha Life EsportsT1 Esports 10 1,78 10 1,92 20 1,75 20 1,95 30 1,75 30 1,95",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Quadruple meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Quintuple meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Victoires paires/impaires",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:14.345420Z",
+              "expanded": true,
+              "rawText": "Map 3 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 Gagnant - Two options",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 Gagnant - Two options Hanwha Life Esports 1,70 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,70",
+                  "decimalOdds": "1.70",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier à atteindre morts",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier à atteindre morts Hanwha Life EsportsT1 Esports 5 1,75 5 1,95 10 1,72 10 2,00 15 1,68 15 2,05",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,72",
+                  "decimalOdds": "1.72",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,68",
+                  "decimalOdds": "1.68",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "2,05",
+                  "decimalOdds": "2.05",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier sang",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier sang Hanwha Life Esports 1,82 T1 Esports 1,88",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier Baron",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier Baron Hanwha Life Esports 1,72 T1 Esports 2,00",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,72",
+                  "decimalOdds": "1.72",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier inhibiteur",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier inhibiteur Hanwha Life Esports 1,65 T1 Esports 2,10",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,65",
+                  "decimalOdds": "1.65",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,10",
+                  "decimalOdds": "2.10",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - º meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - º meurtre Hanwha Life EsportsT1 Esports 10 1,80 10 1,90 20 1,78 20 1,92 30 1,78 30 1,92",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Quadruple meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Quintuple meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Victoires paires/impaires",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:15.169027Z",
+              "expanded": true,
+              "rawText": "Map 4 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 Gagnant - Two options",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 Gagnant - Two options Hanwha Life Esports 1,78 T1 Esports 2,00",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier à atteindre morts",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier à atteindre morts Hanwha Life EsportsT1 Esports 5 1,78 5 1,92 10 1,75 10 1,95 15 1,75 15 1,95",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,78",
+                  "decimalOdds": "1.78",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier sang",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier sang Hanwha Life Esports 1,85 T1 Esports 1,85",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier Baron",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier Baron Hanwha Life Esports 1,75 T1 Esports 1,95",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,75",
+                  "decimalOdds": "1.75",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier inhibiteur",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier inhibiteur Hanwha Life Esports 1,72 T1 Esports 2,00",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports",
+                  "displayedLabel": "Hanwha Life Esports",
+                  "oddsText": "1,72",
+                  "decimalOdds": "1.72",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports",
+                  "displayedLabel": "T1 Esports",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - º meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - º meurtre Hanwha Life EsportsT1 Esports 10 1,82 10 1,88 20 1,80 20 1,90 30 1,80 30 1,90",
+              "outcomes": [
+                {
+                  "label": "Hanwha Life Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Hanwha Life Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "T1 Esports 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Quadruple meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Quintuple meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Victoires paires/impaires",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:16.177387Z",
+              "expanded": true,
+              "rawText": "Map 5 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            }
+          ],
+          "warnings": []
+        },
+        "ageSeconds": 19,
+        "expiresAt": "2026-09-08T20:18:40.614382Z",
+        "freshness": "fresh"
+      },
+      {
+        "capture": {
+          "event": {
+            "providerEventId": "826446",
+            "gameTitle": "lol",
+            "competition": "LPL 2026 Grand Finals",
+            "participants": ["Anyone's Legend", "Invictus Gaming"],
+            "startsAt": "2026-09-12T09:00:00Z",
+            "bestOf": null,
+            "status": "scheduled",
+            "collectedAt": "2026-09-08T20:17:26.673686Z",
+            "sourceReference": "https://stake.bet/fr/sports/league-of-legends/international-1/lpl-2026-grand-finals-t3/826446-anyone-s-legend-invictus-gaming"
+          },
+          "sourceUrl": "https://stake.bet/fr/sports/league-of-legends/international-1/lpl-2026-grand-finals-t3/826446-anyone-s-legend-invictus-gaming",
+          "observedAt": "2026-09-08T20:17:26.673774Z",
+          "expectedTabs": [
+            "tab-main",
+            "tab-map-1",
+            "tab-map-2",
+            "tab-map-3",
+            "tab-map-4",
+            "tab-map-5"
+          ],
+          "visitedTabs": [
+            "tab-main",
+            "tab-map-1",
+            "tab-map-2",
+            "tab-map-3",
+            "tab-map-4",
+            "tab-map-5"
+          ],
+          "markets": [
+            {
+              "label": "Vainqueur du match - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Vainqueur du match - Two options Anyone's Legend 2,00 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "2,00",
+                  "decimalOdds": "2.00",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Handicap de la carte",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Handicap de la carte Anyone's LegendInvictus Gaming -2.5 6,60 2.5 1,10 -1.5 3,10 1.5 1,35 1.5 1,45 -1.5 2,70 2.5 1,12 -2.5 5,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend (-2.5)",
+                  "displayedLabel": "-2.5",
+                  "oddsText": "6,60",
+                  "decimalOdds": "6.60",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming (2.5)",
+                  "displayedLabel": "2.5",
+                  "oddsText": "1,10",
+                  "decimalOdds": "1.10",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend (-1.5)",
+                  "displayedLabel": "-1.5",
+                  "oddsText": "3,10",
+                  "decimalOdds": "3.10",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming (1.5)",
+                  "displayedLabel": "1.5",
+                  "oddsText": "1,35",
+                  "decimalOdds": "1.35",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend (1.5)",
+                  "displayedLabel": "1.5",
+                  "oddsText": "1,45",
+                  "decimalOdds": "1.45",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming (-1.5)",
+                  "displayedLabel": "-1.5",
+                  "oddsText": "2,70",
+                  "decimalOdds": "2.70",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend (2.5)",
+                  "displayedLabel": "2.5",
+                  "oddsText": "1,12",
+                  "decimalOdds": "1.12",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming (-2.5)",
+                  "displayedLabel": "-2.5",
+                  "oddsText": "5,80",
+                  "decimalOdds": "5.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Nombre de maps",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Nombre de maps Plus deMoins de 3.5 1,26 3.5 3,40 4.5 2,40 4.5 1,50",
+              "outcomes": [
+                {
+                  "label": "Over 3.5",
+                  "displayedLabel": "3.5",
+                  "oddsText": "1,26",
+                  "decimalOdds": "1.26",
+                  "status": "open"
+                },
+                {
+                  "label": "Under 3.5",
+                  "displayedLabel": "3.5",
+                  "oddsText": "3,40",
+                  "decimalOdds": "3.40",
+                  "status": "open"
+                },
+                {
+                  "label": "Over 4.5",
+                  "displayedLabel": "4.5",
+                  "oddsText": "2,40",
+                  "decimalOdds": "2.40",
+                  "status": "open"
+                },
+                {
+                  "label": "Under 4.5",
+                  "displayedLabel": "4.5",
+                  "oddsText": "1,50",
+                  "decimalOdds": "1.50",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Gagne au moins un map",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Gagne au moins un map Invictus Gaming Oui 1,08 Non 6,30 Anyone's Legend Oui 1,12 Non 5,30",
+              "outcomes": [
+                {
+                  "label": "Yes Invictus Gaming",
+                  "displayedLabel": "Oui",
+                  "oddsText": "1,08",
+                  "decimalOdds": "1.08",
+                  "status": "open"
+                },
+                {
+                  "label": "No Invictus Gaming",
+                  "displayedLabel": "Non",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                },
+                {
+                  "label": "Yes Anyone's Legend",
+                  "displayedLabel": "Oui",
+                  "oddsText": "1,12",
+                  "decimalOdds": "1.12",
+                  "status": "open"
+                },
+                {
+                  "label": "No Anyone's Legend",
+                  "displayedLabel": "Non",
+                  "oddsText": "5,30",
+                  "decimalOdds": "5.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Résultat final",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Résultat final Slider Tout 0:3 5,30 1:3 4,00 3:1 4,80 3:0 6,30 2:3 4,40 3:2 4,40",
+              "outcomes": [
+                {
+                  "label": "0:3",
+                  "displayedLabel": "0:3",
+                  "oddsText": "5,30",
+                  "decimalOdds": "5.30",
+                  "status": "open"
+                },
+                {
+                  "label": "1:3",
+                  "displayedLabel": "1:3",
+                  "oddsText": "4,00",
+                  "decimalOdds": "4.00",
+                  "status": "open"
+                },
+                {
+                  "label": "3:1",
+                  "displayedLabel": "3:1",
+                  "oddsText": "4,80",
+                  "decimalOdds": "4.80",
+                  "status": "open"
+                },
+                {
+                  "label": "3:0",
+                  "displayedLabel": "3:0",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                },
+                {
+                  "label": "2:3",
+                  "displayedLabel": "2:3",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                },
+                {
+                  "label": "3:2",
+                  "displayedLabel": "3:2",
+                  "oddsText": "4,40",
+                  "decimalOdds": "4.40",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Map 1 Gagnant - Two options Anyone's Legend 1,95 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Map 2 Gagnant - Two options Anyone's Legend 1,95 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Map 3 Gagnant - Two options Anyone's Legend 1,95 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Map 4 Gagnant - Two options Anyone's Legend 1,92 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 Gagnant - Two options",
+              "tab": "tab-main",
+              "capturedAt": "2026-09-08T20:17:22.137027Z",
+              "expanded": true,
+              "rawText": "Map 5 Gagnant - Two options Anyone's Legend 1,92 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 Gagnant - Two options",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 Gagnant - Two options Anyone's Legend 1,95 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier à atteindre morts",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier à atteindre morts Anyone's LegendInvictus Gaming 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier sang",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier sang Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier Baron",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier Baron Anyone's Legend 1,90 Invictus Gaming 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Premier inhibiteur",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - Premier inhibiteur Anyone's Legend 1,90 Invictus Gaming 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - º meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - º meurtre Anyone's LegendInvictus Gaming 10 1,85 10 1,85 20 1,85 20 1,85 30 1,88 30 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Quadruple meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Quintuple meurtre",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 1 - Victoires paires/impaires",
+              "tab": "tab-map-1",
+              "capturedAt": "2026-09-08T20:17:23.264580Z",
+              "expanded": true,
+              "rawText": "Map 1 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 Gagnant - Two options",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 Gagnant - Two options Anyone's Legend 1,95 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier à atteindre morts",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier à atteindre morts Anyone's LegendInvictus Gaming 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier sang",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier sang Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier Baron",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier Baron Anyone's Legend 1,90 Invictus Gaming 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Premier inhibiteur",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - Premier inhibiteur Anyone's Legend 1,90 Invictus Gaming 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - º meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - º meurtre Anyone's LegendInvictus Gaming 10 1,85 10 1,85 20 1,85 20 1,85 30 1,88 30 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Quadruple meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Quintuple meurtre",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 2 - Victoires paires/impaires",
+              "tab": "tab-map-2",
+              "capturedAt": "2026-09-08T20:17:24.077106Z",
+              "expanded": true,
+              "rawText": "Map 2 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 Gagnant - Two options",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 Gagnant - Two options Anyone's Legend 1,95 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,95",
+                  "decimalOdds": "1.95",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier à atteindre morts",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier à atteindre morts Anyone's LegendInvictus Gaming 5 1,88 5 1,82 10 1,90 10 1,80 15 1,90 15 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier sang",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier sang Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier Baron",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier Baron Anyone's Legend 1,90 Invictus Gaming 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Premier inhibiteur",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - Premier inhibiteur Anyone's Legend 1,90 Invictus Gaming 1,80",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,90",
+                  "decimalOdds": "1.90",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,80",
+                  "decimalOdds": "1.80",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - º meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - º meurtre Anyone's LegendInvictus Gaming 10 1,85 10 1,85 20 1,85 20 1,85 30 1,88 30 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Quadruple meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Quintuple meurtre",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 3 - Victoires paires/impaires",
+              "tab": "tab-map-3",
+              "capturedAt": "2026-09-08T20:17:25.038921Z",
+              "expanded": true,
+              "rawText": "Map 3 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 Gagnant - Two options",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 Gagnant - Two options Anyone's Legend 1,92 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier à atteindre morts",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier à atteindre morts Anyone's LegendInvictus Gaming 5 1,85 5 1,85 10 1,85 10 1,85 15 1,88 15 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier sang",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier sang Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier Baron",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier Baron Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Premier inhibiteur",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - Premier inhibiteur Anyone's Legend 1,88 Invictus Gaming 1,82",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,88",
+                  "decimalOdds": "1.88",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,82",
+                  "decimalOdds": "1.82",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - º meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - º meurtre Anyone's LegendInvictus Gaming 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Quadruple meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Quintuple meurtre",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 4 - Victoires paires/impaires",
+              "tab": "tab-map-4",
+              "capturedAt": "2026-09-08T20:17:25.882783Z",
+              "expanded": true,
+              "rawText": "Map 4 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 Gagnant - Two options",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 Gagnant - Two options Anyone's Legend 1,92 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,92",
+                  "decimalOdds": "1.92",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier à atteindre morts",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier à atteindre morts Anyone's LegendInvictus Gaming 5 1,85 5 1,85 10 1,85 10 1,85 15 1,85 15 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 5 Kills",
+                  "displayedLabel": "5",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10 Kills",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 15 Kills",
+                  "displayedLabel": "15",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier sang",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier sang Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier Baron",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier Baron Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Premier inhibiteur",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - Premier inhibiteur Anyone's Legend 1,85 Invictus Gaming 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend",
+                  "displayedLabel": "Anyone's Legend",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming",
+                  "displayedLabel": "Invictus Gaming",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - º meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - º meurtre Anyone's LegendInvictus Gaming 10 1,85 10 1,85 20 1,85 20 1,85 30 1,85 30 1,85",
+              "outcomes": [
+                {
+                  "label": "Anyone's Legend 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 10th Kill",
+                  "displayedLabel": "10",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 20th Kill",
+                  "displayedLabel": "20",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Anyone's Legend 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Invictus Gaming 30th Kill",
+                  "displayedLabel": "30",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Quadruple meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - Quadruple meurtre Yes 6,30",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "6,30",
+                  "decimalOdds": "6.30",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Quintuple meurtre",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - Quintuple meurtre Yes 11,00",
+              "outcomes": [
+                {
+                  "label": "Yes",
+                  "displayedLabel": "Yes",
+                  "oddsText": "11,00",
+                  "decimalOdds": "11.00",
+                  "status": "open"
+                }
+              ]
+            },
+            {
+              "label": "Map 5 - Victoires paires/impaires",
+              "tab": "tab-map-5",
+              "capturedAt": "2026-09-08T20:17:26.673487Z",
+              "expanded": true,
+              "rawText": "Map 5 - Victoires paires/impaires Odd 1,85 Even 1,85",
+              "outcomes": [
+                {
+                  "label": "Odd",
+                  "displayedLabel": "Odd",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                },
+                {
+                  "label": "Even",
+                  "displayedLabel": "Even",
+                  "oddsText": "1,85",
+                  "decimalOdds": "1.85",
+                  "status": "open"
+                }
+              ]
+            }
+          ],
+          "warnings": []
+        },
+        "ageSeconds": 7,
+        "expiresAt": "2026-09-08T20:18:52.137027Z",
+        "freshness": "fresh"
+      }
+    ],
+    "page": {
+      "offset": 0,
+      "limit": 10,
+      "total": 3
+    },
+    "meta": {
+      "dataMode": "real",
+      "freshness": "fresh",
+      "asOf": "2026-09-08T20:17:29.123578Z",
+      "computedAt": "2026-09-08T20:17:30.329921Z",
+      "appVersion": "0.1.0"
+    }
+  }
+}

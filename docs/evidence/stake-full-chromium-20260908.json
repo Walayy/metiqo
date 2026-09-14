@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-08T17:28:33.002240+00:00",
+  "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lck-2026-season-playoffs-t3/823841-hanwha-life-esports-t1-esports",
+  "channel": "chromium",
+  "headless": true,
+  "resourceBlocking": false,
+  "blocked": true,
+  "failures": ["823841-hanwha-life-esports-t1-esports:HTTP_403"],
+  "discoveredEvents": 1,
+  "captures": [],
+  "finishedAt": "2026-09-08T17:28:34.430144+00:00"
+}

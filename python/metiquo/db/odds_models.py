@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -32,7 +33,8 @@ class OddsProviderRecord(Base):
         CheckConstraint("length(trim(code)) > 0", name="code"),
         CheckConstraint("length(trim(display_name)) > 0", name="display_name"),
         CheckConstraint(
-            "provider_type IN ('mock', 'manual_import', 'licensed_feed', 'stake_authorized')",
+            "provider_type IN ('mock', 'manual_import', 'licensed_feed', "
+            "'stake_authorized', 'public_scrape')",
             name="provider_type",
         ),
         UniqueConstraint("code", name="uq_odds_providers_code"),
@@ -552,3 +554,41 @@ class MarketMappingAttempt(Base):
     )
     reason_code: Mapped[str] = mapped_column(String(64), nullable=False)
     evaluated_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+
+
+class StakeScrapeRun(Base):
+    """État durable d'une collecte, y compris des refus d'accès et de la temporisation."""
+
+    __tablename__ = "stake_scrape_runs"
+    __table_args__ = (
+        CheckConstraint("status IN ('operational', 'partial', 'blocked', 'failed')", name="status"),
+        CheckConstraint("event_count >= 0", name="event_count"),
+        Index("ix_stake_runs_finished", "finished_at"),
+        {"schema": ODDS_SCHEMA},
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    finished_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    detail: Mapped[str | None] = mapped_column(String(512))
+    next_attempt_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    event_count: Mapped[int] = mapped_column(nullable=False)
+
+
+class StakePageCapture(Base):
+    """Marchés visibles d'un événement, conservés ensemble sans normalisation spéculative."""
+
+    __tablename__ = "stake_page_captures"
+    __table_args__ = (
+        UniqueConstraint("sha256", name="uq_stake_capture_sha256"),
+        Index("ix_stake_capture_event_time", "provider_event_id", "observed_at"),
+        {"schema": ODDS_SCHEMA},
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    run_id: Mapped[UUID] = mapped_column(ForeignKey("odds.stake_scrape_runs.id"), nullable=False)
+    provider_event_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    starts_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    observed_at: Mapped[datetime] = mapped_column(UtcDateTime(), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    raw_payload_reference: Mapped[str] = mapped_column(String(1024), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)

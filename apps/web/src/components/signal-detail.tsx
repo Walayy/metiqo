@@ -1,6 +1,6 @@
 "use client";
 
-import { QueryRecovery } from "./query-recovery";
+import { QueryFailure, QueryRecovery } from "./query-recovery";
 
 import { canReadPrevious, readBackend } from "../lib/backend";
 
@@ -14,14 +14,22 @@ import type {
 import {
   Badge,
   Button,
-  Card,
-  CardContent,
+  ContextPanel,
+  TitledCard as SectionCard,
+  Metric,
+  MetricGrid,
+  TechnicalText,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
   RemoteDataBoundary,
   RemoteLoadingState,
+  RemotePageLoadingState,
   RemoteRecoverableErrorState,
   RemoteStaleState,
 } from "@metiquo/ui";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   Activity,
   ArrowLeft,
@@ -33,9 +41,9 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
-import { OddsChart } from "./event-detail";
+import { marketStatusLabels, OddsChart } from "./event-detail";
+import { nextPageOffset, PagedResults } from "./paged-results";
 import {
   describeOpportunity,
   formatAbstentionReasons,
@@ -47,6 +55,7 @@ import {
   gradeLabels,
   isAdmissible,
   latestMatchingOddsSnapshot,
+  matchingOddsSnapshots,
   newerOddsSnapshot,
 } from "./opportunity-presenters";
 
@@ -61,46 +70,17 @@ async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-function SectionCard({
-  children,
-  icon,
-  title,
-}: Readonly<{ children: ReactNode; icon: ReactNode; title: string }>) {
-  return (
-    <Card aria-label={title}>
-      <CardContent className="grid gap-4 p-5 sm:p-6">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="grid size-9 place-items-center rounded-lg bg-surface-muted text-ink-secondary"
-          >
-            {icon}
-          </span>
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        </div>
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
-function Metric({ label, value }: Readonly<{ label: string; value: ReactNode }>) {
-  return (
-    <div className="rounded-lg border border-border-subtle p-3">
-      <dt className="text-xs text-ink-secondary">{label}</dt>
-      <dd className="mt-1 text-sm font-semibold">{value}</dd>
-    </div>
-  );
-}
-
 function PriceSections({ opportunity }: Readonly<{ opportunity: Opportunity }>) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <section aria-labelledby="market-price-title" className="rounded-xl bg-surface-muted p-4">
+      <section
+        aria-labelledby="market-price-title"
+        className="min-w-0 border-t border-border-subtle pt-3"
+      >
         <h3 className="font-semibold" id="market-price-title">
           Prix du marché observé
         </h3>
-        <dl className="mt-4 grid grid-cols-2 gap-3">
+        <MetricGrid className="mt-3">
           <Metric label="Cote décimale" value={formatDecimal(opportunity.book.decimalOdds)} />
           <Metric
             label="Probabilité brute"
@@ -115,13 +95,16 @@ function PriceSections({ opportunity }: Readonly<{ opportunity: Opportunity }>) 
             }
           />
           <Metric label="Capture" value={formatDateTime(opportunity.book.capturedAt)} />
-        </dl>
+        </MetricGrid>
       </section>
-      <section aria-labelledby="model-price-title" className="rounded-xl bg-surface-muted p-4">
+      <section
+        aria-labelledby="model-price-title"
+        className="min-w-0 border-t border-border-subtle pt-3"
+      >
         <h3 className="font-semibold" id="model-price-title">
           Prix du modèle indépendant
         </h3>
-        <dl className="mt-4 grid grid-cols-2 gap-3">
+        <MetricGrid className="mt-3">
           <Metric label="Cote juste" value={formatDecimal(opportunity.value.fairOdds)} />
           <Metric label="Probabilité" value={formatPercent(opportunity.model.probability)} />
           <Metric
@@ -129,7 +112,7 @@ function PriceSections({ opportunity }: Readonly<{ opportunity: Opportunity }>) 
             value={`${formatPercent(opportunity.model.probabilityLow)} – ${formatPercent(opportunity.model.probabilityHigh)}`}
           />
           <Metric label="Confiance" value={formatPercent(opportunity.model.confidence)} />
-        </dl>
+        </MetricGrid>
       </section>
     </div>
   );
@@ -148,64 +131,59 @@ function SnapshotHistory({
     left.capturedAt.localeCompare(right.capturedAt),
   );
 
+  if (ordered.length === 0) {
+    return <p className="text-sm text-ink-secondary">Aucune cote observée pour cette sélection.</p>;
+  }
+
   return (
     <div className="grid min-w-0 gap-5">
       <OddsChart snapshots={ordered} />
-      <div
+      <Table
         aria-label="Historique des snapshots de cote"
-        className="max-w-full overflow-x-auto rounded-lg border border-border-subtle"
-        role="region"
-        tabIndex={0}
+        columns={[
+          { label: "Repère", variant: "status", weight: 1.8 },
+          { label: "Capturé à", variant: "date" },
+          { label: "Cote", variant: "number" },
+          { label: "Probabilité sans marge", variant: "number", weight: 1.4 },
+          { label: "Statut marché", variant: "status" },
+          { label: "Fournisseur", variant: "text" },
+        ]}
       >
-        <table className="w-full min-w-[42rem] border-collapse text-left text-xs">
-          <thead className="bg-surface-muted text-ink-secondary">
-            <tr>
-              {[
-                "Repère",
-                "Capturé à",
-                "Cote",
-                "Probabilité sans marge",
-                "Statut marché",
-                "Fournisseur",
-              ].map((label) => (
-                <th className="px-3 py-3 font-semibold" key={label} scope="col">
-                  {label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border-subtle">
-            {ordered.map((snapshot) => (
-              <tr key={snapshot.oddsSnapshotId}>
-                <td className="whitespace-nowrap px-3 py-3">
-                  {snapshot.oddsSnapshotId === signalSnapshotId ? (
-                    <Badge className="border-accent bg-accent-soft text-ink-primary">
-                      Snapshot du signal
-                    </Badge>
-                  ) : snapshot.oddsSnapshotId === latestSnapshotId ? (
-                    <Badge className="border-border-strong bg-surface-muted text-ink-primary">
-                      Dernière cote
-                    </Badge>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="whitespace-nowrap px-3 py-3">
-                  {formatDateTime(snapshot.capturedAt)}
-                </td>
-                <td className="px-3 py-3 font-semibold">{formatDecimal(snapshot.decimalOdds)}</td>
-                <td className="px-3 py-3">
-                  {snapshot.noVigProbability === null
-                    ? "Non calculée"
-                    : formatPercent(snapshot.noVigProbability)}
-                </td>
-                <td className="px-3 py-3">{snapshot.marketStatus}</td>
-                <td className="px-3 py-3">{snapshot.provider}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <TableBody>
+          {ordered.map((snapshot) => (
+            <TableRow key={snapshot.oddsSnapshotId}>
+              <TableCell label="Repère" variant="status">
+                {snapshot.oddsSnapshotId === signalSnapshotId ? (
+                  <Badge className="border-border-subtle bg-accent-soft text-ink-primary">
+                    Snapshot du signal
+                  </Badge>
+                ) : snapshot.oddsSnapshotId === latestSnapshotId ? (
+                  <Badge className="border-border-strong bg-surface-muted text-ink-primary">
+                    Dernière cote
+                  </Badge>
+                ) : (
+                  "—"
+                )}
+              </TableCell>
+              <TableCell label="Capturé à" variant="date">
+                {formatDateTime(snapshot.capturedAt)}
+              </TableCell>
+              <TableCell label="Cote" variant="number">
+                {formatDecimal(snapshot.decimalOdds)}
+              </TableCell>
+              <TableCell label="Probabilité sans marge" variant="number">
+                {snapshot.noVigProbability === null
+                  ? "Non calculée"
+                  : formatPercent(snapshot.noVigProbability)}
+              </TableCell>
+              <TableCell label="Statut marché" variant="status">
+                {marketStatusLabels[snapshot.marketStatus]}
+              </TableCell>
+              <TableCell label="Fournisseur">{snapshot.provider}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -227,37 +205,40 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
     queryKey: ["opportunity-explanation", signalId],
     staleTime: Infinity,
   });
-  const eventId = opportunityQuery.data?.data.event.eventId;
-  const historyQuery = useQuery({
+  const opportunity = opportunityQuery.data?.data;
+  const eventId = opportunity ? opportunity.event.eventId : undefined;
+  const historyQuery = useInfiniteQuery({
     enabled: eventId !== undefined,
+    initialPageParam: 0,
+    getNextPageParam: nextPageOffset,
     placeholderData: keepPreviousData,
-    queryFn: ({ signal }) => {
+    queryFn: ({ signal, pageParam }) => {
       if (eventId === undefined) throw new Error("Événement du signal absent");
       return fetchResource<PageResponseOddsSnapshot>(
-        `/api/v1/events/${encodeURIComponent(eventId)}/odds-history?offset=0&limit=100`,
+        `/api/v1/events/${encodeURIComponent(eventId)}/odds-history?offset=${String(pageParam)}&limit=100`,
         signal,
       );
     },
     queryKey: ["signal-odds-history", eventId],
     refetchInterval: ODDS_REFRESH_INTERVAL_MS,
+    select: ({ pages }) =>
+      ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as PageResponseOddsSnapshot,
   });
 
-  const isPending =
-    opportunityQuery.isPending || explanationQuery.isPending || historyQuery.isPending;
+  const isPending = opportunityQuery.isPending;
   const isFetching =
     opportunityQuery.isFetching || explanationQuery.isFetching || historyQuery.isFetching;
-  const isError = opportunityQuery.isError || explanationQuery.isError || historyQuery.isError;
-  const opportunity = opportunityQuery.data?.data;
   const referenceTime = opportunityQuery.data?.meta.computedAt ?? new Date(0).toISOString();
-  const explanation = explanationQuery.data?.data;
-  const snapshots = historyQuery.data?.data ?? [];
+  const explanation = canReadPrevious(explanationQuery) ? explanationQuery.data?.data : undefined;
+  const snapshots = canReadPrevious(historyQuery) ? (historyQuery.data?.data ?? []) : [];
+  const matchingSnapshots = opportunity ? matchingOddsSnapshots(opportunity, snapshots) : [];
   const latestSnapshot = opportunity
     ? latestMatchingOddsSnapshot(opportunity, snapshots)
     : undefined;
   const updatedSnapshot = opportunity ? newerOddsSnapshot(opportunity, snapshots) : undefined;
 
   return (
-    <div className="grid min-w-0 gap-7">
+    <div className="ui-page-stack">
       <div>
         <Button asChild size="small" variant="ghost">
           <Link href="/">
@@ -269,31 +250,25 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
 
       <RemoteDataBoundary
         className="min-w-0"
-        isLoading={isPending && !isError}
+        isLoading={isPending}
         isRefetching={isFetching && !isPending}
-        loadingFallback={<RemoteLoadingState label="Chargement du signal" rows={8} />}
+        loadingFallback={<RemotePageLoadingState label="Chargement du signal" />}
       >
-        <QueryRecovery queries={[opportunityQuery, explanationQuery, historyQuery]} />
-        {isError && ![opportunityQuery, explanationQuery, historyQuery].every(canReadPrevious) ? (
-          <RemoteRecoverableErrorState
+        <QueryRecovery queries={[opportunityQuery]} />
+        {opportunityQuery.isError && !canReadPrevious(opportunityQuery) ? (
+          <QueryFailure
             description="Le détail du signal n’a pas pu être assemblé."
-            onRetry={() => {
-              void Promise.all([
-                opportunityQuery.refetch(),
-                explanationQuery.refetch(),
-                historyQuery.refetch(),
-              ]);
-            }}
+            missingDescription="Ce signal n’est pas disponible dans le catalogue courant."
+            missingTitle="Signal introuvable"
+            queries={[opportunityQuery]}
           />
         ) : opportunity ? (
           <div className="grid min-w-0 gap-6">
-            <header className="grid gap-4 rounded-xl border border-border-subtle bg-surface-raised p-5 shadow-panel sm:p-7">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent-strong">
-                    Signal de pricing · {opportunity.event.competition}
-                  </p>
-                  <h1 className="mt-2 text-title text-balance font-semibold tracking-tight">
+            <header className="grid min-w-0 gap-5">
+              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <p className="ui-eyebrow">Signal de pricing · {opportunity.event.competition}</p>
+                  <h1 className="ui-page-title">
                     {opportunity.event.teamA} <span className="text-ink-secondary">vs</span>{" "}
                     {opportunity.event.teamB}
                   </h1>
@@ -303,7 +278,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge className="border-accent bg-accent-soft text-ink-primary">
+                  <Badge className="border-border-subtle bg-accent-soft text-ink-primary">
                     {gradeLabels[opportunity.value.grade]}
                   </Badge>
                   <Badge className="border-border-strong bg-surface-muted text-ink-primary">
@@ -311,7 +286,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                   </Badge>
                 </div>
               </div>
-              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <MetricGrid className="border-y border-border-subtle py-3">
                 <Metric label="Edge" value={formatSignedPercent(opportunity.value.edge)} />
                 <Metric
                   label="EV prudente"
@@ -321,11 +296,15 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                   label="EV centrale"
                   value={formatSignedPercent(opportunity.value.expectedValue)}
                 />
-                <Metric label="Version modèle" value={opportunity.model.modelVersion} />
-              </dl>
+                <Metric
+                  label="Version modèle"
+                  value={<TechnicalText>{opportunity.model.modelVersion}</TechnicalText>}
+                />
+              </MetricGrid>
             </header>
 
-            {opportunity.meta.freshness === "stale" ? (
+            {opportunity.meta.freshness !== "fresh" ||
+            opportunity.quality.sourceFreshness !== "fresh" ? (
               <RemoteStaleState
                 description="Le signal reste consultable pour audit, mais aucune décision paper ne doit être prise sur ce snapshot."
                 title="Signal ancien — décision bloquée"
@@ -333,11 +312,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
             ) : null}
 
             {updatedSnapshot ? (
-              <section
-                aria-label="Cote mise à jour"
-                className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100"
-                role="status"
-              >
+              <ContextPanel aria-label="Cote mise à jour" role="status" tone="warning">
                 <p className="font-semibold">Cote mise à jour</p>
                 <p className="mt-1 text-sm leading-6">
                   Ce signal reste lié à la cote {formatDecimal(opportunity.book.decimalOdds)}{" "}
@@ -345,7 +320,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                   observée est {formatDecimal(updatedSnapshot.decimalOdds)}. Toute nouvelle décision
                   est portée par un nouveau signal ; cette fiche historique n’est jamais réécrite.
                 </p>
-              </section>
+              </ContextPanel>
             ) : null}
 
             <SectionCard icon={<Scale className="size-4.5" />} title="Prix marché et prix modèle">
@@ -358,7 +333,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
 
             <div className="grid gap-6 xl:grid-cols-2">
               <SectionCard icon={<Activity className="size-4.5" />} title="Facteurs structurés">
-                <dl className="grid grid-cols-2 gap-3">
+                <MetricGrid>
                   <Metric
                     label="Confiance du mapping"
                     value={formatPercent(opportunity.quality.mappingConfidence)}
@@ -375,7 +350,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                     label="Distance hors distribution"
                     value={formatDecimal(opportunity.model.outOfDistributionDistance)}
                   />
-                </dl>
+                </MetricGrid>
                 <p className="text-xs leading-5 text-ink-secondary">
                   Ces facteurs sont des indicateurs associés au calcul. Ils ne sont pas présentés
                   comme des causes du résultat sportif.
@@ -413,7 +388,7 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                 icon={<CheckCircle2 className="size-4.5" />}
                 title="Qualité et fraîcheur"
               >
-                <dl className="grid grid-cols-2 gap-3">
+                <MetricGrid>
                   <Metric
                     label="Décision"
                     value={opportunity.quality.publishable ? "Publiable" : "Bloquée"}
@@ -427,13 +402,28 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                     label="Cote informative seulement"
                     value={opportunity.book.informationalOnly ? "Oui" : "Non"}
                   />
-                </dl>
+                </MetricGrid>
                 <p className="text-sm leading-6 text-ink-secondary">
                   {describeOpportunity(opportunity, referenceTime)}
                 </p>
               </SectionCard>
 
               <SectionCard icon={<CircleAlert className="size-4.5" />} title="Raisons d’abstention">
+                <QueryRecovery queries={[explanationQuery]} />
+                {explanationQuery.isPending ? (
+                  <RemoteLoadingState
+                    label="Chargement de l’explication"
+                    minHeight="5rem"
+                    rows={2}
+                  />
+                ) : explanationQuery.isError && !canReadPrevious(explanationQuery) ? (
+                  <QueryFailure
+                    description="L’explication complémentaire n’a pas pu être chargée. Les raisons enregistrées dans le signal restent consultables."
+                    missingDescription="L’explication complémentaire n’est pas disponible."
+                    missingTitle="Explication indisponible"
+                    queries={[explanationQuery]}
+                  />
+                ) : null}
                 {opportunity.quality.abstentionReasons?.length ? (
                   <ul className="grid gap-2">
                     {formatAbstentionReasons(opportunity.quality.abstentionReasons).map(
@@ -450,8 +440,10 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                 ) : (
                   <p className="text-sm text-ink-secondary">Aucune raison d’abstention.</p>
                 )}
-                <p className="break-all text-xs text-ink-secondary">
-                  Référence d’explication : {explanation?.reference ?? "Non disponible"}
+                <p className="text-xs text-ink-secondary">
+                  <TechnicalText>
+                    Référence d’explication : {explanation?.reference ?? "Non disponible"}
+                  </TechnicalText>
                 </p>
               </SectionCard>
             </div>
@@ -460,11 +452,35 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
               icon={<Database className="size-4.5" />}
               title="Historique des prix observés"
             >
-              <SnapshotHistory
-                latestSnapshotId={latestSnapshot?.oddsSnapshotId}
-                signalSnapshotId={opportunity.book.oddsSnapshotId}
-                snapshots={snapshots}
-              />
+              <RemoteDataBoundary
+                isLoading={historyQuery.isPending}
+                loadingFallback={
+                  <RemoteLoadingState
+                    label="Chargement de l’historique des cotes"
+                    minHeight="12rem"
+                    rows={4}
+                  />
+                }
+              >
+                <QueryRecovery queries={[historyQuery]} />
+                {historyQuery.isError && !canReadPrevious(historyQuery) ? (
+                  <QueryFailure
+                    description="L’historique des cotes n’a pas pu être chargé. La cote d’origine reste disponible dans le signal."
+                    missingDescription="L’historique des cotes est indisponible."
+                    missingTitle="Historique indisponible"
+                    queries={[historyQuery]}
+                  />
+                ) : (
+                  <>
+                    <SnapshotHistory
+                      latestSnapshotId={latestSnapshot?.oddsSnapshotId}
+                      signalSnapshotId={opportunity.book.oddsSnapshotId}
+                      snapshots={matchingSnapshots}
+                    />
+                    <PagedResults label="d’observations" query={historyQuery} />
+                  </>
+                )}
+              </RemoteDataBoundary>
               <p className="text-xs leading-5 text-ink-secondary">
                 Actualisation automatique toutes les 30 secondes. Le snapshot du signal reste
                 consultable pendant le rafraîchissement.
@@ -475,14 +491,14 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
               icon={<BookOpenCheck className="size-4.5" />}
               title="Règlement paper trading"
             >
-              <dl className="grid gap-3 sm:grid-cols-3">
+              <MetricGrid>
                 <Metric label="Marché" value="Vainqueur du match" />
                 <Metric label="Sélection" value={opportunity.market.selectionLabel} />
                 <Metric
                   label="Version des règles"
                   value={opportunity.market.settlementRulesVersion ?? "Non versionnée — bloqué"}
                 />
-              </dl>
+              </MetricGrid>
               <p className="text-xs leading-5 text-ink-secondary">
                 Le règlement conserve la prédiction et le snapshot de cote d’origine. Aucun pari
                 réel n’est exécuté.
@@ -503,9 +519,21 @@ export function SignalDetail({ signalId }: Readonly<{ signalId: string }>) {
                   <Button disabled>Paper bet bloqué</Button>
                 )}
               </div>
+              {!isAdmissible(opportunity, referenceTime) ? (
+                <p className="text-sm text-ink-secondary">
+                  {describeOpportunity(opportunity, referenceTime)}
+                </p>
+              ) : null}
             </SectionCard>
           </div>
-        ) : null}
+        ) : (
+          <RemoteRecoverableErrorState
+            title="Signal indisponible"
+            description="Aucune fiche n’a été renvoyée pour ce signal. Réessayez pour la récupérer."
+            onRetry={() => void opportunityQuery.refetch()}
+            retryDisabled={opportunityQuery.isFetching}
+          />
+        )}
       </RemoteDataBoundary>
     </div>
   );

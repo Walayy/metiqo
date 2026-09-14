@@ -17,7 +17,9 @@ for (const viewport of [
     await expect(
       compliance.getByText("Publication publique ou commerciale bloquée.", { exact: true }),
     ).toBeVisible();
-    await expect(compliance.getByText("Provider Stake désactivé.", { exact: true })).toBeVisible();
+    await expect(
+      compliance.getByRole("link", { name: "Consulter l’état de la collecte Stake", exact: true }),
+    ).toHaveAttribute("href", "/odds");
     await expect(
       page.getByText("Metiquo ne garantit aucun gain.", { exact: true }).first(),
     ).toBeVisible();

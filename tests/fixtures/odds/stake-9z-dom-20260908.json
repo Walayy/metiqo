@@ -1,0 +1,317 @@
+[
+  {
+    "tab": "tab-main",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/liga-regional-sur-2026-split-2-t10/820307-9z-team-golden-lions",
+      "competition": "Liga Regional Sur 2026 Split 2",
+      "participants": ["9z Team", "Golden Lions"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "expanded": true,
+          "label": "Vainqueur du match - Two options",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,25",
+              "text": "9z Team 1,25"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "3,50",
+              "text": "Golden Lions 3,50"
+            }
+          ],
+          "rawText": "Vainqueur du match - Two options 9z Team 1,25 Golden Lions 3,50"
+        },
+        {
+          "label": "Map 1 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 1 Gagnant - Two options 9z Team 1,42 Golden Lions 2,70",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,42",
+              "text": "9z Team 1,42"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,70",
+              "text": "Golden Lions 2,70"
+            }
+          ]
+        },
+        {
+          "label": "Map 2 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 2 Gagnant - Two options 9z Team 1,42 Golden Lions 2,70",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,42",
+              "text": "9z Team 1,42"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,70",
+              "text": "Golden Lions 2,70"
+            }
+          ]
+        },
+        {
+          "label": "Map 3 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 3 Gagnant - Two options 9z Team 1,42 Golden Lions 2,70",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,42",
+              "text": "9z Team 1,42"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,70",
+              "text": "Golden Lions 2,70"
+            }
+          ]
+        },
+        {
+          "label": "Map 4 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 4 Gagnant - Two options 9z Team 1,48 Golden Lions 2,50",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,48",
+              "text": "9z Team 1,48"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,50",
+              "text": "Golden Lions 2,50"
+            }
+          ]
+        },
+        {
+          "label": "Map 5 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 5 Gagnant - Two options 9z Team 1,50 Golden Lions 2,40",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,50",
+              "text": "9z Team 1,50"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,40",
+              "text": "Golden Lions 2,40"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-1",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/liga-regional-sur-2026-split-2-t10/820307-9z-team-golden-lions",
+      "competition": "Liga Regional Sur 2026 Split 2",
+      "participants": ["9z Team", "Golden Lions"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "label": "Map 1 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 1 Gagnant - Two options 9z Team 1,42 Golden Lions 2,70",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,42",
+              "text": "9z Team 1,42"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,70",
+              "text": "Golden Lions 2,70"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-2",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/liga-regional-sur-2026-split-2-t10/820307-9z-team-golden-lions",
+      "competition": "Liga Regional Sur 2026 Split 2",
+      "participants": ["9z Team", "Golden Lions"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "label": "Map 2 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 2 Gagnant - Two options 9z Team 1,42 Golden Lions 2,70",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,42",
+              "text": "9z Team 1,42"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,70",
+              "text": "Golden Lions 2,70"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-3",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/liga-regional-sur-2026-split-2-t10/820307-9z-team-golden-lions",
+      "competition": "Liga Regional Sur 2026 Split 2",
+      "participants": ["9z Team", "Golden Lions"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "label": "Map 3 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 3 Gagnant - Two options 9z Team 1,42 Golden Lions 2,70",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,42",
+              "text": "9z Team 1,42"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,70",
+              "text": "Golden Lions 2,70"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-4",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/liga-regional-sur-2026-split-2-t10/820307-9z-team-golden-lions",
+      "competition": "Liga Regional Sur 2026 Split 2",
+      "participants": ["9z Team", "Golden Lions"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "label": "Map 4 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 4 Gagnant - Two options 9z Team 1,48 Golden Lions 2,50",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,48",
+              "text": "9z Team 1,48"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,50",
+              "text": "Golden Lions 2,50"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "tab": "tab-map-5",
+    "dom": {
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/liga-regional-sur-2026-split-2-t10/820307-9z-team-golden-lions",
+      "competition": "Liga Regional Sur 2026 Split 2",
+      "participants": ["9z Team", "Golden Lions"],
+      "displayedStart": "22:00 08/09/2026",
+      "scores": ["-", "-"],
+      "tabs": ["tab-main", "tab-map-1", "tab-map-2", "tab-map-3", "tab-map-4", "tab-map-5"],
+      "links": [],
+      "markets": [
+        {
+          "label": "Map 5 Gagnant - Two options",
+          "expanded": true,
+          "rawText": "Map 5 Gagnant - Two options 9z Team 1,50 Golden Lions 2,40",
+          "outcomes": [
+            {
+              "disabled": false,
+              "displayedLabel": "9z Team",
+              "label": "9z Team",
+              "oddsText": "1,50",
+              "text": "9z Team 1,50"
+            },
+            {
+              "disabled": false,
+              "displayedLabel": "Golden Lions",
+              "label": "Golden Lions",
+              "oddsText": "2,40",
+              "text": "Golden Lions 2,40"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

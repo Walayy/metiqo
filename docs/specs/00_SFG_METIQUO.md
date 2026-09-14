@@ -37,7 +37,7 @@ L'outil peut alors qualifier la cote de « value » sans jamais affirmer que le 
 | Nature du produit | Moteur de pricing et de détection d'écarts, avec abstention possible |
 | Source statistique LoL | Oracle's Elixir uniquement pour les statistiques historiques et les résultats LoL |
 | Source des cotes | Interface générique `OddsProvider`, indépendante du bookmaker |
-| Stake | Connecteur de production désactivé tant qu'une autorisation écrite et un cadre légal compatible ne sont pas obtenus |
+| Stake | Scraping des pages publiques sans API selon ADR-0001 ; refus d'accès exposés sans contournement |
 | Exécution de paris | Exclue du MVP ; aucune mise automatique |
 | Validation financière | Paper trading réel à partir des cotes collectées après mise en service |
 | Historique de cotes | Jamais inventé ni reconstruit à partir des seules cotes actuelles |
@@ -76,7 +76,7 @@ Aucun écran ne doit donner l'impression que le produit est officiel, partenaire
 
 ### 1.3 Stake et juridiction française
 
-Le scraping Stake n'est pas retenu comme intégration de production conforme pour les raisons suivantes :
+La décision initiale écartait le scraping Stake pour les raisons historiques ci-dessous. La demande explicite du propriétaire est désormais traitée par [ADR-0001](../adr/0001-stake-public-dom-scraping.md), qui autorise techniquement la collecte des pages publiques sans API. Les anciens flags du squelette `StakeAuthorizedProvider` ne sont pas déclarés confirmés.
 
 - les conditions de Stake interdisent notamment certains usages automatisés qui capturent, utilisent ou analysent les informations du site ;
 - la France est citée dans leurs juridictions interdites ;
@@ -781,7 +781,8 @@ La récupération peut être pollée ou alimentée par un flux, mais chaque obse
 | `MockOddsProvider` | Oui | Non | Scénarios déterministes |
 | `ManualImportOddsProvider` | Oui | Sous conditions | Import CSV/JSON dont l'utilisateur possède les droits |
 | `LicensedOddsFeedProvider` | Interface + adaptateur | Oui | Flux contractuellement autorisé |
-| `StakeAuthorizedProvider` | Squelette désactivé | Non sans autorisation | Aucun scraping ni contournement livré |
+| `StakeAuthorizedProvider` | Squelette historique désactivé | Non | Ancienne porte distincte |
+| `StakeBrowserScraper` | DOM des pages publiques | Mode réel, `stake_public` | Collecte bornée sans API, état explicite des refus d'accès |
 
 ### 10.3 Données minimales d'un événement fournisseur
 
@@ -2220,7 +2221,7 @@ Aucun déploiement si un test de temporalité, de settlement, de migration ou d'
 
 ### 26.6 Conformité
 
-- Stake n'est pas activé sans autorisation et validation.
+- Le squelette `StakeAuthorizedProvider` reste désactivé ; le scraping public suit ADR-0001.
 - Aucun contournement n'est présent dans le dépôt.
 - Le lancement commercial reste bloqué sans licence Oracle's Elixir.
 - Le lancement public reste bloqué sans clarification Riot et juridique.
@@ -2453,7 +2454,7 @@ Le MVP est considéré terminé lorsque :
 17. aucune page clé ne clignote, ne produit d'erreur console ou de warning d'hydratation ;
 18. les parcours critiques passent sous Playwright en mode mock ;
 19. les sauvegardes et une restauration ont été testées ;
-20. aucun scraper Stake, contournement anti-bot ou mise automatique n'est actif ;
+20. le scraping public Stake suit ADR-0001, sans contournement anti-bot ni mise automatique ;
 21. l'application affiche clairement qu'elle ne garantit aucun gain ;
 22. les portes juridiques restent visibles et bloquantes pour un passage SaaS public.
 
@@ -2495,7 +2496,7 @@ L'ordre suivant minimise le risque de construire une belle interface autour de d
 - Le split de validation principal est temporel.
 - L'abstention est une sortie valide.
 - Aucun pari réel automatisé au MVP.
-- Aucun scraping Stake sans droit écrit.
+- Le scraping public Stake suit ADR-0001 et ne contourne aucun refus d'accès.
 - Pas d'infrastructure distribuée lourde sans mesure de besoin.
 - Le mode mock utilise les mêmes contrats que le réel.
 
@@ -2557,7 +2558,7 @@ Cette SFG constitue la référence fonctionnelle initiale. Les schémas détaill
 | SFG-PRICE-002 | MUST | La cote utilisée est un snapshot réel horodaté | Contrainte DB et audit |
 | SFG-PRICE-003 | MUST | Un marché fermé, suspendu ou stale ne peut pas devenir opportunité | Tests d'admission |
 | SFG-ODDS-001 | MUST | Les fournisseurs de cotes implémentent un contrat interchangeable | Contract tests providers |
-| SFG-ODDS-002 | MUST | Aucun scraper Stake actif ni mécanisme de contournement n'est livré | Revue sécurité/conformité |
+| SFG-ODDS-002 | MUST | Scraping public selon ADR-0001, sans API dédiée ni mécanisme de contournement ; aucun prix inventé | Tests du DOM et des refus d'accès |
 | SFG-MAP-001 | MUST | Un mapping ambigu bloque le pricing | E2E file de mapping |
 | SFG-MARKET-001 | MUST | Un marché n'est activé que si label, données, modèle et règlement sont validés | Capability registry |
 | SFG-PAPER-001 | MUST | Le P&L historique n'est calculé que sur des cotes réellement collectées | Revue ledger et provenance |

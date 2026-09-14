@@ -31,3 +31,10 @@ La capture entière est validée avant ouverture de la transaction. Un fournisse
 événement, marché ou sélection incohérent fait échouer l'opération sans publication
 partielle. Un payload doit fournir une référence non vide et peut fournir son SHA-256
 exact. Une capture future ou vide est refusée.
+
+La borne de réception est prise après le retour du fournisseur : un délai réseau
+normal ne rend pas la capture « future ». Le dernier succès garde l'instant des
+observations, même lorsque le fichier est importé plus tard. Réutiliser un
+identifiant de snapshot immuable avec un autre contenu provoque un refus explicite.
+Un import multi-événement peut partager une transaction afin de publier tout le
+document ou aucune de ses observations.

@@ -3,16 +3,27 @@
 import { requestBackend } from "../lib/backend";
 
 import type { ItemResponsePaperBet, PaperBet } from "@metiquo/contracts/types";
-import { Button, RemoteRecoverableErrorState } from "@metiquo/ui";
+import {
+  Button,
+  ContextPanel,
+  Input,
+  Section,
+  Textarea,
+  RemoteRecoverableErrorState,
+} from "@metiquo/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useId, useRef, useState, type SubmitEventHandler } from "react";
+
+import { formatMoney } from "./paper-trading-dashboard";
 
 export function RealPaperSettlement({ bet }: Readonly<{ bet: PaperBet }>) {
   const [reason, setReason] = useState("");
   const [actor, setActor] = useState("admin-local");
+  const [verifiedBet, setVerifiedBet] = useState<PaperBet | null>(null);
+  const helpId = useId();
   const identity = useRef({ payload: "", key: "" });
   const client = useQueryClient();
-  const correction = !["open", "pending_review"].includes(bet.status);
+  const correction = !["open", "pending_review"].includes(verifiedBet?.status ?? bet.status);
   const settlement = useMutation({
     mutationFn: async (): Promise<ItemResponsePaperBet> => {
       const payload = JSON.stringify({
@@ -33,75 +44,98 @@ export function RealPaperSettlement({ bet }: Readonly<{ bet: PaperBet }>) {
         },
       });
       if (!response.ok) {
-        const error = (await response.json()) as { detail?: string };
-        throw new Error(error.detail ?? "Vérification du règlement impossible");
+        const error = (await response.json().catch(() => null)) as { detail?: string } | null;
+        throw new Error(error?.detail ?? "Vérification du règlement impossible");
       }
       return (await response.json()) as ItemResponsePaperBet;
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      setVerifiedBet(response.data);
+      setReason("");
       void client.invalidateQueries({ queryKey: ["paper-bets"] });
       void client.invalidateQueries({ queryKey: ["paper-bet", bet.paperBetId] });
+      void client.invalidateQueries({ queryKey: ["paper-metrics"] });
     },
   });
+  const canSubmit = Boolean(reason.trim() && actor.trim()) && !settlement.isPending;
+  const submit: SubmitEventHandler<HTMLFormElement> = (event) => {
+    event.preventDefault();
+    if (canSubmit) settlement.mutate();
+  };
   return (
-    <section aria-label="Règlement depuis OE" className="grid gap-3 rounded-lg border p-4">
+    <Section aria-label="Règlement depuis OE">
       <h3 className="font-semibold">
-        {correction ? "Vérifier une correction OE" : "Vérifier le résultat OE"}
+        {correction
+          ? "Vérifier une correction Oracle’s Elixir"
+          : "Vérifier le résultat Oracle’s Elixir"}
       </h3>
       <p className="text-sm text-ink-secondary">
         Le résultat et le P&L sont calculés depuis la source validée et les règles du marché. Une
         preuve incomplète maintient la décision en revue.
       </p>
-      <label className="grid gap-1 text-sm">
-        <span>Auteur</span>
-        <input
-          className="min-h-11 rounded-md border bg-surface-raised px-3"
-          value={actor}
-          onChange={(event) => {
-            setActor(event.currentTarget.value);
-          }}
-        />
-      </label>
-      <label className="grid gap-1 text-sm">
-        <span>{correction ? "Motif de correction" : "Motif de vérification"}</span>
-        <input
-          className="min-h-11 rounded-md border bg-surface-raised px-3"
-          value={reason}
-          onChange={(event) => {
-            setReason(event.currentTarget.value);
-          }}
-        />
-      </label>
-      <Button
-        disabled={!reason.trim() || !actor.trim() || settlement.isPending}
-        onClick={() => {
-          settlement.mutate();
-        }}
-      >
-        {settlement.isPending
-          ? "Vérification…"
-          : correction
-            ? "Ajouter une révision vérifiée"
-            : "Vérifier le règlement"}
-      </Button>
+      <form aria-busy={settlement.isPending} className="grid max-w-3xl gap-4" onSubmit={submit}>
+        <p className="text-xs text-ink-secondary" id={helpId}>
+          L’auteur et le motif sont obligatoires.
+        </p>
+        <label className="ui-field">
+          <span>Auteur</span>
+          <Input
+            aria-describedby={helpId}
+            name="actor"
+            readOnly={settlement.isPending}
+            required
+            value={actor}
+            onChange={(event) => {
+              setActor(event.currentTarget.value);
+            }}
+          />
+        </label>
+        <label className="ui-field">
+          <span>{correction ? "Motif de correction" : "Motif de vérification"}</span>
+          <Textarea
+            aria-describedby={helpId}
+            name="reason"
+            readOnly={settlement.isPending}
+            required
+            rows={3}
+            value={reason}
+            onChange={(event) => {
+              setReason(event.currentTarget.value);
+            }}
+          />
+        </label>
+        <Button className="justify-self-start" disabled={!canSubmit} type="submit">
+          {settlement.isPending
+            ? "Vérification…"
+            : correction
+              ? "Ajouter une révision vérifiée"
+              : "Vérifier le règlement"}
+        </Button>
+      </form>
       {settlement.data ? (
-        <p role="status" className="text-sm">
+        <ContextPanel
+          role="status"
+          tone={settlement.data.data.status === "pending_review" ? "warning" : "success"}
+        >
           {settlement.data.data.status === "pending_review"
             ? "Revue requise"
             : "Résultat enregistré"}{" "}
           · {settlement.data.data.settlementReason} · P&L{" "}
-          {settlement.data.data.profitLoss ?? "non réalisé"}
-        </p>
+          {settlement.data.data.profitLoss == null
+            ? "non réalisé"
+            : formatMoney(settlement.data.data.profitLoss, settlement.data.data.currency)}
+        </ContextPanel>
       ) : null}
       {settlement.isError ? (
         <RemoteRecoverableErrorState
           compact
           description={settlement.error.message}
+          retryDisabled={!canSubmit}
           onRetry={() => {
             settlement.mutate();
           }}
         />
       ) : null}
-    </section>
+    </Section>
   );
 }

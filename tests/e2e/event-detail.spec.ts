@@ -24,7 +24,10 @@ test("opens a complete event sheet with an accessible odds summary", async ({ pa
     "Intervalle modèle",
   );
   await expect(page.getByRole("region", { name: "Marchés et capacité" })).toContainText(
-    "non supportés",
+    "Seul le vainqueur du match est disponible",
+  );
+  await expect(page.getByRole("region", { name: "Marchés et capacité" })).toContainText(
+    "après validation de leurs données et règles de règlement",
   );
   await expect(page.getByRole("region", { name: "Participants et roster attendu" })).toContainText(
     "Rosters individuels non fournis",

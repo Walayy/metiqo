@@ -1,13 +1,14 @@
-import { RemoteLoadingState } from "@metiquo/ui";
+import { RemotePageLoadingState } from "@metiquo/ui";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import { ModelsDashboard } from "../../components/models-dashboard";
 
+export const metadata: Metadata = { title: "Modèles & backtests · Metiquo" };
+
 export default function ModelsPage() {
   return (
-    <Suspense
-      fallback={<RemoteLoadingState label="Chargement des modèles" minHeight="32rem" rows={8} />}
-    >
+    <Suspense fallback={<RemotePageLoadingState label="Chargement des modèles" />}>
       <ModelsDashboard />
     </Suspense>
   );

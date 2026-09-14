@@ -1,6 +1,6 @@
 "use client";
 
-import { QueryRecovery } from "./query-recovery";
+import { QueryFailure, QueryRecovery } from "./query-recovery";
 
 import { canReadPrevious, readBackend } from "../lib/backend";
 
@@ -16,13 +16,19 @@ import type {
 import {
   Badge,
   Button,
-  Card,
-  CardContent,
+  TitledCard as DetailCard,
+  ContextPanel,
+  InlineValues,
+  Metric,
+  MetricGrid,
+  Select,
   RemoteDataBoundary,
   RemoteLoadingState,
+  RemotePageLoadingState,
   RemoteRecoverableErrorState,
+  TechnicalText,
 } from "@metiquo/ui";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   Activity,
   ArrowLeft,
@@ -34,7 +40,9 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useId, useState } from "react";
+
+import { nextPageOffset, PagedResults } from "./paged-results";
 
 import {
   describeOpportunity,
@@ -44,7 +52,9 @@ import {
   formatSignedPercent,
   formatTimeUntil,
   freshnessLabels,
+  gradeLabels,
   isAdmissible,
+  sortOpportunities,
 } from "./opportunity-presenters";
 
 async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
@@ -56,32 +66,17 @@ async function fetchResource<T>(path: string, signal: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-function DetailCard({
-  children,
-  icon,
-  title,
-}: Readonly<{ children: ReactNode; icon: ReactNode; title: string }>) {
-  return (
-    <Card aria-label={title}>
-      <CardContent className="grid gap-4 p-5 sm:p-6">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="grid size-9 place-items-center rounded-lg bg-surface-muted text-ink-secondary"
-          >
-            {icon}
-          </span>
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        </div>
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
+export const marketStatusLabels: Readonly<Record<Market["status"], string>> = {
+  open: "Ouvert",
+  suspended: "Suspendu",
+  settled: "Réglé",
+  void: "Annulé",
+};
 
 export function OddsChart({ snapshots }: Readonly<{ snapshots: readonly OddsSnapshot[] }>) {
-  const points = [...snapshots].sort((left, right) =>
-    left.capturedAt.localeCompare(right.capturedAt),
+  const chartId = useId();
+  const points = [...snapshots].sort(
+    (left, right) => Date.parse(left.capturedAt) - Date.parse(right.capturedAt),
   );
   if (points.length === 0) {
     return <p className="text-sm text-ink-secondary">Aucune cote observée pour cet événement.</p>;
@@ -91,10 +86,14 @@ export function OddsChart({ snapshots }: Readonly<{ snapshots: readonly OddsSnap
   const minimum = Math.min(...values);
   const maximum = Math.max(...values);
   const spread = Math.max(maximum - minimum, 0.1);
+  const firstTime = Date.parse(points[0]?.capturedAt ?? "");
+  const lastTime = Date.parse(points.at(-1)?.capturedAt ?? "");
+  const duration = lastTime - firstTime;
   const chartPoints = values
     .map((value, index) => {
-      const x = points.length === 1 ? 50 : (index / (points.length - 1)) * 100;
-      const y = points.length === 1 ? 50 : 86 - ((value - minimum) / spread) * 72;
+      const time = Date.parse(points[index]?.capturedAt ?? "");
+      const x = duration > 0 ? 3 + ((time - firstTime) / duration) * 94 : 50;
+      const y = maximum === minimum ? 50 : 86 - ((value - minimum) / spread) * 72;
       return `${x.toFixed(2)},${y.toFixed(2)}`;
     })
     .join(" ");
@@ -105,16 +104,17 @@ export function OddsChart({ snapshots }: Readonly<{ snapshots: readonly OddsSnap
 
   return (
     <figure className="grid gap-3">
-      <div className="h-48 overflow-hidden rounded-xl border border-border-subtle bg-surface-muted p-4">
+      <div className="h-48 overflow-hidden py-3">
         <svg
-          aria-labelledby="odds-chart-title odds-chart-description"
+          aria-describedby={`${chartId}-description`}
+          aria-labelledby={`${chartId}-title`}
           className="h-full w-full overflow-visible"
           preserveAspectRatio="none"
           role="img"
           viewBox="0 0 100 100"
         >
-          <title id="odds-chart-title">Évolution de la cote observée</title>
-          <desc id="odds-chart-description">{summary}</desc>
+          <title id={`${chartId}-title`}>Évolution de la cote observée</title>
+          <desc id={`${chartId}-description`}>{summary}</desc>
           {[14, 50, 86].map((y) => (
             <line
               className="stroke-border-subtle"
@@ -138,27 +138,35 @@ export function OddsChart({ snapshots }: Readonly<{ snapshots: readonly OddsSnap
           {chartPoints.split(" ").map((point, index) => {
             const [cx = "0", cy = "0"] = point.split(",");
             return (
-              <circle
-                className="fill-accent stroke-surface-raised"
-                cx={cx}
-                cy={cy}
+              <line
+                className="stroke-accent"
                 key={`${point}-${index.toString()}`}
-                r="2.2"
-                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeWidth="6"
                 vectorEffect="non-scaling-stroke"
+                x1={cx}
+                x2={cx}
+                y1={cy}
+                y2={cy}
               />
             );
           })}
         </svg>
       </div>
+      <div className="flex flex-wrap justify-between gap-2 text-xs text-ink-secondary">
+        <span>{formatDateTime(points[0]?.capturedAt ?? "")}</span>
+        {points.length > 1 ? <span>{formatDateTime(points.at(-1)?.capturedAt ?? "")}</span> : null}
+      </div>
       <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-secondary">
         <span>{summary}</span>
         <span className="font-semibold text-ink-primary">
-          {movement === 0
-            ? "→ Stable"
-            : movement > 0
-              ? `↑ Hausse ${formatDecimal(movement)}`
-              : `↓ Baisse ${formatDecimal(Math.abs(movement))}`}
+          {points.length === 1
+            ? "Comparaison indisponible · une seule observation"
+            : movement === 0
+              ? "→ Stable"
+              : movement > 0
+                ? `↑ Hausse ${formatDecimal(movement)}`
+                : `↓ Baisse ${formatDecimal(Math.abs(movement))}`}
         </span>
       </figcaption>
     </figure>
@@ -168,82 +176,109 @@ export function OddsChart({ snapshots }: Readonly<{ snapshots: readonly OddsSnap
 function MarketList({ markets }: Readonly<{ markets: readonly Market[] }>) {
   return (
     <div className="grid gap-3">
-      <ul aria-label="Marchés supportés" className="grid gap-2">
+      <ul aria-label="Marchés supportés" className="grid divide-y divide-border-subtle">
         {markets.map((market) => (
           <li
-            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-muted px-4 py-3 text-sm"
+            className="flex flex-wrap items-start justify-between gap-2 py-3 text-sm"
             key={market.marketId}
           >
-            <span>
-              <strong>Vainqueur du match</strong> · {market.selectionLabel}
+            <span className="grid gap-1">
+              <strong className="font-medium">{market.selectionLabel}</strong>
+              <span className="text-xs text-ink-secondary">Vainqueur du match</span>
             </span>
-            <Badge className="border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+            <Badge>
               <CheckCircle2 aria-hidden="true" className="mr-1 size-3.5" />
-              Supporté · {market.status}
+              Supporté · {marketStatusLabels[market.status]}
             </Badge>
           </li>
         ))}
       </ul>
-      <p className="flex gap-2 rounded-lg border border-border-subtle px-4 py-3 text-xs leading-5 text-ink-secondary">
+      {markets.length === 0 ? (
+        <p className="text-sm text-ink-secondary">Aucun marché disponible pour cet événement.</p>
+      ) : null}
+      <ContextPanel className="flex items-start gap-2">
         <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-        Marchés de carte, totaux et handicaps non supportés : ils restent désactivés tant que leur
-        capability gate n’est pas validé.
-      </p>
+        <p>
+          Seul le vainqueur du match est disponible. Les marchés de carte, totaux et handicaps
+          seront accessibles après validation de leurs données et règles de règlement.
+        </p>
+      </ContextPanel>
     </div>
   );
 }
 
 export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
+  const [selectedSignalId, setSelectedSignalId] = useState("");
   const encodedEventId = encodeURIComponent(eventId);
   const eventQuery = useQuery({
     queryFn: ({ signal }) =>
       fetchResource<ItemResponseEvent>(`/api/v1/events/${encodedEventId}`, signal),
     queryKey: ["event", eventId],
   });
-  const marketsQuery = useQuery({
-    queryFn: ({ signal }) =>
+  const marketsQuery = useInfiniteQuery({
+    initialPageParam: 0,
+    getNextPageParam: nextPageOffset,
+    queryFn: ({ signal, pageParam }) =>
       fetchResource<PageResponseMarket>(
-        `/api/v1/events/${encodedEventId}/markets?offset=0&limit=100`,
+        `/api/v1/events/${encodedEventId}/markets?offset=${String(pageParam)}&limit=100`,
         signal,
       ),
     queryKey: ["event-markets", eventId],
+    select: ({ pages }) =>
+      ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as PageResponseMarket,
   });
-  const oddsQuery = useQuery({
-    queryFn: ({ signal }) =>
+  const oddsQuery = useInfiniteQuery({
+    initialPageParam: 0,
+    getNextPageParam: nextPageOffset,
+    queryFn: ({ signal, pageParam }) =>
       fetchResource<PageResponseOddsSnapshot>(
-        `/api/v1/events/${encodedEventId}/odds-history?offset=0&limit=100`,
+        `/api/v1/events/${encodedEventId}/odds-history?offset=${String(pageParam)}&limit=100`,
         signal,
       ),
     queryKey: ["event-odds", eventId],
+    select: ({ pages }) =>
+      ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as PageResponseOddsSnapshot,
   });
-  const opportunitiesQuery = useQuery({
-    queryFn: ({ signal }) =>
+  const opportunitiesQuery = useInfiniteQuery({
+    initialPageParam: 0,
+    getNextPageParam: nextPageOffset,
+    queryFn: ({ signal, pageParam }) =>
       fetchResource<PageResponseOpportunity>(
-        `/api/v1/opportunities?eventId=${encodedEventId}&offset=0&limit=100`,
+        `/api/v1/opportunities?eventId=${encodedEventId}&offset=${String(pageParam)}&limit=100`,
         signal,
       ),
-    queryKey: ["opportunities", "event-detail", eventId],
+    queryKey: ["opportunities", "event-detail", eventId, "pages"],
+    select: ({ pages }) =>
+      ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as PageResponseOpportunity,
   });
 
-  const isPending =
-    eventQuery.isPending ||
-    marketsQuery.isPending ||
-    oddsQuery.isPending ||
-    opportunitiesQuery.isPending;
+  const isPending = eventQuery.isPending;
   const isFetching =
     eventQuery.isFetching ||
     marketsQuery.isFetching ||
     oddsQuery.isFetching ||
     opportunitiesQuery.isFetching;
-  const isError =
-    eventQuery.isError || marketsQuery.isError || oddsQuery.isError || opportunitiesQuery.isError;
   const event = eventQuery.data?.data;
   const referenceTime = eventQuery.data?.meta.computedAt ?? new Date(0).toISOString();
-  const signals =
-    opportunitiesQuery.data?.data.filter((item) => item.event.eventId === eventId) ?? [];
-  const signal: Opportunity | undefined = signals.at(0);
-  const markets = marketsQuery.data?.data ?? [];
-  const snapshots = oddsQuery.data?.data ?? [];
+  const signals = sortOpportunities(
+    canReadPrevious(opportunitiesQuery)
+      ? (opportunitiesQuery.data?.data.filter((item) => item.event.eventId === eventId) ?? [])
+      : [],
+    "conservative-ev-desc",
+  );
+  const signal: Opportunity | undefined =
+    signals.find((item) => item.signalId === selectedSignalId) ??
+    signals.find((item) => isAdmissible(item, referenceTime)) ??
+    signals.at(0);
+  const markets = canReadPrevious(marketsQuery) ? (marketsQuery.data?.data ?? []) : [];
+  const snapshots = canReadPrevious(oddsQuery) ? (oddsQuery.data?.data ?? []) : [];
+  const chartReference = signal?.book ?? snapshots[0];
+  const chartSnapshots = snapshots.filter(
+    (snapshot) =>
+      snapshot.marketId === chartReference?.marketId &&
+      snapshot.selection === chartReference.selection,
+  );
+  const chartMarket = markets.find((market) => market.marketId === chartReference?.marketId);
   const timeline: readonly (readonly [string, string])[] = signal
     ? [
         ["Cutoff de prédiction", signal.model.predictionCutoff],
@@ -254,7 +289,7 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
     : [];
 
   return (
-    <div className="grid min-w-0 gap-7">
+    <div className="ui-page-stack">
       <div>
         <Button asChild size="small" variant="ghost">
           <Link href="/events">
@@ -266,79 +301,163 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
 
       <RemoteDataBoundary
         className="min-w-0"
-        isLoading={isPending && !isError}
+        isLoading={isPending}
         isRefetching={isFetching && !isPending}
-        loadingFallback={<RemoteLoadingState label="Chargement de l’événement" rows={8} />}
+        loadingFallback={<RemotePageLoadingState label="Chargement de l’événement" />}
       >
-        <QueryRecovery queries={[eventQuery, marketsQuery, oddsQuery, opportunitiesQuery]} />
-        {isError &&
-        ![eventQuery, marketsQuery, oddsQuery, opportunitiesQuery].every(canReadPrevious) ? (
-          <RemoteRecoverableErrorState
+        <QueryRecovery queries={[eventQuery]} />
+        {eventQuery.isError && !canReadPrevious(eventQuery) ? (
+          <QueryFailure
             description="La fiche complète n’a pas pu être assemblée."
-            onRetry={() => {
-              void Promise.all([
-                eventQuery.refetch(),
-                marketsQuery.refetch(),
-                oddsQuery.refetch(),
-                opportunitiesQuery.refetch(),
-              ]);
-            }}
+            missingDescription="Cet événement n’est pas disponible dans le catalogue courant."
+            missingTitle="Événement introuvable"
+            queries={[eventQuery]}
           />
         ) : event ? (
           <div className="grid min-w-0 gap-6">
-            <header className="grid gap-5 rounded-xl border border-border-subtle bg-surface-raised p-5 shadow-panel sm:p-7">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent-strong">
-                    {event.competition}
-                  </p>
-                  <h1 className="mt-2 text-title text-balance font-semibold tracking-tight">
+            <header className="grid min-w-0 gap-5">
+              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-ink-secondary">{event.competition}</p>
+                  <h1 className="ui-page-title">
                     {event.teamA} <span className="text-ink-secondary">vs</span> {event.teamB}
                   </h1>
                   <p className="mt-3 text-sm text-ink-secondary">
                     {formatDateTime(event.startsAt)} · Best of {event.bestOf.toString()} ·{" "}
-                    {formatTimeUntil(event.startsAt, referenceTime)}
+                    {event.status === "scheduled"
+                      ? formatTimeUntil(event.startsAt, referenceTime)
+                      : { live: "En direct", finished: "Terminé", cancelled: "Annulé" }[
+                          event.status
+                        ]}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex min-h-6 flex-wrap gap-2 sm:min-w-40 sm:justify-end">
                   <Badge className="border-border-strong bg-surface-muted text-ink-primary">
-                    {event.status === "scheduled" ? "Planifié" : event.status}
+                    {
+                      {
+                        scheduled: "Planifié",
+                        live: "En direct",
+                        finished: "Terminé",
+                        cancelled: "Annulé",
+                      }[event.status]
+                    }
                   </Badge>
                   {signal ? (
-                    <Badge className="border-accent bg-accent-soft text-ink-primary">
+                    <Badge className="border-border-subtle bg-accent-soft text-ink-primary">
                       {freshnessLabels[signal.meta.freshness]}
                     </Badge>
                   ) : null}
                 </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  ["Participants", `${event.teamA} · ${event.teamB}`],
-                  ["Format", `Best of ${event.bestOf.toString()}`],
-                  ["Marchés actifs", markets.length.toString()],
-                  ["Snapshots de cote", snapshots.length.toString()],
-                ].map(([label, value]) => (
-                  <div className="rounded-lg bg-surface-muted px-4 py-3" key={label}>
-                    <p className="text-xs text-ink-secondary">{label}</p>
-                    <p className="mt-1 text-sm font-semibold">{value}</p>
-                  </div>
-                ))}
-              </div>
+              <MetricGrid className="border-y border-border-subtle py-3">
+                <Metric
+                  label="Participants"
+                  value={<InlineValues items={[event.teamA, event.teamB]} />}
+                />
+                <Metric label="Format" value={`Best of ${event.bestOf.toString()}`} />
+                <Metric
+                  label="Marchés actifs"
+                  value={
+                    marketsQuery.isPending
+                      ? "Chargement…"
+                      : !canReadPrevious(marketsQuery)
+                        ? "Indisponible"
+                        : markets.filter((market) => market.status === "open").length.toString()
+                  }
+                />
+                <Metric
+                  label="Observations chargées"
+                  value={
+                    oddsQuery.isPending
+                      ? "Chargement…"
+                      : !canReadPrevious(oddsQuery)
+                        ? "Indisponible"
+                        : snapshots.length.toString()
+                  }
+                />
+              </MetricGrid>
             </header>
+
+            <QueryRecovery queries={[opportunitiesQuery]} />
+            {opportunitiesQuery.isError && !canReadPrevious(opportunitiesQuery) ? (
+              <QueryFailure
+                description="Les signaux associés ne répondent pas. L’événement, les marchés et les cotes restent consultables."
+                missingDescription="Les signaux associés ne sont pas disponibles."
+                missingTitle="Signaux indisponibles"
+                queries={[opportunitiesQuery]}
+              />
+            ) : opportunitiesQuery.isPending || signals.length > 0 ? (
+              <section
+                aria-label="Signal analysé"
+                aria-busy={opportunitiesQuery.isPending}
+                className="grid gap-3"
+              >
+                <label className="ui-field max-w-2xl" htmlFor="event-signal-selection">
+                  Signal analysé
+                  <Select
+                    id="event-signal-selection"
+                    value={signal?.signalId ?? ""}
+                    onValueChange={setSelectedSignalId}
+                    disabled={opportunitiesQuery.isPending}
+                  >
+                    {opportunitiesQuery.isPending ? (
+                      <option value="">Chargement des signaux…</option>
+                    ) : (
+                      signals.map((item) => (
+                        <option key={item.signalId} value={item.signalId}>
+                          {item.market.selectionLabel} · {gradeLabels[item.value.grade]} · cote{" "}
+                          {formatDecimal(item.book.decimalOdds)} ·{" "}
+                          {formatDateTime(item.book.capturedAt)}
+                        </option>
+                      ))
+                    )}
+                  </Select>
+                </label>
+                <p className="text-xs text-ink-secondary">
+                  Les prix, facteurs, provenance et actions ci-dessous concernent ce signal.
+                </p>
+                <PagedResults label="de signaux" query={opportunitiesQuery} />
+              </section>
+            ) : null}
 
             <div className="grid min-w-0 gap-6 xl:grid-cols-[1.35fr_0.65fr]">
               <div className="grid min-w-0 gap-6">
                 <DetailCard icon={<Activity className="size-4.5" />} title="Courbe des cotes">
-                  <OddsChart snapshots={snapshots} />
+                  <RemoteDataBoundary
+                    isLoading={oddsQuery.isPending}
+                    loadingFallback={
+                      <RemoteLoadingState label="Chargement des cotes" minHeight="12rem" rows={4} />
+                    }
+                  >
+                    <QueryRecovery queries={[oddsQuery]} />
+                    {oddsQuery.isError && !canReadPrevious(oddsQuery) ? (
+                      <QueryFailure
+                        description="L’historique des cotes n’a pas pu être chargé."
+                        missingDescription="L’historique des cotes est indisponible."
+                        missingTitle="Historique indisponible"
+                        queries={[oddsQuery]}
+                      />
+                    ) : (
+                      <>
+                        {chartReference ? (
+                          <p className="text-sm text-ink-secondary">
+                            Sélection : {chartMarket?.selectionLabel ?? chartReference.selection}
+                          </p>
+                        ) : null}
+                        <OddsChart snapshots={chartSnapshots} />
+                        <PagedResults label="d’observations" query={oddsQuery} />
+                      </>
+                    )}
+                  </RemoteDataBoundary>
                 </DetailCard>
 
                 <DetailCard icon={<ShieldCheck className="size-4.5" />} title="Prix et incertitude">
                   {signal ? (
-                    <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    <MetricGrid>
                       {[
                         [
                           "P. marché sans marge",
-                          signal.book.noVigProbability
+                          signal.book.noVigProbability !== null
                             ? formatPercent(signal.book.noVigProbability)
                             : "Non calculée",
                         ],
@@ -354,12 +473,9 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                           formatSignedPercent(signal.value.conservativeExpectedValue),
                         ],
                       ].map(([label, value]) => (
-                        <div className="rounded-lg border border-border-subtle p-3" key={label}>
-                          <dt className="text-xs text-ink-secondary">{label}</dt>
-                          <dd className="mt-1 text-sm font-semibold">{value}</dd>
-                        </div>
+                        <Metric key={label} label={label} value={value} />
                       ))}
-                    </dl>
+                    </MetricGrid>
                   ) : (
                     <p className="text-sm text-ink-secondary">
                       Aucun prix modèle pour cet événement.
@@ -368,7 +484,31 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                 </DetailCard>
 
                 <DetailCard icon={<Database className="size-4.5" />} title="Marchés et capacité">
-                  <MarketList markets={markets} />
+                  <RemoteDataBoundary
+                    isLoading={marketsQuery.isPending}
+                    loadingFallback={
+                      <RemoteLoadingState
+                        label="Chargement des marchés"
+                        minHeight="8rem"
+                        rows={3}
+                      />
+                    }
+                  >
+                    <QueryRecovery queries={[marketsQuery]} />
+                    {marketsQuery.isError && !canReadPrevious(marketsQuery) ? (
+                      <QueryFailure
+                        description="Les marchés n’ont pas pu être chargés."
+                        missingDescription="Les marchés sont indisponibles."
+                        missingTitle="Marchés indisponibles"
+                        queries={[marketsQuery]}
+                      />
+                    ) : (
+                      <>
+                        <MarketList markets={markets} />
+                        <PagedResults label="de marchés" query={marketsQuery} />
+                      </>
+                    )}
+                  </RemoteDataBoundary>
                 </DetailCard>
               </div>
 
@@ -381,7 +521,7 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                     <div>
                       <dt className="text-xs text-ink-secondary">Participants canoniques</dt>
                       <dd className="mt-1 font-semibold">
-                        {event.teamA} · {event.teamB}
+                        <InlineValues items={[event.teamA, event.teamB]} />
                       </dd>
                     </div>
                     <div>
@@ -393,11 +533,13 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                       </dd>
                     </div>
                   </dl>
-                  <p className="flex gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                  <ContextPanel className="flex gap-2" tone="warning">
                     <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-                    Rosters individuels non fournis dans ce snapshot. Ils ne sont ni supposés ni
-                    reconstruits.
-                  </p>
+                    <p>
+                      Rosters individuels non fournis dans ce snapshot. Ils ne sont ni supposés ni
+                      reconstruits.
+                    </p>
+                  </ContextPanel>
                 </DetailCard>
 
                 <DetailCard icon={<Activity className="size-4.5" />} title="Facteurs de décision">
@@ -436,29 +578,41 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
 
                 <DetailCard icon={<Database className="size-4.5" />} title="Provenance">
                   {signal ? (
-                    <dl className="grid gap-3 break-all text-sm">
+                    <dl className="grid min-w-0 gap-3 text-sm">
                       <div>
                         <dt className="text-xs text-ink-secondary">Version modèle</dt>
-                        <dd className="mt-1 font-semibold">{signal.model.modelVersion}</dd>
+                        <dd className="mt-1">
+                          <TechnicalText>{signal.model.modelVersion}</TechnicalText>
+                        </dd>
                       </div>
                       <div>
                         <dt className="text-xs text-ink-secondary">Feature snapshot</dt>
-                        <dd className="mt-1 font-mono text-xs">{signal.model.featureSnapshotId}</dd>
+                        <dd className="mt-1">
+                          <TechnicalText>{signal.model.featureSnapshotId}</TechnicalText>
+                        </dd>
                       </div>
                       <div>
                         <dt className="text-xs text-ink-secondary">Snapshot de cote</dt>
-                        <dd className="mt-1 font-mono text-xs">{signal.book.oddsSnapshotId}</dd>
+                        <dd className="mt-1">
+                          <TechnicalText>{signal.book.oddsSnapshotId}</TechnicalText>
+                        </dd>
                       </div>
                       <div>
                         <dt className="text-xs text-ink-secondary">Snapshot Oracle’s Elixir</dt>
-                        <dd className="mt-1 font-semibold">
-                          {signal.meta.dataMode === "mock"
-                            ? "Non utilisé — mode mock"
-                            : signal.book.provenanceReference}
+                        <dd className="mt-1 text-xs text-ink-secondary">
+                          {signal.meta.dataMode === "mock" ? (
+                            "Non utilisé — mode mock"
+                          ) : (
+                            <TechnicalText>{signal.book.provenanceReference}</TechnicalText>
+                          )}
                         </dd>
                       </div>
                     </dl>
-                  ) : null}
+                  ) : (
+                    <p className="text-sm text-ink-secondary">
+                      Aucune provenance de signal disponible pour cet événement.
+                    </p>
+                  )}
                 </DetailCard>
               </aside>
             </div>
@@ -467,8 +621,8 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
               {signal ? (
                 <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {timeline.map(([label, value], index) => (
-                    <li className="relative rounded-lg border border-border-subtle p-4" key={label}>
-                      <span className="text-xs font-semibold text-accent-strong">
+                    <li className="min-w-0 border-t border-border-subtle py-3" key={label}>
+                      <span className="text-xs font-medium text-ink-secondary">
                         Étape {(index + 1).toString()}
                       </span>
                       <p className="mt-2 text-sm font-semibold">{label}</p>
@@ -485,7 +639,7 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
 
             <section
               aria-label="Action paper trading"
-              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border-subtle bg-surface-raised p-5 shadow-panel sm:p-6"
+              className="flex flex-wrap items-center justify-between gap-4 border-t border-border-subtle pt-5"
             >
               <div>
                 <h2 className="font-semibold">Paper trading uniquement</h2>
@@ -494,25 +648,36 @@ export function EventDetail({ eventId }: Readonly<{ eventId: string }>) {
                   Aucune mise réelle ni connexion bookmaker.
                 </p>
               </div>
-              {signal && isAdmissible(signal, referenceTime) ? (
+              {signal ? (
                 <div className="flex flex-wrap gap-2">
                   <Button asChild variant="outline">
                     <Link href={`/opportunities/${encodeURIComponent(signal.signalId)}`}>
                       Voir le signal
                     </Link>
                   </Button>
-                  <Button asChild>
-                    <Link href={`/paper-trading?signalId=${encodeURIComponent(signal.signalId)}`}>
-                      Créer un paper bet
-                    </Link>
-                  </Button>
+                  {isAdmissible(signal, referenceTime) ? (
+                    <Button asChild>
+                      <Link href={`/paper-trading?signalId=${encodeURIComponent(signal.signalId)}`}>
+                        Créer un paper bet
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button disabled>Paper bet non admissible</Button>
+                  )}
                 </div>
               ) : (
                 <Button disabled>Paper bet non admissible</Button>
               )}
             </section>
           </div>
-        ) : null}
+        ) : (
+          <RemoteRecoverableErrorState
+            title="Événement indisponible"
+            description="Aucune fiche n’a été renvoyée pour cet événement. Réessayez pour la récupérer."
+            onRetry={() => void eventQuery.refetch()}
+            retryDisabled={eventQuery.isFetching}
+          />
+        )}
       </RemoteDataBoundary>
     </div>
   );

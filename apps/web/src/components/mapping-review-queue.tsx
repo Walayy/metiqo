@@ -16,12 +16,25 @@ import {
   Button,
   Card,
   CardContent,
+  ContextPanel,
+  InlineValues,
+  Input,
+  Radio,
   RemoteDataBoundary,
   RemoteEmptyState,
   RemoteLoadingState,
   RemoteRecoverableErrorState,
+  Section,
+  SelectionItem,
+  TechnicalText,
+  Textarea,
 } from "@metiquo/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import {
   BadgeCheck,
   Ban,
@@ -32,17 +45,21 @@ import {
   ListTree,
   ShieldAlert,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { formatDateTime, formatPercent } from "./opportunity-presenters";
+import { PagedResults } from "./paged-results";
 
 const MAPPINGS_PATH = "/api/backend/api/v1/admin/mappings";
 
-async function getPending(signal: AbortSignal): Promise<PageResponseMappingReview> {
-  const response = await readBackend(`${MAPPINGS_PATH}/pending?offset=0&limit=100`, {
-    headers: { accept: "application/json" },
-    signal,
-  });
+async function getPending(offset: number, signal: AbortSignal): Promise<PageResponseMappingReview> {
+  const response = await readBackend(
+    `${MAPPINGS_PATH}/pending?offset=${String(offset)}&limit=100`,
+    {
+      headers: { accept: "application/json" },
+      signal,
+    },
+  );
   if (!response.ok) throw new Error("La file de mapping ne répond pas");
   return (await response.json()) as PageResponseMappingReview;
 }
@@ -68,18 +85,28 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 function CandidateCard({
   candidate,
   checked,
+  groupName,
   onSelect,
-}: Readonly<{ candidate: MappingCandidate; checked: boolean; onSelect: () => void }>) {
+}: Readonly<{
+  candidate: MappingCandidate;
+  checked: boolean;
+  groupName: string;
+  onSelect: () => void;
+}>) {
   const summary = `${candidate.label}, confiance ${formatPercent(Number(candidate.confidence))}`;
   return (
-    <label className="grid cursor-pointer gap-3 rounded-lg border border-border-subtle p-4 transition-colors duration-interaction hover:border-accent has-[:checked]:border-accent has-[:checked]:bg-accent-soft motion-reduce:transition-none">
+    <SelectionItem>
       <span className="flex items-start gap-3">
-        <input checked={checked} name="mapping-candidate" onChange={onSelect} type="radio" />
+        <Radio
+          aria-label={summary}
+          checked={checked}
+          name={groupName}
+          onChange={onSelect}
+          value={candidate.eventId}
+        />
         <span className="min-w-0">
           <span className="block font-semibold">{candidate.label}</span>
-          <span className="mt-1 block break-all text-xs text-ink-secondary">
-            {candidate.eventId}
-          </span>
+          <TechnicalText className="mt-1 block">{candidate.eventId}</TechnicalText>
         </span>
       </span>
       <span aria-label={summary} className="grid gap-2" role="img">
@@ -87,35 +114,36 @@ function CandidateCard({
           <span>Score global</span>
           <strong>{formatPercent(Number(candidate.confidence))}</strong>
         </span>
-        <span className="h-2 overflow-hidden rounded-full bg-surface-muted">
+        <span className="ui-score-track">
           <span
-            className="block h-full rounded-full bg-accent"
-            style={{ width: `${(Number(candidate.confidence) * 100).toString()}%` }}
+            style={{
+              width: `${Math.min(100, Math.max(0, Number(candidate.confidence) * 100)).toString()}%`,
+            }}
           />
         </span>
       </span>
-      <span className="text-xs font-semibold">Composantes du score</span>
-      <ul className="grid gap-1 text-xs leading-5 text-ink-secondary">
-        {candidate.reasons.map((reason) => (
-          <li key={reason}>• {reason}</li>
-        ))}
-      </ul>
+      <span className="grid gap-1">
+        <span className="text-xs font-medium">Composantes du score</span>
+        <span className="grid gap-1 text-xs leading-5 text-ink-secondary" role="list">
+          {candidate.reasons.map((reason) => (
+            <span key={reason} role="listitem">
+              • {reason}
+            </span>
+          ))}
+        </span>
+      </span>
       {candidate.selectionsInverted ? (
         <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
           Participants inversés : les sélections A/B seront remappées.
         </span>
       ) : null}
-    </label>
+    </SelectionItem>
   );
 }
 
 function DecisionResult({ review }: Readonly<{ review: MappingReview }>) {
   return (
-    <div
-      aria-live="polite"
-      className="grid gap-2 rounded-lg border border-emerald-300 bg-emerald-50/80 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/30"
-      role="status"
-    >
+    <ContextPanel aria-live="polite" role="status" tone="success">
       <p className="flex items-center gap-2 font-semibold">
         <BadgeCheck aria-hidden="true" className="size-4" />
         Décision {review.status}
@@ -124,35 +152,39 @@ function DecisionResult({ review }: Readonly<{ review: MappingReview }>) {
         {review.reviewer} · {review.reviewedAt ? formatDateTime(review.reviewedAt) : "date absente"}
       </p>
       <p className="text-xs text-ink-secondary">{review.decisionReason}</p>
-    </div>
+    </ContextPanel>
   );
 }
 
 function AliasResult({ alias }: Readonly<{ alias: AliasRecord }>) {
   return (
-    <div
-      aria-live="polite"
-      className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/30"
-      role="status"
-    >
+    <ContextPanel aria-live="polite" role="status" tone="success">
       <p className="font-semibold">Alias créé et daté</p>
       <p className="mt-1">
-        {alias.alias} → {alias.canonicalId}
+        {alias.alias} → <TechnicalText>{alias.canonicalId}</TechnicalText>
       </p>
       <p className="mt-1 text-xs text-ink-secondary">Créé le {formatDateTime(alias.createdAt)}</p>
-    </div>
+    </ContextPanel>
   );
 }
 
 function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
   const queryClient = useQueryClient();
-  const [selectedEventId, setSelectedEventId] = useState(review.candidates[0]?.eventId ?? "");
+  const [selectedEventId, setSelectedEventId] = useState(review.selectedEventId ?? "");
   const [reviewer, setReviewer] = useState("admin-local");
   const [reason, setReason] = useState("");
   const [alias, setAlias] = useState(review.rawParticipants[0] ?? "");
+  const reasonInput = useRef<HTMLTextAreaElement>(null);
+  const resultFocus = useRef<HTMLDivElement>(null);
   const selectedCandidate = review.candidates.find(
     (candidate) => candidate.eventId === selectedEventId,
   );
+  const canonicalTeamId = selectedCandidate?.selectionsInverted
+    ? selectedCandidate.teamBId
+    : selectedCandidate?.teamAId;
+  const canonicalTeamName = selectedCandidate?.selectionsInverted
+    ? selectedCandidate.teamB
+    : selectedCandidate?.teamA;
   const refreshAudit = async () => {
     await queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] });
   };
@@ -167,13 +199,27 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
         },
       );
     },
-    onSuccess: refreshAudit,
+    onSuccess: async (response) => {
+      queryClient.setQueryData<InfiniteData<PageResponseMappingReview, number>>(
+        ["admin", "mappings", "pending"],
+        (current) =>
+          current
+            ? {
+                ...current,
+                pages: current.pages.map((page) => ({
+                  ...page,
+                  data: page.data.map((item) =>
+                    item.mappingReviewId === review.mappingReviewId ? response.data : item,
+                  ),
+                })),
+              }
+            : current,
+      );
+      await refreshAudit();
+    },
   });
   const aliasMutation = useMutation({
     mutationFn: () => {
-      const canonicalTeamId = selectedCandidate?.selectionsInverted
-        ? selectedCandidate.teamBId
-        : selectedCandidate?.teamAId;
       return postJson<ItemResponseAliasRecord>("/admin/aliases", {
         alias: alias.trim(),
         canonicalId: canonicalTeamId,
@@ -185,30 +231,42 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
     },
     onSuccess: refreshAudit,
   });
-  const canDecide = reviewer.trim().length > 0 && reason.trim().length > 0 && !decision.isPending;
-  const canApprove = canDecide && selectedEventId.length > 0;
+  const isBusy = decision.isPending || aliasMutation.isPending;
+  const currentDecision = decision.data?.data ?? (review.status !== "pending" ? review : undefined);
+  const canDecide = reviewer.trim().length > 0 && reason.trim().length > 0 && !isBusy;
+  const canApprove = canDecide && Boolean(selectedCandidate);
   const canCreateAlias =
     alias.trim().length > 0 &&
     reviewer.trim().length > 0 &&
-    Boolean(selectedCandidate?.teamAId && selectedCandidate.teamBId) &&
-    !aliasMutation.isPending;
+    Boolean(canonicalTeamId) &&
+    !currentDecision &&
+    !isBusy;
+
+  useEffect(() => {
+    if (decision.isSuccess) resultFocus.current?.focus();
+  }, [decision.isSuccess]);
 
   return (
-    <Card aria-label={`Mapping ${review.providerEventId}`}>
-      <CardContent className="grid gap-5 p-5 sm:p-6">
-        {decision.data ? (
-          <DecisionResult review={decision.data.data} />
-        ) : (
+    <Card aria-label={`Mapping ${review.providerEventId}`} variant="flat">
+      <CardContent className="grid gap-6 py-0">
+        {currentDecision ? (
           <div
-            className="flex items-start gap-3 rounded-lg border border-red-300 bg-red-50/80 p-4 text-sm leading-6 text-red-950 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100"
-            role="alert"
+            className="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+            ref={resultFocus}
+            tabIndex={-1}
           >
+            <DecisionResult review={currentDecision} />
+          </div>
+        ) : (
+          <ContextPanel className="flex items-start gap-3" role="alert" tone="danger">
             <ShieldAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
             <div>
               <p className="font-semibold">Publication bloquée · décision explicite requise</p>
-              <p>Cette ambiguïté reste bloquante tant qu’elle est en statut pending.</p>
+              <p>
+                Choisissez un candidat puis justifiez votre décision pour lever cette ambiguïté.
+              </p>
             </div>
-          </div>
+          </ContextPanel>
         )}
 
         <section aria-labelledby={`raw-${review.mappingReviewId}`} className="grid gap-3">
@@ -219,11 +277,12 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
             <ListTree aria-hidden="true" className="size-4" />
             Événement brut
           </h3>
-          <dl className="grid gap-3 rounded-lg bg-surface-muted p-4 text-sm sm:grid-cols-2">
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-xs text-ink-secondary">Provider / référence</dt>
-              <dd className="mt-1 break-all font-semibold">
-                {review.provider} · {review.providerEventId}
+              <dd className="mt-1 grid gap-1">
+                <span className="font-medium">{review.provider}</span>
+                <TechnicalText>{review.providerEventId}</TechnicalText>
               </dd>
             </div>
             <div>
@@ -232,114 +291,162 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
             </div>
             <div className="sm:col-span-2">
               <dt className="text-xs text-ink-secondary">Participants bruts</dt>
-              <dd className="mt-1 font-semibold">{review.rawParticipants.join(" — ")}</dd>
+              <dd className="mt-1 font-semibold">
+                <InlineValues items={review.rawParticipants} separator="—" />
+              </dd>
             </div>
           </dl>
         </section>
 
-        <fieldset className="grid gap-3">
+        <fieldset className="grid min-w-0 gap-3" disabled={isBusy || Boolean(currentDecision)}>
           <legend className="flex items-center gap-2 font-semibold">
             <GitMerge aria-hidden="true" className="size-4" />
             Candidats canoniques
           </legend>
-          <div className="grid gap-3 lg:grid-cols-2">
+          {!currentDecision && review.candidates.length > 0 ? (
+            <p className="text-xs text-ink-secondary">
+              Comparez les candidats et sélectionnez celui à rapprocher. Aucun choix n’est fait
+              automatiquement.
+            </p>
+          ) : null}
+          <div className="grid min-w-0 gap-3 lg:grid-cols-2">
             {review.candidates.map((candidate) => (
               <CandidateCard
                 candidate={candidate}
                 checked={candidate.eventId === selectedEventId}
+                groupName={`mapping-candidate-${review.mappingReviewId}`}
                 key={candidate.eventId}
                 onSelect={() => {
                   setSelectedEventId(candidate.eventId);
+                  aliasMutation.reset();
                 }}
               />
             ))}
           </div>
+          {review.candidates.length === 0 ? (
+            <p className="text-sm text-ink-secondary">
+              Aucun candidat disponible. Vous pouvez rejeter ce mapping en indiquant un motif.
+            </p>
+          ) : null}
         </fieldset>
 
-        <section
-          aria-label="Aperçu d’impact"
-          className="grid gap-2 rounded-lg border border-accent bg-accent-soft p-4 text-sm leading-6"
-        >
+        <ContextPanel aria-label="Aperçu d’impact" role="region" tone="info">
           <p className="flex items-center gap-2 font-semibold">
             <Eye aria-hidden="true" className="size-4" />
             Aperçu d’impact
           </p>
           {selectedCandidate ? (
             <p>
-              Une approbation auditera le rapprochement de « {review.rawParticipants.join(" — ")} »
-              vers « {selectedCandidate.label} ». {review.affectedSnapshotCount} observation(s)
-              existante(s) deviendront consultables sous l’événement canonique ; aucune cote ni
-              aucun signal historique ne sera réécrit.
+              {currentDecision?.status === "approved"
+                ? "Rapprochement approuvé de"
+                : "Une approbation auditera le rapprochement de"}{" "}
+              « {review.rawParticipants.join(" — ")} » vers « {selectedCandidate.label} ».{" "}
+              {review.affectedSnapshotCount == null
+                ? "Les observations existantes"
+                : `${String(review.affectedSnapshotCount)} observation(s) existante(s)`}
+              {currentDecision?.status === "approved"
+                ? " sont consultables"
+                : " deviendront consultables"}{" "}
+              sous l’événement canonique ; aucune cote ni aucun signal historique ne sera réécrit.
             </p>
           ) : (
             <p>Aucun candidat sélectionné : l’approbation reste désactivée.</p>
           )}
-        </section>
+        </ContextPanel>
 
-        <section aria-label="Créer un alias daté" className="grid gap-3 rounded-lg border p-4">
-          <h3 className="flex items-center gap-2 font-semibold">
-            <Link2 aria-hidden="true" className="size-4" />
-            Alias provider
-          </h3>
-          <label className="grid gap-1 text-sm" htmlFor={`alias-${review.mappingReviewId}`}>
-            <span className="font-semibold">Alias brut</span>
-            <input
-              className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3"
-              id={`alias-${review.mappingReviewId}`}
-              onChange={(event) => {
-                setAlias(event.currentTarget.value);
-              }}
-              value={alias}
-            />
-          </label>
-          <p className="break-all text-xs text-ink-secondary">
-            Destination équipe :{" "}
-            {(selectedCandidate?.selectionsInverted
-              ? selectedCandidate.teamBId
-              : selectedCandidate?.teamAId) ?? "aucune"}
-            . La date et l’approbateur sont enregistrés par le serveur.
-          </p>
-          <Button
-            disabled={!canCreateAlias}
-            onClick={() => {
-              aliasMutation.mutate();
-            }}
-            variant="outline"
-          >
-            <Link2 aria-hidden="true" className="size-4" />
-            {aliasMutation.isPending ? "Création…" : "Créer l’alias daté"}
-          </Button>
-          {aliasMutation.isError ? (
-            <RemoteRecoverableErrorState
-              compact
-              description={aliasMutation.error.message}
-              onRetry={() => {
+        {!currentDecision ? (
+          <Section aria-label="Créer un alias daté">
+            <h3 className="flex items-center gap-2 font-semibold">
+              <Link2 aria-hidden="true" className="size-4" />
+              Alias provider
+            </h3>
+            <label className="ui-field max-w-xl" htmlFor={`alias-${review.mappingReviewId}`}>
+              <span className="font-semibold">Alias brut</span>
+              <Input
+                id={`alias-${review.mappingReviewId}`}
+                aria-describedby={`alias-help-${review.mappingReviewId}`}
+                readOnly={isBusy}
+                required
+                onChange={(event) => {
+                  setAlias(event.currentTarget.value);
+                  aliasMutation.reset();
+                }}
+                value={alias}
+              />
+            </label>
+            <p
+              className="text-xs leading-5 text-ink-secondary"
+              id={`alias-help-${review.mappingReviewId}`}
+            >
+              Destination équipe :{" "}
+              {canonicalTeamName ? <strong>{canonicalTeamName} · </strong> : null}
+              <TechnicalText>{canonicalTeamId ?? "aucune"}</TechnicalText>
+              <span className="mt-1 block">
+                La date et l’approbateur sont enregistrés par le serveur.
+              </span>
+              {!selectedCandidate ? (
+                <span className="mt-1 block">
+                  Sélectionnez un candidat ci-dessus pour choisir l’équipe de destination.
+                </span>
+              ) : !reviewer.trim() ? (
+                <span className="mt-1 block">
+                  Renseignez le relecteur ci-dessous pour créer cet alias.
+                </span>
+              ) : null}
+            </p>
+            <Button
+              aria-busy={aliasMutation.isPending}
+              className="justify-self-start"
+              disabled={!canCreateAlias}
+              onClick={() => {
                 aliasMutation.mutate();
               }}
-            />
-          ) : null}
-          {aliasMutation.data ? <AliasResult alias={aliasMutation.data.data} /> : null}
-        </section>
+              variant="outline"
+            >
+              <Link2 aria-hidden="true" className="size-4" />
+              {aliasMutation.isPending ? "Création…" : "Créer l’alias daté"}
+            </Button>
+            {aliasMutation.isError ? (
+              <RemoteRecoverableErrorState
+                compact
+                description={aliasMutation.error.message}
+                retryDisabled={!canCreateAlias}
+                onRetry={() => {
+                  aliasMutation.mutate();
+                }}
+              />
+            ) : null}
+            {aliasMutation.data ? <AliasResult alias={aliasMutation.data.data} /> : null}
+          </Section>
+        ) : aliasMutation.data ? (
+          <AliasResult alias={aliasMutation.data.data} />
+        ) : null}
 
-        {!decision.data ? (
-          <section aria-label="Décision de mapping" className="grid gap-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm" htmlFor={`reviewer-${review.mappingReviewId}`}>
+        {!currentDecision ? (
+          <Section aria-label="Décision de mapping">
+            <div className="grid items-start gap-3 sm:grid-cols-2">
+              <label className="ui-field" htmlFor={`reviewer-${review.mappingReviewId}`}>
                 <span className="font-semibold">Relecteur</span>
-                <input
-                  className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3"
+                <Input
+                  aria-describedby={`decision-help-${review.mappingReviewId}`}
                   id={`reviewer-${review.mappingReviewId}`}
+                  readOnly={isBusy}
+                  required
                   onChange={(event) => {
                     setReviewer(event.currentTarget.value);
                   }}
                   value={reviewer}
                 />
               </label>
-              <label className="grid gap-1 text-sm" htmlFor={`reason-${review.mappingReviewId}`}>
+              <label className="ui-field" htmlFor={`reason-${review.mappingReviewId}`}>
                 <span className="font-semibold">Motif obligatoire</span>
-                <input
-                  className="min-h-11 rounded-md border border-border-strong bg-surface-raised px-3"
+                <Textarea
+                  aria-describedby={`decision-help-${review.mappingReviewId}`}
                   id={`reason-${review.mappingReviewId}`}
+                  readOnly={isBusy}
+                  ref={reasonInput}
+                  required
+                  rows={3}
                   onChange={(event) => {
                     setReason(event.currentTarget.value);
                   }}
@@ -348,17 +455,27 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
                 />
               </label>
             </div>
+            <p
+              className="text-xs text-ink-secondary"
+              id={`decision-help-${review.mappingReviewId}`}
+            >
+              Le relecteur et le motif sont obligatoires pour enregistrer une décision.
+            </p>
             <div className="flex flex-wrap gap-3">
               <Button
+                aria-busy={decision.isPending && decision.variables === "approve"}
                 disabled={!canApprove}
                 onClick={() => {
                   decision.mutate("approve");
                 }}
               >
                 <BadgeCheck aria-hidden="true" className="size-4" />
-                Approuver le candidat
+                {decision.isPending && decision.variables === "approve"
+                  ? "Approbation…"
+                  : "Approuver le candidat"}
               </Button>
               <Button
+                aria-busy={decision.isPending && decision.variables === "reject"}
                 disabled={!canDecide}
                 onClick={() => {
                   decision.mutate("reject");
@@ -366,10 +483,12 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
                 variant="outline"
               >
                 <Ban aria-hidden="true" className="size-4" />
-                Rejeter le mapping
+                {decision.isPending && decision.variables === "reject"
+                  ? "Rejet…"
+                  : "Rejeter le mapping"}
               </Button>
             </div>
-          </section>
+          </Section>
         ) : null}
 
         {decision.isError ? (
@@ -378,6 +497,7 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
             description={decision.error.message}
             onRetry={() => {
               decision.reset();
+              reasonInput.current?.focus();
             }}
             retryLabel="Corriger la saisie"
           />
@@ -388,25 +508,44 @@ function MappingReviewCard({ review }: Readonly<{ review: MappingReview }>) {
 }
 
 export function MappingReviewQueue() {
-  const mappings = useQuery({
-    queryFn: ({ signal }) => getPending(signal),
+  const mappings = useInfiniteQuery({
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: PageResponseMappingReview, pages: PageResponseMappingReview[]) => {
+      const loaded = pages.flatMap((page) => page.data);
+      // Resolved reviews leave the server's pending queue; exclude them from the next offset.
+      const next = loaded.filter((review) => review.status === "pending").length;
+      return lastPage.data.length > 0 && loaded.length < (pages[0]?.page.total ?? 0)
+        ? next
+        : undefined;
+    },
+    queryFn: ({ signal, pageParam }) => getPending(pageParam, signal),
     queryKey: ["admin", "mappings", "pending"],
+    select: ({ pages }) =>
+      ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as PageResponseMappingReview,
   });
+  const pendingCount = mappings.data
+    ? Math.max(
+        0,
+        mappings.data.page.total -
+          mappings.data.data.filter((review) => review.status !== "pending").length,
+      )
+    : 0;
 
   return (
     <Card aria-label="File de mapping">
-      <CardContent className="grid gap-4 p-5 sm:p-6">
+      <CardContent className="grid gap-4">
         <div className="flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="grid size-9 place-items-center rounded-lg bg-surface-muted text-ink-secondary"
-          >
+          <span aria-hidden="true" className="text-ink-secondary">
             <GitMerge className="size-5" />
           </span>
           <div>
             <h2 className="text-lg font-semibold tracking-tight">File de mapping</h2>
             <p className="mt-1 text-xs text-ink-secondary">
-              {mappings.data?.page.total ?? 0} ambiguïté en attente
+              {mappings.isPending
+                ? "Chargement des ambiguïtés…"
+                : mappings.data
+                  ? `${String(pendingCount)} ambiguïté${pendingCount > 1 ? "s" : ""} en attente`
+                  : "Nombre d’ambiguïtés indisponible"}
             </p>
           </div>
         </div>
@@ -415,6 +554,7 @@ export function MappingReviewQueue() {
           <RemoteRecoverableErrorState
             description="La file reste inchangée ; rechargez-la avant toute décision."
             onRetry={() => void mappings.refetch()}
+            retryDisabled={mappings.isFetching}
           />
         ) : (
           <RemoteDataBoundary
@@ -423,7 +563,7 @@ export function MappingReviewQueue() {
             loadingFallback={<RemoteLoadingState minHeight="20rem" rows={6} />}
           >
             {mappings.data?.data.length ? (
-              <div className="grid gap-4">
+              <div className="grid gap-6 divide-y divide-border-subtle">
                 {mappings.data.data.map((review) => (
                   <MappingReviewCard key={review.mappingReviewId} review={review} />
                 ))}
@@ -433,6 +573,7 @@ export function MappingReviewQueue() {
             )}
           </RemoteDataBoundary>
         )}
+        <PagedResults label="de mappings" query={mappings} />
         <p className="flex items-start gap-2 text-xs leading-5 text-ink-secondary">
           <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           Approbations, rejets et alias sont enregistrés dans le journal d’audit.

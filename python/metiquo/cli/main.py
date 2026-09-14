@@ -52,6 +52,8 @@ from metiquo.operations.restore import RestoreRequest, RestoreService
 from metiquo.paper.creation import PaperBankrollPolicy, PostgresPaperService
 from metiquo.paper.reporting import PostgresFinancialReportingService
 from metiquo.paper.settlement_job import PostgresPaperSettlementService
+from metiquo.services.odds_import import import_odds_file
+from metiquo.services.stake_scraping import scrape_stake
 from metiquo.services.value_pipeline import PostgresValuePipeline, ValueEvaluationRequest
 from metiquo.worker.queue import PostgresJobQueue
 
@@ -78,6 +80,18 @@ class CliError(RuntimeError):
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="oe", description="Oracle's Elixir pour Metiquo")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    odds_scrape = commands.add_parser("odds-scrape", help="collecter les pages publiques Stake")
+    odds_scrape.add_argument(
+        "--url", action="append", default=[], help="page publique d'un match LoL ; répétable"
+    )
+    _machine_output(odds_scrape)
+
+    odds_import = commands.add_parser("odds-import", help="archiver et importer un relevé de cotes")
+    odds_import.add_argument("--file", type=Path, required=True)
+    odds_import.add_argument("--provider", required=True)
+    odds_import.add_argument("--format", choices=("csv", "json"), required=True)
+    _machine_output(odds_import)
 
     catalog = commands.add_parser("catalog", help="gérer le catalogue de sources")
     catalog_commands = catalog.add_subparsers(dest="catalog_command", required=True)
@@ -262,6 +276,16 @@ def _dispatch(
     settings: Settings,
     engine: Engine,
 ) -> tuple[dict[str, object], ExitCode]:
+    if arguments.command == "odds-scrape":
+        scrape_result = scrape_stake(engine, settings, arguments.url)
+        code = (
+            ExitCode.SUCCESS if scrape_result["state"] == "operational" else ExitCode.SOURCE_FAILURE
+        )
+        return scrape_result, code
+    if arguments.command == "odds-import":
+        return import_odds_file(
+            engine, settings, arguments.file, arguments.provider, arguments.format
+        ), ExitCode.SUCCESS
     if arguments.command == "auth":
         if arguments.password_file is not None:
             if (

@@ -99,6 +99,27 @@ describe("remote state library", () => {
     );
   });
 
+  it("preserves interactive content and keyboard focus during a background refresh", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <RemoteDataBoundary>
+        <button type="button">Ouvrir le snapshot</button>
+      </RemoteDataBoundary>,
+    );
+    const action = screen.getByRole("button", { name: "Ouvrir le snapshot" });
+    await user.tab();
+    expect(action).toHaveFocus();
+
+    rerender(
+      <RemoteDataBoundary isRefetching>
+        <button type="button">Ouvrir le snapshot</button>
+      </RemoteDataBoundary>,
+    );
+    expect(screen.getByRole("button", { name: "Ouvrir le snapshot" })).toBe(action);
+    expect(action).toHaveFocus();
+    expect(screen.getByRole("status", { name: "Actualisation des données" })).toBeInTheDocument();
+  });
+
   it("uses the reserved loading fallback for an initial load or an unsafe refetch", () => {
     const { rerender } = render(
       <RemoteDataBoundary isLoading loadingFallback={<p>Emplacement réservé</p>}>

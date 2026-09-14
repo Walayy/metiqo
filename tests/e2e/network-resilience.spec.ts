@@ -88,7 +88,9 @@ const cases = [
     content: (page: Page) =>
       page
         .getByRole("region", { name: "État opérationnel", exact: true })
-        .getByText("Source historique", { exact: true }),
+        .getByText("Les mesures opérationnelles réelles sont disponibles en mode réel.", {
+          exact: true,
+        }),
   },
   {
     path: "/paper-trading",

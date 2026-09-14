@@ -23,14 +23,24 @@ import type {
 import {
   Badge,
   Button,
-  Card,
-  CardContent,
+  TitledCard as Panel,
+  Metric,
+  MetricGrid,
+  ContextPanel,
+  TechnicalText,
+  StatusList,
+  Table,
+  TableBody,
+  TableCell,
+  TableCellContent,
+  TableRow,
   RemoteDataBoundary,
   RemoteEmptyState,
   RemoteLoadingState,
   RemoteRecoverableErrorState,
+  RemoteSkeleton,
 } from "@metiquo/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   ArchiveRestore,
@@ -46,11 +56,12 @@ import {
   Rows3,
   ShieldAlert,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { formatDateTime } from "./opportunity-presenters";
 import { MappingReviewQueue } from "./mapping-review-queue";
 import { OperationalStatusPanel } from "./operational-status-panel";
+import { nextPageOffset, PagedResults } from "./paged-results";
 
 const API_BASE = "/api/backend/api/v1/admin";
 
@@ -61,6 +72,29 @@ async function readResource<T>(path: string, signal: AbortSignal): Promise<T> {
   });
   if (!response.ok) throw new Error("La ressource d’administration ne répond pas");
   return (await response.json()) as T;
+}
+
+interface AdminPage {
+  data: unknown[];
+  page: { total: number; offset: number };
+}
+
+function usePagedAdminResource<T extends AdminPage>(
+  resource: string,
+  refreshInterval?: (pages: readonly T[]) => number | false,
+) {
+  return useInfiniteQuery({
+    queryKey: ["admin", resource],
+    initialPageParam: 0,
+    queryFn: ({ signal, pageParam }) =>
+      readResource<T>(`/${resource}?offset=${String(pageParam)}&limit=100`, signal),
+    getNextPageParam: nextPageOffset,
+    select: ({ pages }) => ({ ...pages[0], data: pages.flatMap((page) => page.data) }) as T,
+    refetchInterval: (query) =>
+      canReadPrevious({ data: query.state.data, error: query.state.error })
+        ? (refreshInterval?.(query.state.data?.pages ?? []) ?? false)
+        : false,
+  });
 }
 
 async function startSync(
@@ -81,42 +115,33 @@ async function startSync(
   return (await response.json()) as ItemResponseIngestionRunSummary | ItemResponseJobSummary;
 }
 
-function Panel({
-  children,
-  icon,
-  title,
-}: Readonly<{ children: ReactNode; icon: ReactNode; title: string }>) {
-  return (
-    <Card aria-label={title}>
-      <CardContent className="grid gap-4 p-5 sm:p-6">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="grid size-9 place-items-center rounded-lg bg-surface-muted text-ink-secondary"
-          >
-            {icon}
-          </span>
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        </div>
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
 function statusTone(status: string) {
-  if (status === "succeeded" || status === "fresh" || status === "enabled") {
+  if (
+    status === "succeeded" ||
+    status === "fresh" ||
+    status === "enabled" ||
+    status === "operational"
+  ) {
     return "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200";
   }
   if (
     status === "failed" ||
+    status === "dead" ||
+    status === "unavailable" ||
     status === "blocking" ||
     status === "quarantined" ||
     status === "disabled"
   ) {
     return "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200";
   }
-  if (status === "degraded" || status === "stale" || status === "warning" || status === "pending") {
+  if (
+    status === "degraded" ||
+    status === "stale" ||
+    status === "warning" ||
+    status === "pending" ||
+    status === "queued" ||
+    status === "running"
+  ) {
     return "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200";
   }
   return "border-border-strong bg-surface-muted text-ink-secondary";
@@ -132,13 +157,15 @@ function Stat({
   value,
 }: Readonly<{ icon: ReactNode; label: string; value: ReactNode }>) {
   return (
-    <div className="grid min-w-0 gap-2 rounded-lg border border-border-subtle bg-surface-muted p-4">
-      <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-ink-secondary">
-        <span aria-hidden="true">{icon}</span>
-        <span>{label}</span>
-      </dt>
-      <dd className="break-words text-sm font-semibold">{value}</dd>
-    </div>
+    <Metric
+      label={
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true">{icon}</span>
+          {label}
+        </span>
+      }
+      value={value}
+    />
   );
 }
 
@@ -152,7 +179,7 @@ function formatAge(seconds: number | null | undefined) {
 
 function SourceCatalogue({ source }: Readonly<{ source: ProviderHealth }>) {
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 gap-4 [overflow-wrap:anywhere]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-semibold">{source.providerCode}</p>
@@ -162,16 +189,17 @@ function SourceCatalogue({ source }: Readonly<{ source: ProviderHealth }>) {
         </div>
         <StatusBadge status={source.status} />
       </div>
-      {source.status === "degraded" ? (
-        <div
-          className="rounded-lg border border-amber-300 bg-amber-50/80 p-4 text-sm leading-6 text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
-          role="status"
-        >
-          <p className="font-semibold">Erreur récupérable · dernier snapshot conservé</p>
+      {source.status === "degraded" || source.status === "unavailable" ? (
+        <ContextPanel tone={source.status === "unavailable" ? "danger" : "warning"} role="status">
+          <p className="font-semibold">
+            {source.status === "unavailable"
+              ? "Source indisponible"
+              : "Erreur récupérable · dernier snapshot conservé"}
+          </p>
           <p>{source.detail}</p>
-        </div>
+        </ContextPanel>
       ) : null}
-      <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <MetricGrid>
         <Stat
           icon={<CheckCircle2 className="size-4" />}
           label="Dernier succès"
@@ -190,14 +218,69 @@ function SourceCatalogue({ source }: Readonly<{ source: ProviderHealth }>) {
         <Stat
           icon={<CircleAlert className="size-4" />}
           label="Échecs observés"
-          value={(source.failureCount ?? 0).toString()}
+          value={source.failureCount === undefined ? "Non mesurés" : source.failureCount.toString()}
         />
         <Stat
           icon={<Activity className="size-4" />}
           label="Fraîcheur source"
-          value={source.freshness ?? source.status}
+          value={source.freshness ?? "Non mesurée"}
         />
-      </dl>
+      </MetricGrid>
+    </div>
+  );
+}
+
+function SourceCatalogueLoading() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Chargement du catalogue des sources"
+      className="grid gap-4"
+      data-remote-state="loading"
+      role="status"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid gap-1">
+          <RemoteSkeleton height="1.5rem" width="8rem" />
+          <RemoteSkeleton height="1rem" width="12rem" />
+        </div>
+        <RemoteSkeleton height="1.375rem" width="4.5rem" />
+      </div>
+      <ContextPanel>
+        <RemoteSkeleton height="1.25rem" width="80%" />
+        <RemoteSkeleton height="1.25rem" />
+        <div className="grid gap-2 sm:hidden">
+          <RemoteSkeleton height="1.25rem" width="90%" />
+          <RemoteSkeleton height="1.25rem" width="65%" />
+        </div>
+      </ContextPanel>
+      <MetricGrid>
+        <Stat
+          icon={<CheckCircle2 className="size-4" />}
+          label="Dernier succès"
+          value={<RemoteSkeleton height="1.40625rem" width="8rem" />}
+        />
+        <Stat
+          icon={<FileClock className="size-4" />}
+          label="Dernière capture"
+          value={<RemoteSkeleton height="1.40625rem" width="8rem" />}
+        />
+        <Stat
+          icon={<Activity className="size-4" />}
+          label="Âge de la capture"
+          value={<RemoteSkeleton height="1.40625rem" width="4rem" />}
+        />
+        <Stat
+          icon={<CircleAlert className="size-4" />}
+          label="Échecs observés"
+          value={<RemoteSkeleton height="1.40625rem" width="3rem" />}
+        />
+        <Stat
+          icon={<Activity className="size-4" />}
+          label="Fraîcheur source"
+          value={<RemoteSkeleton height="1.40625rem" width="6rem" />}
+        />
+      </MetricGrid>
     </div>
   );
 }
@@ -208,12 +291,12 @@ function SnapshotOverview({ runs }: Readonly<{ runs: readonly IngestionRunSummar
   const lastSuccess = orderedRuns.find((run) => run.status === "succeeded");
   const activeSnapshot = orderedRuns.find((run) => run.lastValidSnapshotId)?.lastValidSnapshotId;
   const years = [
-    ...new Set(runs.map((run) => run.seasonYear ?? new Date(run.startedAt).getUTCFullYear())),
+    ...new Set(runs.flatMap((run) => (run.seasonYear == null ? [] : [run.seasonYear]))),
   ].sort((left, right) => right - left);
 
   return (
     <div className="grid gap-4">
-      <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <MetricGrid>
         <Stat
           icon={<FileClock className="size-4" />}
           label="Dernière tentative"
@@ -227,25 +310,31 @@ function SnapshotOverview({ runs }: Readonly<{ runs: readonly IngestionRunSummar
         <Stat
           icon={<Rows3 className="size-4" />}
           label="Lignes validées"
-          value={lastSuccess?.rowCount.toString() ?? "0"}
+          value={lastSuccess?.rowCount.toString() ?? "Aucun succès validé"}
         />
         <Stat
           icon={<Fingerprint className="size-4" />}
           label="Snapshot actif"
-          value={activeSnapshot ?? "Non exposé"}
+          value={activeSnapshot ? <TechnicalText>{activeSnapshot}</TechnicalText> : "Non exposé"}
         />
         <Stat
           icon={<CalendarRange className="size-4" />}
-          label="Fraîcheur annuelle"
+          label="Saisons renseignées"
           value={years.length > 0 ? years.join(", ") : "Non exposée"}
         />
         <Stat
           icon={<ArchiveRestore className="size-4" />}
           label="Hash actif"
-          value={lastSuccess?.snapshotSha256 ?? "Non exposé dans ce mode"}
+          value={
+            lastSuccess?.snapshotSha256 ? (
+              <TechnicalText>{lastSuccess.snapshotSha256}</TechnicalText>
+            ) : (
+              "Non exposé dans ce mode"
+            )
+          }
         />
-      </dl>
-      <div className="grid gap-2 rounded-lg border border-border-subtle p-4 text-sm leading-6">
+      </MetricGrid>
+      <div className="grid min-w-0 gap-2 border-t border-border-subtle pt-3 text-sm leading-6 [overflow-wrap:anywhere]">
         <p>
           <strong>Plage de dates métier :</strong>{" "}
           {lastSuccess?.minEventDate && lastSuccess.maxEventDate
@@ -256,7 +345,7 @@ function SnapshotOverview({ runs }: Readonly<{ runs: readonly IngestionRunSummar
           <strong>Schéma :</strong>{" "}
           {lastSuccess?.schemaFingerprint
             ? `${lastSuccess.schemaFingerprint} · ${lastSuccess.schemaChanged ? "changement détecté" : "stable"}`
-            : "aucun changement déclaré dans ce mode"}
+            : "non exposé dans ce mode"}
         </p>
       </div>
     </div>
@@ -265,40 +354,40 @@ function SnapshotOverview({ runs }: Readonly<{ runs: readonly IngestionRunSummar
 
 function IngestionHistory({ runs }: Readonly<{ runs: readonly IngestionRunSummary[] }>) {
   return (
-    <div
+    <Table
       aria-label="Historique des synchronisations"
-      className="max-w-full overflow-x-auto rounded-lg border border-border-subtle"
-      role="region"
-      tabIndex={0}
+      columns={[
+        { label: "Source", variant: "text" },
+        { label: "Statut", variant: "status" },
+        { label: "Début", variant: "date" },
+        { label: "Fin", variant: "date" },
+        { label: "Lignes", variant: "number" },
+        { label: "Dernier snapshot valide", variant: "technical" },
+      ]}
     >
-      <table className="w-full min-w-[48rem] border-collapse text-left text-xs">
-        <thead className="bg-surface-muted text-ink-secondary">
-          <tr>
-            {["Source", "Statut", "Début", "Fin", "Lignes", "Dernier snapshot valide"].map(
-              (label) => (
-                <th className="px-3 py-3 font-semibold" key={label} scope="col">
-                  {label}
-                </th>
-              ),
-            )}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border-subtle">
-          {runs.map((run) => (
-            <tr key={run.runId}>
-              <td className="px-3 py-3 font-semibold">{run.source}</td>
-              <td className="px-3 py-3">
-                <StatusBadge status={run.status} />
-              </td>
-              <td className="whitespace-nowrap px-3 py-3">{formatDateTime(run.startedAt)}</td>
-              <td className="whitespace-nowrap px-3 py-3">{formatDateTime(run.completedAt)}</td>
-              <td className="px-3 py-3 tabular-nums">{run.rowCount}</td>
-              <td className="max-w-64 break-all px-3 py-3">{run.lastValidSnapshotId ?? "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <TableBody>
+        {runs.map((run) => (
+          <TableRow key={run.runId}>
+            <TableCell label="Source">{run.source}</TableCell>
+            <TableCell label="Statut" variant="status">
+              <StatusBadge status={run.status} />
+            </TableCell>
+            <TableCell label="Début" variant="date">
+              {formatDateTime(run.startedAt)}
+            </TableCell>
+            <TableCell label="Fin" variant="date">
+              {formatDateTime(run.completedAt)}
+            </TableCell>
+            <TableCell label="Lignes" variant="number">
+              {run.rowCount}
+            </TableCell>
+            <TableCell label="Dernier snapshot valide" variant="technical">
+              {run.lastValidSnapshotId ?? "—"}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -307,7 +396,7 @@ function QualityList({ issues }: Readonly<{ issues: readonly DataQualityIssue[] 
     <div className="grid gap-3">
       {issues.map((issue) => (
         <article
-          className="grid gap-2 rounded-lg border border-border-subtle p-4 sm:grid-cols-[1fr_auto]"
+          className="grid min-w-0 gap-2 rounded-lg border border-border-subtle p-4 [overflow-wrap:anywhere] sm:grid-cols-[minmax(0,1fr)_auto]"
           key={issue.issueId}
         >
           <div>
@@ -329,109 +418,86 @@ function QualityList({ issues }: Readonly<{ issues: readonly DataQualityIssue[] 
 
 function CapabilityMatrix({ values }: Readonly<{ values: readonly CapabilityEvaluationDto[] }>) {
   return (
-    <div
+    <Table
       aria-label="Matrice des capacités"
-      className="max-w-full overflow-x-auto rounded-lg border border-border-subtle"
-      role="region"
-      tabIndex={0}
+      columns={[
+        { label: "Capacité", variant: "technical", weight: 1.8 },
+        { label: "État", variant: "status" },
+        { label: "Gates", variant: "detail", weight: 2.8 },
+        { label: "Complétude", variant: "number", weight: 1 },
+        { label: "Échantillon", variant: "number", weight: 1 },
+        { label: "Seuils", variant: "technical", weight: 1.8 },
+        { label: "Raisons", variant: "technical", weight: 1.7 },
+      ]}
     >
-      <table className="w-full min-w-[62rem] border-collapse text-left text-xs">
-        <thead className="bg-surface-muted text-ink-secondary">
-          <tr>
-            {["Capacité", "État", "Gates", "Complétude", "Échantillon", "Seuils", "Raisons"].map(
-              (label) => (
-                <th className="px-3 py-3 font-semibold" key={label} scope="col">
-                  {label}
-                </th>
-              ),
-            )}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border-subtle">
-          {values.map((value) => (
-            <tr key={`${value.snapshotId}:${value.capability}:${value.thresholdVersion}`}>
-              <td className="px-3 py-3">
-                <p className="font-semibold">{value.capability}</p>
-                <p className="mt-1 text-ink-secondary">
-                  {value.kind} · révision {value.evaluationRevision}
-                </p>
-              </td>
-              <td className="px-3 py-3">
-                <StatusBadge status={value.status} />
-              </td>
-              <td className="max-w-72 px-3 py-3">
-                <div className="flex flex-wrap gap-1">
-                  {Object.entries(value.gates).map(([gate, state]) => (
-                    <Badge
-                      className={statusTone(
-                        state === true ? "enabled" : state === false ? "disabled" : "pending",
-                      )}
-                      key={gate}
-                    >
-                      {gate}: {state === true ? "ok" : state === false ? "non" : "attente"}
-                    </Badge>
-                  ))}
-                </div>
-              </td>
-              <td className="whitespace-nowrap px-3 py-3 tabular-nums">
-                {(Number(value.observedCompleteness) * 100).toFixed(1)} % /{" "}
-                {(Number(value.minimumCompleteness) * 100).toFixed(1)} %
-              </td>
-              <td className="whitespace-nowrap px-3 py-3 tabular-nums">
-                {value.observedSampleSize} / {value.minimumSampleSize}
-              </td>
-              <td className="px-3 py-3">
-                <p>{value.thresholdVersion}</p>
-                <p className="mt-1 max-w-56 break-all text-ink-secondary">
-                  snapshot {value.snapshotId}
-                </p>
-              </td>
-              <td className="max-w-72 px-3 py-3 text-ink-secondary">
-                {value.reasonCodes.length > 0 ? value.reasonCodes.join(" · ") : "Aucun blocage"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <TableBody>
+        {values.map((value) => (
+          <TableRow key={`${value.snapshotId}:${value.capability}:${value.thresholdVersion}`}>
+            <TableCell label="Capacité" variant="technical">
+              <TableCellContent
+                primary={value.capability}
+                secondary={
+                  <>
+                    {value.kind} · révision {value.evaluationRevision}
+                  </>
+                }
+              />
+            </TableCell>
+            <TableCell label="État" variant="status">
+              <StatusBadge status={value.status} />
+            </TableCell>
+            <TableCell label="Gates" variant="detail">
+              <StatusList
+                aria-label="Détail des gates"
+                items={Object.entries(value.gates).map(([gate, state]) => ({
+                  label: gate,
+                  value: state === true ? "ok" : state === false ? "non" : "attente",
+                  tone: state === true ? "success" : state === false ? "danger" : "warning",
+                }))}
+              />
+            </TableCell>
+            <TableCell label="Complétude" variant="number">
+              {(Number(value.observedCompleteness) * 100).toFixed(1)} % /{" "}
+              {(Number(value.minimumCompleteness) * 100).toFixed(1)} %
+            </TableCell>
+            <TableCell label="Échantillon" variant="number">
+              {value.observedSampleSize} / {value.minimumSampleSize}
+            </TableCell>
+            <TableCell label="Seuils" variant="technical">
+              <TableCellContent
+                primary={value.thresholdVersion}
+                secondary={<>snapshot {value.snapshotId}</>}
+              />
+            </TableCell>
+            <TableCell label="Raisons" variant="technical">
+              {value.reasonCodes.length > 0 ? value.reasonCodes.join(" · ") : "Aucun blocage"}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
 function PageHeader({ description, eyebrow, title }: Readonly<Record<string, string>>) {
   return (
     <header className="grid gap-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{eyebrow}</p>
-      <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+      <p className="ui-eyebrow">{eyebrow}</p>
+      <h1 className="ui-page-title">{title}</h1>
       <p className="max-w-3xl text-sm leading-6 text-ink-secondary sm:text-base">{description}</p>
     </header>
   );
 }
 
 export function DataHealthDashboard() {
-  const sources = useQuery({
-    queryFn: ({ signal }) =>
-      readResource<PageResponseProviderHealth>("/data-sources?offset=0&limit=100", signal),
-    queryKey: ["admin", "data-sources"],
-  });
-  const runs = useQuery({
-    queryFn: ({ signal }) =>
-      readResource<PageResponseIngestionRunSummary>("/ingestion-runs?offset=0&limit=100", signal),
-    queryKey: ["admin", "ingestion-runs"],
-  });
-  const issues = useQuery({
-    queryFn: ({ signal }) =>
-      readResource<PageResponseDataQualityIssue>("/quality-issues?offset=0&limit=100", signal),
-    queryKey: ["admin", "quality-issues"],
-  });
-  const capabilities = useQuery({
-    queryFn: ({ signal }) =>
-      readResource<PageResponseCapabilityEvaluationDto>("/capabilities?offset=0&limit=100", signal),
-    queryKey: ["admin", "capabilities"],
-  });
+  const sources = usePagedAdminResource<PageResponseProviderHealth>("data-sources");
+  const runs = usePagedAdminResource<PageResponseIngestionRunSummary>("ingestion-runs");
+  const issues = usePagedAdminResource<PageResponseDataQualityIssue>("quality-issues");
+  const capabilities = usePagedAdminResource<PageResponseCapabilityEvaluationDto>("capabilities");
   const quarantined = issues.data?.data.filter((issue) => issue.status === "quarantined") ?? [];
 
   return (
-    <div className="grid gap-6 sm:gap-8">
+    <div className="ui-page-stack">
       <PageHeader
         description="Catalogue de provenance, snapshots validés, fraîcheur et anomalies. Les champs absents du mode courant sont signalés au lieu d’être déduits."
         eyebrow="Provenance & qualité"
@@ -449,18 +515,23 @@ export function DataHealthDashboard() {
           />
         ) : (
           <RemoteDataBoundary
-            className="min-h-[42rem] sm:min-h-[28rem] xl:min-h-[24rem]"
+            className="min-w-0"
             isLoading={sources.isPending}
             isRefetching={sources.isFetching && !sources.isPending}
-            loadingFallback={<RemoteLoadingState minHeight="inherit" rows={8} />}
+            loadingFallback={<SourceCatalogueLoading />}
           >
-            {sources.data?.data[0] ? (
-              <SourceCatalogue source={sources.data.data[0]} />
+            {sources.data?.data.length ? (
+              <div className="grid gap-6 divide-y divide-border-subtle [&>div+div]:pt-6">
+                {sources.data.data.map((source) => (
+                  <SourceCatalogue key={source.providerCode} source={source} />
+                ))}
+              </div>
             ) : (
               <RemoteEmptyState description="Aucune source n’est déclarée dans ce mode." />
             )}
           </RemoteDataBoundary>
         )}
+        <PagedResults label="de sources" query={sources} />
       </Panel>
 
       <Panel icon={<Fingerprint className="size-5" />} title="Snapshot et couverture">
@@ -468,6 +539,7 @@ export function DataHealthDashboard() {
         {runs.isError && !canReadPrevious(runs) ? (
           <RemoteRecoverableErrorState
             onRetry={() => void runs.refetch()}
+            retryDisabled={runs.isFetching}
             title="Historique indisponible"
           />
         ) : (
@@ -476,6 +548,12 @@ export function DataHealthDashboard() {
             isRefetching={runs.isFetching && !runs.isPending}
           >
             <SnapshotOverview runs={runs.data?.data ?? []} />
+            {runs.hasNextPage ? (
+              <p className="mt-3 text-xs text-ink-secondary">
+                La couverture porte sur les tentatives chargées. Consultez la suite de l’historique
+                pour compléter ce résumé.
+              </p>
+            ) : null}
           </RemoteDataBoundary>
         )}
       </Panel>
@@ -483,12 +561,18 @@ export function DataHealthDashboard() {
       <Panel icon={<FileClock className="size-5" />} title="Tentatives d’ingestion">
         <QueryRecovery queries={[runs]} />
         {runs.isError && !canReadPrevious(runs) ? (
-          <RemoteRecoverableErrorState onRetry={() => void runs.refetch()} />
+          <RemoteRecoverableErrorState
+            onRetry={() => void runs.refetch()}
+            retryDisabled={runs.isFetching}
+          />
+        ) : runs.isPending ? (
+          <RemoteLoadingState label="Chargement des tentatives d’ingestion" rows={4} />
         ) : runs.data?.data.length ? (
           <IngestionHistory runs={runs.data.data} />
         ) : (
           <RemoteEmptyState description="Aucune synchronisation n’a encore été enregistrée." />
         )}
+        <PagedResults label="de tentatives" query={runs} />
       </Panel>
 
       <Panel icon={<ListChecks className="size-5" />} title="Capacités par snapshot">
@@ -497,13 +581,17 @@ export function DataHealthDashboard() {
           <RemoteRecoverableErrorState
             description="Les capacités restent fermées tant que leur dernière évaluation n’est pas disponible."
             onRetry={() => void capabilities.refetch()}
+            retryDisabled={capabilities.isFetching}
             title="Registre indisponible"
           />
+        ) : capabilities.isPending ? (
+          <RemoteLoadingState label="Chargement des capacités" rows={4} />
         ) : capabilities.data?.data.length ? (
           <CapabilityMatrix values={capabilities.data.data} />
         ) : (
           <RemoteEmptyState description="Aucun snapshot n’a encore été évalué ; tous les marchés restent fermés." />
         )}
+        <PagedResults label="de capacités" query={capabilities} />
       </Panel>
 
       <Panel icon={<ShieldAlert className="size-5" />} title="Anomalies bloquantes">
@@ -512,20 +600,44 @@ export function DataHealthDashboard() {
           <RemoteRecoverableErrorState
             description="Les snapshots valides restent consultables ; la liste d’anomalies peut être rechargée séparément."
             onRetry={() => void issues.refetch()}
+            retryDisabled={issues.isFetching}
           />
+        ) : issues.isPending ? (
+          <RemoteLoadingState label="Chargement des anomalies" rows={4} />
         ) : issues.data?.data.length ? (
           <QualityList issues={issues.data.data} />
         ) : (
           <RemoteEmptyState description="Aucune anomalie ouverte." />
         )}
+        <PagedResults label="d’anomalies" query={issues} />
       </Panel>
 
       <Panel icon={<ArchiveRestore className="size-5" />} title="Quarantaine">
-        {quarantined.length > 0 ? (
+        {issues.isError && !canReadPrevious(issues) ? (
+          <RemoteRecoverableErrorState
+            description="L’état de la quarantaine ne peut pas être vérifié pour le moment."
+            onRetry={() => void issues.refetch()}
+            retryDisabled={issues.isFetching}
+          />
+        ) : issues.isPending ? (
+          <RemoteLoadingState label="Chargement de la quarantaine" rows={3} />
+        ) : quarantined.length > 0 ? (
           <QualityList issues={quarantined} />
         ) : (
-          <RemoteEmptyState description="Aucun snapshot n’est actuellement en quarantaine." />
+          <RemoteEmptyState
+            description={
+              issues.hasNextPage
+                ? "Aucun snapshot en quarantaine parmi les anomalies chargées."
+                : "Aucun snapshot n’est actuellement en quarantaine."
+            }
+          />
         )}
+        {issues.hasNextPage ? (
+          <p className="text-xs text-ink-secondary">
+            Cette liste porte sur les anomalies chargées. Affichez la suite des anomalies pour
+            compléter la quarantaine.
+          </p>
+        ) : null}
       </Panel>
     </div>
   );
@@ -535,7 +647,10 @@ function JobList({ jobs }: Readonly<{ jobs: readonly JobSummary[] }>) {
   return (
     <div className="grid gap-3 md:grid-cols-3">
       {jobs.map((job) => (
-        <article className="grid gap-3 rounded-lg border border-border-subtle p-4" key={job.jobId}>
+        <article
+          className="grid min-w-0 gap-3 rounded-lg border border-border-subtle p-4 [overflow-wrap:anywhere]"
+          key={job.jobId}
+        >
           <div className="flex flex-wrap items-start justify-between gap-2">
             <p className="font-semibold">{job.name}</p>
             <StatusBadge status={job.status} />
@@ -554,13 +669,17 @@ function JobList({ jobs }: Readonly<{ jobs: readonly JobSummary[] }>) {
             </p>
           ) : null}
           {job.errorCode ? (
-            <p className="break-all text-xs text-ink-secondary">Erreur : {job.errorCode}</p>
+            <p className="text-xs text-ink-secondary">
+              <TechnicalText>Erreur : {job.errorCode}</TechnicalText>
+            </p>
           ) : null}
           {job.cancelRequested ? (
             <p className="text-xs text-ink-secondary">Annulation demandée</p>
           ) : null}
           {job.traceId ? (
-            <p className="break-all text-xs text-ink-secondary">Trace : {job.traceId}</p>
+            <p className="text-xs text-ink-secondary">
+              <TechnicalText>Trace : {job.traceId}</TechnicalText>
+            </p>
           ) : null}
         </article>
       ))}
@@ -572,7 +691,10 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
   return (
     <ol className="grid gap-3">
       {entries.map((entry) => (
-        <li className="grid gap-2 rounded-lg border border-border-subtle p-4" key={entry.auditId}>
+        <li
+          className="grid min-w-0 gap-2 rounded-lg border border-border-subtle p-4 [overflow-wrap:anywhere]"
+          key={entry.auditId}
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="font-semibold">{entry.action}</p>
             <Badge>{entry.dataMode}</Badge>
@@ -580,8 +702,8 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
           <p className="text-xs text-ink-secondary">
             {formatDateTime(entry.occurredAt)} · ressource {entry.resourceId ?? "—"}
           </p>
-          <p className="break-all text-xs text-ink-secondary">
-            Empreinte : {entry.idempotencyFingerprint}
+          <p className="text-xs text-ink-secondary">
+            <TechnicalText>Empreinte : {entry.idempotencyFingerprint}</TechnicalText>
           </p>
           {entry.actor ? (
             <p className="text-xs text-ink-secondary">
@@ -590,10 +712,14 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
           ) : null}
           {entry.impact ? (
             <details className="min-w-0 text-xs text-ink-secondary">
-              <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4">
+              <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">
                 Références et trace
               </summary>
-              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">
+              <pre
+                aria-label="Références et trace de l’action"
+                className="mt-2 max-h-64 overflow-auto overscroll-contain rounded whitespace-pre-wrap ui-technical-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                tabIndex={0}
+              >
                 {JSON.stringify(entry.impact, null, 2)}
               </pre>
             </details>
@@ -607,22 +733,14 @@ function AuditList({ entries }: Readonly<{ entries: readonly AuditEntry[] }>) {
 export function AdminOperationsDashboard() {
   const queryClient = useQueryClient();
   const [submittedJob, setSubmittedJob] = useState<JobSummary | null>(null);
-  const jobs = useQuery({
-    queryFn: ({ signal }) =>
-      readResource<PageResponseJobSummary>("/jobs?offset=0&limit=100", signal),
-    queryKey: ["admin", "jobs"],
-    refetchInterval: (query) => {
-      if (!submittedJob) return false;
-      const current =
-        query.state.data?.data.find((job) => job.jobId === submittedJob.jobId) ?? submittedJob;
-      return ["queued", "running"].includes(current.status) ? 2000 : false;
-    },
+  const jobs = usePagedAdminResource<PageResponseJobSummary>("jobs", (pages) => {
+    if (!submittedJob) return false;
+    const current =
+      pages.flatMap((page) => page.data).find((job) => job.jobId === submittedJob.jobId) ??
+      submittedJob;
+    return ["queued", "running"].includes(current.status) ? 2000 : false;
   });
-  const audit = useQuery({
-    queryFn: ({ signal }) =>
-      readResource<PageResponseAuditEntry>("/audit-log?offset=0&limit=100", signal),
-    queryKey: ["admin", "audit-log"],
-  });
+  const audit = usePagedAdminResource<PageResponseAuditEntry>("audit-log");
   const sync = useMutation({
     mutationFn: startSync,
     onSuccess: async (response) => {
@@ -636,12 +754,28 @@ export function AdminOperationsDashboard() {
       ]);
     },
   });
-  const dataMode = jobs.data?.meta.dataMode ?? "mock";
-  const activeJob =
-    jobs.data?.data.find((job) => job.jobId === submittedJob?.jobId) ?? submittedJob;
+  const dataMode = canReadPrevious(jobs) ? jobs.data?.meta.dataMode : undefined;
+  const activeJob = canReadPrevious(jobs)
+    ? (jobs.data?.data.find((job) => job.jobId === submittedJob?.jobId) ?? submittedJob)
+    : null;
+  const syncInProgress =
+    sync.isPending || activeJob?.status === "queued" || activeJob?.status === "running";
+
+  useEffect(() => {
+    if (activeJob?.status !== "succeeded") return;
+    for (const resource of [
+      "audit-log",
+      "data-sources",
+      "ingestion-runs",
+      "quality-issues",
+      "capabilities",
+    ]) {
+      void queryClient.invalidateQueries({ queryKey: ["admin", resource] });
+    }
+  }, [activeJob?.jobId, activeJob?.status, queryClient]);
 
   return (
-    <div className="grid gap-6 sm:gap-8">
+    <div className="ui-page-stack">
       <PageHeader
         description="Commandes idempotentes et journal audité. Les synchronisations en file sont suivies jusqu’à leur résultat."
         eyebrow="Opérations contrôlées"
@@ -651,12 +785,13 @@ export function AdminOperationsDashboard() {
       <Panel icon={<RefreshCw className="size-5" />} title="Synchronisation contrôlée">
         <div className="flex flex-wrap items-center gap-3">
           <Button
-            disabled={sync.isPending}
+            aria-busy={syncInProgress}
+            disabled={syncInProgress || !dataMode}
             onClick={() => {
               sync.mutate(crypto.randomUUID());
             }}
           >
-            {sync.isPending ? (
+            {syncInProgress ? (
               <RefreshCw
                 aria-hidden="true"
                 className="size-4 animate-spin motion-reduce:animate-none"
@@ -664,10 +799,20 @@ export function AdminOperationsDashboard() {
             ) : (
               <Play aria-hidden="true" className="size-4" />
             )}
-            {sync.isPending ? "Synchronisation en cours…" : `Lancer la synchronisation ${dataMode}`}
+            {syncInProgress
+              ? "Synchronisation en cours…"
+              : dataMode
+                ? `Lancer la synchronisation ${dataMode}`
+                : jobs.isError
+                  ? "Mode indisponible"
+                  : "Vérification du mode…"}
           </Button>
           <p className="text-xs leading-5 text-ink-secondary">
-            Une clé d’idempotence unique est générée pour cette action.
+            {dataMode
+              ? "Le résultat apparaît ici et dans le journal d’audit."
+              : jobs.isError
+                ? "Réessayez le chargement des jobs ci-dessous pour vérifier le mode."
+                : "La synchronisation sera disponible lorsque le mode aura été vérifié."}
           </p>
         </div>
         {sync.isPending ? (
@@ -682,23 +827,32 @@ export function AdminOperationsDashboard() {
               sync.mutate(sync.variables);
             }}
             title="Synchronisation échouée"
+            retryDisabled={syncInProgress}
           />
         ) : null}
         {sync.data && "rowCount" in sync.data.data && !submittedJob ? (
           <div
             aria-live="polite"
-            className="grid gap-3 rounded-lg border border-emerald-300 bg-emerald-50/80 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/30"
+            className={`grid gap-3 rounded-lg border p-4 text-sm ${statusTone(sync.data.data.status)}`}
             role="status"
           >
             <p className="flex items-center gap-2 font-semibold">
-              <CheckCircle2 aria-hidden="true" className="size-4" />
-              Synchronisation terminée
+              {sync.data.data.status === "succeeded" ? (
+                <CheckCircle2 aria-hidden="true" className="size-4" />
+              ) : (
+                <CircleAlert aria-hidden="true" className="size-4" />
+              )}
+              {sync.data.data.status === "succeeded"
+                ? "Synchronisation terminée"
+                : "Synchronisation non validée"}
             </p>
             <p>
               {sync.data.data.rowCount} lignes · {sync.data.data.status} · fin{" "}
               {formatDateTime(sync.data.data.completedAt)}
             </p>
-            <p className="break-all text-xs text-ink-secondary">Run {sync.data.data.runId}</p>
+            <p className="text-xs text-ink-secondary">
+              <TechnicalText>Run {sync.data.data.runId}</TechnicalText>
+            </p>
           </div>
         ) : null}
         {activeJob ? (
@@ -716,9 +870,13 @@ export function AdminOperationsDashboard() {
                     ? "Synchronisation terminée"
                     : "Synchronisation interrompue"}
             </p>
-            <p className="break-all text-xs text-ink-secondary">Job {activeJob.jobId}</p>
+            <p className="text-xs text-ink-secondary">
+              <TechnicalText>Job {activeJob.jobId}</TechnicalText>
+            </p>
             {activeJob.runId ? (
-              <p className="break-all text-xs text-ink-secondary">Run {activeJob.runId}</p>
+              <p className="text-xs text-ink-secondary">
+                <TechnicalText>Run {activeJob.runId}</TechnicalText>
+              </p>
             ) : null}
             {activeJob.errorCode ? <p>{activeJob.errorCode}</p> : null}
             <p>Le dernier snapshot validé reste actif jusqu’à la validation du suivant.</p>
@@ -729,7 +887,10 @@ export function AdminOperationsDashboard() {
       <Panel icon={<Activity className="size-5" />} title="Jobs">
         <QueryRecovery queries={[jobs]} />
         {jobs.isError && !canReadPrevious(jobs) ? (
-          <RemoteRecoverableErrorState onRetry={() => void jobs.refetch()} />
+          <RemoteRecoverableErrorState
+            onRetry={() => void jobs.refetch()}
+            retryDisabled={jobs.isFetching}
+          />
         ) : jobs.data?.data.length ? (
           <JobList jobs={jobs.data.data} />
         ) : jobs.isPending ? (
@@ -737,6 +898,7 @@ export function AdminOperationsDashboard() {
         ) : (
           <RemoteEmptyState description="Aucun job n’est déclaré." />
         )}
+        <PagedResults label="de jobs" query={jobs} />
       </Panel>
 
       <MappingReviewQueue />
@@ -746,7 +908,10 @@ export function AdminOperationsDashboard() {
       <Panel icon={<ListChecks className="size-5" />} title="Journal d’audit">
         <QueryRecovery queries={[audit]} />
         {audit.isError && !canReadPrevious(audit) ? (
-          <RemoteRecoverableErrorState onRetry={() => void audit.refetch()} />
+          <RemoteRecoverableErrorState
+            onRetry={() => void audit.refetch()}
+            retryDisabled={audit.isFetching}
+          />
         ) : audit.data?.data.length ? (
           <AuditList entries={audit.data.data} />
         ) : audit.isPending ? (
@@ -754,6 +919,7 @@ export function AdminOperationsDashboard() {
         ) : (
           <RemoteEmptyState description="Aucune action auditée dans cet historique." />
         )}
+        <PagedResults label="d’actions" query={audit} />
       </Panel>
 
       <div
@@ -763,7 +929,9 @@ export function AdminOperationsDashboard() {
         <CircleAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
         {dataMode === "mock"
           ? "Les synchronisations mock n’accèdent pas au réseau Oracle’s Elixir et restent isolées du mode réel."
-          : "La synchronisation réelle conserve le dernier snapshot validé lorsqu’une source externe échoue."}
+          : dataMode === "real"
+            ? "La synchronisation réelle conserve le dernier snapshot validé lorsqu’une source externe échoue."
+            : "Le mode de synchronisation est en cours de vérification."}
       </div>
     </div>
   );

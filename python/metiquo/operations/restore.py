@@ -27,6 +27,7 @@ from metiquo.operations.backup_repository import (
     verify_file,
 )
 from metiquo.operations.backup_tools import BackupError, PostgresTools, file_hash, run_process
+from metiquo.operations.odds_objects import odds_object_references
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +147,7 @@ class RestoreService:
                     "raw",
                     "models",
                     "quarantine",
+                    "odds",
                 }:
                     raise BackupError("RESTORE_OBJECT_PATH_INVALID")
                 paths.add(item.path)
@@ -208,6 +210,10 @@ class RestoreService:
                 revision = connection.scalar(text("SELECT version_num FROM public.alembic_version"))
                 raw_ids = set(connection.scalars(text("SELECT id FROM raw.snapshots")))
                 model_ids = set(connection.scalars(text("SELECT id FROM ml.model_versions")))
+                for relative, digest in odds_object_references(connection):
+                    path = safe_child(root, root / relative)
+                    if not path.is_file() or file_hash(path) != digest:
+                        raise BackupError("RESTORE_ODDS_OBJECT_INVALID")
                 if (
                     revision != manifest.migration_revision
                     or raw_ids != set(manifest.snapshot_ids)

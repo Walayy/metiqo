@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("renders the real canonical event contract with the unchanged explorer", async ({ page }) => {
+test("renders the real canonical event contract with a localized data-mode label", async ({
+  page,
+}) => {
   await page.route("**/api/backend/api/v1/events**", async (route) => {
     await route.fulfill({
       body: JSON.stringify({
@@ -35,7 +37,7 @@ test("renders the real canonical event contract with the unchanged explorer", as
   await page.goto("/events");
 
   await expect(page.getByRole("heading", { level: 1, name: "Événements" })).toBeVisible();
-  await expect(page.getByText("Données real")).toBeVisible();
+  await expect(page.getByText("Données réelles", { exact: true })).toBeVisible();
   const event = page.getByRole("region", { name: "Aurore réelle contre Bastion réel" });
   await expect(event).toContainText("Ligue historique");
   await expect(event).toContainText("Best of 3");

@@ -1306,6 +1306,23 @@
         "title": "ItemResponse[PaperMetricsDto]",
         "type": "object"
       },
+      "ItemResponse_StakeCollectionStatus_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/StakeCollectionStatus"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ItemResponse[StakeCollectionStatus]",
+        "type": "object"
+      },
       "JobSummary": {
         "additionalProperties": false,
         "description": "État public minimal d'un job orchestré.",
@@ -2078,6 +2095,93 @@
         "title": "ModelSummary",
         "type": "object"
       },
+      "ObservedOddsQuote": {
+        "additionalProperties": false,
+        "description": "Dernière observation d'une sélection, distincte d'un signal de value.",
+        "properties": {
+          "ageSeconds": {
+            "minimum": 0.0,
+            "title": "Ageseconds",
+            "type": "integer"
+          },
+          "capturedAt": {
+            "format": "date-time",
+            "title": "Capturedat",
+            "type": "string"
+          },
+          "decimalOdds": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Decimalodds",
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/ProviderEvent"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/FreshnessStatus"
+          },
+          "informationalOnly": {
+            "title": "Informationalonly",
+            "type": "boolean"
+          },
+          "marketLabel": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Marketlabel",
+            "type": "string"
+          },
+          "marketStatus": {
+            "$ref": "#/components/schemas/MarketStatus"
+          },
+          "oddsSnapshotId": {
+            "format": "uuid",
+            "title": "Oddssnapshotid",
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/MarketPeriod"
+          },
+          "provider": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "providerStatus": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          },
+          "providerType": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Providertype",
+            "type": "string"
+          },
+          "selectionLabel": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Selectionlabel",
+            "type": "string"
+          }
+        },
+        "required": [
+          "oddsSnapshotId",
+          "provider",
+          "providerType",
+          "providerStatus",
+          "event",
+          "marketLabel",
+          "period",
+          "marketStatus",
+          "selectionLabel",
+          "decimalOdds",
+          "capturedAt",
+          "ageSeconds",
+          "freshness",
+          "informationalOnly"
+        ],
+        "title": "ObservedOddsQuote",
+        "type": "object"
+      },
       "OddsCaptureResult": {
         "additionalProperties": false,
         "description": "Résultat immuable d'une collecte pour un événement fournisseur.",
@@ -2737,6 +2841,31 @@
         "title": "PageResponse[ModelSummary]",
         "type": "object"
       },
+      "PageResponse_ObservedOddsQuote_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ObservedOddsQuote"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "meta"
+        ],
+        "title": "PageResponse[ObservedOddsQuote]",
+        "type": "object"
+      },
       "PageResponse_OddsSnapshot_": {
         "additionalProperties": false,
         "properties": {
@@ -2835,6 +2964,31 @@
           "meta"
         ],
         "title": "PageResponse[ProviderHealth]",
+        "type": "object"
+      },
+      "PageResponse_StakePublicEvent_": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StakePublicEvent"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ContractMetadata"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "meta"
+        ],
+        "title": "PageResponse[StakePublicEvent]",
         "type": "object"
       },
       "PaperBet": {
@@ -3252,15 +3406,14 @@
           "bestOf": {
             "anyOf": [
               {
-                "maximum": 9,
-                "minimum": 1,
+                "maximum": 9.0,
+                "minimum": 1.0,
                 "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Bestof"
           },
           "collectedAt": {
@@ -3294,7 +3447,7 @@
             "type": "string"
           },
           "sourceReference": {
-            "maxLength": 128,
+            "maxLength": 255,
             "minLength": 1,
             "title": "Sourcereference",
             "type": "string"
@@ -3683,6 +3836,106 @@
         "title": "ReleaseCompliance",
         "type": "object"
       },
+      "ScrapedMarket": {
+        "additionalProperties": false,
+        "properties": {
+          "capturedAt": {
+            "format": "date-time",
+            "title": "Capturedat",
+            "type": "string"
+          },
+          "expanded": {
+            "title": "Expanded",
+            "type": "boolean"
+          },
+          "label": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/ScrapedOutcome"
+            },
+            "maxItems": 512,
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "rawText": {
+            "maxLength": 20000,
+            "title": "Rawtext",
+            "type": "string"
+          },
+          "tab": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Tab",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "tab",
+          "capturedAt",
+          "expanded",
+          "rawText",
+          "outcomes"
+        ],
+        "title": "ScrapedMarket",
+        "type": "object"
+      },
+      "ScrapedOutcome": {
+        "additionalProperties": false,
+        "properties": {
+          "decimalOdds": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimalodds"
+          },
+          "displayedLabel": {
+            "maxLength": 512,
+            "title": "Displayedlabel",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "oddsText": {
+            "maxLength": 64,
+            "title": "Oddstext",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "suspended",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "displayedLabel",
+          "oddsText",
+          "decimalOdds",
+          "status"
+        ],
+        "title": "ScrapedOutcome",
+        "type": "object"
+      },
       "SelectionType": {
         "description": "Issue normalisée indépendamment du libellé fournisseur.",
         "enum": [
@@ -3814,6 +4067,181 @@
           "reasonCode"
         ],
         "title": "SourceOperationalHealth",
+        "type": "object"
+      },
+      "StakeCollectionStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "checkedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkedat"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "eventCount": {
+            "minimum": 0.0,
+            "title": "Eventcount",
+            "type": "integer"
+          },
+          "lastSuccessAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastsuccessat"
+          },
+          "nextAttemptAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextattemptat"
+          },
+          "state": {
+            "enum": [
+              "disabled",
+              "never_collected",
+              "operational",
+              "partial",
+              "blocked",
+              "failed",
+              "stale"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "state",
+          "checkedAt",
+          "lastSuccessAt",
+          "nextAttemptAt",
+          "detail",
+          "eventCount"
+        ],
+        "title": "StakeCollectionStatus",
+        "type": "object"
+      },
+      "StakeEventCapture": {
+        "additionalProperties": false,
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/ProviderEvent"
+          },
+          "expectedTabs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Expectedtabs",
+            "type": "array"
+          },
+          "markets": {
+            "items": {
+              "$ref": "#/components/schemas/ScrapedMarket"
+            },
+            "maxItems": 512,
+            "title": "Markets",
+            "type": "array"
+          },
+          "observedAt": {
+            "format": "date-time",
+            "title": "Observedat",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "maxLength": 512,
+            "title": "Sourceurl",
+            "type": "string"
+          },
+          "visitedTabs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Visitedtabs",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event",
+          "sourceUrl",
+          "observedAt",
+          "expectedTabs",
+          "visitedTabs",
+          "markets",
+          "warnings"
+        ],
+        "title": "StakeEventCapture",
+        "type": "object"
+      },
+      "StakePublicEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "ageSeconds": {
+            "minimum": 0.0,
+            "title": "Ageseconds",
+            "type": "integer"
+          },
+          "capture": {
+            "$ref": "#/components/schemas/StakeEventCapture"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "title": "Expiresat",
+            "type": "string"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/FreshnessStatus"
+          }
+        },
+        "required": [
+          "capture",
+          "ageSeconds",
+          "expiresAt",
+          "freshness"
+        ],
+        "title": "StakePublicEvent",
         "type": "object"
       },
       "SystemStatusResponse": {
@@ -5606,6 +6034,225 @@
         "summary": "Get Model",
         "tags": [
           "reads"
+        ]
+      }
+    },
+    "/api/v1/odds/quotes": {
+      "get": {
+        "operationId": "list_observed_odds_api_v1_odds_quotes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Provider"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startsFrom",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Startsfrom"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startsTo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Startsto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponse_ObservedOddsQuote_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Observed Odds",
+        "tags": [
+          "observed-odds"
+        ]
+      }
+    },
+    "/api/v1/odds/stake/events": {
+      "get": {
+        "operationId": "events_api_v1_odds_stake_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startsFrom",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Startsfrom"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startsTo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Startsto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponse_StakePublicEvent_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Events",
+        "tags": [
+          "stake-scraping"
+        ]
+      }
+    },
+    "/api/v1/odds/stake/status": {
+      "get": {
+        "operationId": "status_api_v1_odds_stake_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse_StakeCollectionStatus_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Status",
+        "tags": [
+          "stake-scraping"
         ]
       }
     },

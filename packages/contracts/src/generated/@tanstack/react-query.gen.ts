@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.js';
-import { approveMappingApiV1AdminMappingsMappingReviewIdApprovePost, auditLogApiV1AdminAuditLogGet, createAliasApiV1AdminAliasesPost, createPaperBetApiV1PaperBetsPost, currentSessionApiV1AuthSessionGet, downloadReportApiV1PaperReportsReportIdGet, getBacktestApiV1BacktestsBacktestIdGet, getEventApiV1EventsEventIdGet, getJobApiV1AdminJobsJobIdGet, getModelApiV1ModelsModelVersionIdGet, getOddsHistoryApiV1EventsEventIdOddsHistoryGet, getOpportunityApiV1OpportunitiesSignalIdGet, getOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGet, getPaperBetApiV1PaperBetsPaperBetIdGet, healthHealthGet, listBacktestsApiV1BacktestsGet, listCapabilitiesApiV1AdminCapabilitiesGet, listDataSourcesApiV1AdminDataSourcesGet, listEventMarketsApiV1EventsEventIdMarketsGet, listEventsApiV1EventsGet, listIngestionRunsApiV1AdminIngestionRunsGet, listJobsApiV1AdminJobsGet, listModelsApiV1ModelsGet, listOpportunitiesApiV1OpportunitiesGet, listPaperBetsApiV1PaperBetsGet, listPendingMappingsApiV1AdminMappingsPendingGet, listQualityIssuesApiV1AdminQualityIssuesGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, metricsApiV1PaperBetsMetricsGet, type Options, promoteApiV1AdminModelsModelVersionIdPromotePost, readyReadyGet, rejectMappingApiV1AdminMappingsMappingReviewIdRejectPost, releaseComplianceApiV1SystemComplianceGet, retireApiV1AdminModelsModelVersionIdRetirePost, settlePaperBetApiV1AdminPaperBetsSettlePost, syncApiV1AdminOraclesElixirSyncPost, systemStatusApiV1SystemStatusGet, trainApiV1AdminModelsTrainPost } from '../sdk.gen.js';
-import type { ApproveMappingApiV1AdminMappingsMappingReviewIdApprovePostData, ApproveMappingApiV1AdminMappingsMappingReviewIdApprovePostError, ApproveMappingApiV1AdminMappingsMappingReviewIdApprovePostResponse, AuditLogApiV1AdminAuditLogGetData, AuditLogApiV1AdminAuditLogGetError, AuditLogApiV1AdminAuditLogGetResponse, CreateAliasApiV1AdminAliasesPostData, CreateAliasApiV1AdminAliasesPostError, CreateAliasApiV1AdminAliasesPostResponse, CreatePaperBetApiV1PaperBetsPostData, CreatePaperBetApiV1PaperBetsPostError, CreatePaperBetApiV1PaperBetsPostResponse, CurrentSessionApiV1AuthSessionGetData, CurrentSessionApiV1AuthSessionGetResponse, DownloadReportApiV1PaperReportsReportIdGetData, DownloadReportApiV1PaperReportsReportIdGetError, GetBacktestApiV1BacktestsBacktestIdGetData, GetBacktestApiV1BacktestsBacktestIdGetError, GetBacktestApiV1BacktestsBacktestIdGetResponse, GetEventApiV1EventsEventIdGetData, GetEventApiV1EventsEventIdGetError, GetEventApiV1EventsEventIdGetResponse, GetJobApiV1AdminJobsJobIdGetData, GetJobApiV1AdminJobsJobIdGetError, GetJobApiV1AdminJobsJobIdGetResponse, GetModelApiV1ModelsModelVersionIdGetData, GetModelApiV1ModelsModelVersionIdGetError, GetModelApiV1ModelsModelVersionIdGetResponse, GetOddsHistoryApiV1EventsEventIdOddsHistoryGetData, GetOddsHistoryApiV1EventsEventIdOddsHistoryGetError, GetOddsHistoryApiV1EventsEventIdOddsHistoryGetResponse, GetOpportunityApiV1OpportunitiesSignalIdGetData, GetOpportunityApiV1OpportunitiesSignalIdGetError, GetOpportunityApiV1OpportunitiesSignalIdGetResponse, GetOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGetData, GetOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGetError, GetOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGetResponse, GetPaperBetApiV1PaperBetsPaperBetIdGetData, GetPaperBetApiV1PaperBetsPaperBetIdGetError, GetPaperBetApiV1PaperBetsPaperBetIdGetResponse, HealthHealthGetData, HealthHealthGetError, HealthHealthGetResponse, ListBacktestsApiV1BacktestsGetData, ListBacktestsApiV1BacktestsGetError, ListBacktestsApiV1BacktestsGetResponse, ListCapabilitiesApiV1AdminCapabilitiesGetData, ListCapabilitiesApiV1AdminCapabilitiesGetError, ListCapabilitiesApiV1AdminCapabilitiesGetResponse, ListDataSourcesApiV1AdminDataSourcesGetData, ListDataSourcesApiV1AdminDataSourcesGetError, ListDataSourcesApiV1AdminDataSourcesGetResponse, ListEventMarketsApiV1EventsEventIdMarketsGetData, ListEventMarketsApiV1EventsEventIdMarketsGetError, ListEventMarketsApiV1EventsEventIdMarketsGetResponse, ListEventsApiV1EventsGetData, ListEventsApiV1EventsGetError, ListEventsApiV1EventsGetResponse, ListIngestionRunsApiV1AdminIngestionRunsGetData, ListIngestionRunsApiV1AdminIngestionRunsGetError, ListIngestionRunsApiV1AdminIngestionRunsGetResponse, ListJobsApiV1AdminJobsGetData, ListJobsApiV1AdminJobsGetError, ListJobsApiV1AdminJobsGetResponse, ListModelsApiV1ModelsGetData, ListModelsApiV1ModelsGetError, ListModelsApiV1ModelsGetResponse, ListOpportunitiesApiV1OpportunitiesGetData, ListOpportunitiesApiV1OpportunitiesGetError, ListOpportunitiesApiV1OpportunitiesGetResponse, ListPaperBetsApiV1PaperBetsGetData, ListPaperBetsApiV1PaperBetsGetError, ListPaperBetsApiV1PaperBetsGetResponse, ListPendingMappingsApiV1AdminMappingsPendingGetData, ListPendingMappingsApiV1AdminMappingsPendingGetError, ListPendingMappingsApiV1AdminMappingsPendingGetResponse, ListQualityIssuesApiV1AdminQualityIssuesGetData, ListQualityIssuesApiV1AdminQualityIssuesGetError, ListQualityIssuesApiV1AdminQualityIssuesGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostResponse, MetricsApiV1PaperBetsMetricsGetData, MetricsApiV1PaperBetsMetricsGetError, MetricsApiV1PaperBetsMetricsGetResponse, PromoteApiV1AdminModelsModelVersionIdPromotePostData, PromoteApiV1AdminModelsModelVersionIdPromotePostError, PromoteApiV1AdminModelsModelVersionIdPromotePostResponse, ReadyReadyGetData, ReadyReadyGetError, ReadyReadyGetResponse, RejectMappingApiV1AdminMappingsMappingReviewIdRejectPostData, RejectMappingApiV1AdminMappingsMappingReviewIdRejectPostError, RejectMappingApiV1AdminMappingsMappingReviewIdRejectPostResponse, ReleaseComplianceApiV1SystemComplianceGetData, ReleaseComplianceApiV1SystemComplianceGetError, ReleaseComplianceApiV1SystemComplianceGetResponse, RetireApiV1AdminModelsModelVersionIdRetirePostData, RetireApiV1AdminModelsModelVersionIdRetirePostError, RetireApiV1AdminModelsModelVersionIdRetirePostResponse, SettlePaperBetApiV1AdminPaperBetsSettlePostData, SettlePaperBetApiV1AdminPaperBetsSettlePostError, SettlePaperBetApiV1AdminPaperBetsSettlePostResponse, SyncApiV1AdminOraclesElixirSyncPostData, SyncApiV1AdminOraclesElixirSyncPostError, SyncApiV1AdminOraclesElixirSyncPostResponse, SystemStatusApiV1SystemStatusGetData, SystemStatusApiV1SystemStatusGetError, SystemStatusApiV1SystemStatusGetResponse, TrainApiV1AdminModelsTrainPostData, TrainApiV1AdminModelsTrainPostError, TrainApiV1AdminModelsTrainPostResponse } from '../types.gen.js';
+import { approveMappingApiV1AdminMappingsMappingReviewIdApprovePost, auditLogApiV1AdminAuditLogGet, createAliasApiV1AdminAliasesPost, createPaperBetApiV1PaperBetsPost, currentSessionApiV1AuthSessionGet, downloadReportApiV1PaperReportsReportIdGet, eventsApiV1OddsStakeEventsGet, getBacktestApiV1BacktestsBacktestIdGet, getEventApiV1EventsEventIdGet, getJobApiV1AdminJobsJobIdGet, getModelApiV1ModelsModelVersionIdGet, getOddsHistoryApiV1EventsEventIdOddsHistoryGet, getOpportunityApiV1OpportunitiesSignalIdGet, getOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGet, getPaperBetApiV1PaperBetsPaperBetIdGet, healthHealthGet, listBacktestsApiV1BacktestsGet, listCapabilitiesApiV1AdminCapabilitiesGet, listDataSourcesApiV1AdminDataSourcesGet, listEventMarketsApiV1EventsEventIdMarketsGet, listEventsApiV1EventsGet, listIngestionRunsApiV1AdminIngestionRunsGet, listJobsApiV1AdminJobsGet, listModelsApiV1ModelsGet, listObservedOddsApiV1OddsQuotesGet, listOpportunitiesApiV1OpportunitiesGet, listPaperBetsApiV1PaperBetsGet, listPendingMappingsApiV1AdminMappingsPendingGet, listQualityIssuesApiV1AdminQualityIssuesGet, loginApiV1AuthLoginPost, logoutApiV1AuthLogoutPost, metricsApiV1PaperBetsMetricsGet, type Options, promoteApiV1AdminModelsModelVersionIdPromotePost, readyReadyGet, rejectMappingApiV1AdminMappingsMappingReviewIdRejectPost, releaseComplianceApiV1SystemComplianceGet, retireApiV1AdminModelsModelVersionIdRetirePost, settlePaperBetApiV1AdminPaperBetsSettlePost, statusApiV1OddsStakeStatusGet, syncApiV1AdminOraclesElixirSyncPost, systemStatusApiV1SystemStatusGet, trainApiV1AdminModelsTrainPost } from '../sdk.gen.js';
+import type { ApproveMappingApiV1AdminMappingsMappingReviewIdApprovePostData, ApproveMappingApiV1AdminMappingsMappingReviewIdApprovePostError, ApproveMappingApiV1AdminMappingsMappingReviewIdApprovePostResponse, AuditLogApiV1AdminAuditLogGetData, AuditLogApiV1AdminAuditLogGetError, AuditLogApiV1AdminAuditLogGetResponse, CreateAliasApiV1AdminAliasesPostData, CreateAliasApiV1AdminAliasesPostError, CreateAliasApiV1AdminAliasesPostResponse, CreatePaperBetApiV1PaperBetsPostData, CreatePaperBetApiV1PaperBetsPostError, CreatePaperBetApiV1PaperBetsPostResponse, CurrentSessionApiV1AuthSessionGetData, CurrentSessionApiV1AuthSessionGetResponse, DownloadReportApiV1PaperReportsReportIdGetData, DownloadReportApiV1PaperReportsReportIdGetError, EventsApiV1OddsStakeEventsGetData, EventsApiV1OddsStakeEventsGetError, EventsApiV1OddsStakeEventsGetResponse, GetBacktestApiV1BacktestsBacktestIdGetData, GetBacktestApiV1BacktestsBacktestIdGetError, GetBacktestApiV1BacktestsBacktestIdGetResponse, GetEventApiV1EventsEventIdGetData, GetEventApiV1EventsEventIdGetError, GetEventApiV1EventsEventIdGetResponse, GetJobApiV1AdminJobsJobIdGetData, GetJobApiV1AdminJobsJobIdGetError, GetJobApiV1AdminJobsJobIdGetResponse, GetModelApiV1ModelsModelVersionIdGetData, GetModelApiV1ModelsModelVersionIdGetError, GetModelApiV1ModelsModelVersionIdGetResponse, GetOddsHistoryApiV1EventsEventIdOddsHistoryGetData, GetOddsHistoryApiV1EventsEventIdOddsHistoryGetError, GetOddsHistoryApiV1EventsEventIdOddsHistoryGetResponse, GetOpportunityApiV1OpportunitiesSignalIdGetData, GetOpportunityApiV1OpportunitiesSignalIdGetError, GetOpportunityApiV1OpportunitiesSignalIdGetResponse, GetOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGetData, GetOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGetError, GetOpportunityExplanationApiV1OpportunitiesSignalIdExplanationGetResponse, GetPaperBetApiV1PaperBetsPaperBetIdGetData, GetPaperBetApiV1PaperBetsPaperBetIdGetError, GetPaperBetApiV1PaperBetsPaperBetIdGetResponse, HealthHealthGetData, HealthHealthGetError, HealthHealthGetResponse, ListBacktestsApiV1BacktestsGetData, ListBacktestsApiV1BacktestsGetError, ListBacktestsApiV1BacktestsGetResponse, ListCapabilitiesApiV1AdminCapabilitiesGetData, ListCapabilitiesApiV1AdminCapabilitiesGetError, ListCapabilitiesApiV1AdminCapabilitiesGetResponse, ListDataSourcesApiV1AdminDataSourcesGetData, ListDataSourcesApiV1AdminDataSourcesGetError, ListDataSourcesApiV1AdminDataSourcesGetResponse, ListEventMarketsApiV1EventsEventIdMarketsGetData, ListEventMarketsApiV1EventsEventIdMarketsGetError, ListEventMarketsApiV1EventsEventIdMarketsGetResponse, ListEventsApiV1EventsGetData, ListEventsApiV1EventsGetError, ListEventsApiV1EventsGetResponse, ListIngestionRunsApiV1AdminIngestionRunsGetData, ListIngestionRunsApiV1AdminIngestionRunsGetError, ListIngestionRunsApiV1AdminIngestionRunsGetResponse, ListJobsApiV1AdminJobsGetData, ListJobsApiV1AdminJobsGetError, ListJobsApiV1AdminJobsGetResponse, ListModelsApiV1ModelsGetData, ListModelsApiV1ModelsGetError, ListModelsApiV1ModelsGetResponse, ListObservedOddsApiV1OddsQuotesGetData, ListObservedOddsApiV1OddsQuotesGetError, ListObservedOddsApiV1OddsQuotesGetResponse, ListOpportunitiesApiV1OpportunitiesGetData, ListOpportunitiesApiV1OpportunitiesGetError, ListOpportunitiesApiV1OpportunitiesGetResponse, ListPaperBetsApiV1PaperBetsGetData, ListPaperBetsApiV1PaperBetsGetError, ListPaperBetsApiV1PaperBetsGetResponse, ListPendingMappingsApiV1AdminMappingsPendingGetData, ListPendingMappingsApiV1AdminMappingsPendingGetError, ListPendingMappingsApiV1AdminMappingsPendingGetResponse, ListQualityIssuesApiV1AdminQualityIssuesGetData, ListQualityIssuesApiV1AdminQualityIssuesGetError, ListQualityIssuesApiV1AdminQualityIssuesGetResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostError, LoginApiV1AuthLoginPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostResponse, MetricsApiV1PaperBetsMetricsGetData, MetricsApiV1PaperBetsMetricsGetError, MetricsApiV1PaperBetsMetricsGetResponse, PromoteApiV1AdminModelsModelVersionIdPromotePostData, PromoteApiV1AdminModelsModelVersionIdPromotePostError, PromoteApiV1AdminModelsModelVersionIdPromotePostResponse, ReadyReadyGetData, ReadyReadyGetError, ReadyReadyGetResponse, RejectMappingApiV1AdminMappingsMappingReviewIdRejectPostData, RejectMappingApiV1AdminMappingsMappingReviewIdRejectPostError, RejectMappingApiV1AdminMappingsMappingReviewIdRejectPostResponse, ReleaseComplianceApiV1SystemComplianceGetData, ReleaseComplianceApiV1SystemComplianceGetError, ReleaseComplianceApiV1SystemComplianceGetResponse, RetireApiV1AdminModelsModelVersionIdRetirePostData, RetireApiV1AdminModelsModelVersionIdRetirePostError, RetireApiV1AdminModelsModelVersionIdRetirePostResponse, SettlePaperBetApiV1AdminPaperBetsSettlePostData, SettlePaperBetApiV1AdminPaperBetsSettlePostError, SettlePaperBetApiV1AdminPaperBetsSettlePostResponse, StatusApiV1OddsStakeStatusGetData, StatusApiV1OddsStakeStatusGetResponse, SyncApiV1AdminOraclesElixirSyncPostData, SyncApiV1AdminOraclesElixirSyncPostError, SyncApiV1AdminOraclesElixirSyncPostResponse, SystemStatusApiV1SystemStatusGetData, SystemStatusApiV1SystemStatusGetError, SystemStatusApiV1SystemStatusGetResponse, TrainApiV1AdminModelsTrainPostData, TrainApiV1AdminModelsTrainPostError, TrainApiV1AdminModelsTrainPostResponse } from '../types.gen.js';
 
 /**
  * Create Alias
@@ -902,6 +902,120 @@ export const getModelApiV1ModelsModelVersionIdGetOptions = (options: Options<Get
         return data;
     },
     queryKey: getModelApiV1ModelsModelVersionIdGetQueryKey(options)
+});
+
+export const listObservedOddsApiV1OddsQuotesGetQueryKey = (options?: Options<ListObservedOddsApiV1OddsQuotesGetData>) => createQueryKey('listObservedOddsApiV1OddsQuotesGet', options);
+
+/**
+ * List Observed Odds
+ */
+export const listObservedOddsApiV1OddsQuotesGetOptions = (options?: Options<ListObservedOddsApiV1OddsQuotesGetData>) => queryOptions<ListObservedOddsApiV1OddsQuotesGetResponse, ListObservedOddsApiV1OddsQuotesGetError, ListObservedOddsApiV1OddsQuotesGetResponse, ReturnType<typeof listObservedOddsApiV1OddsQuotesGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listObservedOddsApiV1OddsQuotesGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listObservedOddsApiV1OddsQuotesGetQueryKey(options)
+});
+
+export const listObservedOddsApiV1OddsQuotesGetInfiniteQueryKey = (options?: Options<ListObservedOddsApiV1OddsQuotesGetData>): QueryKey<Options<ListObservedOddsApiV1OddsQuotesGetData>> => createQueryKey('listObservedOddsApiV1OddsQuotesGet', options, true);
+
+/**
+ * List Observed Odds
+ */
+export const listObservedOddsApiV1OddsQuotesGetInfiniteOptions = (options?: Options<ListObservedOddsApiV1OddsQuotesGetData>) => {
+    const opts = infiniteQueryOptions<ListObservedOddsApiV1OddsQuotesGetResponse, ListObservedOddsApiV1OddsQuotesGetError, InfiniteData<ListObservedOddsApiV1OddsQuotesGetResponse>, QueryKey<Options<ListObservedOddsApiV1OddsQuotesGetData>>, number | Pick<QueryKey<Options<ListObservedOddsApiV1OddsQuotesGetData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<ListObservedOddsApiV1OddsQuotesGetData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    offset: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await listObservedOddsApiV1OddsQuotesGet({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: listObservedOddsApiV1OddsQuotesGetInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+export const eventsApiV1OddsStakeEventsGetQueryKey = (options?: Options<EventsApiV1OddsStakeEventsGetData>) => createQueryKey('eventsApiV1OddsStakeEventsGet', options);
+
+/**
+ * Events
+ */
+export const eventsApiV1OddsStakeEventsGetOptions = (options?: Options<EventsApiV1OddsStakeEventsGetData>) => queryOptions<EventsApiV1OddsStakeEventsGetResponse, EventsApiV1OddsStakeEventsGetError, EventsApiV1OddsStakeEventsGetResponse, ReturnType<typeof eventsApiV1OddsStakeEventsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await eventsApiV1OddsStakeEventsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: eventsApiV1OddsStakeEventsGetQueryKey(options)
+});
+
+export const eventsApiV1OddsStakeEventsGetInfiniteQueryKey = (options?: Options<EventsApiV1OddsStakeEventsGetData>): QueryKey<Options<EventsApiV1OddsStakeEventsGetData>> => createQueryKey('eventsApiV1OddsStakeEventsGet', options, true);
+
+/**
+ * Events
+ */
+export const eventsApiV1OddsStakeEventsGetInfiniteOptions = (options?: Options<EventsApiV1OddsStakeEventsGetData>) => {
+    const opts = infiniteQueryOptions<EventsApiV1OddsStakeEventsGetResponse, EventsApiV1OddsStakeEventsGetError, InfiniteData<EventsApiV1OddsStakeEventsGetResponse>, QueryKey<Options<EventsApiV1OddsStakeEventsGetData>>, number | Pick<QueryKey<Options<EventsApiV1OddsStakeEventsGetData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<EventsApiV1OddsStakeEventsGetData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    offset: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await eventsApiV1OddsStakeEventsGet({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: eventsApiV1OddsStakeEventsGetInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+export const statusApiV1OddsStakeStatusGetQueryKey = (options?: Options<StatusApiV1OddsStakeStatusGetData>) => createQueryKey('statusApiV1OddsStakeStatusGet', options);
+
+/**
+ * Status
+ */
+export const statusApiV1OddsStakeStatusGetOptions = (options?: Options<StatusApiV1OddsStakeStatusGetData>) => queryOptions<StatusApiV1OddsStakeStatusGetResponse, DefaultError, StatusApiV1OddsStakeStatusGetResponse, ReturnType<typeof statusApiV1OddsStakeStatusGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await statusApiV1OddsStakeStatusGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: statusApiV1OddsStakeStatusGetQueryKey(options)
 });
 
 export const listOpportunitiesApiV1OpportunitiesGetQueryKey = (options?: Options<ListOpportunitiesApiV1OpportunitiesGetData>) => createQueryKey('listOpportunitiesApiV1OpportunitiesGet', options);

@@ -23,6 +23,7 @@ for (const size of ["desktop", "mobile"] as const) {
     if (size === "mobile") await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     await activate(page, page.getByRole("link", { name: "Aller au contenu" }));
+    if (size === "mobile") await activate(page, page.getByRole("button", { name: /^Filtres \(/ }));
     const team = page.getByLabel("Équipe", { exact: true });
     await typeAt(page, team, "Aurore 02");
     await page.keyboard.press("Enter");
@@ -40,10 +41,15 @@ for (const size of ["desktop", "mobile"] as const) {
     await expect(creation.getByRole("status").filter({ hasText: "Paper bet créé" })).toBeVisible();
     const settlement = creation.getByRole("region", { name: "Règlement fictif", exact: true });
     await tabTo(page, settlement.getByRole("combobox", { name: "Statut", exact: true }));
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("listbox")).toBeVisible();
     await page.keyboard.press("Home");
+    await expect(page.getByRole("option", { name: "Gagné", exact: true })).toBeFocused();
     await page.keyboard.press("ArrowDown");
-    await expect(settlement.getByRole("combobox", { name: "Statut", exact: true })).toHaveValue(
-      "lost",
+    await expect(page.getByRole("option", { name: "Perdu", exact: true })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(settlement.getByRole("combobox", { name: "Statut", exact: true })).toHaveText(
+      "Perdu",
     );
     await typeAt(page, settlement.getByLabel("P&L fictif"), "-5");
     await typeAt(
@@ -55,9 +61,9 @@ for (const size of ["desktop", "mobile"] as const) {
       page,
       settlement.getByRole("button", { name: "Enregistrer le règlement fictif" }),
     );
-    await expect(creation.getByRole("status").filter({ hasText: "Règlement lost" })).toContainText(
-      /-5,00\s*€/,
-    );
+    await expect(
+      creation.getByRole("status").filter({ hasText: "Règlement enregistré · Perdu" }),
+    ).toContainText(/-5,00\s*€/);
   });
 
   test(`reviews mapping and starts a model through ${size} keyboard controls`, async ({ page }) => {
@@ -184,14 +190,14 @@ test("changes appearance with menu keys and returns focus to its trigger", async
   const trigger = page.getByRole("button", { name: "Changer le thème" });
   await activate(page, trigger);
   await page.keyboard.press("Home");
-  await expect(page.getByRole("menuitem", { name: "Système" })).toBeFocused();
+  await expect(page.getByRole("menuitemradio", { name: "Système" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("menuitem", { name: "Clair" })).toBeFocused();
+  await expect(page.getByRole("menuitemradio", { name: "Clair" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("menuitem", { name: "Sombre" })).toBeFocused();
+  await expect(page.getByRole("menuitemradio", { name: "Sombre" })).toBeFocused();
   expect(
     await page
-      .getByRole("menuitem", { name: "Sombre" })
+      .getByRole("menuitemradio", { name: "Sombre" })
       .evaluate((element) => Number.parseFloat(getComputedStyle(element).outlineWidth)),
   ).toBeGreaterThanOrEqual(2);
   await page.keyboard.press("Enter");
@@ -204,11 +210,11 @@ test("restores filter fields when clearing and revisiting a shared URL", async (
   await expect(page.getByLabel("Équipe", { exact: true })).toHaveValue("Aurore 02");
   await activate(page, page.getByRole("link", { name: "Effacer", exact: true }));
   await expect(page.getByLabel("Équipe", { exact: true })).toHaveValue("");
-  await expect(page.getByRole("combobox", { name: "Grade", exact: true })).toHaveValue("");
+  await expect(page.getByRole("combobox", { name: "Grade", exact: true })).toHaveText("Tous");
   await page.goBack();
   await expect(page.getByLabel("Équipe", { exact: true })).toHaveValue("Aurore 02");
-  await expect(page.getByRole("combobox", { name: "Grade", exact: true })).toHaveValue(
-    "STRONG_VALUE",
+  await expect(page.getByRole("combobox", { name: "Grade", exact: true })).toHaveText(
+    "Forte value",
   );
 });
 

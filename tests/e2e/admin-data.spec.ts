@@ -150,26 +150,44 @@ test("shows measured operations with readable data during a source failure", asy
 });
 
 test("offers independent recovery for temporary catalogue and quality errors", async ({ page }) => {
+  let catalogueUnavailable = true;
+  let qualityUnavailable = true;
   await page.route("**/api/backend/api/v1/admin/data-sources**", async (route) => {
-    await route.fulfill({ body: "{}", contentType: "application/json", status: 503 });
+    if (catalogueUnavailable) {
+      await route.fulfill({ body: "{}", contentType: "application/json", status: 503 });
+    } else {
+      await route.continue();
+    }
   });
   await page.route("**/api/backend/api/v1/admin/quality-issues**", async (route) => {
-    await route.fulfill({ body: "{}", contentType: "application/json", status: 503 });
+    if (qualityUnavailable) {
+      await route.fulfill({ body: "{}", contentType: "application/json", status: 503 });
+    } else {
+      await route.continue();
+    }
   });
   await page.goto("/data");
 
-  await expect(page.getByRole("alert").filter({ hasText: "Catalogue indisponible" })).toBeVisible();
-  await expect(
-    page.getByRole("alert").filter({ hasText: "Actualisation impossible" }),
-  ).toBeVisible();
-  await expect(
-    page
-      .getByRole("region", { name: "Catalogue des sources" })
-      .getByRole("button", { name: "Réessayer" }),
-  ).toBeVisible();
-  await expect(
-    page
-      .getByRole("region", { name: "Anomalies bloquantes" })
-      .getByRole("button", { name: "Réessayer" }),
-  ).toBeVisible();
+  const catalogue = page.getByRole("region", { name: "Catalogue des sources", exact: true });
+  const quality = page.getByRole("region", { name: "Anomalies bloquantes", exact: true });
+  const quarantine = page.getByRole("region", { name: "Quarantaine", exact: true });
+  await expect(catalogue.getByRole("alert")).toContainText("Catalogue indisponible");
+  await expect(quality.getByRole("alert")).toContainText("Actualisation impossible");
+  await expect(quarantine.getByRole("alert")).toContainText("ne peut pas être vérifié");
+  await expect(quarantine.locator('[data-remote-state="empty"]')).toHaveCount(0);
+  await expect(catalogue.getByRole("button", { name: "Réessayer" })).toBeVisible();
+  await expect(quality.getByRole("button", { name: "Réessayer" })).toBeVisible();
+
+  catalogueUnavailable = false;
+  await catalogue.getByRole("button", { name: "Réessayer" }).click();
+  await expect(catalogue.getByRole("alert")).toHaveCount(0);
+  await expect(catalogue).toContainText("mock-provider");
+  await expect(quality.getByRole("alert")).toBeVisible();
+  await expect(quarantine.getByRole("alert")).toBeVisible();
+
+  qualityUnavailable = false;
+  await quality.getByRole("button", { name: "Réessayer" }).click();
+  await expect(quality.getByRole("alert")).toHaveCount(0);
+  await expect(quality).toContainText("EVENT_MAPPING_AMBIGUOUS");
+  await expect(quarantine.getByRole("alert")).toHaveCount(0);
 });

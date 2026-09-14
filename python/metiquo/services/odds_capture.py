@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
@@ -28,7 +29,7 @@ from metiquo.db.odds_models import (
 from metiquo.foundation.time import Clock, SystemClock
 from metiquo.providers import OddsProvider, provider_entity_uuid, provider_market_uuid
 
-type OddsProviderType = Literal["mock", "manual_import", "licensed_feed"]
+type OddsProviderType = Literal["mock", "manual_import", "licensed_feed", "public_scrape"]
 
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
 
@@ -95,13 +96,15 @@ class OddsCaptureService:
         provider: OddsProvider,
         event: ProviderEvent,
         source: OddsCaptureSource,
+        *,
+        connection: Connection | None = None,
     ) -> OddsCaptureReport:
         """Capturer un événement et ajouter uniquement de nouvelles observations."""
 
-        recorded_at = self._clock.now().value
         try:
             markets = provider.get_event_markets(event.provider_event_id)
             capture = provider.capture_snapshot(event.provider_event_id)
+            recorded_at = self._clock.now().value
             observations = _normalize_observations(
                 provider,
                 event,
@@ -113,10 +116,11 @@ class OddsCaptureService:
                 recorded_at,
             )
         except Exception as error:
-            self._record_failure(provider, source, recorded_at, error)
+            if connection is None:
+                self.record_failure(provider, source, self._clock.now().value, error)
             raise
         event_snapshot_id = observations[0].snapshot.event_id
-        with self.engine.begin() as connection:
+        with self.engine.begin() if connection is None else nullcontext(connection) as connection:
             provider_id = _upsert_provider(connection, provider.provider_code, source, recorded_at)
             event_id = _upsert_event(
                 connection,
@@ -139,7 +143,7 @@ class OddsCaptureService:
                 provider_id,
                 ProviderStatus.OPERATIONAL,
                 recorded_at,
-                capture.captured_at,
+                max(item.snapshot.captured_at for item in observations),
                 None,
             )
         return OddsCaptureReport(
@@ -158,7 +162,7 @@ class OddsCaptureService:
             ),
         )
 
-    def _record_failure(
+    def record_failure(
         self,
         provider: OddsProvider,
         source: OddsCaptureSource,
@@ -419,6 +423,16 @@ def _persist_observations(
         ).scalar_one_or_none()
         if inserted_id is not None:
             inserted.append(cast(UUID, inserted_id))
+        else:
+            existing_fingerprint = connection.scalar(
+                select(snapshots.c.observation_fingerprint).where(
+                    snapshots.c.id == snapshot.odds_snapshot_id
+                )
+            )
+            if existing_fingerprint is not None and existing_fingerprint != observation.fingerprint:
+                raise OddsCaptureValidationError(
+                    "Un identifiant de snapshot immuable est réutilisé avec un autre contenu"
+                )
     return tuple(inserted)
 
 
