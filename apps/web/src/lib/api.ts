@@ -6,7 +6,9 @@ import { transportReady } from './transport';
 
 async function get<T>(path: string, schema: z.ZodType<T>, signal: AbortSignal): Promise<T> {
   await transportReady;
-  const response = await fetch(`${config.apiBaseUrl}${path}`, { signal });
+  const response = await fetch(`${config.apiBaseUrl}${path}`, {
+    signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
+  });
   if (!response.ok) throw new Error(`Le chargement a échoué (${response.status}).`);
   return schema.parse(await response.json());
 }

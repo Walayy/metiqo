@@ -86,9 +86,14 @@ body {
   color: var(--text);
   min-width: 320px;
 }
-body[data-scroll-locked] {
-  margin-right: 0 !important;
-  --removed-scroll-bar-size: 0px !important;
+@supports (scrollbar-gutter: stable) {
+  /* Higher specificity than Radix's injected body rule. The root already
+     reserves the gutter; a second compensation would shrink the page. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    --removed-scroll-bar-size: 0px !important;
+  }
 }
 button,
 input,
@@ -417,38 +422,27 @@ h3 {
   margin-top: auto;
   padding-top: 32px;
 }
-.demo-card {
+.analysis-card {
   border: 1px solid var(--border);
   border-radius: 9px;
   padding: 14px;
   background: var(--surface-muted);
   position: relative;
 }
-.demo-icon {
+.analysis-icon {
   display: flex;
   color: var(--accent);
   margin-bottom: 12px;
 }
-.demo-card strong {
+.analysis-card strong {
   display: block;
   font-size: 12px;
 }
-.demo-card p {
+.analysis-card p {
   font-size: 11px;
   line-height: 1.75;
   margin-top: 6px;
   color: var(--muted);
-}
-.demo-tag {
-  position: absolute;
-  right: 10px;
-  top: 16px;
-  font-size: 10px;
-  letter-spacing: 0.8px;
-  color: var(--muted);
-  border: 1px solid var(--border-strong);
-  border-radius: 3px;
-  padding: 3px 4px;
 }
 .help-nav {
   margin-top: 20px;
@@ -500,39 +494,6 @@ h3 {
   align-items: center;
   gap: 8px;
 }
-.mode-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--border-strong);
-  border-radius: 5px;
-  padding: 5px 8px;
-  color: var(--muted);
-  font-size: 10px;
-}
-.mode-pill:hover {
-  color: var(--text);
-  background: var(--surface-hover);
-}
-.header-divider {
-  width: 1px;
-  height: 18px;
-  background: var(--border);
-  margin: 0 6px;
-}
-.profile-mark {
-  display: grid;
-  place-items: center;
-  width: 29px;
-  height: 29px;
-  border: 1px solid var(--border-strong);
-  border-radius: 50%;
-  font-family: var(--font-display);
-  font-size: 11px;
-  color: var(--text);
-  margin-left: 10px;
-  background: var(--selected);
-}
 .mobile-menu {
   display: none;
 }
@@ -578,11 +539,6 @@ h1 {
 .heading-actions {
   padding-top: 14px;
   align-self: center;
-}
-.scenario-label {
-  font-size: 10px;
-  color: var(--subtle);
-  letter-spacing: 0.8px;
 }
 .date-caption {
   display: flex;
@@ -719,9 +675,7 @@ h2 {
 }
 .refresh-button {
   font-size: 10px;
-  padding-right: 0;
   gap: 6px;
-  border: none;
 }
 .league-tabs {
   display: flex;
@@ -758,7 +712,6 @@ h2 {
   align-items: center;
   gap: 5px;
   margin-left: auto;
-  padding-right: 0;
   font-size: 10px;
 }
 .filter-toolbar {
@@ -1514,8 +1467,6 @@ h2 {
   inset: 0;
   z-index: 60;
   background: var(--overlay);
-  backdrop-filter: blur(4px);
-  animation: fade-in 0.16s ease-out;
 }
 .modal-content {
   position: fixed;
@@ -1532,7 +1483,6 @@ h2 {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: modal-in 0.18s ease-out;
 }
 .modal-header {
   display: flex;
@@ -1715,7 +1665,6 @@ button.catalog-item:hover {
   border-right: 0;
   border-top: 0;
   border-bottom: 0;
-  animation: drawer-in 0.22s ease-out;
 }
 .detail-scroll {
   overflow: auto;
@@ -1823,44 +1772,6 @@ button.catalog-item:hover {
   color: var(--muted);
   font-weight: 400;
 }
-.offers-table {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.offer-head,
-.offer-row {
-  display: grid;
-  grid-template-columns: 1fr 65px 70px;
-  align-items: center;
-  padding: 10px 13px;
-  gap: 10px;
-}
-.offer-head {
-  color: var(--muted);
-  background: var(--surface-muted);
-  font-size: 10px;
-}
-.offer-row {
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-}
-.offer-row > strong {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-}
-.bookmaker-icon {
-  width: 23px;
-  height: 23px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 5px;
-  font-size: 10px;
-  background: var(--surface-muted);
-}
 .formula-note {
   display: flex;
   align-items: flex-start;
@@ -1962,7 +1873,6 @@ button.catalog-item:hover {
   width: min(290px, 90vw);
   background: var(--sidebar);
   border-right: 1px solid var(--border);
-  animation: nav-in 0.18s ease-out;
 }
 .mobile-sidebar .sidebar-inner {
   padding: 25px 22px 16px;
@@ -1984,19 +1894,6 @@ button.catalog-item:hover {
   transform: translateX(-50%);
   z-index: 80;
   pointer-events: none;
-}
-.dialog-loading {
-  position: fixed;
-  z-index: 80;
-  bottom: 25px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 12px;
-  box-shadow: var(--shadow);
 }
 .toast {
   padding: 13px 19px;
@@ -2024,8 +1921,7 @@ button.catalog-item:hover {
 .skip-link:focus {
   top: 10px;
 }
-.fatal-error,
-.boot-placeholder {
+.fatal-error {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -2163,36 +2059,6 @@ button.catalog-item:hover {
     opacity: 0;
   }
   to {
-    opacity: 1;
-  }
-}
-@keyframes modal-in {
-  from {
-    opacity: 0;
-    translate: 0 7px;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-@keyframes drawer-in {
-  from {
-    opacity: 0.5;
-    translate: 20px 0;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-@keyframes nav-in {
-  from {
-    translate: -20px 0;
-    opacity: 0.5;
-  }
-  to {
-    translate: 0 0;
     opacity: 1;
   }
 }

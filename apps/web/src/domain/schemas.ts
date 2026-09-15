@@ -24,7 +24,22 @@ export const catalogSchema = z.object({
   leagues: z.array(leagueSchema),
   teams: z.array(teamSchema),
 });
-export const offerSchema = z.object({ bookmaker: z.string(), odds: z.number().gt(1) });
+export const oddsHistorySchema = z
+  .array(
+    z.object({
+      recordedAt: z.iso.datetime(),
+      odds: z.number().gt(1),
+    }),
+  )
+  .min(1)
+  .refine(
+    (history) =>
+      history.every(
+        (point, index) =>
+          index === 0 || Date.parse(point.recordedAt) > Date.parse(history[index - 1]!.recordedAt),
+      ),
+    { message: 'Les relevés doivent être uniques et classés par date croissante.' },
+  );
 export const opportunitySchema = z
   .object({
     id: z.string(),
@@ -36,8 +51,8 @@ export const opportunitySchema = z
     format: z.enum(['BO1', 'BO3', 'BO5']),
     market: z.enum(['winner', 'map1']),
     probability: z.number().gt(0).lt(1),
-    offers: z.array(offerSchema).min(1),
-    history: z.array(z.object({ label: z.string(), odds: z.number().gt(1) })).min(2),
+    bookmaker: z.literal('stake'),
+    history: oddsHistorySchema,
   })
   .refine(
     (item) => item.homeId !== item.awayId && [item.homeId, item.awayId].includes(item.pickId),
@@ -47,7 +62,7 @@ export const opportunitySchema = z
   );
 export const opportunitiesSchema = z.object({
   generatedAt: z.iso.datetime(),
-  scenarioDate: z.iso.datetime(),
+  referenceDate: z.iso.datetime(),
   items: z.array(opportunitySchema),
 });
 export type League = z.infer<typeof leagueSchema>;

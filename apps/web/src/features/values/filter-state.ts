@@ -1,14 +1,14 @@
 export interface Filters {
   league: string;
+  team: string;
   market: string;
   minValue: number;
-  bookmaker: string;
   period: string;
 }
 export const defaultFilters: Filters = {
   league: 'all',
+  team: 'all',
   market: 'all',
   minValue: 0,
-  bookmaker: 'all',
   period: 'all',
 };

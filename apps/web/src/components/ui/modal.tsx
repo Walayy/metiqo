@@ -25,11 +25,21 @@ export function Modal({ open, onOpenChange, title, description, children, classN
           }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
-            if (opener.current?.isConnected) opener.current.focus();
-            else
-              document
-                .querySelector<HTMLButtonElement>('[aria-label="Ouvrir la navigation"]')
-                ?.focus();
+            if (
+              opener.current?.isConnected &&
+              opener.current !== document.body &&
+              opener.current.getClientRects().length > 0
+            )
+              opener.current.focus({ preventScroll: true });
+            else {
+              const navigation = document.querySelector<HTMLButtonElement>(
+                '[aria-label="Ouvrir la navigation"]',
+              );
+              const fallback = navigation?.getClientRects().length
+                ? navigation
+                : document.getElementById('values-title');
+              fallback?.focus({ preventScroll: true });
+            }
           }}
         >
           <div className="modal-header">

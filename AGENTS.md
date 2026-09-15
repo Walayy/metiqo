@@ -7,9 +7,10 @@ Metiquo est une application d’analyse des values sur les marchés esport. Le p
 ## Périmètre et données
 
 - Ne contredis jamais ce fichier. Faire évoluer ces règles explicitement lorsque le besoin produit évolue.
-- Développer la section demandée sans ajouter de pages factices ni de boutons inactifs.
+- Développer la section demandée sans ajouter de pages factices ni de boutons inactifs. Exception produit : le sélecteur de jeux affiche CS2 et Dota 2 désactivés et marqués « À venir ».
 - Prévoir toutes les régions, ligues, divisions et équipes via des identifiants stables et un référentiel extensible ; ne pas coder les filtres contre une liste fermée.
-- Distinguer les identités sourcées des rencontres, probabilités et cotes fictives. Toujours rendre visible le mode démo. Ne jamais présenter une fixture comme un calendrier officiel ou une prédiction réelle.
+- Distinguer les identités sourcées des rencontres, probabilités et cotes fictives dans le README et les sources. À la demande produit du 15 septembre 2026, l’interface est identique en modes mock et API, sans badge ni texte de démonstration. Ne pas qualifier les fixtures de calendrier officiel ni de prédiction réelle.
+- Stake est l’unique bookmaker suivi. La cote courante est le dernier relevé horodaté ; l’historique commence à l’enregistrement de la rencontre. Aucune comparaison entre bookmakers.
 - Documenter la source, la date de récupération et les limites de couverture du référentiel. Ne pas annoncer une exhaustivité ou une actualité non vérifiées.
 - Utiliser les logos officiels sourcés, conservés localement quand possible, avec dimensions réservées et repli accessible. Ne pas recréer de faux logos ou inventer une URL.
 - La value est calculée par `(probabilité estimée × cote décimale - 1) × 100`. Les chiffres affichés et tris dérivent des mêmes données. Aucune promesse de rendement.

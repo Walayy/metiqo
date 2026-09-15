@@ -10,21 +10,18 @@ export function filterValues(
   favorites: string[],
   savedOnly: boolean,
   sort: string,
-  scenarioDate: string,
+  referenceDate: string,
 ) {
   const term = normalize(search.trim());
   return items
     .filter((item) => {
       if (savedOnly && !favorites.includes(item.id)) return false;
       if (filters.league !== 'all' && item.leagueId !== filters.league) return false;
-      if (filters.market !== 'all' && item.market !== filters.market) return false;
-      if (
-        filters.bookmaker !== 'all' &&
-        !item.offers.some((o) => o.bookmaker === filters.bookmaker)
-      )
+      if (filters.team !== 'all' && ![item.homeId, item.awayId].includes(filters.team))
         return false;
+      if (filters.market !== 'all' && item.market !== filters.market) return false;
       if (valueOf(item) + Number.EPSILON < filters.minValue) return false;
-      if (filters.period === 'today' && item.startsAt.slice(0, 10) !== scenarioDate.slice(0, 10))
+      if (filters.period === 'today' && item.startsAt.slice(0, 10) !== referenceDate.slice(0, 10))
         return false;
       const home = catalog.teams.find((t) => t.id === item.homeId);
       const away = catalog.teams.find((t) => t.id === item.awayId);

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useDeferredValue, useEffect, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { Dialog } from 'radix-ui';
@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleHelp,
-  FlaskConical,
   Globe2,
   Menu,
   Moon,
@@ -25,31 +24,25 @@ import {
 import { clsx } from 'clsx';
 import type { Catalog } from '@/domain/schemas';
 import { valueOf } from '@/domain/value';
-import { percent, time } from '@/lib/format';
-import { config } from '@/lib/config';
+import { calendarDay, calendarMonth, percent, time } from '@/lib/format';
 import { catalogQuery, opportunitiesQuery } from '@/lib/api';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useTheme } from '@/hooks/use-theme';
+import { useExplorerLocation } from '@/hooks/use-explorer-location';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Select } from '@/components/ui/select';
+import { Modal } from '@/components/ui/modal';
 import { InsightsSkeleton, ValuesSkeleton } from '@/components/ui/skeleton';
 import { ValueRow } from '@/features/values/value-row';
 import { FeaturedValue } from '@/features/values/featured-value';
 import { defaultFilters } from '@/features/values/filter-state';
 import { filterValues } from '@/features/values/filter';
-const ValueDetail = lazy(() =>
-  import('@/features/values/value-detail').then((module) => ({ default: module.ValueDetail })),
-);
-const FilterDialog = lazy(() =>
-  import('@/features/values/filter-dialog').then((module) => ({ default: module.FilterDialog })),
-);
-const HelpDialog = lazy(() =>
-  import('@/features/values/help-dialog').then((module) => ({ default: module.HelpDialog })),
-);
-const CatalogDialog = lazy(() =>
-  import('@/features/catalog/catalog-dialog').then((module) => ({ default: module.CatalogDialog })),
-);
+import { ValueDetail } from '@/features/values/value-detail';
+import { FilterDialog } from '@/features/values/filter-dialog';
+import { HelpDialog } from '@/features/values/help-dialog';
+import { CatalogDialog } from '@/features/catalog/catalog-dialog';
 
 const emptyCatalog: Catalog = { retrievedAt: '', source: '', leagues: [], teams: [] };
 const pageSize = 6;
@@ -60,19 +53,22 @@ export function App() {
   const items = result.data?.items ?? [];
   const { favorites, toggle } = useFavorites();
   const { theme, toggleTheme } = useTheme();
-  const [savedOnly, setSavedOnly] = useState(false);
-  const [filters, setFilters] = useState(defaultFilters);
-  const [search, setSearch] = useState('');
+  const [explorer, updateLocation] = useExplorerLocation();
+  const { savedOnly, filters, search, sort, page, selectedId, detailOpen } = explorer;
+  const setSavedOnly = (savedOnly: boolean) => updateLocation({ savedOnly });
+  const setFilters = (filters: typeof defaultFilters) => updateLocation({ filters });
+  const setSearch = (search: string) => updateLocation({ search });
+  const setSort = (sort: string) => updateLocation({ sort });
+  const setPage = (page: number) => updateLocation({ page });
   const deferredSearch = useDeferredValue(search);
-  const [sort, setSort] = useState('value');
-  const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const resultsHeading = useRef<HTMLHeadingElement>(null);
+  const pendingPageFocus = useRef(false);
   const [panel, setPanel] = useState<'filters' | 'help' | 'catalog' | null>(null);
   const [mobileNav, setMobileNav] = useState(false);
+  const pendingPanel = useRef<typeof panel>(null);
   const [notice, setNotice] = useState('');
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(noticeTimer.current), []);
-  const detailTrigger = useRef<HTMLElement | null>(null);
   const isLoading = catalogResult.isPending || result.isPending;
   const invalidReferences = items.some(
     (item) =>
@@ -88,10 +84,18 @@ export function App() {
     favorites,
     savedOnly,
     sort,
-    result.data?.scenarioDate ?? '',
+    result.data?.referenceDate ?? '',
   );
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pages);
+  useLayoutEffect(() => {
+    if (!pendingPageFocus.current) return;
+    pendingPageFocus.current = false;
+    resultsHeading.current?.focus({ preventScroll: true });
+    resultsHeading.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }, [currentPage]);
+  const availableFavorites = items.filter((item) => favorites.includes(item.id)).length;
+  const emptyFavorites = savedOnly && availableFavorites === 0;
   const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const best = filtered.reduce<(typeof filtered)[number] | undefined>(
     (acc, item) => (!acc || valueOf(item) > valueOf(acc) ? item : acc),
@@ -109,11 +113,23 @@ export function App() {
     setPage(1);
   }
   function chooseLeague(id: string) {
-    updateFilters({ ...filters, league: id });
+    updateFilters({ ...filters, league: id, team: 'all' });
+  }
+  function chooseTeam(id: string) {
+    updateLocation({
+      filters: { ...defaultFilters, team: id },
+      search: '',
+      savedOnly: false,
+      page: 1,
+    });
   }
   function changeSaved(value: boolean) {
     setSavedOnly(value);
     setPage(1);
+  }
+  function changePage(next: number) {
+    pendingPageFocus.current = true;
+    setPage(next);
   }
   function save(id: string) {
     toggle(id);
@@ -122,13 +138,16 @@ export function App() {
     noticeTimer.current = setTimeout(() => setNotice(''), 2500);
   }
   function openDetail(id: string) {
-    detailTrigger.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setSelectedId(id);
+    updateLocation({ selectedId: id, detailOpen: true });
   }
   function closeDetail() {
-    setSelectedId(null);
-    requestAnimationFrame(() => detailTrigger.current?.focus());
+    updateLocation({ detailOpen: false });
+  }
+  function openPanel(next: NonNullable<typeof panel>) {
+    if (mobileNav) {
+      pendingPanel.current = next;
+      setMobileNav(false);
+    } else setPanel(next);
   }
   function reset() {
     updateFilters(defaultFilters);
@@ -144,8 +163,8 @@ export function App() {
     leagues: catalog.leagues,
     selectedLeague: filters.league,
     onLeagueChange: chooseLeague,
-    onCatalog: () => setPanel('catalog'),
-    onHelp: () => setPanel('help'),
+    onCatalog: () => openPanel('catalog'),
+    onHelp: () => openPanel('help'),
   };
 
   return (
@@ -161,12 +180,22 @@ export function App() {
           <Dialog.Overlay className="modal-overlay" />
           <Dialog.Content
             className="mobile-sidebar"
+            onAnimationEnd={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                event.currentTarget.dataset.state === 'closed' &&
+                pendingPanel.current
+              ) {
+                setPanel(pendingPanel.current);
+                pendingPanel.current = null;
+              }
+            }}
             onCloseAutoFocus={(event) => {
               event.preventDefault();
               if (!panel)
                 document
                   .querySelector<HTMLButtonElement>('[aria-label="Ouvrir la navigation"]')
-                  ?.focus();
+                  ?.focus({ preventScroll: true });
             }}
           >
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
@@ -197,11 +226,6 @@ export function App() {
             <strong>{savedOnly ? 'Mes favoris' : 'Les values'}</strong>
           </div>
           <div className="header-actions">
-            <button type="button" className="mode-pill" onClick={() => setPanel('help')}>
-              <FlaskConical size={13} />
-              {config.dataMode === 'mock' ? 'Mode démo' : 'Mode API'}
-            </button>
-            <span className="header-divider" />
             <Button
               variant="ghost"
               iconOnly
@@ -230,9 +254,6 @@ export function App() {
             >
               <CircleHelp size={18} />
             </Button>
-            <span className="profile-mark" title="Espace de démonstration">
-              M
-            </span>
           </div>
         </header>
         <main id="main-content" className="main-content">
@@ -250,11 +271,13 @@ export function App() {
               </p>
             </div>
             <div className="heading-actions">
-              <span className="scenario-label">SCÉNARIO DE DÉMONSTRATION</span>
               <div className="date-caption">
-                <span className="calendar-number">14</span>
+                <span className="calendar-number">
+                  {result.data ? calendarDay(result.data.referenceDate) : '—'}
+                </span>
                 <span>
-                  Septembre 2026<small>Heure de Paris · UTC+2</small>
+                  {result.data ? calendarMonth(result.data.referenceDate) : '—'}
+                  <small>Heure de Paris</small>
                 </span>
               </div>
             </div>
@@ -308,7 +331,9 @@ export function App() {
             <section className="values-section" aria-labelledby="values-title">
               <div className="section-heading">
                 <div>
-                  <h2 id="values-title">{savedOnly ? 'Mes favoris' : 'Les values'}</h2>
+                  <h2 id="values-title" ref={resultsHeading} tabIndex={-1}>
+                    {savedOnly ? 'Mes favoris' : 'Les values'}
+                  </h2>
                   <span className="count-pill">{isLoading ? '…' : filtered.length}</span>
                 </div>
                 <Button
@@ -318,7 +343,7 @@ export function App() {
                   disabled={result.isFetching || catalogResult.isFetching}
                 >
                   <RefreshCw size={14} className={result.isFetching ? 'is-spinning' : ''} />
-                  <span>{result.isFetching ? 'Actualisation…' : 'Actualiser'}</span>
+                  <span>Actualiser</span>
                 </Button>
               </div>
               <div className="league-tabs" aria-label="Filtres rapides par ligue">
@@ -382,6 +407,7 @@ export function App() {
                 <Button
                   className={clsx('filter-button', activeFilters > 0 && 'has-filters')}
                   onClick={() => setPanel('filters')}
+                  disabled={!catalogResult.data}
                 >
                   <SlidersHorizontal size={15} />
                   Filtres{activeFilters > 0 && <span>{activeFilters}</span>}
@@ -407,13 +433,16 @@ export function App() {
                 <div className="active-filters">
                   <span>
                     {filters.league !== 'all'
-                      ? catalog.leagues.find((l) => l.id === filters.league)?.name
+                      ? (catalog.leagues.find((l) => l.id === filters.league)?.name ??
+                        'Ligue indisponible')
                       : 'Toutes les ligues'}
+                    {filters.team !== 'all'
+                      ? ` · ${catalog.teams.find((team) => team.id === filters.team)?.name ?? 'Équipe indisponible'}`
+                      : ''}
                     {filters.minValue > 0 ? ` · Value ≥ ${filters.minValue} %` : ''}
                     {filters.market !== 'all'
                       ? ` · ${filters.market === 'winner' ? 'Match' : 'Carte 1'}`
                       : ''}
-                    {filters.bookmaker !== 'all' ? ` · ${filters.bookmaker}` : ''}
                   </span>
                   <button type="button" onClick={reset}>
                     Effacer
@@ -442,43 +471,60 @@ export function App() {
                       {savedOnly ? <Bookmark size={29} /> : <Search size={29} />}
                     </span>
                     <h3>
-                      {savedOnly && !favorites.length
-                        ? 'Gardez vos meilleures pistes.'
-                        : 'Aucune value dans cette sélection.'}
+                      {emptyFavorites
+                        ? favorites.length
+                          ? 'Ces favoris ne sont plus disponibles.'
+                          : 'Gardez vos meilleures pistes.'
+                        : savedOnly
+                          ? 'Aucun favori ne correspond aux filtres.'
+                          : 'Aucune value dans cette sélection.'}
                     </h3>
                     <p>
-                      {savedOnly && !favorites.length
-                        ? 'Ajoutez une opportunité aux favoris pour la retrouver ici.'
-                        : 'Essayez une autre équipe ou élargissez vos filtres.'}
+                      {emptyFavorites
+                        ? favorites.length
+                          ? 'Les opportunités enregistrées ne figurent plus dans les données disponibles.'
+                          : 'Ajoutez une opportunité aux favoris pour la retrouver ici.'
+                        : savedOnly
+                          ? 'Vos favoris sont conservés. Effacez les filtres et la recherche pour les retrouver.'
+                          : 'Essayez une autre équipe ou élargissez vos filtres.'}
                     </p>
                     <Button
                       onClick={() => {
                         reset();
-                        if (savedOnly) changeSaved(false);
+                        if (emptyFavorites) changeSaved(false);
                       }}
                     >
-                      {savedOnly ? 'Explorer les values' : 'Réinitialiser les filtres'}
+                      {emptyFavorites
+                        ? 'Explorer les values'
+                        : 'Effacer les filtres et la recherche'}
                       <ArrowRight size={15} />
                     </Button>
                   </div>
                 ) : (
-                  <>
-                    <div className="table-heading" aria-hidden="true">
-                      <span>RENCONTRE</span>
-                      <span>SÉLECTION</span>
-                      <span>COTE</span>
-                      <span>PROBA.</span>
-                      <span>
-                        VALUE <ArrowDownUp size={10} />
-                      </span>
-                      <span />
+                  <div role="table" aria-label="Opportunités" aria-colcount={6}>
+                    <div role="rowgroup">
+                      <div className="table-heading" role="row">
+                        <span role="columnheader" aria-colindex={1}>
+                          RENCONTRE
+                        </span>
+                        <span role="columnheader" aria-colindex={2}>
+                          SÉLECTION
+                        </span>
+                        <span role="columnheader" aria-colindex={3}>
+                          COTE
+                        </span>
+                        <span role="columnheader" aria-colindex={4}>
+                          PROBA.
+                        </span>
+                        <span role="columnheader" aria-colindex={5}>
+                          VALUE
+                        </span>
+                        <span role="columnheader" aria-colindex={6}>
+                          <span className="sr-only">Actions</span>
+                        </span>
+                      </div>
                     </div>
-                    <motion.div
-                      key={`${filters.league}-${savedOnly}-${currentPage}`}
-                      initial={{ opacity: 0.55, y: 3 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.18 }}
-                    >
+                    <div role="rowgroup">
                       {visible.map((item) => (
                         <ValueRow
                           key={item.id}
@@ -492,15 +538,15 @@ export function App() {
                           onOpen={() => openDetail(item.id)}
                         />
                       ))}
-                    </motion.div>
-                  </>
+                    </div>
+                  </div>
                 )}
               </div>
               <div className="table-footer">
                 <span aria-live="polite">
                   {!filtered.length
                     ? 'Aucun résultat'
-                    : `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, filtered.length)} sur ${filtered.length} opportunités`}
+                    : `Page ${currentPage} sur ${pages} · ${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, filtered.length)} sur ${filtered.length} opportunités`}
                 </span>
                 <div className="pagination">
                   <Button
@@ -508,7 +554,7 @@ export function App() {
                     variant="ghost"
                     aria-label="Page précédente"
                     disabled={currentPage === 1}
-                    onClick={() => setPage(currentPage - 1)}
+                    onClick={() => changePage(currentPage - 1)}
                   >
                     <ChevronLeft size={16} />
                   </Button>
@@ -521,21 +567,16 @@ export function App() {
                     variant="ghost"
                     aria-label="Page suivante"
                     disabled={currentPage === pages}
-                    onClick={() => setPage(currentPage + 1)}
+                    onClick={() => changePage(currentPage + 1)}
                   >
                     <ChevronRight size={16} />
                   </Button>
                 </div>
               </div>
               <div className="data-caption">
+                <span>Cotes suivies sur Stake</span>
                 <span>
-                  <FlaskConical size={13} />
-                  Matchs et cotes simulés
-                </span>
-                <span>
-                  {result.data
-                    ? `Actualisé à ${time(result.data.generatedAt)}`
-                    : 'Chargement du scénario'}
+                  {result.data ? `Actualisé à ${time(result.data.generatedAt)}` : '—'}
                   <span className="meta-dot">·</span>Heure de Paris
                 </span>
               </div>
@@ -544,8 +585,8 @@ export function App() {
                   <Radar size={20} />
                 </span>
                 <div>
-                  <strong>Le bon réflexe : comparer.</strong>
-                  <p>Ouvrez une value pour retrouver les cotes et le détail du calcul.</p>
+                  <strong>Comprendre la value.</strong>
+                  <p>Découvrez le lien entre probabilité estimée, cote et value.</p>
                 </div>
                 <button
                   type="button"
@@ -577,43 +618,52 @@ export function App() {
           </footer>
         </main>
       </div>
-      <Suspense
-        fallback={
-          <div className="dialog-loading" role="status">
-            Ouverture…
-          </div>
-        }
-      >
-        {panel === 'filters' && (
-          <FilterDialog
-            open
-            onClose={() => setPanel(null)}
-            filters={filters}
-            onChange={updateFilters}
-            catalog={catalog}
-            bookmakers={[...new Set(items.flatMap((i) => i.offers.map((o) => o.bookmaker)))]}
-          />
-        )}
-        {panel === 'help' && <HelpDialog open onClose={() => setPanel(null)} />}
-        {panel === 'catalog' && (
-          <CatalogDialog
-            open
-            onClose={() => setPanel(null)}
-            catalog={catalog}
-            selectedLeague={filters.league}
-            onSelect={chooseLeague}
-          />
-        )}
-        {selected && (
+      <>
+        <FilterDialog
+          open={panel === 'filters'}
+          onClose={() => setPanel(null)}
+          filters={filters}
+          onChange={updateFilters}
+          catalog={catalog}
+        />
+        <HelpDialog open={panel === 'help'} onClose={() => setPanel(null)} />
+        <CatalogDialog
+          open={panel === 'catalog'}
+          onClose={() => setPanel(null)}
+          catalog={catalog}
+          selectedLeague={filters.league}
+          onSelect={chooseLeague}
+          onSelectTeam={chooseTeam}
+          loading={catalogResult.isPending}
+          error={catalogResult.isError}
+          onRetry={() => void catalogResult.refetch()}
+        />
+        {selected && !isLoading && !isError && (
           <ValueDetail
             item={selected}
+            open={detailOpen}
             catalog={catalog}
             saved={favorites.includes(selected.id)}
             onSave={() => save(selected.id)}
             onClose={closeDetail}
           />
         )}
-      </Suspense>
+        <Modal
+          open={detailOpen && !selected && !isLoading && !isError}
+          onOpenChange={(open) => {
+            if (!open) closeDetail();
+          }}
+          title="Opportunité indisponible"
+          description="Cette opportunité ne figure plus dans les données disponibles."
+        >
+          <div className="catalog-status">
+            <Button onClick={closeDetail}>Revenir aux résultats</Button>
+          </div>
+        </Modal>
+      </>
+      {(result.isFetching || catalogResult.isFetching) && (
+        <Spinner fixed label="Actualisation des données" />
+      )}
       <div className="toast-region" role="status" aria-live="polite">
         <AnimatePresence>
           {notice && (

@@ -1,17 +1,9 @@
-import {
-  ArrowUpRight,
-  Bookmark,
-  CircleHelp,
-  Globe2,
-  Radar,
-  ShieldCheck,
-  Swords,
-  X,
-} from 'lucide-react';
+import { ArrowUpRight, Bookmark, CircleHelp, Globe2, Radar, ShieldCheck, X } from 'lucide-react';
 import type { League } from '@/domain/schemas';
 import { clsx } from 'clsx';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
+import { GameSelector } from './game-selector';
 
 interface Props {
   favoriteCount: number;
@@ -52,15 +44,7 @@ export function Sidebar({
           </Button>
         )}
       </div>
-      <div className="game-selector">
-        <span className="game-icon">
-          <Swords size={20} />
-        </span>
-        <div>
-          <strong>League of Legends</strong>
-          <span>Votre terrain de jeu</span>
-        </div>
-      </div>
+      <GameSelector />
       <p className="nav-label">ESPACE D’ANALYSE</p>
       <nav aria-label="Navigation principale" className="main-nav">
         <button
@@ -137,8 +121,8 @@ export function Sidebar({
         </button>
       </nav>
       <div className="sidebar-bottom">
-        <div className="demo-card">
-          <span className="demo-icon">
+        <div className="analysis-card">
+          <span className="analysis-icon">
             <ShieldCheck size={19} />
           </span>
           <strong>Le jeu de l’analyse.</strong>
@@ -147,9 +131,15 @@ export function Sidebar({
             <br />
             Affinez votre lecture.
           </p>
-          <span className="demo-tag">MODE DÉMO</span>
         </div>
-        <button type="button" className="nav-item help-nav" onClick={onHelp}>
+        <button
+          type="button"
+          className="nav-item help-nav"
+          onClick={() => {
+            onHelp();
+            onClose?.();
+          }}
+        >
           <CircleHelp size={18} />
           <span>Comprendre la value</span>
           <ArrowUpRight size={14} />

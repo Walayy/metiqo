@@ -1,4 +1,4 @@
-import { ArrowUpRight, FlaskConical, ScanLine } from 'lucide-react';
+import { ArrowUpRight, History, ScanLine } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -46,13 +46,13 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => vo
           ni une certitude ni la probabilité de gagner.
         </p>
         <div className="formula-note">
-          <FlaskConical size={19} />
+          <History size={19} />
           <div>
-            <strong>Vous explorez une démonstration</strong>
+            <strong>Suivre une cote dans le temps</strong>
             <p>
-              Les ligues et équipes sont sourcées. Les affiches, horaires, cotes, historiques et
-              probabilités sont fictifs. Les bookmakers sont cités à titre illustratif, sans
-              affiliation. Aucun pari n’est possible.
+              Les cotes Stake sont suivies depuis l’enregistrement du match. Chaque relevé est daté
+              ; la value utilise la dernière cote disponible et la probabilité estimée. L’historique
+              permet de retrouver les hausses comme les baisses.
             </p>
           </div>
         </div>

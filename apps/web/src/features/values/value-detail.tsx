@@ -1,19 +1,21 @@
-import { Bookmark, Check, Info } from 'lucide-react';
+import { Bookmark, History, Info } from 'lucide-react';
 import type { Catalog, Opportunity } from '@/domain/schemas';
-import { bestOffer, expectedValue, fairOdds, marketLabel, valueOf } from '@/domain/value';
-import { decimal, percent, shortDate, time } from '@/lib/format';
+import { currentQuote, oddsChange, fairOdds, marketLabel, valueOf } from '@/domain/value';
+import { dateTime, decimal, signedDecimal, percent, shortDate, time } from '@/lib/format';
 import { Modal } from '@/components/ui/modal';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
-import { OddsChart } from '@/components/ui/odds-chart';
+import { OddsHistory } from './odds-history';
 export function ValueDetail({
   item,
+  open,
   catalog,
   saved,
   onSave,
   onClose,
 }: {
   item: Opportunity | null;
+  open: boolean;
   catalog: Catalog;
   saved: boolean;
   onSave: () => void;
@@ -24,15 +26,16 @@ export function ValueDetail({
   const away = catalog.teams.find((t) => t.id === item.awayId)!;
   const pick = catalog.teams.find((t) => t.id === item.pickId)!;
   const league = catalog.leagues.find((l) => l.id === item.leagueId)!;
-  const best = bestOffer(item);
+  const latest = currentQuote(item);
+  const first = item.history[0]!;
   return (
     <Modal
-      open={!!item}
-      onOpenChange={(open) => {
-        if (!open) onClose();
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
       }}
       title="L’opportunité en détail"
-      description={`${league.name} · ${shortDate(item.startsAt)} à ${time(item.startsAt)} · Match simulé`}
+      description={`${league.name} · ${shortDate(item.startsAt)} à ${time(item.startsAt)}`}
       className="detail-drawer"
     >
       <div className="detail-scroll">
@@ -54,7 +57,7 @@ export function ValueDetail({
         <div className="detail-selection">
           <span>{marketLabel(item.market)}</span>
           <strong>{pick.name}</strong>
-          <span className="value-badge">+{percent(valueOf(item))} de value</span>
+          <span className="value-badge">{signedDecimal(valueOf(item), 1)} % de value</span>
         </div>
         <div className="detail-metrics">
           <div>
@@ -66,56 +69,44 @@ export function ValueDetail({
             <strong>{decimal(fairOdds(item.probability))}</strong>
           </div>
           <div>
-            <span>Meilleure cote</span>
-            <strong className="text-accent">{decimal(best.odds)}</strong>
+            <span>Cote Stake</span>
+            <strong className="text-accent">{decimal(latest.odds)}</strong>
           </div>
         </div>
         <section className="detail-section">
           <h3>
-            Comparer les cotes <span>Simulation</span>
+            <span className="history-title">
+              <History size={16} /> Le suivi de cote
+            </span>
+            <span>Stake · Heure de Paris</span>
           </h3>
-          <div className="offers-table">
-            <div className="offer-head">
-              <span>Bookmaker</span>
-              <span>Cote</span>
-              <span>Value</span>
+          <div className="history-summary">
+            <div>
+              <span>À l’enregistrement</span>
+              <strong>{decimal(first.odds)}</strong>
+              <time dateTime={first.recordedAt}>{dateTime(first.recordedAt)}</time>
             </div>
-            {[...item.offers]
-              .sort((a, b) => b.odds - a.odds)
-              .map((offer) => (
-                <div className="offer-row" key={offer.bookmaker}>
-                  <strong>
-                    <span className={`bookmaker-icon bookmaker-${offer.bookmaker.toLowerCase()}`}>
-                      {offer.bookmaker.slice(0, 1)}
-                    </span>
-                    {offer.bookmaker}
-                    {offer === best && <Check size={14} className="text-accent" />}
-                  </strong>
-                  <span>{decimal(offer.odds)}</span>
-                  <span
-                    className={expectedValue(item.probability, offer.odds) > 0 ? 'text-accent' : ''}
-                  >
-                    {expectedValue(item.probability, offer.odds) > 0 ? '+' : ''}
-                    {percent(expectedValue(item.probability, offer.odds))}
-                  </span>
-                </div>
-              ))}
+            <div>
+              <span>Dernier relevé</span>
+              <strong>{decimal(latest.odds)}</strong>
+              <time dateTime={latest.recordedAt}>{dateTime(latest.recordedAt)}</time>
+            </div>
+            <div>
+              <span>Écart de cote</span>
+              <strong>{signedDecimal(oddsChange(item))}</strong>
+              <small>depuis le début du suivi</small>
+            </div>
           </div>
-        </section>
-        <section className="detail-section">
-          <h3>
-            Évolution de la meilleure cote <span>Simulée</span>
-          </h3>
-          <OddsChart history={item.history} />
+          <OddsHistory key={item.id} history={item.history} />
         </section>
         <div className="formula-note">
           <Info size={17} />
           <div>
             <strong>Le calcul, en toute transparence</strong>
             <p>
-              ({decimal(item.probability, 2)} × {decimal(best.odds)} − 1) × 100 = +
-              {percent(valueOf(item))}. La probabilité est fictive ; aucun modèle prédictif n’est
-              connecté.
+              ({decimal(item.probability, 2)} × {decimal(latest.odds)} − 1) × 100 ={' '}
+              {signedDecimal(valueOf(item), 1)} %. Le calcul utilise la dernière cote relevée. Une
+              value positive ne garantit pas un gain.
             </p>
           </div>
         </div>

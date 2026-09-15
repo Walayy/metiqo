@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { catalog, opportunities } from './fixtures';
-import { valueOf, bestOffer } from '@/domain/value';
+import { valueOf, currentQuote } from '@/domain/value';
 import { filterValues } from '@/features/values/filter';
 import { defaultFilters } from '@/features/values/filter-state';
 describe('Contrat du scénario LoL', () => {
@@ -14,7 +14,7 @@ describe('Contrat du scénario LoL', () => {
       expect([item.homeId, item.awayId]).toContain(item.pickId);
       expect(item.homeId).not.toBe(item.awayId);
       expect(valueOf(item)).toBeGreaterThan(0);
-      expect(item.history.at(-1)?.odds).toBe(bestOffer(item).odds);
+      expect(item.history.at(-1)?.odds).toBe(currentQuote(item).odds);
     }
   });
   it('inclut les six ligues majeures et la LFL avec leurs identités locales', () => {
@@ -37,7 +37,7 @@ describe('Contrat du scénario LoL', () => {
       [item.id],
       true,
       'value',
-      opportunities.scenarioDate,
+      opportunities.referenceDate,
     );
     expect(result.map((i) => i.id)).toEqual([item.id]);
   });
@@ -51,7 +51,7 @@ describe('Contrat du scénario LoL', () => {
         [],
         false,
         'value',
-        opportunities.scenarioDate,
+        opportunities.referenceDate,
       ),
     ).toEqual([]);
     expect(
@@ -63,7 +63,7 @@ describe('Contrat du scénario LoL', () => {
         [],
         false,
         'value',
-        opportunities.scenarioDate,
+        opportunities.referenceDate,
       ),
     ).toEqual([]);
   });
@@ -76,7 +76,7 @@ describe('Contrat du scénario LoL', () => {
       [],
       false,
       'value',
-      opportunities.scenarioDate,
+      opportunities.referenceDate,
     );
     expect(sorted[0]?.id).toBe(opportunities.items[0]?.id);
     expect(
@@ -90,7 +90,7 @@ describe('Contrat du scénario LoL', () => {
       [],
       false,
       'time',
-      opportunities.scenarioDate,
+      opportunities.referenceDate,
     );
     expect(
       chronological.every(

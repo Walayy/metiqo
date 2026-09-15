@@ -2,7 +2,7 @@ import rawCatalog from './data/catalog.json';
 import { catalogSchema, opportunitiesSchema } from '@/domain/schemas';
 import type { Opportunity } from '@/domain/schemas';
 export const catalog = catalogSchema.parse(rawCatalog);
-const scenarioDate = '2026-09-14T08:00:00.000Z';
+const referenceDate = '2026-09-14T08:00:00.000Z';
 
 // Every pairing, price, probability and time below is fictional. Identities are sourced.
 const curated: [string, string, string, number, number][] = [
@@ -17,7 +17,6 @@ const curated: [string, string, string, number, number][] = [
   ['lec', 'FNC', 'VIT', 0.53, 1.95],
   ['lpl', 'JDG', 'WBG', 0.55, 1.88],
 ];
-const bookmakerNames = ['Pinnacle', 'Unibet', 'Betway'];
 function makeItem(
   leagueId: string,
   homeId: string,
@@ -29,9 +28,8 @@ function makeItem(
 ): Opportunity {
   const league = catalog.leagues.find((l) => l.id === leagueId)!;
   const startsAt = new Date(
-    Date.parse(scenarioDate) + ((index % 8) * 60 + 360) * 60_000 + (index >= 8 ? 86_400_000 : 0),
+    Date.parse(referenceDate) + ((index % 8) * 60 + 360) * 60_000 + (index >= 8 ? 86_400_000 : 0),
   ).toISOString();
-  const bookmakers = [...bookmakerNames.slice(index % 3), ...bookmakerNames.slice(0, index % 3)];
   return {
     id: `demo-${league.slug}-${homeId}-${awayId}-${market}`,
     leagueId,
@@ -42,20 +40,14 @@ function makeItem(
     format: league.slug === 'lfl' ? 'BO1' : 'BO3',
     market,
     probability,
-    offers: bookmakers.map((bookmaker, i) => ({
-      bookmaker,
-      odds: Math.round((odds - i * 0.04) * 100) / 100,
+    bookmaker: 'stake',
+    history: (index % 3 === 1
+      ? [0.08, 0.08, 0.05, 0.06, 0.03, 0.03, 0.01, 0]
+      : [-0.11, -0.11, -0.08, -0.09, -0.05, -0.05, -0.02, 0]
+    ).map((delta, point) => ({
+      recordedAt: new Date(Date.parse(referenceDate) - (7 - point) * 4 * 3_600_000).toISOString(),
+      odds: Math.round((odds + delta) * 100) / 100,
     })),
-    history: [
-      { label: '08:00', odds: odds - 0.11 },
-      { label: '09:00', odds: odds - 0.11 },
-      { label: '10:00', odds: odds - 0.08 },
-      { label: '11:00', odds: odds - 0.09 },
-      { label: '12:00', odds: odds - 0.05 },
-      { label: '13:00', odds: odds - 0.05 },
-      { label: '14:00', odds: odds - 0.02 },
-      { label: '15:00', odds },
-    ],
   };
 }
 const items: Opportunity[] = curated.map(([slug, homeCode, awayCode, probability, odds], index) => {
@@ -77,7 +69,7 @@ for (const league of catalog.leagues) {
 const first = items[0]!;
 items.push(makeItem(first.leagueId, first.homeId, first.awayId, 0.59, 1.78, 0, 'map1'));
 export const opportunities = opportunitiesSchema.parse({
-  scenarioDate,
-  generatedAt: scenarioDate,
+  referenceDate,
+  generatedAt: referenceDate,
   items,
 });

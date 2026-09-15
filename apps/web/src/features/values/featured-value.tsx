@@ -1,7 +1,7 @@
-import { ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import type { Catalog, Opportunity } from '@/domain/schemas';
-import { bestOffer, valueOf, marketLabel } from '@/domain/value';
-import { decimal } from '@/lib/format';
+import { currentQuote, oddsChange, trackedBookmaker, valueOf, marketLabel } from '@/domain/value';
+import { decimal, signedDecimal } from '@/lib/format';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
 import { OddsChart } from '@/components/ui/odds-chart';
@@ -20,7 +20,9 @@ export function FeaturedValue({
   const away = catalog.teams.find((t) => t.id === item.awayId)!;
   const pick = catalog.teams.find((t) => t.id === item.pickId)!;
   const league = catalog.leagues.find((l) => l.id === item.leagueId)!;
-  const offer = bestOffer(item);
+  const offer = currentQuote(item);
+  const change = oddsChange(item);
+  const TrendIcon = change > 0 ? ArrowUpRight : change < 0 ? ArrowDownRight : ArrowRight;
   return (
     <aside className="insights-column" aria-label="À la une">
       <div className="featured-card">
@@ -45,7 +47,6 @@ export function FeaturedValue({
           {league.name}
           <span>·</span>
           {item.format}
-          <span>·</span>Simulation
         </p>
         <div className="featured-value">
           <span>
@@ -73,15 +74,15 @@ export function FeaturedValue({
         <div className="section-mini-title">
           <h3>Le mouvement de cote</h3>
           <span className="mini-icon">
-            <ArrowUpRight size={15} />
+            <TrendIcon size={15} />
           </span>
         </div>
         <div className="trend-value">
           <strong>{decimal(offer.odds)}</strong>
-          <span>+{decimal(offer.odds - (item.history[0]?.odds ?? offer.odds))}</span>
+          <span>{signedDecimal(change)}</span>
         </div>
         <p>
-          {pick.code} · {offer.bookmaker} · simulé
+          {pick.code} · {trackedBookmaker.name}
         </p>
         <OddsChart history={item.history} compact />
       </div>
@@ -95,11 +96,7 @@ export function FeaturedValue({
         </span>
         <ArrowUpRight size={16} />
       </button>
-      <p className="insights-note">
-        Les estimations sont simulées.
-        <br />
-        Une value positive ne garantit pas un gain.
-      </p>
+      <p className="insights-note">Une value positive ne garantit pas un gain.</p>
     </aside>
   );
 }

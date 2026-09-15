@@ -41,6 +41,7 @@ export function ValuesSkeleton() {
           </div>
           <div className="row-actions">
             <span className="skeleton skeleton-bookmark" />
+            <span className="skeleton skeleton-detail" />
           </div>
         </div>
       ))}

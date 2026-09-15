@@ -10,14 +10,12 @@ export function FilterDialog({
   filters,
   onChange,
   catalog,
-  bookmakers,
 }: {
   open: boolean;
   onClose: () => void;
   filters: Filters;
   onChange: (filters: Filters) => void;
   catalog: Catalog;
-  bookmakers: string[];
 }) {
   return (
     <Modal
@@ -54,19 +52,6 @@ export function FilterDialog({
               { value: 'map1', label: 'Vainqueur de la carte 1' },
             ]}
           />
-        </div>
-        <div className="field-group">
-          <label>Bookmaker disponible</label>
-          <Select
-            label="Filtrer par bookmaker"
-            value={filters.bookmaker}
-            onChange={(bookmaker) => onChange({ ...filters, bookmaker })}
-            options={[
-              { value: 'all', label: 'Tous les bookmakers' },
-              ...bookmakers.map((b) => ({ value: b, label: b })),
-            ]}
-          />
-          <small>Affiche les marchés proposés par ce bookmaker.</small>
         </div>
         <div className="field-group">
           <label htmlFor="min-value">
