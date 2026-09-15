@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+.idea/
+*.iml
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+coverage/
+test-results/
+.cache/
+*.log

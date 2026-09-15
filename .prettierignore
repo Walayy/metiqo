@@ -1,0 +1,7 @@
+package-lock.json
+node_modules
+dist
+.cache
+.idea
+apps/web/public/mockServiceWorker.js
+apps/web/src/mocks/data/catalog.json

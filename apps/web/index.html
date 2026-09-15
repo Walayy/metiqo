@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101211" />
+    <meta
+      name="description"
+      content="Metiquo — explorez les values sur League of Legends. Démonstration avec rencontres, cotes et estimations simulées."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Les values · Metiquo</title>
+    <script>
+      (() => {
+        let preference = 'system';
+        try {
+          preference = localStorage.getItem('metiquo:theme') || 'system';
+        } catch {}
+        const dark =
+          preference === 'dark' ||
+          (preference !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"><div class="boot-placeholder" role="status">Chargement de Metiquo…</div></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

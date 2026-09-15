@@ -1,0 +1,32 @@
+{
+  "name": "metiquo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @metiquo/web",
+    "build": "npm run build --workspace @metiquo/web",
+    "preview": "npm run preview --workspace @metiquo/web",
+    "lint": "npm run lint --workspace @metiquo/web",
+    "test": "npm run test --workspace @metiquo/web",
+    "typecheck": "npm run typecheck --workspace @metiquo/web",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "catalog:sync": "node scripts/sync-catalog.mjs && node scripts/build-catalog.mjs"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "msw": {
+    "workerDirectory": [
+      "apps\\web\\public"
+    ]
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
+}
