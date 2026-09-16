@@ -13,6 +13,7 @@ html[data-fonts='fallback'] {
   --space-md: 12px;
   --space-lg: 16px;
   --space-xl: 24px;
+  --space-2xl: 32px;
   --touch-target: 44px;
 }
 
@@ -92,6 +93,80 @@ html[data-fonts='fallback'] {
 }
 .refresh-button {
   padding-inline: var(--space-md);
+}
+.league-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+}
+.league-toolbar .league-tabs {
+  display: flex;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-xs);
+}
+.league-toolbar .league-tabs > button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--touch-target);
+  padding-inline: var(--space-sm);
+}
+.league-tabs .logo-frame {
+  width: 23px;
+  height: 23px;
+  background: var(--surface-muted);
+  border: 0;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.league-tabs .logo-frame img {
+  width: 19px;
+  height: 19px;
+  padding: 0;
+}
+.league-tabs .logo-frame > span {
+  color: var(--text);
+}
+.league-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-left: auto;
+}
+.league-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: var(--touch-target);
+  font-size: 11px;
+  padding-inline: var(--space-md);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+.league-actions > button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+@media (max-width: 680px) {
+  .league-toolbar {
+    gap: var(--space-sm);
+  }
+  .league-toolbar .league-tabs {
+    display: contents;
+  }
+  .league-actions {
+    margin-left: auto;
+  }
+  .league-toolbar .league-tabs > button {
+    display: inline-flex;
+  }
 }
 .sort-wrapper .select-trigger {
   padding-inline: var(--space-sm);
@@ -689,11 +764,7 @@ input[type='range'] {
   .row-open-label {
     display: inline;
   }
-  .skeleton-row .skeleton-bookmark {
-    position: absolute;
-    top: var(--space-xl);
-    right: var(--space-xl);
-  }
+
   .skeleton-detail {
     display: block;
     grid-column: 3;

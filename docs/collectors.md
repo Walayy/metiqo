@@ -13,7 +13,7 @@ npm run data:lol:sync
 npm run data:oracle:sync
 ```
 
-`docker:up` construit les images, applique les migrations et démarre le planificateur. Si sa collecte initiale est encore en cours, une commande manuelle pour la même source renvoie **75**, sans lancer de doublon. Attendre la fin de l’exécution ou consulter son état. Les sources LoL et Oracle possèdent des verrous différents et peuvent fonctionner simultanément.
+`docker:up` construit les images, applique les migrations et démarre le planificateur. Si une collecte est déjà en cours, une commande manuelle pour la même source renvoie **75**, sans lancer de doublon. Attendre la fin de l’exécution ou consulter son état. Les sources LoL et Oracle possèdent des verrous différents et peuvent fonctionner simultanément.
 
 Commandes Docker précises, également utilisables sous PowerShell :
 
@@ -63,13 +63,19 @@ Les valeurs source restent en JSONB, sans confusion entre année du fichier, cha
 
 ## Planification intégrée ou cron
 
-`metiquo-worker serve` planifie les deux sources :
+`metiquo-worker serve` consomme les planifications et la file persistées en PostgreSQL, configurables dans **Admin → Scripts & planifications** :
 
-- Catalogue : initialisation puis toutes les 24 heures.
-- Oracle : import initial complet, dernière année toutes les 6 heures, ensemble chaque semaine.
-- Les échéances sont calculées depuis PostgreSQL et survivent aux redémarrages.
-- Une panne utilise un délai progressif de 1, 2, 4, 8, 16 puis 30 minutes. Une source en échec n’annule pas le traitement de l’autre.
-- `serve --only lol-catalog` ou `serve --only oracles-elixir` limite le processus à une source.
+- Catalogue : `0 4 * * *`, chaque jour à 04:00, heure de Paris.
+- Oracle récent : `0 */6 * * *`, à 00:00, 06:00, 12:00 et 18:00, heure de Paris.
+- Oracle complet : `0 3 * * 0`, le dimanche à 03:00, heure de Paris.
+- La migration crée une prochaine échéance future ; un premier import immédiat se lance manuellement.
+- Les échéances survivent aux redémarrages. Après une panne, une seule collecte rattrape les échéances manquées pour chaque script.
+- Les échecs restent visibles et n’empêchent pas les autres scripts de s’exécuter. Le prochain cron ou une action manuelle permet une nouvelle tentative. Si une commande CLI détient le verrou de la source, la file réessaie après une minute.
+- Les jobs de la file s’exécutent en série, avec un verrou PostgreSQL qui empêche deux workers de consommer le même job. `serve --only lol-catalog` ou `serve --only oracles-elixir` limite le processus à une source ; l’interface est prévue pour un worker supervisé unique.
+- Le heartbeat est actualisé toutes les 20 secondes, même pendant une collecte longue ; après 90 secondes sans contact, les lancements manuels sont désactivés. Le worker vérifie la file toutes les cinq secondes entre deux collectes.
+- Les anciens intervalles en secondes ne configurent plus `serve`. Les interrupteurs `*_ENABLED` restent prioritaires. La pause Admin arrête les futures échéances, sans annuler une demande déjà en file ni une collecte en cours.
+
+Voir [le guide d’administration](administration.md) pour les permissions et les limites.
 
 La planification intégrée suffit sous Docker et Windows. Pour utiliser un cron Linux à sa place, arrêter le service `worker` persistant et employer les commandes ponctuelles. Exemple à adapter au chemin réel et au fuseau du serveur :
 
@@ -80,20 +86,20 @@ La planification intégrée suffit sous Docker et Windows. Pour utiliser un cron
 30 0 * * 0 cd /srv/metiquo && /usr/bin/docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-oracles-elixir >> /var/log/metiquo-oracle.log 2>&1
 ```
 
-Ces exemples ne créent aucun cron sur la machine. Le cron externe doit superviser les codes de sortie et gérer ses relances ; la commande ponctuelle ne lance pas la boucle de réessai du worker. Un nouvel `docker:up` peut redémarrer le planificateur intégré : choisir un seul mode de planification par source.
+Ces exemples ne créent aucun cron sur la machine. Le cron externe doit superviser les codes de sortie et gérer ses relances ; la commande ponctuelle ne passe pas par la file Admin. Un nouvel `docker:up` peut redémarrer le planificateur intégré : choisir un seul mode de planification par source.
 
 ## Configuration et état
 
 - `METIQUO_CATALOG_ENABLED=true` : autorise le collecteur, manuel et planifié.
-- `METIQUO_CATALOG_INTERVAL_SECONDS=86400` : cadence, minimum 300.
+- Les cadences sont stockées dans `script_schedules` et modifiées depuis Admin.
 - `METIQUO_CATALOG_MAX_PAGES=200` : plafond de découverte, échec explicite si dépassé.
 - `METIQUO_CATALOG_MAX_PAGE_BYTES=15000000`, `METIQUO_CATALOG_MAX_IMAGE_BYTES=10000000` : limites de réponse.
 - `METIQUO_CATALOG_MAX_IMAGE_PIXELS=80000000` : limite de décodage, réglable à la baisse. Les grandes images sont décodées une par une puis réduites avant conversion pour borner la mémoire ; l’original LOUD sourcé mesure 8334 × 8334 px.
 - `METIQUO_CATALOG_TIMEOUT_SECONDS=60` : délai réseau par requête.
-- `METIQUO_ORACLE_ENABLED=true`, `METIQUO_ORACLE_INTERVAL_SECONDS=21600`, `METIQUO_ORACLE_FULL_REFRESH_SECONDS=604800` : activation et cadences Oracle.
+- `METIQUO_ORACLE_ENABLED=true` : activation des collectes Oracle. Les anciennes variables d’intervalle ne pilotent plus le planificateur.
 - `METIQUO_ARTIFACT_DIR` : volume commun aux CSV, pages et logos ; écriture worker, lecture seule API.
 
-Compose transmet l’activation et les cadences depuis `.env.docker`. Les paramètres avancés peuvent être ajoutés à `environment` ou passés avec `docker compose run -e METIQUO_…=…`. Un paramètre ajouté uniquement au fichier `.env.docker` n’est pas automatiquement injecté dans le conteneur.
+Compose transmet les interrupteurs d’activation depuis `.env.docker` ; les cadences viennent de PostgreSQL. Les paramètres avancés peuvent être ajoutés à `environment` ou passés avec `docker compose run -e METIQUO_…=…`. Un paramètre ajouté uniquement au fichier `.env.docker` n’est pas automatiquement injecté dans le conteneur.
 
 - `/api/v1/sources/lol-esports` : version active, dernière vérification, vingt dernières exécutions et leurs bilans.
 - `/api/v1/sources/lol-esports/reference` : document de la version active ; `?versionId=…` permet de lire une ancienne version.

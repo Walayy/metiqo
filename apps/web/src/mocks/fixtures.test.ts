@@ -27,15 +27,13 @@ describe('Contrat du scénario LoL', () => {
       expect(league.image).toMatch(/^\/logos\/\d+\.webp$/);
     }
   });
-  it('combine recherche, ligue, marché, seuil et favoris', () => {
+  it('combine recherche, ligue, marché et seuil', () => {
     const item = opportunities.items[0]!;
     const result = filterValues(
       opportunities.items,
       catalog,
       { ...defaultFilters, league: item.leagueId, market: 'winner', minValue: 8 },
       'gen.g',
-      [item.id],
-      true,
       'value',
       opportunities.referenceDate,
     );
@@ -48,8 +46,6 @@ describe('Contrat du scénario LoL', () => {
         catalog,
         { ...defaultFilters, minValue: 15 },
         '',
-        [],
-        false,
         'value',
         opportunities.referenceDate,
       ),
@@ -60,8 +56,6 @@ describe('Contrat du scénario LoL', () => {
         catalog,
         defaultFilters,
         'introuvable',
-        [],
-        false,
         'value',
         opportunities.referenceDate,
       ),
@@ -73,8 +67,6 @@ describe('Contrat du scénario LoL', () => {
       catalog,
       defaultFilters,
       '',
-      [],
-      false,
       'value',
       opportunities.referenceDate,
     );
@@ -87,8 +79,6 @@ describe('Contrat du scénario LoL', () => {
       catalog,
       defaultFilters,
       '',
-      [],
-      false,
       'time',
       opportunities.referenceDate,
     );

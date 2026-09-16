@@ -1,0 +1,235 @@
+:root {
+  --motion-control: 240ms;
+  --motion-content: 320ms;
+}
+
+/* A shared moving surface preserves the size and focus of each control. */
+.sidebar-groups .nav-item,
+.league-filter-rail .league-chip,
+.calendar-days .calendar-day,
+.simulation-periods button {
+  position: relative;
+}
+.sidebar-groups,
+.league-filter-rail,
+.calendar-days,
+.simulation-periods {
+  isolation: isolate;
+}
+.selection-indicator {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--selected);
+}
+.sidebar-groups .nav-item.is-active,
+.league-filter-rail .league-chip[aria-pressed='true'],
+.calendar-days .calendar-day.is-selected,
+.simulation-periods button[aria-pressed='true'] {
+  background: transparent;
+}
+.league-chip .selection-indicator {
+  background: var(--accent-soft);
+  max-width: none;
+}
+.sidebar-groups .nav-item > .selection-indicator {
+  flex: none;
+}
+.simulation-periods button {
+  font-weight: 650;
+}
+.button,
+.nav-item,
+.league-filter-rail .league-chip,
+.league-picker-trigger,
+.league-picker-option,
+.values-refresh,
+.calendar-day,
+.simulation-periods button,
+.select-trigger,
+.active-filters button,
+.league-trigger,
+.fixture-row,
+.segment-control button,
+.history-periods button,
+.map-tabs [role='tab'],
+.team-filter-options label {
+  transition:
+    background-color var(--motion-control) var(--ease-enter),
+    border-color var(--motion-control) var(--ease-enter),
+    color var(--motion-control) var(--ease-enter),
+    opacity var(--motion-control) var(--ease-enter),
+    box-shadow var(--motion-control) var(--ease-enter),
+    transform var(--motion-control) var(--ease-enter);
+}
+.button:active:not(:disabled),
+.league-chip:active,
+.calendar-day:active:not(:disabled),
+.simulation-periods button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.team-filter-popover[data-state='open'] {
+  animation: menu-enter var(--motion-enter) var(--ease-enter) both;
+}
+.team-filter-popover[data-state='closed'] {
+  animation: surface-disappear var(--motion-exit) ease-in both;
+}
+.nav-active-dot {
+  transition: opacity var(--motion-control) ease;
+}
+.active-filters,
+.insights-column {
+  animation: surface-appear var(--motion-content) var(--ease-enter) both;
+}
+
+/* Skeletons reuse the final component grids and dimensions at every breakpoint. */
+.skeleton-metric {
+  height: 1em;
+  width: 2.4ch;
+  margin-block: 0.12em;
+}
+.skeleton-match .team-pair {
+  flex-shrink: 0;
+}
+.skeleton-match .skeleton-logo {
+  width: 29px;
+  height: 29px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.skeleton-match .skeleton-logo + .skeleton-logo {
+  top: 9px;
+  left: 18px;
+}
+.row-actions .skeleton-detail {
+  display: block;
+  width: 17px;
+  height: 17px;
+  margin-inline: var(--space-sm);
+}
+.league-loading-logo {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+.league-loading-name {
+  width: 90px;
+  height: 18px;
+}
+.league-loading-count {
+  width: 52px;
+  height: 14px;
+}
+.league-loading-time {
+  width: 70px;
+  height: 14px;
+}
+.league-loading-chevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.simulation-profit-skeleton {
+  width: 5ch;
+  height: 1em;
+  margin-block: 0.25em;
+}
+.simulation-stat-skeleton {
+  width: min(75px, 100%);
+  height: 1.2em;
+}
+.profit-chart > svg {
+  height: clamp(220px, 29vw, 300px);
+}
+.profit-chart-skeleton svg rect {
+  fill: var(--border);
+}
+.profit-chart-skeleton svg line {
+  stroke: var(--border);
+  stroke-dasharray: 3 5;
+}
+.profit-chart-skeleton svg {
+  animation: skeleton-breathe 1.8s ease-in-out infinite;
+}
+.chart-scrubber-skeleton {
+  height: var(--touch-target);
+  display: flex;
+  align-items: center;
+}
+.chart-scrubber-skeleton .skeleton {
+  height: 4px;
+  width: 100%;
+}
+.chart-inspection {
+  min-height: 66px;
+}
+.chart-inspection .skeleton {
+  min-height: 12px;
+}
+.chart-inspection > div {
+  min-width: 0;
+}
+.chart-inspection strong,
+.chart-inspection span {
+  overflow-wrap: anywhere;
+}
+.profit-chart .chart-scrubber input {
+  accent-color: var(--accent);
+}
+@keyframes skeleton-breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 680px) {
+  .value-row .match-cell {
+    padding-right: 0;
+  }
+  .row-actions .skeleton-detail {
+    width: 48px;
+    height: 12px;
+    margin: 0;
+  }
+  .skeleton-match .skeleton-lines {
+    width: min(145px, 40vw);
+  }
+  .league-loading-name {
+    width: 64px;
+  }
+  .league-loading-time {
+    width: 52px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .nav-item,
+  .league-filter-rail .league-chip,
+  .league-picker-trigger,
+  .league-picker-option,
+  .values-refresh,
+  .calendar-day,
+  .simulation-periods button,
+  .select-trigger,
+  .active-filters button,
+  .league-trigger,
+  .fixture-row,
+  .segment-control button,
+  .history-periods button,
+  .map-tabs [role='tab'],
+  .team-filter-options label,
+  .nav-active-dot {
+    transition: none;
+    transform: none;
+  }
+  .active-filters,
+  .insights-column,
+  .profit-chart-skeleton svg,
+  .team-filter-popover[data-state] {
+    animation: none;
+  }
+}

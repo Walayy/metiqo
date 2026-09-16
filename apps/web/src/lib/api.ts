@@ -3,14 +3,13 @@ import type { z } from 'zod';
 import { catalogSchema, opportunitiesSchema } from '@/domain/schemas';
 import { config } from './config';
 import { transportReady } from './transport';
+import { fetchResponse, readResponse } from './http';
+import { matchesSchema } from '@/domain/matches';
+import { performanceSchema } from '@/features/performance/simulation';
 
 async function get<T>(path: string, schema: z.ZodType<T>, signal: AbortSignal): Promise<T> {
   await transportReady;
-  const response = await fetch(`${config.apiBaseUrl}${path}`, {
-    signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
-  });
-  if (!response.ok) throw new Error(`Le chargement a échoué (${response.status}).`);
-  return schema.parse(await response.json());
+  return readResponse(await fetchResponse(`${config.apiBaseUrl}${path}`, signal), schema);
 }
 export const catalogQuery = queryOptions({
   queryKey: ['catalog'],
@@ -20,5 +19,16 @@ export const catalogQuery = queryOptions({
 export const opportunitiesQuery = queryOptions({
   queryKey: ['opportunities'],
   queryFn: ({ signal }) => get('/opportunities', opportunitiesSchema, signal),
+  staleTime: 60_000,
+});
+export const matchesQuery = queryOptions({
+  queryKey: ['matches'],
+  queryFn: ({ signal }) => get('/matches', matchesSchema, signal),
+  staleTime: 15_000,
+  refetchInterval: (query) => (query.state.error ? false : 30_000),
+});
+export const performanceQuery = queryOptions({
+  queryKey: ['performance'],
+  queryFn: ({ signal }) => get('/performance', performanceSchema, signal),
   staleTime: 60_000,
 });

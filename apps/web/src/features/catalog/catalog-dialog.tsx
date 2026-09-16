@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/modal';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { StatusPanel } from '@/features/status/status-panel';
 export function CatalogDialog({
   open,
   onClose,
@@ -15,6 +16,7 @@ export function CatalogDialog({
   onSelectTeam,
   loading,
   error,
+  retrying,
   onRetry,
 }: {
   open: boolean;
@@ -24,7 +26,8 @@ export function CatalogDialog({
   onSelect: (id: string) => void;
   onSelectTeam: (id: string) => void;
   loading: boolean;
-  error: boolean;
+  error: Error | null;
+  retrying: boolean;
   onRetry: () => void;
 }) {
   const [search, setSearch] = useState('');
@@ -59,10 +62,7 @@ export function CatalogDialog({
           <Spinner label="Chargement du catalogue" />
         </div>
       ) : error ? (
-        <div className="catalog-status" role="alert">
-          <p>Impossible de charger le catalogue.</p>
-          <Button onClick={onRetry}>Réessayer</Button>
-        </div>
+        <StatusPanel error={error} onRetry={onRetry} busy={retrying} compact />
       ) : (
         <>
           <div className="catalog-controls">

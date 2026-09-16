@@ -248,6 +248,9 @@ def test_migration_admin_seed_and_database_role_boundaries(database):
     with Session(engine) as db:
         admin = db.scalars(select(AppUser).where(AppUser.email == "admin@metiquo.fr")).one()
         assert admin.role == "admin" and admin.verified_at is None
+        for email, role in (("metiquo@admin.fr", "admin"), ("metiquo@user.fr", "user")):
+            account = db.scalars(select(AppUser).where(AppUser.email == email)).one()
+            assert account.role == role and account.verified_at is None
     # A second downgrade/upgrade preserves the provisioned identity.
     command.downgrade(Config("alembic.ini"), "0001")
     command.upgrade(Config("alembic.ini"), "head")
@@ -258,7 +261,7 @@ def test_migration_admin_seed_and_database_role_boundaries(database):
         ):
             pytest.skip("Docker SQL roles not installed")
     for role, statement in (
-        ("metiquo_api", "UPDATE app_users SET role = 'admin' WHERE false"),
+        ("metiquo_api", "DELETE FROM app_users WHERE false"),
         ("metiquo_api", "UPDATE teams SET data = '{}' WHERE false"),
         ("metiquo_worker", "SELECT * FROM auth_sessions"),
         ("metiquo_worker", "SELECT * FROM app_users"),
@@ -266,6 +269,48 @@ def test_migration_admin_seed_and_database_role_boundaries(database):
         with pytest.raises(ProgrammingError), engine.begin() as conn:
             conn.execute(text(f"SET LOCAL ROLE {role}"))
             conn.execute(text(statement))
+
+
+@pytest.mark.integration
+def test_requested_roles_preserve_accounts_and_revoke_only_changed_sessions(database):
+    engine, _ = database
+    command.downgrade(Config("alembic.ini"), "0004")
+    now = datetime.now(UTC)
+    emails = ("metiquo@admin.fr", "metiquo@user.fr", "unchanged@example.com")
+    ids = [uuid4() for _ in emails]
+    with Session(engine) as db:
+        for index, email in enumerate(emails):
+            db.add(
+                AppUser(
+                    id=ids[index],
+                    auth_issuer="metiquo:email",
+                    auth_subject=email,
+                    email=email,
+                    role="admin" if index == 1 else "user",
+                    verified_at=now,
+                    disabled=index == 1,
+                )
+            )
+        db.flush()
+        for index, user_id in enumerate(ids):
+            db.add(
+                AuthSession(
+                    token_hash=str(index) * 64,
+                    user_id=user_id,
+                    created_at=now,
+                    last_seen_at=now,
+                    expires_at=now + timedelta(days=1),
+                )
+            )
+        db.commit()
+    command.upgrade(Config("alembic.ini"), "head")
+    with Session(engine) as db:
+        for index, user_id in enumerate(ids):
+            account = db.get(AppUser, user_id)
+            assert account is not None and account.email == emails[index]
+            assert account.role == ("admin" if index == 0 else "user")
+            assert account.verified_at == now and account.disabled == (index == 1)
+        assert list(db.scalars(select(AuthSession.user_id))) == [ids[2]]
 
 
 @pytest.mark.integration

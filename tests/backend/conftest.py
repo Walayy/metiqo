@@ -1,10 +1,13 @@
 import os
+from datetime import UTC, datetime
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from metiquo_core.config import Settings
 from metiquo_core.db import create_db
+from metiquo_core.models import ScriptSchedule
+from metiquo_core.scheduling import SCRIPTS, upcoming
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 
@@ -28,8 +31,23 @@ def database(monkeypatch, tmp_path):
                 "TRUNCATE oracle_rows, dataset_versions, datasets, ingestion_runs, "
                 "odds_observations, probability_estimates, markets, matches, teams, leagues, "
                 "catalog_metadata, app_users, auth_challenges, auth_sessions, auth_rate_limits "
+                ", script_schedules, script_runs, worker_status, admin_audit "
                 "CASCADE"
             )
+        )
+        connection.execute(
+            ScriptSchedule.__table__.insert(),
+            [
+                {
+                    "id": key,
+                    "cron": script.cron,
+                    "timezone": "Europe/Paris",
+                    "enabled": True,
+                    "next_run_at": upcoming(script.cron, "Europe/Paris", datetime.now(UTC), 1)[0],
+                    "revision": 1,
+                }
+                for key, script in SCRIPTS.items()
+            ],
         )
     yield engine, settings
     engine.dispose()

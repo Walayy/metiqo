@@ -1,8 +1,9 @@
 import rawCatalog from './data/catalog.json';
 import { catalogSchema, opportunitiesSchema } from '@/domain/schemas';
 import type { Opportunity } from '@/domain/schemas';
+import { dayKey, shiftDay } from '@/features/matches/calendar';
 export const catalog = catalogSchema.parse(rawCatalog);
-const referenceDate = '2026-09-14T08:00:00.000Z';
+const referenceDate = `${dayKey(new Date())}T08:00:00.000Z`;
 
 // Every pairing, price, probability and time below is fictional. Identities are sourced.
 const curated: [string, string, string, number, number][] = [
@@ -27,11 +28,15 @@ function makeItem(
   market: Opportunity['market'] = 'winner',
 ): Opportunity {
   const league = catalog.leagues.find((l) => l.id === leagueId)!;
+  const slot = (index - 8) % 14;
+  const offset = index < 8 ? 0 : slot < 7 ? slot - 7 : slot - 6;
   const startsAt = new Date(
-    Date.parse(referenceDate) + ((index % 8) * 60 + 360) * 60_000 + (index >= 8 ? 86_400_000 : 0),
+    Date.parse(`${shiftDay(referenceDate.slice(0, 10), offset)}T08:00:00Z`) +
+      ((index % 8) * 60 + 360) * 60_000,
   ).toISOString();
+  const lastQuoteAt = Math.min(Date.parse(referenceDate), Date.parse(startsAt) - 3_600_000);
   return {
-    id: `demo-${league.slug}-${homeId}-${awayId}-${market}`,
+    id: `demo-${league.slug}-${homeId}-${awayId}-${market}-${startsAt.slice(0, 10)}`,
     leagueId,
     homeId,
     awayId,
@@ -45,7 +50,7 @@ function makeItem(
       ? [0.08, 0.08, 0.05, 0.06, 0.03, 0.03, 0.01, 0]
       : [-0.11, -0.11, -0.08, -0.09, -0.05, -0.05, -0.02, 0]
     ).map((delta, point) => ({
-      recordedAt: new Date(Date.parse(referenceDate) - (7 - point) * 4 * 3_600_000).toISOString(),
+      recordedAt: new Date(lastQuoteAt - (7 - point) * 4 * 3_600_000).toISOString(),
       odds: Math.round((odds + delta) * 100) / 100,
     })),
   };

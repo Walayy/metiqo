@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
+from metiquo_api.admin import create_admin_router
 from metiquo_api.auth import create_auth_router
 from metiquo_api.auth_config import AuthSettings
 from metiquo_api.catalog import create_catalog_router
@@ -59,13 +60,14 @@ def create_app(
         redoc_url=None,
     )
     app.include_router(create_auth_router(engine, auth_settings or AuthSettings()))
+    app.include_router(create_admin_router(engine, auth_settings or AuthSettings()))
     app.include_router(create_catalog_router(engine, config))
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request: Request, error: RequestValidationError) -> Response:
-        if request.url.path.startswith("/api/v1/auth/"):
+        if request.url.path.startswith(("/api/v1/auth/", "/api/v1/admin/")):
             return JSONResponse(
-                status_code=422, content={"detail": "Données de connexion invalides."}
+                status_code=422, content={"detail": "Données de la demande invalides."}
             )
         return await request_validation_exception_handler(request, error)
 
@@ -74,7 +76,7 @@ def create_app(
         request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         response = await call_next(request)
-        if request.url.path.startswith("/api/v1/auth/"):
+        if request.url.path.startswith(("/api/v1/auth/", "/api/v1/admin/")):
             response.headers["Cache-Control"] = "no-store"
             response.headers["Pragma"] = "no-cache"
         return response
@@ -86,7 +88,21 @@ def create_app(
     @app.exception_handler(SQLAlchemyError)
     async def database_error(_request: Request, error: SQLAlchemyError) -> JSONResponse:
         logger.error("Database request failed: %s", type(error).__name__)
-        return JSONResponse(status_code=503, content={"detail": "Database unavailable"})
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Le service est momentanément indisponible."},
+            headers={"Retry-After": "30", "Cache-Control": "no-store"},
+        )
+
+    @app.exception_handler(Exception)
+    async def unexpected_error(_request: Request, error: Exception) -> JSONResponse:
+        # No SQL parameters, cookies, credentials or request bodies in client responses/logs.
+        logger.error("Unhandled request failure: %s", type(error).__name__)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Une erreur du serveur empêche de terminer la demande."},
+            headers={"Cache-Control": "no-store"},
+        )
 
     @app.get("/health/live", include_in_schema=False)
     def live() -> dict[str, str]:
@@ -188,6 +204,43 @@ def create_app(
                 )
             )
         return Opportunities(generated_at=now, reference_date=now, items=items)
+
+    @app.get("/api/v1/matches")
+    def matches(session: Annotated[Session, Depends(get_session)]) -> dict[str, object]:
+        now = datetime.now(UTC)
+        rows = session.scalars(
+            select(EsportMatch)
+            .where(
+                EsportMatch.starts_at >= now - timedelta(days=9),
+                EsportMatch.starts_at <= now + timedelta(days=9),
+            )
+            .order_by(EsportMatch.starts_at, EsportMatch.id)
+        ).all()
+        # The current storage has schedules only. Never infer live scores from time.
+        return {
+            "generatedAt": now,
+            "items": [
+                {
+                    "id": str(match.id),
+                    "leagueId": match.league_id,
+                    "homeId": match.home_id,
+                    "awayId": match.away_id,
+                    "startsAt": match.starts_at,
+                    "updatedAt": match.registered_at,
+                    "format": match.format,
+                    "status": "scheduled",
+                    "patch": None,
+                    "stage": None,
+                    "maps": [],
+                }
+                for match in rows
+            ],
+        }
+
+    @app.get("/api/v1/performance")
+    def performance() -> dict[str, object]:
+        # No source currently links pre-match decisions to verified settlements.
+        return {"generatedAt": datetime.now(UTC), "items": []}
 
     @app.get("/api/v1/sources/oracles-elixir")
     def source_status(session: Annotated[Session, Depends(get_session)]) -> dict[str, object]:

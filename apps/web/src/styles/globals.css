@@ -39,6 +39,11 @@
   --logo-bg: #252b29;
   --focus: #65a243;
   --field-error: #a32e27;
+  --live: #b63730;
+  --live-soft: #fff0ed;
+  --side-blue: #2968a4;
+  --side-red: #b63752;
+  --chart-negative: #b63730;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
@@ -72,6 +77,11 @@
   --logo-bg: #242a26;
   --focus: #b6e598;
   --field-error: #ffb2a9;
+  --live: #ff9d91;
+  --live-soft: #392622;
+  --side-blue: #8dc0f0;
+  --side-red: #f4a1b0;
+  --chart-negative: #ff9d91;
 }
 * {
   box-sizing: border-box;
@@ -146,6 +156,14 @@ input[type='range'] {
   outline: 2px solid var(--focus);
   outline-offset: 4px;
   border-radius: 4px;
+}
+/* Landmarks remain focusable for skip links and focus restoration. A click
+   followed by F5 can make them :focus-visible, outlining the entire page.
+   Keep indicators on controls, custom widgets and navigation headings. */
+:where(main, section, article, aside, nav, header, footer)[tabindex='-1']:not([role]):not(
+    [contenteditable]
+  ):focus {
+  outline: none;
 }
 svg {
   flex-shrink: 0;
@@ -363,15 +381,7 @@ h3 {
 .is-active .nav-active-dot {
   opacity: 1;
 }
-.nav-count {
-  margin-left: auto;
-  font-size: 10px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  min-width: 20px;
-  text-align: center;
-}
+
 .nav-section-heading {
   display: flex;
   align-items: center;
@@ -1000,10 +1010,7 @@ h2 {
 .row-actions .row-open {
   width: 25px;
 }
-.bookmark-filled {
-  color: var(--accent);
-  fill: var(--accent-soft);
-}
+
 .table-footer {
   display: flex;
   align-items: center;
@@ -1396,10 +1403,7 @@ h2 {
   width: 59px;
   height: 25px;
 }
-.skeleton-bookmark {
-  width: 17px;
-  height: 20px;
-}
+
 .featured-skeleton {
   height: 444px;
   border-radius: 11px;
@@ -2677,9 +2681,7 @@ button.catalog-item:hover {
   .skeleton-odds {
     margin-right: 0;
   }
-  .skeleton-bookmark {
-    position: static;
-  }
+
   .skeleton-lines {
     width: 145px;
   }

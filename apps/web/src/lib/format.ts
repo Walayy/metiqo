@@ -1,5 +1,21 @@
 export const decimal = (value: number, digits = 2) =>
   value.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+export const compactEuro = (value: number) =>
+  new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    notation: 'compact',
+    maximumFractionDigits: Math.abs(value) < 10 ? 2 : 1,
+  }).format(value);
+export const scheduledDate = (value: string, timeZone = 'Europe/Paris') =>
+  new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone,
+  }).format(new Date(value));
 export const accountDate = (value: string) =>
   new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',

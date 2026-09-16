@@ -3,7 +3,6 @@ import json
 import logging
 import signal
 import threading
-import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -15,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from metiquo_worker.catalog_sync import sync_catalog
 from metiquo_worker.ingestion import SOURCE, CollectionBusy, collect
+from metiquo_worker.scheduler import serve_schedules
 
 logger = logging.getLogger(__name__)
 
@@ -71,42 +71,7 @@ def serve(engine: Engine, settings: Settings, only: list[str] | None = None) -> 
         else Path(".cache/backend/worker.heartbeat")
     )
     heartbeat.parent.mkdir(parents=True, exist_ok=True)
-    retry_at = {"lol-catalog": 0.0, "oracles-elixir": 0.0}
-    failures = {"lol-catalog": 0, "oracles-elixir": 0}
-    logger.info(
-        "Worker started; catalog=%s, Oracle=%s; Stake has no registered job",
-        settings.catalog_enabled,
-        settings.oracle_enabled,
-    )
-    while not stopping.is_set():
-        heartbeat.touch()
-        for source in retry_at:
-            if stopping.is_set():
-                break
-            enabled = (
-                settings.catalog_enabled if source == "lol-catalog" else settings.oracle_enabled
-            )
-            if not enabled or (only and source not in only) or time.monotonic() < retry_at[source]:
-                continue
-            try:
-                if source == "lol-catalog":
-                    if catalog_due(engine, settings):
-                        sync_catalog(engine, settings)
-                else:
-                    due, full = due_scope(engine, settings)
-                    if due:
-                        collect(engine, settings, latest=not full)
-                failures[source] = 0
-            except CollectionBusy:
-                logger.info("%s already running; checking again later", source)
-                retry_at[source] = time.monotonic() + 60
-            except Exception as error:
-                failures[source] += 1
-                delay = min(1800, 60 * 2 ** min(failures[source] - 1, 5))
-                retry_at[source] = time.monotonic() + delay
-                logger.error("%s failed (%s); retry in %ss", source, type(error).__name__, delay)
-        stopping.wait(30)
-    engine.dispose()
+    serve_schedules(engine, settings, only, stopping, heartbeat)
 
 
 def main() -> None:

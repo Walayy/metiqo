@@ -1,0 +1,284 @@
+.league-filter-bar {
+  display: flex;
+  align-items: start;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+.league-filter-rail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-gutter: stable;
+  padding: var(--space-xs);
+  margin: calc(-1 * var(--space-xs));
+}
+.league-chip,
+.league-picker-trigger,
+.values-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: var(--space-sm);
+  min-height: var(--touch-target);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.league-chip > span:last-child {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.league-chip:hover,
+.league-picker-trigger:hover,
+.values-refresh:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.league-chip[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.league-chip .logo-frame {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+}
+.league-chip .logo-frame img {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+}
+.league-chip .logo-frame > span {
+  color: var(--text);
+  font-size: 10px;
+}
+.league-picker-trigger {
+  margin-left: auto;
+}
+.values-refresh:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.values-refresh--mobile {
+  display: none;
+}
+.league-picker {
+  width: min(480px, calc(100vw - var(--space-2xl)));
+  height: min(660px, calc(100dvh - var(--space-2xl)));
+}
+.league-picker-search {
+  position: relative;
+  flex-shrink: 0;
+  margin: var(--space-lg) var(--space-xl) var(--space-md);
+}
+.league-picker-search .search-field {
+  height: 48px;
+  width: 100%;
+}
+.league-picker-search input {
+  min-width: 0;
+  padding-right: var(--touch-target);
+  font-size: 16px;
+}
+.league-picker-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.league-picker-search > button {
+  position: absolute;
+  right: 1px;
+  top: 2px;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+.league-picker-search > button:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+.league-picker-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: var(--space-xs) var(--space-lg) var(--space-xl);
+}
+.league-picker-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  text-align: left;
+}
+.league-picker-option:hover {
+  background: var(--surface-hover);
+}
+.league-picker-option[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+.league-picker-option > span:nth-child(2) {
+  display: grid;
+  gap: var(--space-xs);
+  flex: 1;
+  min-width: 0;
+}
+.league-picker-option strong {
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.league-picker-option small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.league-picker-option > svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.league-picker-option .logo-frame,
+.league-picker-all {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+}
+.league-picker-option .logo-frame img {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+.league-picker-count {
+  padding: var(--space-lg) var(--space-md) var(--space-sm);
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.league-picker-empty {
+  padding: var(--space-xl) var(--space-md);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.league-picker-state {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+@media (max-width: 680px) {
+  .section-heading.values-heading {
+    height: auto;
+    min-height: var(--touch-target);
+    margin-bottom: var(--space-md);
+  }
+  .values-refresh--desktop {
+    display: none;
+  }
+  .values-refresh--mobile {
+    display: inline-flex;
+    font-size: 12px;
+    padding-inline: var(--space-sm);
+  }
+  .league-filter-bar {
+    gap: var(--space-md);
+    padding-bottom: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+  .league-filter-rail {
+    flex: 1;
+  }
+  .league-chip {
+    min-height: 48px;
+    padding-inline: var(--space-md);
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+  }
+  .league-picker-trigger {
+    min-height: 48px;
+    padding-inline: var(--space-sm);
+    color: var(--text);
+    border-color: var(--border);
+    background: var(--surface);
+  }
+  .modal-content.league-picker {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: min(620px, 85dvh);
+    max-height: calc(100dvh - var(--space-lg));
+    transform: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .league-picker[data-state='open'] {
+    animation-name: league-picker-enter;
+  }
+  .league-picker[data-state='closed'] {
+    animation-name: league-picker-exit;
+  }
+  .league-picker-search {
+    margin-inline: var(--space-lg);
+  }
+  .league-picker-list {
+    padding-inline: var(--space-sm);
+  }
+}
+@keyframes league-picker-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes league-picker-exit {
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .league-chip,
+  .league-picker-trigger,
+  .values-refresh {
+    transition: none;
+  }
+  .modal-content.league-picker {
+    animation: none;
+  }
+}

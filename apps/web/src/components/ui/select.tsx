@@ -6,10 +6,11 @@ interface Props {
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
   className?: string;
+  disabled?: boolean;
 }
-export function Select({ label, value, onChange, options, className = '' }: Props) {
+export function Select({ label, value, onChange, options, className = '', disabled }: Props) {
   return (
-    <Primitive.Root value={value} onValueChange={onChange}>
+    <Primitive.Root value={value} onValueChange={onChange} disabled={disabled}>
       <Primitive.Trigger className={`select-trigger ${className}`} aria-label={label}>
         <Primitive.Value />
         <Primitive.Icon>

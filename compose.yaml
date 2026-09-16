@@ -128,10 +128,7 @@ services:
       METIQUO_DATABASE_URL: postgresql+psycopg://metiquo_worker:${METIQUO_WORKER_PASSWORD}@db:5432/metiquo
       METIQUO_ARTIFACT_DIR: /data/artifacts
       METIQUO_ORACLE_ENABLED: ${METIQUO_ORACLE_ENABLED:-true}
-      METIQUO_ORACLE_INTERVAL_SECONDS: ${METIQUO_ORACLE_INTERVAL_SECONDS:-21600}
-      METIQUO_ORACLE_FULL_REFRESH_SECONDS: ${METIQUO_ORACLE_FULL_REFRESH_SECONDS:-604800}
       METIQUO_CATALOG_ENABLED: ${METIQUO_CATALOG_ENABLED:-true}
-      METIQUO_CATALOG_INTERVAL_SECONDS: ${METIQUO_CATALOG_INTERVAL_SECONDS:-86400}
     volumes: [artifacts:/data/artifacts]
     shm_size: 1gb
     depends_on:
@@ -161,6 +158,8 @@ services:
       args:
         VITE_DATA_MODE: ${VITE_DATA_MODE:-mock}
         VITE_API_BASE_URL: /api/v1
+        VITE_DONATION_URL: ${VITE_DONATION_URL:-}
+        VITE_STAKE_REFERRAL_URL: ${VITE_STAKE_REFERRAL_URL:-}
     ports: ['${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:8080']
     depends_on:
       api: { condition: service_healthy }

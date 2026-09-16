@@ -81,6 +81,27 @@ def digest(settings: AuthSettings, value: str) -> str:
     ).hexdigest()
 
 
+def authenticated_user(request: Request, session: Session, settings: AuthSettings) -> AppUser:
+    now = datetime.now(UTC)
+    token = request.cookies.get(settings.session_cookie, "")
+    auth_session = session.get(AuthSession, fingerprint(token))
+    if (
+        auth_session is None
+        or auth_session.expires_at <= now
+        or auth_session.last_seen_at + IDLE_TTL <= now
+    ):
+        raise HTTPException(401, "Connectez-vous pour accéder à cet espace.")
+    user = session.get(AppUser, auth_session.user_id)
+    if user is None or user.verified_at is None:
+        raise HTTPException(401, "Cette session n’est plus valide.")
+    if user.disabled:
+        raise HTTPException(423, "Ce compte est suspendu. Contactez un administrateur.")
+    if now - auth_session.last_seen_at >= timedelta(minutes=5):
+        auth_session.last_seen_at = now
+        session.flush()
+    return user
+
+
 def enforce_limits(
     session: Session, settings: AuthSettings, limits: list[tuple[str, int, int]], now: datetime
 ) -> None:
@@ -255,7 +276,7 @@ def create_auth_router(engine: Engine, settings: AuthSettings) -> APIRouter:
                 400, "Code invalide ou expiré. Demandez un nouveau code si nécessaire."
             )
         user = session.scalars(
-            select(AppUser).where(AppUser.email == challenge.email)
+            select(AppUser).where(AppUser.email == challenge.email).with_for_update()
         ).one_or_none()
         if user is None:
             user = AppUser(
@@ -266,6 +287,10 @@ def create_auth_router(engine: Engine, settings: AuthSettings) -> APIRouter:
             )
             session.add(user)
             session.flush()
+        elif user.disabled:
+            session.delete(challenge)
+            session.commit()
+            raise HTTPException(423, "Ce compte est suspendu. Contactez un administrateur.")
         elif user.verified_at is None:
             user.verified_at = now
         token = secrets.token_urlsafe(32)
@@ -313,6 +338,8 @@ def create_auth_router(engine: Engine, settings: AuthSettings) -> APIRouter:
         if user is None or user.verified_at is None:
             clear_cookie(response, settings.session_cookie)
             return SessionResponse(user=None)
+        if user.disabled:
+            raise HTTPException(423, "Ce compte est suspendu. Contactez un administrateur.")
         if now - auth_session.last_seen_at >= timedelta(minutes=5):
             auth_session.last_seen_at = now
             session.commit()

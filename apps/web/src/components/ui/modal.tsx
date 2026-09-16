@@ -50,7 +50,8 @@ export function Modal({
               );
               const fallback = navigation?.getClientRects().length
                 ? navigation
-                : document.getElementById('values-title');
+                : (document.getElementById('values-title') ??
+                  document.getElementById('main-content'));
               fallback?.focus({ preventScroll: true });
             }
           }}

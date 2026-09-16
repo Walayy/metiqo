@@ -1,24 +1,19 @@
-import { Bookmark, History, Info } from 'lucide-react';
+import { History, Info } from 'lucide-react';
 import type { Catalog, Opportunity } from '@/domain/schemas';
 import { currentQuote, oddsChange, fairOdds, marketLabel, valueOf } from '@/domain/value';
 import { dateTime, decimal, signedDecimal, percent, shortDate, time } from '@/lib/format';
 import { Modal } from '@/components/ui/modal';
 import { Logo } from '@/components/ui/logo';
-import { Button } from '@/components/ui/button';
 import { OddsHistory } from './odds-history';
 export function ValueDetail({
   item,
   open,
   catalog,
-  saved,
-  onSave,
   onClose,
 }: {
   item: Opportunity | null;
   open: boolean;
   catalog: Catalog;
-  saved: boolean;
-  onSave: () => void;
   onClose: () => void;
 }) {
   if (!item) return null;
@@ -110,13 +105,6 @@ export function ValueDetail({
             </p>
           </div>
         </div>
-      </div>
-      <div className="detail-footer">
-        <Button variant={saved ? 'secondary' : 'primary'} onClick={onSave}>
-          <Bookmark size={17} className={saved ? 'bookmark-filled' : ''} />
-          {saved ? 'Retirer des favoris' : 'Suivre cette value'}
-        </Button>
-        <span>Enregistré sur cet appareil</span>
       </div>
     </Modal>
   );

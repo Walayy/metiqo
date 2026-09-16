@@ -1,33 +1,49 @@
-import { ArrowUpRight, Bookmark, CircleHelp, Globe2, Radar, ShieldCheck, X } from 'lucide-react';
-import type { League } from '@/domain/schemas';
+import {
+  CalendarDays,
+  ChartNoAxesCombined,
+  HeartHandshake,
+  Link,
+  Radar,
+  Terminal,
+  Users,
+  X,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { useId } from 'react';
+import { SelectionIndicator } from '@/components/ui/selection-indicator';
 import { clsx } from 'clsx';
-import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
+import { viewLabels } from '@/app/navigation';
+import type { AppView } from '@/app/navigation';
 import { GameSelector } from './game-selector';
 
 interface Props {
-  favoriteCount: number;
-  savedOnly: boolean;
-  onSavedChange: (value: boolean) => void;
-  leagues: League[];
-  selectedLeague: string;
-  onLeagueChange: (id: string) => void;
-  onCatalog: () => void;
-  onHelp: () => void;
+  view: AppView;
+  onNavigate: (view: AppView) => void;
+  onSupport: (kind: 'donation' | 'referral') => void;
+  isAdmin: boolean;
   onClose?: () => void;
 }
-export function Sidebar({
-  favoriteCount,
-  savedOnly,
-  onSavedChange,
-  leagues,
-  selectedLeague,
-  onLeagueChange,
-  onCatalog,
-  onHelp,
-  onClose,
-}: Props) {
-  const pinned = ['lck', 'lpl', 'lec', 'lfl', 'lcs', 'cblol-brazil', 'lcp'];
+export function Sidebar({ view, onNavigate, onSupport, isAdmin, onClose }: Props) {
+  const selectionId = useId();
+  function entry(id: AppView, Icon: LucideIcon) {
+    return (
+      <button
+        type="button"
+        className={clsx('nav-item', view === id && 'is-active')}
+        aria-current={view === id ? 'page' : undefined}
+        onClick={() => {
+          onNavigate(id);
+          onClose?.();
+        }}
+      >
+        {view === id && <SelectionIndicator id={selectionId} />}
+        <Icon size={18} />
+        <span>{viewLabels[id]}</span>
+        <span className="nav-active-dot" />
+      </button>
+    );
+  }
   return (
     <div className="sidebar-inner">
       <div className="brand">
@@ -45,110 +61,57 @@ export function Sidebar({
         )}
       </div>
       <GameSelector />
-      <p className="nav-label">ESPACE D’ANALYSE</p>
-      <nav aria-label="Navigation principale" className="main-nav">
-        <button
-          type="button"
-          className={clsx('nav-item', !savedOnly && 'is-active')}
-          aria-current={!savedOnly ? 'page' : undefined}
-          onClick={() => {
-            onSavedChange(false);
-            onClose?.();
-          }}
-        >
-          <Radar size={19} />
-          <span>Les values</span>
-          <span className="nav-active-dot" />
-        </button>
-        <button
-          type="button"
-          className={clsx('nav-item', savedOnly && 'is-active')}
-          aria-current={savedOnly ? 'page' : undefined}
-          onClick={() => {
-            onSavedChange(true);
-            onClose?.();
-          }}
-        >
-          <Bookmark size={18} />
-          <span>Mes favoris</span>
-          <span className="nav-count">{favoriteCount}</span>
-        </button>
-      </nav>
-      <div className="nav-section-heading">
-        <p className="nav-label">LES COMPÉTITIONS</p>
-        <span>LoL</span>
-      </div>
-      <nav aria-label="Ligues favorites" className="league-nav">
-        {!leagues.length &&
-          pinned.map((slug) => (
-            <div key={slug} className="nav-item league-loading" aria-hidden="true">
-              <span className="skeleton" />
-              <span className="skeleton" />
-            </div>
-          ))}
-        {pinned
-          .map((slug) => leagues.find((l) => l.slug === slug))
-          .filter((league): league is League => !!league)
-          .map((league) => (
+      <nav aria-label="Navigation principale" className="sidebar-groups">
+        <div>
+          <p className="nav-label">ESPORT</p>
+          <div className="main-nav">{entry('matches', CalendarDays)}</div>
+        </div>
+        <div>
+          <p className="nav-label">ANALYSE</p>
+          <div className="main-nav">
+            {entry('values', Radar)}
+            {entry('performance', ChartNoAxesCombined)}
+          </div>
+        </div>
+        <div>
+          <p className="nav-label">SOUTENIR METIQUO</p>
+          <div className="main-nav">
             <button
               type="button"
-              key={league.id}
-              className={clsx(
-                'nav-item league-nav-item',
-                selectedLeague === league.id && 'league-is-active',
-              )}
-              aria-pressed={selectedLeague === league.id}
+              className="nav-item"
+              aria-haspopup="dialog"
               onClick={() => {
-                onLeagueChange(selectedLeague === league.id ? 'all' : league.id);
+                onSupport('donation');
                 onClose?.();
               }}
             >
-              <Logo src={league.image} name={league.name} league />
-              <span>{league.name}</span>
+              <HeartHandshake size={18} />
+              <span>Faire un don</span>
             </button>
-          ))}
-        <button
-          type="button"
-          className="nav-item all-leagues"
-          onClick={() => {
-            onCatalog();
-            onClose?.();
-          }}
-        >
-          <Globe2 size={17} />
-          <span>Toutes les ligues</span>
-          <ArrowUpRight size={14} />
-        </button>
+            <button
+              type="button"
+              className="nav-item"
+              aria-haspopup="dialog"
+              onClick={() => {
+                onSupport('referral');
+                onClose?.();
+              }}
+            >
+              <Link size={18} />
+              <span>Parrainage Stake</span>
+            </button>
+          </div>
+        </div>
+        {isAdmin && (
+          <div>
+            <p className="nav-label">GESTION</p>
+            <div className="main-nav">
+              {entry('users', Users)}
+              {entry('admin', Terminal)}
+            </div>
+          </div>
+        )}
       </nav>
-      <div className="sidebar-bottom">
-        <div className="analysis-card">
-          <span className="analysis-icon">
-            <ShieldCheck size={19} />
-          </span>
-          <strong>Le jeu de l’analyse.</strong>
-          <p>
-            Explorez les données.
-            <br />
-            Affinez votre lecture.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="nav-item help-nav"
-          onClick={() => {
-            onHelp();
-            onClose?.();
-          }}
-        >
-          <CircleHelp size={18} />
-          <span>Comprendre la value</span>
-          <ArrowUpRight size={14} />
-        </button>
-        <div className="sidebar-signature">
-          <span>Conçu pour voir plus juste.</span>
-          <span>v0.1</span>
-        </div>
-      </div>
     </div>
   );
 }

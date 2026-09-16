@@ -5,12 +5,17 @@ import { MotionConfig } from 'motion/react';
 import './styles/fonts.css';
 import './styles/globals.css';
 import './styles/interactions.css';
-import { App } from './app/app';
+import { AppRouter } from './app/app-router';
+import { isKnownLocation } from './features/status/status-model';
+import { retryRead } from './lib/http-error';
 import { ErrorBoundary } from './app/error-boundary';
 import { RevealApp } from './app/reveal-app';
-import { catalogQuery, opportunitiesQuery } from './lib/api';
+import { catalogQuery, matchesQuery, opportunitiesQuery, performanceQuery } from './lib/api';
+import './styles/experience.css';
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, retryOnMount: false, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: { retry: retryRead, retryOnMount: false, refetchOnWindowFocus: false },
+  },
 });
 async function prepareFonts() {
   // A slow font must never freeze startup or replace visible text later.
@@ -36,10 +41,18 @@ async function prepareFonts() {
 }
 
 // Warm the shared cache, but never hold the interface behind a slow API.
-const initialData = Promise.all([
-  queryClient.prefetchQuery(catalogQuery),
-  queryClient.prefetchQuery(opportunitiesQuery),
-]);
+const initialData = Promise.all(
+  isKnownLocation(location.pathname, location.search)
+    ? [
+        queryClient.prefetchQuery(catalogQuery),
+        new URLSearchParams(location.search).get('view') === 'matches'
+          ? queryClient.prefetchQuery(matchesQuery)
+          : new URLSearchParams(location.search).get('view') === 'performance'
+            ? queryClient.prefetchQuery(performanceQuery)
+            : queryClient.prefetchQuery(opportunitiesQuery),
+      ]
+    : [],
+);
 let dataTimer: ReturnType<typeof setTimeout> | undefined;
 await Promise.all([
   prepareFonts(),
@@ -57,7 +70,7 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <MotionConfig reducedMotion="user">
-          <App />
+          <AppRouter />
         </MotionConfig>
       </QueryClientProvider>
     </ErrorBoundary>

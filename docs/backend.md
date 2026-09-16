@@ -28,7 +28,7 @@ flowchart LR
 - `apps/web` : données esport conservées en mock, authentification réelle dans une modale. Les imports Python et les secrets ne sont jamais embarqués dans le bundle frontend.
 - `pgadmin` : administration locale de PostgreSQL, authentification indépendante et connexion au réseau interne de la base. Son volume de configuration est distinct des données métier.
 
-L’image API contient les dépendances HTTP et base ; l’image worker contient le navigateur. Les deux applications s’exécutent sous l’UID 10001. Nginx s’exécute sous son utilisateur non privilégié. L’API et Nginx ont un système de fichiers en lecture seule. Les données PostgreSQL et les CSV sont dans deux volumes distincts. L’API monte les CSV en lecture seule ; son rôle SQL lit les données esport et écrit uniquement les tables/colonnes nécessaires à l’authentification, sans pouvoir attribuer de rôle. Le worker écrit les données de collecte mais n’accède pas aux tables d’authentification. Le rôle propriétaire est réservé aux migrations et à l’administration.
+L’image API contient les dépendances HTTP et base ; l’image worker contient le navigateur. Les deux applications s’exécutent sous l’UID 10001. Nginx s’exécute sous son utilisateur non privilégié. L’API et Nginx ont un système de fichiers en lecture seule. Les données PostgreSQL et les CSV sont dans deux volumes distincts. L’API monte les CSV en lecture seule ; son rôle SQL lit les données esport et écrit uniquement les tables/colonnes nécessaires à l’authentification et à l’administration (rôles/statuts, planifications, file et audit). Le worker écrit les données de collecte mais n’accède pas aux tables d’authentification. Le rôle propriétaire est réservé aux migrations et à l’administration.
 
 ## Démarrage Docker
 
@@ -42,7 +42,7 @@ Application : `http://127.0.0.1:8080`. OpenAPI : `http://127.0.0.1:8080/api/docs
 
 Le projet Compose s’appelle `metiquo-stack`, pour ne pas réutiliser les anciens volumes `metiquo_*`. Les volumes créés sont `metiquo-stack_postgres_data`, `metiquo-stack_artifacts` et `metiquo-stack_pgadmin_data`. Un autre projet Compose peut être utilisé avec `-p`.
 
-Au premier lancement, le worker synchronise le catalogue LoL et ses logos, puis découvre les fichiers Oracle disponibles et importe l’historique complet. Les relances utilisent les dates des collectes réussies en base : elles ne déclenchent pas systématiquement un nouvel export. L’API reste disponible pendant les collectes. Les noms, options, cadences et usages cron sont détaillés dans [le guide des collecteurs](collectors.md).
+Le worker suit les crons persistés et les demandes manuelles de l’espace Admin. Les premières collectes attendent la prochaine échéance ; utiliser **Lancer** pour un import immédiat. L’API reste disponible pendant les collectes. Les noms, options et cadences sont détaillés dans [le guide des collecteurs](collectors.md) et [le guide d’administration](administration.md).
 
 ### pgAdmin et accès à PostgreSQL
 
@@ -142,7 +142,7 @@ Lors de son implémentation future :
 3. Enregistrer la rencontre avant ses cotes, créer les marchés/sélections, puis appeler `record_quote` dans une transaction. Cette fonction verrouille le marché, vérifie l’appartenance de la sélection et rejette les relevés antérieurs à l’enregistrement ou contradictoires au même instant.
 4. Produire les estimations dans un traitement distinct, avec version et expiration du modèle. `/opportunities` ne renvoie que les matchs à venir, marchés actifs, estimations valides et cotes de moins de 15 minutes par défaut. La dernière cote est dérivée du dernier relevé, même si elle baisse ; aucune value n’est stockée.
 
-L’authentification email est implémentée dans `apps/api/src/metiquo_api/auth.py`, avec migration `0002`, Mailpit et modale frontend. Aucun mot de passe, compte bookmaker ou paiement n’est ajouté. Les favoris restent locaux et les routes esport restent publiques. Le détail des protections et des limites est dans [authentication.md](authentication.md).
+L’authentification email est implémentée dans `apps/api/src/metiquo_api/auth.py`, avec migration `0002`, Mailpit et modale frontend. Aucun mot de passe, compte bookmaker ou paiement n’est ajouté. Les routes esport restent publiques. Le détail des protections et des limites est dans [authentication.md](authentication.md).
 
 ## Configuration
 
@@ -155,8 +155,6 @@ Les paramètres Python commencent par `METIQUO_` et sont validés au démarrage.
 | `METIQUO_LOG_LEVEL`                     | `INFO`                                                                    |
 | `METIQUO_ORACLE_ENABLED`                | `true` ; `false` garde le worker en veille                                |
 | `METIQUO_ORACLE_FOLDER_ID`              | Dossier public documenté dans les sources                                 |
-| `METIQUO_ORACLE_INTERVAL_SECONDS`       | `21600`, minimum 300                                                      |
-| `METIQUO_ORACLE_FULL_REFRESH_SECONDS`   | `604800`, minimum 300                                                     |
 | `METIQUO_ORACLE_EXPORT_TIMEOUT_SECONDS` | `600`, maximum 1800                                                       |
 | `METIQUO_ORACLE_MAX_ARCHIVE_BYTES`      | `1500000000`                                                              |
 | `METIQUO_ORACLE_MAX_EXPANDED_BYTES`     | `5000000000`                                                              |
@@ -213,7 +211,7 @@ docker compose --env-file .env.docker start worker
 
 Le dossier `.cache/backups` est ignoré par Git ; déplacer les copies vers une sauvegarde privée durable. Prévoir assez de place dans `/tmp` pour les archives (en mémoire dans le conteneur API) ou utiliser un conteneur utilitaire avec un disque de sauvegarde monté. Restaurer le dump dans une **nouvelle base** avec `pg_restore`, avec les rôles initialisés par le script PostgreSQL et les mêmes migrations ; restaurer les CSV dans un nouveau volume avec l’UID/GID 10001. Vérifier les empreintes, `/health/ready`, les nombres de versions/lignes et un téléchargement CSV avant de basculer les services. Relancer ensuite le worker. Conserver une copie hors du serveur et tester périodiquement la restauration.
 
-Pour un serveur, placer Nginx derrière une terminaison TLS et un domaine configurés explicitement, activer les cookies Secure et configurer l’origine et le fournisseur SMTP. L’écoute actuelle est locale ; modifier `WEB_BIND_ADDRESS` seulement pour le réseau choisi. Les routes esport sont publiques en lecture ; les routes d’authentification traitent des données privées. Les futurs endpoints privés devront contrôler les autorisations côté serveur. Prévoir sauvegardes automatisées, alertes et rotation des secrets. Ce travail ne publie rien sur Internet.
+Pour un serveur, placer Nginx derrière une terminaison TLS et un domaine configurés explicitement, activer les cookies Secure et configurer l’origine et le fournisseur SMTP. L’écoute actuelle est locale ; modifier `WEB_BIND_ADDRESS` seulement pour le réseau choisi. Les routes esport sont publiques en lecture ; les routes d’authentification traitent des données privées. Les endpoints `/api/v1/admin/*` contrôlent la session, le rôle courant et l’origine des écritures côté serveur. Prévoir sauvegardes automatisées, alertes et rotation des secrets. Ce travail ne publie rien sur Internet.
 
 ### Limites assumées
 

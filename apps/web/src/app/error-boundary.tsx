@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { StatusPage } from '@/features/status/status-panel';
 export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
@@ -10,17 +11,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
   }
   render() {
     return this.state.failed ? (
-      <main className="fatal-error">
-        <h1>Un contretemps.</h1>
-        <p>Metiquo n’a pas pu afficher cet écran.</p>
-        <button
-          type="button"
-          className="button button--primary"
-          onClick={() => window.location.reload()}
-        >
-          Recharger
-        </button>
-      </main>
+      <StatusPage error={new Error('Rendering failed')} onRetry={() => window.location.reload()} />
     ) : (
       this.props.children
     );

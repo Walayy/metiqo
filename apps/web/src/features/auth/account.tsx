@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Check, LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react';
@@ -12,11 +12,17 @@ import { codeSchema, emailSchema } from './contracts';
 import type { AuthSession, Challenge } from './contracts';
 import './auth.css';
 import { authFeedbackMessages, authMessages } from './messages';
+import { AccountContext } from './account-context';
+import { StatusPanel } from '@/features/status/status-panel';
+import { HttpError } from '@/lib/http-error';
+import { requestCooldown } from '@/lib/http';
 
 export function Account() {
   const session = useQuery(sessionQuery);
   const client = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const account = useContext(AccountContext);
+  if (!account) throw new Error('Account requires its dialog context');
+  const { open, setOpen } = account;
   const channel = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
     if (!('BroadcastChannel' in window)) return;
@@ -52,7 +58,8 @@ export function Account() {
         <AccountDialog
           session={session.data}
           loading={session.isPending}
-          failed={session.isError}
+          retrying={session.isFetching}
+          failure={session.error}
           retry={() => {
             void session.refetch();
           }}
@@ -67,13 +74,14 @@ export function Account() {
 interface Props {
   session: AuthSession | undefined;
   loading: boolean;
-  failed: boolean;
+  retrying: boolean;
+  failure: Error | null;
   retry: () => void;
   onClose: () => void;
   onSession: (session: AuthSession) => Promise<void>;
 }
 
-function AccountDialog({ session, loading, failed, retry, onClose, onSession }: Props) {
+function AccountDialog({ session, loading, retrying, failure, retry, onClose, onSession }: Props) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [challenge, setChallenge] = useState<Challenge | null>(null);
@@ -82,9 +90,13 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
   const [notice, setNotice] = useState('');
   const [now, setNow] = useState(Date.now);
   const [blockedUntil, setBlockedUntil] = useState(0);
+  const [serviceFailure, setServiceFailure] = useState<HttpError | null>(() =>
+    requestCooldown('/api/v1/auth/request-code'),
+  );
   const emailInput = useRef<HTMLInputElement>(null);
   const codeInput = useRef<HTMLInputElement>(null);
   const controller = useRef<AbortController | null>(null);
+  const sending = useRef(false);
   const user = session?.user;
   const validationError = challenge
     ? !code
@@ -108,7 +120,14 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
   }, [challenge]);
 
   const action = useMutation({
-    mutationFn: async (kind: 'send' | 'verify' | 'logout') => {
+    retry: false,
+    mutationFn: async ({
+      kind,
+      verificationCode,
+    }: {
+      kind: 'send' | 'verify' | 'logout';
+      verificationCode?: string;
+    }) => {
       controller.current?.abort();
       const pending = new AbortController();
       controller.current = pending;
@@ -126,8 +145,9 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
         setNow(Date.now());
         setNotice(challenge ? authMessages.codeResent : '');
       } else if (kind === 'verify' && challenge) {
-        if (!codeSchema.safeParse(code).success) throw new AuthError(authMessages.codeIncomplete);
-        const result = await verifyCode(challenge.challengeId, code, pending.signal);
+        const parsed = codeSchema.safeParse(verificationCode);
+        if (!parsed.success) throw new AuthError(authMessages.codeIncomplete);
+        const result = await verifyCode(challenge.challengeId, parsed.data, pending.signal);
         if (pending.signal.aborted) return;
         await onSession(result);
         setChallenge(null);
@@ -142,11 +162,22 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
         onClose();
       }
     },
+    onSettled: () => {
+      sending.current = false;
+    },
     onError: (failure) => {
       if (controller.current?.signal.aborted) return;
-      setError(failure instanceof AuthError ? failure.message : authMessages.failed);
-      if (failure instanceof AuthError && failure.retryAfter) {
-        setBlockedUntil(Date.now() + failure.retryAfter * 1000);
+      if (
+        failure instanceof HttpError &&
+        ![400, 403, 422].includes(failure.status) &&
+        !(failure instanceof AuthError && failure.status === 0)
+      ) {
+        setServiceFailure(failure);
+      } else {
+        setError(failure instanceof HttpError ? failure.message : authMessages.failed);
+      }
+      if (failure instanceof HttpError && failure.retryAt) {
+        setBlockedUntil(failure.retryAt);
         setNow(Date.now());
       }
       if (challenge) {
@@ -172,6 +203,36 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
       : authMessages.emailHint;
   const fieldMessage = fieldError || notice || fieldHint;
   const fieldTone = fieldError ? 'error' : notice ? 'success' : 'hint';
+  function startAction(kind: 'send' | 'verify' | 'logout', verificationCode = code) {
+    if (sending.current || action.isPending) return;
+    const currentTime = Date.now();
+    if (
+      kind === 'verify' &&
+      (!challenge ||
+        currentTime >= Date.parse(challenge.expiresAt) ||
+        blockedUntil > currentTime ||
+        !codeSchema.safeParse(verificationCode).success)
+    )
+      return;
+    if (
+      kind === 'send' &&
+      Math.max(challenge ? Date.parse(challenge.resendAt) : 0, blockedUntil) > currentTime
+    )
+      return;
+    sending.current = true;
+    action.mutate({ kind, verificationCode: kind === 'verify' ? verificationCode : undefined });
+  }
+  function changeCode(value: string) {
+    if (sending.current) return;
+    const next = value.replace(/\D/g, '').slice(0, 6);
+    setCode(next);
+    setError('');
+    setNotice('');
+    if (next.length === 6 && next !== code) {
+      setSubmitted(true);
+      startAction('verify', next);
+    }
+  }
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (action.isPending || expired || (challenge ? blockedUntil > now : resendSeconds > 0)) return;
@@ -182,7 +243,7 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
       (challenge ? codeInput : emailInput).current?.focus({ preventScroll: true });
       return;
     }
-    action.mutate(challenge ? 'verify' : 'send');
+    startAction(challenge ? 'verify' : 'send');
   }
   return (
     <Modal
@@ -191,14 +252,22 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
         if (!open) onClose();
       }}
       title={
-        user ? 'Votre profil' : challenge ? 'Consultez votre boîte mail' : 'Bienvenue sur Metiquo'
+        failure || serviceFailure
+          ? 'Votre connexion à Metiquo'
+          : user
+            ? 'Votre profil'
+            : challenge
+              ? 'Consultez votre boîte mail'
+              : 'Bienvenue sur Metiquo'
       }
       description={
-        user
-          ? 'Votre compte, en toute simplicité.'
-          : challenge
-            ? 'Un code à 6 chiffres vous attend pour continuer.'
-            : 'Connectez-vous ou créez votre compte avec votre email.'
+        failure || serviceFailure
+          ? 'Les informations pour poursuivre.'
+          : user
+            ? 'Votre compte, en toute simplicité.'
+            : challenge
+              ? 'Un code à 6 chiffres vous attend pour continuer.'
+              : 'Connectez-vous ou créez votre compte avec votre email.'
       }
       initialFocusRef={emailInput}
       className="auth-modal"
@@ -208,11 +277,23 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
           <div className="auth-loading" role="status">
             <Spinner /> Vérification de votre session…
           </div>
-        ) : failed ? (
-          <div className="auth-service-error">
-            <p role="alert">Impossible de vérifier votre session. Veuillez réessayer.</p>
-            <Button onClick={retry}>Réessayer</Button>
-          </div>
+        ) : failure || serviceFailure ? (
+          <StatusPanel
+            compact
+            error={failure ?? serviceFailure!}
+            busy={retrying}
+            onRetry={
+              failure
+                ? retry
+                : () => {
+                    setServiceFailure(null);
+                    requestAnimationFrame(() =>
+                      (challenge ? codeInput : emailInput).current?.focus(),
+                    );
+                  }
+            }
+            retryLabel={failure ? 'Vérifier ma session' : 'Reprendre'}
+          />
         ) : user ? (
           <>
             <div className="auth-profile-heading">
@@ -247,7 +328,6 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
                 <dd>{accountDate(user.createdAt)}</dd>
               </div>
             </dl>
-            <p className="auth-footnote">Vos favoris restent enregistrés sur cet appareil.</p>
             <FieldFeedback
               id="auth-profile-feedback"
               message={error || notice}
@@ -255,7 +335,7 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
               reserve={authFeedbackMessages}
             />
             <Button
-              onClick={() => action.mutate('logout')}
+              onClick={() => startAction('logout')}
               disabled={action.isPending}
               className="auth-submit"
             >
@@ -294,9 +374,10 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
                     minLength={6}
                     required
                     value={code}
-                    onChange={(event) => {
-                      setCode(event.target.value.replace(/\D/g, '').slice(0, 6));
-                      setError('');
+                    onChange={(event) => changeCode(event.target.value)}
+                    onPaste={(event) => {
+                      event.preventDefault();
+                      changeCode(event.clipboardData.getData('text'));
                     }}
                     placeholder="000000"
                     aria-invalid={!!fieldError}
@@ -358,7 +439,7 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
                   <ArrowRight size={17} />
                 )}
                 {action.isPending
-                  ? action.variables === 'send'
+                  ? action.variables?.kind === 'send'
                     ? 'Envoi du code…'
                     : 'Vérification…'
                   : challenge
@@ -371,7 +452,7 @@ function AccountDialog({ session, loading, failed, retry, onClose, onSession }: 
                 <Button
                   variant="ghost"
                   disabled={action.isPending || resendSeconds > 0}
-                  onClick={() => action.mutate('send')}
+                  onClick={() => startAction('send')}
                 >
                   {resendSeconds > 0 ? `Renvoyer dans ${resendSeconds} s` : 'Renvoyer un code'}
                 </Button>

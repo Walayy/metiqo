@@ -4,13 +4,13 @@ import { filterValues } from './filter';
 import { catalog, opportunities } from '@/mocks/fixtures';
 
 describe('Contexte partagé dans l’URL', () => {
-  it('restaure les favoris, les filtres, le tri, la page et un détail sans perdre un paramètre externe', () => {
+  it('restaure la vue, les filtres, le tri, la page et un détail sans perdre un paramètre externe', () => {
     const original = new URLSearchParams(
-      'mock=slow&view=favorites&league=ligue-ouverte&team=equipe-ouverte&market=map1&min=4&q=Gen.G&sort=probability&page=3&detail=match-42',
+      'mock=slow&view=values&league=ligue-ouverte&team=equipe-ouverte&market=map1&min=4&q=Gen.G&sort=probability&page=3&detail=match-42',
     );
     const state = readExplorerLocation(original);
     expect(state).toMatchObject({
-      savedOnly: true,
+      view: 'values',
       page: 3,
       search: 'Gen.G',
       sort: 'probability',
@@ -50,8 +50,6 @@ describe('Contexte partagé dans l’URL', () => {
         catalog,
         state.filters,
         '',
-        [],
-        false,
         'value',
         opportunities.referenceDate,
       );
@@ -65,8 +63,6 @@ describe('Contexte partagé dans l’URL', () => {
         catalog,
         state.filters,
         '',
-        [],
-        false,
         'value',
         opportunities.referenceDate,
       ),

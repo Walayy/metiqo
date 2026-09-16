@@ -1,0 +1,72 @@
+[
+  {
+    "id": "Gnar",
+    "name": "Gnar",
+    "image": "/champions/Gnar.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Gnar.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Vi",
+    "name": "Vi",
+    "image": "/champions/Vi.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Vi.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Ahri",
+    "name": "Ahri",
+    "image": "/champions/Ahri.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Ahri.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Jinx",
+    "name": "Jinx",
+    "image": "/champions/Jinx.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Jinx.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Nautilus",
+    "name": "Nautilus",
+    "image": "/champions/Nautilus.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Nautilus.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Renekton",
+    "name": "Renekton",
+    "image": "/champions/Renekton.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Renekton.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Sejuani",
+    "name": "Sejuani",
+    "image": "/champions/Sejuani.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Sejuani.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Azir",
+    "name": "Azir",
+    "image": "/champions/Azir.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Azir.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Kaisa",
+    "name": "Kai'Sa",
+    "image": "/champions/Kaisa.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Kaisa.png",
+    "retrievedAt": "2026-09-16"
+  },
+  {
+    "id": "Rakan",
+    "name": "Rakan",
+    "image": "/champions/Rakan.png",
+    "source": "https://ddragon.leagueoflegends.com/cdn/16.18.1/img/champion/Rakan.png",
+    "retrievedAt": "2026-09-16"
+  }
+]

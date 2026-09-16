@@ -245,8 +245,16 @@ def test_api_contract_quotes_and_estimate_expiry(database):
         body = Opportunities.model_validate(response.json())
         assert len(body.items) == 1
         assert [quote.odds for quote in body.items[0].history] == [2.1, 1.8]
+        schedule = client.get("/api/v1/matches").json()["items"]
+        assert len(schedule) == 1
+        assert schedule[0]["id"] == str(match_id)
+        assert schedule[0]["status"] == "scheduled"
+        assert schedule[0]["maps"] == []
+        assert schedule[0]["patch"] is None
+        assert client.get("/api/v1/performance").json()["items"] == []
         with Session(engine) as session, session.begin():
             estimate = session.get(ProbabilityEstimate, (market_id, now))
             estimate.estimated_at = now - timedelta(minutes=2)
             estimate.valid_until = now - timedelta(minutes=1)
         assert client.get("/api/v1/opportunities").json()["items"] == []
+        assert len(client.get("/api/v1/matches").json()["items"]) == 1

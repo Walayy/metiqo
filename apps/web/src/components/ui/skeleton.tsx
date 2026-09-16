@@ -1,4 +1,4 @@
-export function ValuesSkeleton() {
+export function ValuesSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <div
       className="values-skeleton"
@@ -15,10 +15,13 @@ export function ValuesSkeleton() {
         <span>VALUE</span>
         <span />
       </div>
-      {Array.from({ length: 6 }, (_, index) => (
+      {Array.from({ length: rows }, (_, index) => (
         <div className="value-row skeleton-row" key={index} aria-hidden="true">
           <div className="match-cell skeleton-match">
-            <div className="skeleton skeleton-logo" />
+            <div className="team-pair">
+              <span className="skeleton skeleton-logo" />
+              <span className="skeleton skeleton-logo" />
+            </div>
             <div className="skeleton-lines">
               <span className="skeleton" />
               <span className="skeleton" />
@@ -40,7 +43,6 @@ export function ValuesSkeleton() {
             <span className="skeleton skeleton-value" />
           </div>
           <div className="row-actions">
-            <span className="skeleton skeleton-bookmark" />
             <span className="skeleton skeleton-detail" />
           </div>
         </div>

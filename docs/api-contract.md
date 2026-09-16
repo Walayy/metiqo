@@ -83,11 +83,11 @@ Stake est l’unique bookmaker accepté. Le premier relevé correspond à l’en
 
 La cote courante est celle du **dernier relevé**, même si elle baisse. Aucun champ séparé de cote courante, d’écart ou de value n’est stocké. La value est `(probability * odds - 1) * 100`, et la cote juste `1 / probability`. Arrondir uniquement pour l’affichage. L’écart depuis l’enregistrement est la dernière cote moins la première. L’historique représente des relevés de cote, pas des probabilités estimées passées ; aucune value historique n’est inventée.
 
-Le contrat est identique en modes mock et API, sans champ spécifique à un badge de démonstration. L’ancien contrat `offers`/`history.label` et le champ `scenarioDate` sont remplacés. Les identifiants existants de fixtures restent inchangés pour préserver les favoris locaux.
+Le contrat est identique en modes mock et API, sans champ spécifique à un badge de démonstration. L’ancien contrat `offers`/`history.label` et le champ `scenarioDate` sont remplacés. Les identifiants existants de fixtures restent stables.
 
 ## Comportement réseau
 
-AbortSignal est transmis à `fetch`, combiné à un délai maximal de 15 secondes. TanStack Query effectue une nouvelle tentative après un échec. Le catalogue reste en cache pour la session ; les opportunités ont une fraîcheur de 60 secondes. Les deux lectures sont préchargées avant le premier écran, avec ce même cache, puis utilisées sans double requête au montage. Un échec initial affiche l’état de nouvelle tentative sans redémarrage automatique au montage. « Actualiser » relance les deux lectures en conservant les résultats existants pendant le chargement. Aucun polling ni trafic réel de bookmaker.
+AbortSignal est transmis à `fetch`, combiné à un délai maximal de 20 secondes. TanStack Query autorise au plus une nouvelle tentative de lecture sur erreur réseau, timeout ou 5xx sans délai serveur ; les 4xx et `Retry-After` n’entraînent pas de relance automatique. Voir [les états de reprise](error-handling.md). Le catalogue reste en cache pour la session ; les opportunités ont une fraîcheur de 60 secondes. Les deux lectures sont préchargées avant le premier écran, avec ce même cache, puis utilisées sans double requête au montage. Un échec initial affiche l’état de nouvelle tentative sans redémarrage automatique au montage. « Actualiser » relance les deux lectures en conservant les résultats existants pendant le chargement. Aucun polling ni trafic réel de bookmaker.
 
 En mode API, les erreurs HTTP et les contrats invalides sont visibles. Il n’y a aucun fallback vers une fixture. La pagination et les filtres sont locaux pour ce prototype ; le backend devra les exposer côté serveur si le volume devient significatif.
 
@@ -114,6 +114,16 @@ interface Session {
 }
 ```
 
-Erreurs : 400 code incorrect/expiré/consommé ou navigateur différent ; 403 origine/en-tête refusés ; 422 corps invalide ; 429 limite atteinte avec `Retry-After` en secondes ; 503 SMTP ou base indisponible. L’email et le code reçus ne sont pas recopiés dans les erreurs de validation. La réponse à la demande de code ne révèle pas l’existence d’un compte.
+Erreurs : 400 code incorrect/expiré/consommé ou navigateur différent ; 403 origine/en-tête refusés ; 422 corps invalide ; 423 compte suspendu après preuve d’accès ; 429 limite atteinte avec `Retry-After` en secondes ; 503 SMTP ou base indisponible. L’email et le code reçus ne sont pas recopiés dans les erreurs de validation. La réponse à la demande de code ne révèle pas l’existence d’un compte.
 
 Le client annule les requêtes abandonnées, applique un délai maximal de 20 secondes et ne renvoie pas automatiquement un POST. La lecture de session est vérifiée au retour du focus et toutes les 60 secondes en onglet actif. Voir [authentication.md](authentication.md) pour le détail des cookies et des limites.
+
+## Rencontres et simulation historique — 16 septembre 2026
+
+`GET /matches` renvoie `{ generatedAt, items }`, avec identifiants de rencontre indépendants des marchés. Chaque rencontre contient `id`, `leagueId`, `homeId`, `awayId`, `startsAt`, `updatedAt`, `format` (BO1/BO3/BO5), `status` (scheduled/live/finished), `patch`, `stage` et `maps`. Chaque carte contient son numéro, son statut (scheduled/live/finished/skipped), `durationSeconds`, `winnerId` nullable et les deux `sides`. Un côté identifie l’équipe, blue/red, les objectifs et cinq joueurs : identifiant, nom, rôle, champion/image, kills/deaths/assists, cs et gold. Les scores de série, éliminations et totaux d’or sont dérivés, pas stockés en double. Les cartes non commencées ne portent pas de statistiques. Les identifiants, compositions, côtés et vainqueurs incohérents sont rejetés par Zod.
+
+L’API actuelle lit `matches` sur une fenêtre UTC de ±9 jours couvrant toute la fenêtre J−7/J+7 de Paris. Le statut reste `scheduled`, `maps` vide et les métadonnées inconnues nulles : le stockage actuel ne contient pas de scores live. Une heure dépassée ne suffit jamais à inférer un direct ou un résultat. MSW fournit le scénario de direct documenté ; le frontend relit la route toutes les 30 secondes quand Matchs est monté. `updatedAt` identifie la date du relevé, distincte de la consultation HTTP.
+
+`GET /performance` renvoie `{ generatedAt, items }`. Chaque enregistrement fige `id`, `matchId`, `leagueId`, `homeId`, `awayId`, `pickId`, `market`, `observedAt`, `startsAt`, `settledAt`, `probability`, `odds` et `result` (won/lost/void). Un seul engagement par couple rencontre/marché, observation strictement antérieure au début, règlement postérieur ou égal au début, équipes cohérentes. Les ISO 8601 avec Z ou décalage explicite sont acceptés. Les identifiants référencent le catalogue reçu.
+
+Aucun historique de décision/règlement réel n’est encore relié au stockage : l’API renvoie donc explicitement une liste vide. Le mock comprend 120 règlements fictifs. Il n’existe ni création de paris, ni écriture de mise, ni endpoint de paiement. Les paramètres de simulation restent locaux au composant. Les destinations de soutien sont des URLs HTTPS publiques de construction (`VITE_DONATION_URL`, `VITE_STAKE_REFERRAL_URL`) ; aucune URL absente ne provoque un repli mock en mode API.

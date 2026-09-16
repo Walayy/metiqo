@@ -1,11 +1,17 @@
 # Vérifications de la première version
 
+## Filtres de ligue sur mobile — 16 septembre 2026
+
+- `npm run check` réussi : TypeScript, ESLint, build, 37 tests frontend et 51 tests backend hors intégration. Les deux avertissements de dépréciation Starlette préexistants subsistent.
+- Chromium à 320, 390, 820 et 1440 px, clair et sombre : barre sur une seule rangée, logos agrandis, sélection contrastée, bouton Plus accessible et aucune largeur de page excédentaire observée. Actualiser apparaît une seule fois selon le breakpoint.
+- Recherche par région (« japon »), sélection de LJL hors des raccourcis, ajout et visibilité automatique de la sélection dans la barre ; retour à toutes les ligues, actualisation, recherche sans résultat et effacement vérifiés.
+- Panneau mobile ancré en bas, recherche fixe et liste défilante ; version centrée sur desktop. Entrée, Tab, boucle de focus, Escape et retour au bouton Plus vérifiés. Les animations respectent la règle CSS de mouvement réduit ; pas de test sur téléphone physique ni avec lecteur d’écran complet.
+
 ## Corrections de l’audit — 15 septembre 2026 (points 5–9 et 11–13)
 
 - Pagination mobile : page 2 puis 3, focus replacé sur `values-title`, premières cartes visibles. Précédent/suivant du navigateur restitue les pages 2 et 3 et leurs URL.
 - Mobile 320 et 390 px : introduction compacte, probabilité et action Détail visibles, noms longs MVKA–DINO sans débordement. Aucun bouton actif de la liste inférieur à 44 × 44 px dans la mesure DOM à 320 px. Thèmes clair et sombre inspectés.
 - Chargement lent à 320 px : le splash disparaît pendant la requête, avec skeletons et spinner fixe ; la recherche reste utilisable et sa saisie est conservée à l’arrivée des données. Première carte à la même position (501,48 px) et de même hauteur (220 px) dans les états skeleton et chargé.
-- Favoris : favori T1, filtre LFL, vue vide expliquant le filtre ; l’action d’effacement retrouve T1 en restant dans les favoris. La vue et le favori sont conservés après F5. Le favori de test a été retiré.
 - Catalogue : `LFL` retrouve la LFL ; libellés français des régions, compteurs de rattachement explicites et participants internationaux non renseignés. Choisir T1 dans Équipes affiche ses deux marchés par identifiant, sans confondre T1 Academy ; le filtre survit à F5.
 - Historique : 24 h affiche 7 relevés au lieu de 8 ; Home sélectionne le 13 septembre à 10:00 (1,64), un clic sur la courbe sélectionne le 13 septembre à 22:00 (1,70). Curseur de 44 px, tableau de la même période, un seul conteneur défilant dans le détail. En-tête à y=0 et pied à y=741 dans le viewport de 844 px après navigation clavier.
 - Détail directement restauré après F5 depuis son URL. Les cellules et en-têtes de la liste sont présents dans l’arbre accessible, y compris les en-têtes visuellement masqués sur mobile. L’aide annonce son contenu et l’en-tête Value n’affiche plus un faux contrôle de tri.
@@ -65,7 +71,6 @@ Réalisées le 14 septembre 2026 sur le frontend local, puis sur le build de pro
 
 - Chargement des 34 opportunités du scénario.
 - Recherche « Karmine » : deux opportunités distinctes, KC et KCB.
-- Ajout d’un favori, conservation après rechargement, ouverture depuis « Mes favoris ».
 - Ouverture et fermeture d’une analyse, comparaison des trois offres et cohérence du calcul affiché.
 - Fermeture avec Escape et retour du focus au déclencheur.
 - Seuil de value à 15 % : état vide ; réinitialisation : retour des résultats.
@@ -143,3 +148,36 @@ La découverte couvre les données exposées par les pages publiques Riot à la 
 - Le conteneur pgAdmin a été recréé après son initialisation pour appliquer le réglage SMTP : le compte et l’unique connexion préconfigurée sont conservés dans le volume. Mailpit est configuré comme SMTP local ; l’envoi d’un email de réinitialisation n’a pas été déclenché.
 - Initialisation testée dans un dossier temporaire avec un template CRLF : cinq secrets distincts, relance sans changement, ajout des réglages auth/pgAdmin sur une ancienne configuration sans remplacer les trois mots de passe PostgreSQL. Une nouvelle exécution sur `.env.docker` réel le conserve octet pour octet. Aucun secret ajouté aux fichiers versionnés.
 - `docker compose config --quiet` et `npm run check` réussis : 23 tests frontend, 43 tests backend hors intégration, TypeScript, ESLint, build, Ruff et mypy. Les deux avertissements Starlette déjà documentés subsistent. Aucune modification de l’interface Metiquo ni de son schéma SQL ; les tests PostgreSQL complets et la matrice UI responsive/thèmes n’ont pas été rejoués pour cet ajout d’infrastructure.
+
+## Erreurs et reprise — 16 septembre 2026
+
+- `npm run check` réussi : TypeScript, ESLint, **37 tests frontend**, build, Ruff, mypy et **51 tests backend hors intégration**. Suite PostgreSQL complète dans `metiquo_errors_test` : **82 tests réussis**, dont 31 d’intégration. Deux avertissements Starlette préexistants. Prettier et `git diff --check` réussis.
+- Chromium : 404 en clair desktop et sombre mobile, retour par Tab/Entrée, focus initial ; 401 sur une vraie session anonyme, ouverture de la modale email et retour du focus avec Escape ; 403 en Admin et 423 sur petit écran ; 429 des données et du formulaire, attente conservée après F5 et réouverture ; reprise des données après un 503. Largeurs 320, 390, 820 et 1440 px, thèmes clair et sombre, sans débordement observé.
+- Injection des erreurs de service par un proxy HTTP de test isolé, sans couper la stack utilisateur, sans créer de compte ni modifier de rôle. Les autorisations, limites et suspensions réelles sont couvertes par les tests PostgreSQL ; aucun scénario d’authentification fictive livré dans MSW.
+- Démarrage du build avec modules JavaScript volontairement indisponibles : repli HTML et lien de rechargement fonctionnels. Le contrôle a détecté un identifiant retiré par Vite ; la détection utilise maintenant les scripts modules émis par le build. Aucun test d’un appareil physique ou d’un lecteur d’écran complet.
+- Nginx dans un conteneur temporaire : chemin inconnu = HTTP 404 avec HTML applicatif ; ressource `/assets/` absente = HTTP 404 sans HTML applicatif ; API inaccessible = JSON HTTP 503, `Retry-After: 30`, `Cache-Control: no-store`. Aucun déploiement public.
+
+## Contour de focus après F5 — 16 septembre 2026
+
+- Reproduction navigateur : clic sur le titre de page puis F5, le `main[tabindex="-1"]` reçoit `:focus-visible` et un contour de 2 px. La règle commune retire uniquement le contour des conteneurs structurels non interactifs ; titres, contrôles, widgets avec rôle et champs éditables sont préservés.
+- Vérification en clair et sombre aux formats 1440 × 900, 768 × 1024 et 390 × 844 : aucun contour du conteneur ni débordement horizontal. Rechargement réel, lien d’évitement puis Tab, pagination au clavier et fermeture de modale avec retour au bouton déclencheur vérifiés ; indicateurs clavier conservés. Sélection du texte inchangée.
+- `npm run check` réussi : 37 tests frontend et 51 tests backend hors intégration, TypeScript, ESLint, build, Ruff et mypy. Deux avertissements de dépréciation Starlette préexistants. Aucun test d’intégration PostgreSQL ni appareil physique rejoué pour cette modification CSS.
+- Frontend Docker local reconstruit seul et correction confirmée sur `http://127.0.0.1:8080`.
+
+## Navigation, calendrier et code automatique — 16 septembre 2026
+
+- `npm run check` : TypeScript, ESLint, 41 tests frontend, build Vite, Ruff, mypy et 51 tests backend hors intégration réussis. Deux avertissements de dépréciation préexistants Starlette/httpx/anyio restent présents. Aucun code backend modifié dans cette intervention.
+- Tests ajoutés pour les dates de Paris autour de minuit et des changements d’heure, les bornes J−7/J+7, les dates invalides, les liens partagés et le regroupement des marchés sans fusionner des rencontres à des horaires différents.
+- Navigateur sur Vite (5173), API Docker existante : desktop 1440 px, tablette 820 px et mobile 390 px, clair/sombre. Pas de débordement horizontal observé ; cartes mobiles, logos locaux, sidebar défilante, filtres Radix, date sélectionnée maintenue visible au redimensionnement.
+- Bornes du calendrier vérifiées par sélection du premier et dernier jour : flèche précédente/suivante désactivée à la borne respective ; jour précédent et retour navigateur restaurent la date. Saisie au clavier dans le champ date, retour à aujourd’hui, détail contrôlé. Rechargement sur la date sélectionnée : huit rencontres du jour, marchés multiples regroupés.
+- Performance : filtre « En baisse » sélectionné au clavier, 11 marchés affichés sur 34 comparables ; aucune métrique de gain ajoutée. Accès directs Utilisateurs et Scripts & planifications contrôlés avec le compte administrateur ; Gestion absente après déconnexion. Modales Faire un don et Parrainage Stake, fermeture Escape et parcours de navigation mobile contrôlés.
+- Authentification réelle avec le compte admin existant et Mailpit : cinq chiffres conservent le formulaire, le sixième déclenche la vérification et affiche le profil. Journal HTTP : une demande de code et une seule vérification, toutes deux 200. Aucun clic de validation nécessaire. Le collage est normalisé par le même gestionnaire, mais n’a pas fait l’objet d’une seconde connexion réelle lors de cette vérification.
+- Limites : aucune opportunité réelle disponible côté API, pas de vérification d’un calendrier esport officiel, ni de transaction de soutien. Les tests PostgreSQL d’intégration n’ont pas été relancés pour cette évolution frontend. Les services locaux existants db, Mailpit, API et web ont été redémarrés pour vérifier l’authentification, sans reconstruction des images.
+
+## Accordéons, cartes, simulation et soutien — 16 septembre 2026
+
+- `npm run check` : TypeScript, ESLint, tests unitaires frontend, build Vite, Ruff, mypy et tests backend hors intégration exécutés. Les tests de simulation couvrent mises/gains/pertes/remboursements, centimes, rendement, seuil strict et flottants, filtres combinés, chronologie et rejet du futur/doublons ; les contrats de matchs couvrent compositions, côtés, vainqueurs et états. Le test PostgreSQL existant est étendu pour vérifier que les rencontres demeurent disponibles après expiration d’une estimation, mais l’intégration PostgreSQL n’est pas relancée.
+- Navigateur Vite `127.0.0.1:5173` : ordinateur 1440 px, tablette 820 px, mobiles 390 et 320 px. Thèmes clair/sombre utilisés ; aucun débordement de page ou de modale observé aux dimensions contrôlées. Accordéon fermé initialement, score 1–0, carte active, carte future désactivée et navigation entre cartes avec flèche droite vérifiés. Les compositions se replient sur une colonne sur mobile ; les très petites largeurs affichent les statistiques des joueurs en cartes.
+- Performance : passage de 10 à 20 € double le gain net (26,70 → 53,40 €) sans changer le rendement. Sélection simultanée de T1 et G2, courbe négative, remise à zéro, validation de mise nulle et touche Home du curseur contrôlées. Les axes du SVG suivent la largeur réelle du conteneur.
+- Soutien : don et parrainage ouverts via navigation mobile ; copie du lien de don réussie. Pendant l’animation de fermeture, le titre reste « Soutenir Metiquo » et aucun contenu Stake n’apparaît. Escape et retour du focus à la navigation contrôlés. Liens temporaires `example.com` seulement ; aucune transaction externe effectuée.
+- Limites : scores, joueurs et règlements sont les fixtures horodatées du mode mock. Aucun fournisseur de direct ni règlement réel n’est raccordé. API `/performance` vide par conception ; les nouveaux endpoints nécessitent de reconstruire l’API Docker si l’on utilise la stack déjà démarrée. Aucun déploiement réalisé.

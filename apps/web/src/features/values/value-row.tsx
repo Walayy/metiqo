@@ -1,8 +1,7 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Bookmark } from 'lucide-react';
-import { clsx } from 'clsx';
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react';
 import type { League, Opportunity, Team } from '@/domain/schemas';
 import { currentQuote, oddsChange, trackedBookmaker, marketLabel, valueOf } from '@/domain/value';
-import { decimal, percent, shortDate, time } from '@/lib/format';
+import { decimal, percent } from '@/lib/format';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
 interface Props {
@@ -11,11 +10,9 @@ interface Props {
   home: Team;
   away: Team;
   pick: Team;
-  saved: boolean;
-  onSave: () => void;
   onOpen: () => void;
 }
-export function ValueRow({ item, league, home, away, pick, saved, onSave, onOpen }: Props) {
+export function ValueRow({ item, league, home, away, pick, onOpen }: Props) {
   const offer = currentQuote(item);
   const TrendIcon =
     oddsChange(item) > 0 ? ArrowUpRight : oddsChange(item) < 0 ? ArrowDownRight : ArrowRight;
@@ -40,10 +37,6 @@ export function ValueRow({ item, league, home, away, pick, saved, onSave, onOpen
             <span>{league.name}</span>
             <span className="meta-dot">·</span>
             <span>{item.format}</span>
-            <span className="meta-dot">·</span>
-            <span>
-              {shortDate(item.startsAt)}, {time(item.startsAt)}
-            </span>
           </div>
         </div>
       </div>
@@ -82,15 +75,6 @@ export function ValueRow({ item, league, home, away, pick, saved, onSave, onOpen
         <span className="mobile-value-label">value</span>
       </div>
       <div className="row-actions" role="cell" aria-colindex={6}>
-        <Button
-          variant="ghost"
-          iconOnly
-          aria-label={`${saved ? 'Retirer' : 'Ajouter'} ${home.code} – ${away.code} ${item.market === 'winner' ? 'match' : 'carte 1'} ${saved ? 'des' : 'aux'} favoris`}
-          aria-pressed={saved}
-          onClick={onSave}
-        >
-          <Bookmark size={17} className={clsx(saved && 'bookmark-filled')} />
-        </Button>
         <Button
           variant="ghost"
           className="row-open"

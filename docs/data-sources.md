@@ -73,6 +73,24 @@ Les emails de compte sont saisis par l’utilisateur et vérifiés par un code S
 
 Mailpit v1.31.1 ([images officielles](https://mailpit.axllent.org/docs/install/docker/), [SMTP](https://mailpit.axllent.org/docs/configuration/smtp/)) capture les messages localement, sans livraison externe. Documentation consultée le 15 septembre 2026. La possession d’un code dans cet environnement vérifie le parcours local, pas la propriété d’une boîte mail externe. La sécurité de session s’appuie sur les recommandations [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) ; détail dans [authentication.md](authentication.md).
 
+## Administration et raccourcis de ligues — 16 septembre 2026
+
+Les logos des raccourcis LCK, LPL, LEC, LFL et CBLOL utilisent les fichiers locaux du catalogue déjà sourcé ; aucune nouvelle identité, URL ou couverture n’est prétendue. Les comptes, planifications, heartbeat et historiques Admin proviennent exclusivement de PostgreSQL et du worker réel. L’historique Admin commence avec cette fonctionnalité ; les anciennes collectes restent dans les endpoints source.
+
+Le calcul des échéances utilise [croniter](https://github.com/pallets-eco/croniter) et les fuseaux IANA via `zoneinfo`/`tzdata`, documentation consultée le 16 septembre 2026. Ce sont des horaires de collecte configurés par l’administrateur, pas un calendrier de compétitions.
+
 ## Marques et droits
 
 Les marques, noms et logos appartiennent à Riot Games, aux organisateurs et aux équipes concernés. Leur présence dans un site public n’équivaut pas à une licence commerciale générale. Le prototype local les utilise comme identifiants descriptifs et documente leur provenance ; les droits et conditions devront être vérifiés avant une exploitation publique du produit.
+
+## Calendrier et performance — 16 septembre 2026
+
+Le scénario frontend de 34 marchés se répartit désormais de J−7 à J+7 autour du jour courant de Paris, calculé au chargement du module MSW. Les affiches, horaires, probabilités et relevés restent fictifs ; le catalogue sourcé du 14 septembre et ses logos ne changent pas. Les identifiants des opportunités comportent la date pour distinguer les rencontres de journées différentes. Les relevés des rencontres passées précèdent leur horaire de début.
+
+La nouvelle demande du 16 septembre sépare `/matches` des opportunités. Le mock décline les identités sourcées en rencontres fictives, avec cartes, scores, objectifs, compositions et alias de joueurs entièrement fictifs (`apps/web/src/mocks/esport.ts`). Les journées J−3 et J+3 sont volontairement vides pour vérifier les dates désactivées. Le score de série dérive des cartes gagnées. Il ne s’agit pas d’un calendrier officiel ni d’un flux live ; les statistiques restent celles du scénario horodaté, même lors d’une nouvelle lecture. L’API expose seulement les rencontres stockées, sans inventer de direct ni de compositions.
+
+Performance utilise 120 décisions et règlements fictifs répartis sur environ 60 jours, avec gains, pertes et annulations. Chaque décision fige sa cote et sa probabilité avant le match. Cet historique est indépendant des opportunités courantes et permet uniquement de tester une simulation : il ne constitue ni un historique utilisateur réel ni une validation du modèle. Le mode API reste vide tant qu’une source ne fournit pas les règlements et décisions nécessaires.
+
+### Portraits des champions — 16 septembre 2026
+
+Dix portraits officiels sont récupérés depuis Riot Data Dragon **16.18.1**, version retournée par `https://ddragon.leagueoflegends.com/api/versions.json` lors de cette récupération. Les noms et fichiers proviennent de `https://ddragon.leagueoflegends.com/cdn/16.18.1/data/fr_FR/champion.json`. [Documentation primaire Data Dragon](https://developer.riotgames.com/docs/lol#data-dragon). Les URLs exactes, noms et date sont conservés dans `apps/web/src/mocks/data/champions.json` ; fichiers originaux dans `apps/web/public/champions/`. Champions : Gnar, Vi, Ahri, Jinx, Nautilus, Renekton, Sejuani, Azir, Kai’Sa et Rakan. Aucune couverture de tous les champions ou actualité automatique n’est annoncée. Ces images identifient les champions d’une composition fictive, sans assertion sur leurs choix par des joueurs réels. Les assets League of Legends restent la propriété de Riot Games.
