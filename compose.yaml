@@ -1,0 +1,189 @@
+name: metiquo-stack
+
+services:
+  db:
+    image: postgres:18-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+    environment:
+      POSTGRES_DB: metiquo
+      POSTGRES_USER: metiquo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run docker:init}
+      METIQUO_API_PASSWORD: ${METIQUO_API_PASSWORD:?Run npm run docker:init}
+      METIQUO_WORKER_PASSWORD: ${METIQUO_WORKER_PASSWORD:?Run npm run docker:init}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./infra/docker/postgres-init.sh:/docker-entrypoint-initdb.d/10-metiquo.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+    networks: [database]
+
+  migrate:
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile, target: api }
+    image: metiquo-api:local
+    environment:
+      METIQUO_DATABASE_URL: postgresql+psycopg://metiquo:${POSTGRES_PASSWORD}@db:5432/metiquo
+    command: [alembic, upgrade, head]
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [database]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  api:
+    image: metiquo-api:local
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile, target: api }
+    environment:
+      METIQUO_DATABASE_URL: postgresql+psycopg://metiquo_api:${METIQUO_API_PASSWORD}@db:5432/metiquo
+      METIQUO_ARTIFACT_DIR: /data/artifacts
+      METIQUO_AUTH_SECRET: ${METIQUO_AUTH_SECRET:?Run npm run docker:init}
+      METIQUO_AUTH_ORIGINS: '${METIQUO_AUTH_ORIGINS:-["http://127.0.0.1:8080","http://localhost:8080","http://127.0.0.1:5173","http://localhost:5173"]}'
+      METIQUO_AUTH_COOKIE_SECURE: ${METIQUO_AUTH_COOKIE_SECURE:-false}
+      METIQUO_AUTH_TRUST_PROXY: 'true'
+      METIQUO_SMTP_HOST: ${METIQUO_SMTP_HOST:-mailpit}
+      METIQUO_SMTP_PORT: ${METIQUO_SMTP_PORT:-1025}
+      METIQUO_SMTP_SECURITY: ${METIQUO_SMTP_SECURITY:-none}
+      METIQUO_SMTP_FROM: ${METIQUO_SMTP_FROM:-connexion@metiquo.fr}
+    volumes: [artifacts:/data/artifacts:ro]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      mailpit: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          python,
+          -c,
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=4)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [database, frontend, mail]
+
+  mailpit:
+    image: axllent/mailpit:v1.31.1@sha256:98b916bd3c8d61f7633a52d3ea2f58d00620cb01ca57ab59edde68c347a95365
+    environment:
+      MP_MAX_MESSAGES: '500'
+      MP_MAX_AGE: 24h
+      MP_DISABLE_VERSION_CHECK: 'true'
+    ports: ['127.0.0.1:${MAILPIT_PORT:-8025}:8025']
+    healthcheck:
+      test: [CMD, /mailpit, readyz]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [mail]
+
+  pgadmin:
+    image: dpage/pgadmin4:9.17@sha256:2f4ce946ddf8360680d7eff4eaba1d91859eb6b4003e6623bad5c63a322c2f4d
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@metiquo.fr}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Run npm run docker:init}
+      PGADMIN_LISTEN_PORT: '5050'
+      PGADMIN_DISABLE_POSTFIX: 'true'
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: 'False'
+      PGADMIN_CONFIG_SESSION_COOKIE_NAME: "'metiquo_pgadmin_session'"
+      PGADMIN_CONFIG_MAIL_SERVER: "'mailpit'"
+      PGADMIN_CONFIG_MAIL_PORT: '1025'
+      PGADMIN_CONFIG_MAIL_USE_SSL: 'False'
+      PGADMIN_CONFIG_MAIL_USE_TLS: 'False'
+      PGADMIN_CONFIG_SECURITY_EMAIL_SENDER: "'pgadmin@metiquo.fr'"
+    ports: ['127.0.0.1:${PGADMIN_PORT:-5050}:5050']
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./infra/docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      db: { condition: service_healthy }
+      mailpit: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, wget, --quiet, --tries=1, --spider, 'http://127.0.0.1:5050/misc/ping']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [database, administration, mail]
+
+  worker:
+    image: metiquo-worker:local
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile, target: worker }
+    init: true
+    environment:
+      METIQUO_DATABASE_URL: postgresql+psycopg://metiquo_worker:${METIQUO_WORKER_PASSWORD}@db:5432/metiquo
+      METIQUO_ARTIFACT_DIR: /data/artifacts
+      METIQUO_ORACLE_ENABLED: ${METIQUO_ORACLE_ENABLED:-true}
+      METIQUO_ORACLE_INTERVAL_SECONDS: ${METIQUO_ORACLE_INTERVAL_SECONDS:-21600}
+      METIQUO_ORACLE_FULL_REFRESH_SECONDS: ${METIQUO_ORACLE_FULL_REFRESH_SECONDS:-604800}
+      METIQUO_CATALOG_ENABLED: ${METIQUO_CATALOG_ENABLED:-true}
+      METIQUO_CATALOG_INTERVAL_SECONDS: ${METIQUO_CATALOG_INTERVAL_SECONDS:-86400}
+    volumes: [artifacts:/data/artifacts]
+    shm_size: 1gb
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          CMD,
+          python,
+          -c,
+          "import os,time; assert time.time()-os.stat('/tmp/metiquo-worker.heartbeat').st_mtime < 3600",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    stop_grace_period: 30s
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [database, ingestion]
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        VITE_DATA_MODE: ${VITE_DATA_MODE:-mock}
+        VITE_API_BASE_URL: /api/v1
+    ports: ['${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:8080']
+    depends_on:
+      api: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/health]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks: [frontend]
+
+volumes:
+  postgres_data:
+  artifacts:
+  pgadmin_data:
+
+networks:
+  database: { internal: true }
+  frontend:
+  ingestion:
+  mail:
+  administration:

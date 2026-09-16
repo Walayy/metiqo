@@ -1,0 +1,10 @@
+# Optional local DB access for uv development and isolated integration tests.
+services:
+  db:
+    ports: ['127.0.0.1:${DB_DEV_PORT:-54329}:5432']
+    networks: [database, development]
+  mailpit:
+    ports: ['127.0.0.1:${SMTP_DEV_PORT:-1025}:1025']
+
+networks:
+  development:

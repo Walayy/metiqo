@@ -1,0 +1,27 @@
+.field-feedback {
+  display: grid;
+  align-items: start;
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.field-feedback-measure,
+.field-feedback-content {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+.field-feedback-measure {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.field-feedback-message {
+  margin: 0;
+  color: var(--muted);
+}
+.field-feedback-message--error {
+  color: var(--field-error);
+}
+.field-feedback-message--success {
+  color: var(--accent);
+}

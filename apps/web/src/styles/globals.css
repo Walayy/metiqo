@@ -38,6 +38,7 @@
   --overlay: #0a10084d;
   --logo-bg: #252b29;
   --focus: #65a243;
+  --field-error: #a32e27;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
@@ -70,6 +71,7 @@
   --overlay: #050804a8;
   --logo-bg: #242a26;
   --focus: #b6e598;
+  --field-error: #ffb2a9;
 }
 * {
   box-sizing: border-box;

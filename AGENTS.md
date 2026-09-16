@@ -2,7 +2,11 @@
 
 ## Présentation
 
-Metiquo est une application d’analyse des values sur les marchés esport. Le premier jeu pris en charge est League of Legends. Le nom du dossier historique est `metiqo`, la marque affichée est **Metiquo**. La première version est une single-page app frontend, intégralement mockée. Le backend sera ajouté ultérieurement dans `apps/api`, dans ce même dépôt.
+Metiquo est une application d’analyse des values sur les marchés esport. Le premier jeu pris en charge est League of Legends. Le nom du dossier historique est `metiqo`, la marque affichée est **Metiquo**. Les données esport du frontend restent en mode mock, avec un backend réel, PostgreSQL, un worker Oracle’s Elixir et Docker. À la demande produit du 15 septembre 2026, le frontend et le backend intègrent une authentification réelle par code email à six chiffres, sans mot de passe, dans une modale sans route dédiée. Mailpit capture les emails en local ; `admin@metiquo.fr` est provisionné administrateur, les inscriptions ordinaires sont des comptes utilisateur.
+
+La demande suivante du 15 septembre 2026 autorise les commandes backend `sync-lol-catalog` (référentiel et logos versionnés) et `sync-oracles-elixir` (alias historique `collect`), en manuel ou planifiées dans le worker. Le catalogue est actualisé quotidiennement ; Oracle conserve ses cadences de six heures et d’une semaine. Ces collecteurs ne modifient ni l’UI/UX ni les fixtures frontend. Les relations saisonnières et divisions absentes de la source restent inconnues ; une participation ne doit pas devenir une affiliation d’origine supposée.
+
+pgAdmin est intégré à la stack locale à la demande du 15 septembre 2026 : interface sur `127.0.0.1:5050`, connexion PostgreSQL préconfigurée et volume de configuration persistant. Son compte, le rôle SQL administrateur et le compte utilisateur Metiquo sont distincts. Les mots de passe restent dans `.env.docker`, ignoré par Git ; aucune publication du port PostgreSQL dans la stack standard.
 
 ## Périmètre et données
 
@@ -18,7 +22,10 @@ Metiquo est une application d’analyse des values sur les marchés esport. Le p
 
 ## Architecture et développement
 
-- Monorepo npm workspaces : `apps/web` pour le frontend, `apps/api` réservé au futur backend. Ne pas créer de serveur factice aujourd’hui.
+- Monorepo : npm workspaces pour `apps/web` ; workspace Python 3.13 avec uv pour `apps/api` (FastAPI), `apps/worker` (collecteurs) et `packages/core` (domaine et PostgreSQL). Versions verrouillées dans les deux lockfiles.
+- API, worker et base cloisonnés. Patchright/Chromium appartient exclusivement au worker. Stake reste un emplacement d’extension désactivé : aucun accès à Stake.bet dans cette livraison. Pas d’authentification simulée ni de probabilités inventées par l’API.
+- L’authentification utilise toujours l’API réelle, même lorsque les données esport sont mockées. Créer les utilisateurs après vérification de l’email ; ne jamais exposer les codes ou jetons de session dans les réponses ou logs. Sessions révocables en cookie HttpOnly, codes expirables à usage unique, limites persistantes et contrôle d’origine sur les écritures. Le rôle SQL de l’API écrit seulement les tables et colonnes nécessaires à l’authentification ; le worker n’accède pas aux données d’authentification.
+- Versionner le schéma PostgreSQL avec Alembic. Conserver les données source, leur provenance et leur empreinte ; publier les versions actives atomiquement. Les échecs de collecte doivent préserver les dernières données valides et rester observables.
 - React, TypeScript strict et Vite. Organisation par feature, composants UI génériques, domaine et accès aux données séparés.
 - Les composants ne lisent pas directement les fixtures. HTTP typé + validation Zod + TanStack Query ; MSW intercepte les appels en mode mock. L’adaptateur réel utilise les mêmes contrats.
 - Le mode mock est explicite via `VITE_DATA_MODE=mock`. Les valeurs `api` et `mock` sont les seules permises. Ne jamais basculer silencieusement en mock en cas d’erreur API.
@@ -35,6 +42,7 @@ Metiquo est une application d’analyse des values sur les marchés esport. Le p
 - Appliquer le thème avant le premier rendu pour éviter les flashes. Le changement de thème ne doit pas relancer les requêtes ni modifier les dimensions.
 - Utiliser Radix pour les dialogues et menus : clavier, focus piégé, Escape, retour du focus, labels et descriptions accessibles.
 - État focus-visible net. Zones tactiles d’au moins 44 px sur mobile. Boutons avec type explicite, noms accessibles pour les icônes et état désactivé réel.
+- Validation des formulaires : messages français sous les champs, dans un espace réservé qui ne déplace ni les contrôles ni le dialogue. Utiliser le composant de retour de champ partagé ; remplacer les bulles natives par une validation accessible à la soumission, puis pendant la correction. Transitions discrètes sans animation de hauteur.
 - Caret uniquement dans les champs éditables. Texte de contenu sélectionnable ; contrôles non sélectionnables. Ne pas désactiver globalement la sélection ni le focus.
 - Réserver les dimensions des images et skeletons. Skeletons correspondant au composant final, annoncés via `aria-busy`, animation discrète respectant `prefers-reduced-motion`.
 - Motion pour les transitions utiles ; animer principalement opacité et transform. Ne pas animer systématiquement la mise en page ou toutes les propriétés CSS.

@@ -1,0 +1,13 @@
+[project]
+name = "metiquo-core"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = ["sqlalchemy>=2.0.43,<2.1", "psycopg[binary]>=3.2.10,<4", "alembic>=1.16,<2", "pydantic-settings>=2.10,<3"]
+
+[project.scripts]
+metiquo-admin = "metiquo_core.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+

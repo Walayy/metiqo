@@ -1,7 +1,7 @@
 import { Dialog } from 'radix-ui';
 import { X } from 'lucide-react';
 import { useRef } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { Button } from './button';
 interface Props {
   open: boolean;
@@ -10,8 +10,17 @@ interface Props {
   description: string;
   children: ReactNode;
   className?: string;
+  initialFocusRef?: RefObject<HTMLElement | null>;
 }
-export function Modal({ open, onOpenChange, title, description, children, className = '' }: Props) {
+export function Modal({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  className = '',
+  initialFocusRef,
+}: Props) {
   const opener = useRef<HTMLElement | null>(null);
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -19,9 +28,13 @@ export function Modal({ open, onOpenChange, title, description, children, classN
         <Dialog.Overlay className="modal-overlay" />
         <Dialog.Content
           className={`modal-content ${className}`}
-          onOpenAutoFocus={() => {
+          onOpenAutoFocus={(event) => {
             opener.current =
               document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            if (initialFocusRef?.current) {
+              event.preventDefault();
+              initialFocusRef.current.focus();
+            }
           }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();

@@ -1,5 +1,12 @@
 export const decimal = (value: number, digits = 2) =>
   value.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+export const accountDate = (value: string) =>
+  new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Paris',
+  }).format(new Date(value));
 export const percent = (value: number, digits = 1) => `${decimal(value, digits)} %`;
 export const signedDecimal = (value: number, digits = 2) =>
   `${value > 0 ? '+' : value < 0 ? '−' : ''}${decimal(Math.abs(value), digits)}`;

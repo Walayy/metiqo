@@ -1,0 +1,22 @@
+[project]
+name = "metiquo-worker"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "metiquo-core",
+    "patchright>=1.55,<2",
+    "httpx>=0.28,<1",
+    "beautifulsoup4>=4.13,<5",
+    "pillow>=11.3,<13",
+]
+
+[project.scripts]
+metiquo-worker = "metiquo_worker.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+metiquo-core = { workspace = true }
+

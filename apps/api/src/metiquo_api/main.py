@@ -1,0 +1,299 @@
+import logging
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime, timedelta
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse
+from metiquo_core.config import Settings
+from metiquo_core.contracts import Catalog, Opportunities, Opportunity
+from metiquo_core.db import create_db
+from metiquo_core.models import (
+    CatalogMetadata,
+    CatalogVersion,
+    Dataset,
+    DatasetVersion,
+    EsportMatch,
+    IngestionRun,
+    League,
+    Market,
+    OddsObservation,
+    OracleRow,
+    ProbabilityEstimate,
+    Team,
+)
+from sqlalchemy import func, select, text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import Response
+
+from metiquo_api.auth import create_auth_router
+from metiquo_api.auth_config import AuthSettings
+from metiquo_api.catalog import create_catalog_router
+
+logger = logging.getLogger(__name__)
+
+
+def create_app(
+    settings: Settings | None = None, auth_settings: AuthSettings | None = None
+) -> FastAPI:
+    config = settings or Settings()
+    engine = create_db(config)
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        yield
+        engine.dispose()
+
+    app = FastAPI(
+        title="Metiquo API",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url="/api/docs",
+        openapi_url="/api/openapi.json",
+        redoc_url=None,
+    )
+    app.include_router(create_auth_router(engine, auth_settings or AuthSettings()))
+    app.include_router(create_catalog_router(engine, config))
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_request(request: Request, error: RequestValidationError) -> Response:
+        if request.url.path.startswith("/api/v1/auth/"):
+            return JSONResponse(
+                status_code=422, content={"detail": "Données de connexion invalides."}
+            )
+        return await request_validation_exception_handler(request, error)
+
+    @app.middleware("http")
+    async def private_auth_responses(
+        request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
+        response = await call_next(request)
+        if request.url.path.startswith("/api/v1/auth/"):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Pragma"] = "no-cache"
+        return response
+
+    def get_session() -> Iterator[Session]:
+        with Session(engine) as session:
+            yield session
+
+    @app.exception_handler(SQLAlchemyError)
+    async def database_error(_request: Request, error: SQLAlchemyError) -> JSONResponse:
+        logger.error("Database request failed: %s", type(error).__name__)
+        return JSONResponse(status_code=503, content={"detail": "Database unavailable"})
+
+    @app.get("/health/live", include_in_schema=False)
+    def live() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.get("/health/ready", include_in_schema=False)
+    def ready(session: Annotated[Session, Depends(get_session)]) -> dict[str, str]:
+        session.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+        session.execute(select(Dataset.id).limit(1))
+        return {"status": "ready"}
+
+    @app.get("/api/v1/catalog", response_model=Catalog)
+    def catalog(session: Annotated[Session, Depends(get_session)]) -> Catalog:
+        snapshot = session.scalar(
+            select(CatalogVersion)
+            .join(CatalogMetadata, CatalogMetadata.active_version_id == CatalogVersion.id)
+            .where(CatalogMetadata.id == 1)
+        )
+        if snapshot is not None:
+            return Catalog.model_validate(snapshot.document["catalog"])
+        metadata = session.get(CatalogMetadata, 1)
+        if metadata is None:
+            raise HTTPException(
+                503, "No sourced catalog imported; run metiquo-admin catalog-import"
+            )
+        return Catalog.model_validate(
+            {
+                "retrievedAt": metadata.retrieved_at,
+                "source": metadata.source,
+                "leagues": [
+                    league.data for league in session.scalars(select(League).order_by(League.id))
+                ],
+                "teams": [team.data for team in session.scalars(select(Team).order_by(Team.id))],
+            }
+        )
+
+    @app.get("/api/v1/opportunities", response_model=Opportunities)
+    def opportunities(session: Annotated[Session, Depends(get_session)]) -> Opportunities:
+        now = datetime.now(UTC)
+        latest = (
+            select(func.max(ProbabilityEstimate.estimated_at))
+            .where(
+                ProbabilityEstimate.market_id == Market.id, ProbabilityEstimate.estimated_at <= now
+            )
+            .correlate(Market)
+            .scalar_subquery()
+        )
+        rows = session.execute(
+            select(Market, EsportMatch, ProbabilityEstimate)
+            .join(EsportMatch, EsportMatch.id == Market.match_id)
+            .join(ProbabilityEstimate, ProbabilityEstimate.market_id == Market.id)
+            .where(
+                Market.active.is_(True),
+                EsportMatch.starts_at > now,
+                ProbabilityEstimate.estimated_at == latest,
+                ProbabilityEstimate.valid_until > now,
+            )
+            .order_by(EsportMatch.starts_at, Market.id)
+        ).all()
+        histories: dict[UUID, list[dict[str, object]]] = {}
+        if rows:
+            quotes = session.scalars(
+                select(OddsObservation)
+                .where(
+                    OddsObservation.market_id.in_([market.id for market, _, _ in rows]),
+                    OddsObservation.recorded_at <= now,
+                )
+                .order_by(OddsObservation.recorded_at)
+            )
+            for quote in quotes:
+                histories.setdefault(quote.market_id, []).append(
+                    {"recordedAt": quote.recorded_at, "odds": float(quote.odds)}
+                )
+        items = []
+        for market, match, estimate in rows:
+            history = histories.get(market.id, [])
+            if not history:
+                continue
+            last_recorded = history[-1]["recordedAt"]
+            if not isinstance(last_recorded, datetime) or last_recorded < now - timedelta(
+                seconds=config.odds_max_age_seconds
+            ):
+                continue
+            items.append(
+                Opportunity.model_validate(
+                    {
+                        "id": str(market.id),
+                        "leagueId": match.league_id,
+                        "homeId": match.home_id,
+                        "awayId": match.away_id,
+                        "pickId": market.pick_id,
+                        "startsAt": match.starts_at,
+                        "format": match.format,
+                        "market": market.kind,
+                        "probability": float(estimate.probability),
+                        "bookmaker": market.bookmaker,
+                        "history": history,
+                    }
+                )
+            )
+        return Opportunities(generated_at=now, reference_date=now, items=items)
+
+    @app.get("/api/v1/sources/oracles-elixir")
+    def source_status(session: Annotated[Session, Depends(get_session)]) -> dict[str, object]:
+        runs = session.scalars(
+            select(IngestionRun)
+            .where(IngestionRun.source == "oracles-elixir")
+            .order_by(IngestionRun.started_at.desc())
+            .limit(20)
+        ).all()
+        return {
+            "source": "oracles-elixir",
+            "runs": [
+                {
+                    "id": run.id,
+                    "status": run.status,
+                    "scope": run.scope,
+                    "startedAt": run.started_at,
+                    "finishedAt": run.finished_at,
+                    "error": run.error,
+                    "details": run.details,
+                }
+                for run in runs
+            ],
+        }
+
+    @app.get("/api/v1/sources/oracles-elixir/datasets")
+    def datasets(session: Annotated[Session, Depends(get_session)]) -> dict[str, object]:
+        rows = session.execute(
+            select(Dataset, DatasetVersion)
+            .join(DatasetVersion, Dataset.active_version_id == DatasetVersion.id)
+            .where(Dataset.source == "oracles-elixir")
+            .order_by(Dataset.file_year)
+        )
+        return {
+            "items": [
+                {
+                    "year": dataset.file_year,
+                    "filename": dataset.filename,
+                    "sourceFileId": dataset.source_file_id,
+                    "versionId": version.id,
+                    "sha256": version.sha256,
+                    "rowCount": version.row_count,
+                    "byteCount": version.byte_count,
+                    "columns": version.columns,
+                    "retrievedAt": version.retrieved_at,
+                    "checkedAt": dataset.checked_at,
+                }
+                for dataset, version in rows
+            ]
+        }
+
+    def get_version(session: Session, year: int, version_id: UUID | None) -> DatasetVersion:
+        dataset = session.get(Dataset, f"oracles-elixir:{year}")
+        if dataset is None:
+            raise HTTPException(404, "Unknown dataset year")
+        selected = version_id or dataset.active_version_id
+        version = session.get(DatasetVersion, selected) if selected else None
+        if version is None or version.dataset_id != dataset.id:
+            raise HTTPException(404, "Unknown dataset version")
+        return version
+
+    @app.get("/api/v1/sources/oracles-elixir/datasets/{year}/rows")
+    def source_rows(
+        year: int,
+        session: Annotated[Session, Depends(get_session)],
+        version_id: Annotated[UUID | None, Query(alias="versionId")] = None,
+        after: Annotated[int, Query(ge=0)] = 0,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+        game_id: Annotated[str | None, Query(alias="gameId", max_length=200)] = None,
+    ) -> dict[str, object]:
+        if after and version_id is None:
+            raise HTTPException(422, "Pin versionId when continuing pagination")
+        version = get_version(session, year, version_id)
+        statement = (
+            select(OracleRow)
+            .where(OracleRow.version_id == version.id, OracleRow.row_number > after)
+            .order_by(OracleRow.row_number)
+            .limit(limit + 1)
+        )
+        if game_id is not None:
+            statement = statement.where(OracleRow.game_id == game_id)
+        rows = session.scalars(statement).all()
+        page = rows[:limit]
+        return {
+            "versionId": version.id,
+            "sha256": version.sha256,
+            "nextAfter": page[-1].row_number if len(rows) > limit else None,
+            "items": [{"rowNumber": row.row_number, "data": row.payload} for row in page],
+        }
+
+    @app.get("/api/v1/sources/oracles-elixir/datasets/{year}/file")
+    def source_file(
+        year: int,
+        session: Annotated[Session, Depends(get_session)],
+        version_id: Annotated[UUID | None, Query(alias="versionId")] = None,
+    ) -> FileResponse:
+        version = get_version(session, year, version_id)
+        root = config.artifact_dir.resolve()
+        path = (root / version.artifact_path).resolve()
+        if not path.is_relative_to(root) or not path.is_file():
+            raise HTTPException(503, "Stored CSV unavailable; restore the artifact volume")
+        return FileResponse(
+            path,
+            media_type="text/csv",
+            filename=f"oracle-{year}.csv",
+            headers={"ETag": f'"{version.sha256}"', "Cache-Control": "no-cache"},
+        )
+
+    return app

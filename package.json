@@ -13,10 +13,17 @@
     "lint": "npm run lint --workspace @metiquo/web",
     "test": "npm run test --workspace @metiquo/web",
     "typecheck": "npm run typecheck --workspace @metiquo/web",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run check:backend",
+    "check:backend": "uv run --frozen ruff check packages apps/api apps/worker migrations tests/backend && uv run --frozen ruff format --check packages apps/api apps/worker migrations tests/backend && uv run --frozen mypy && uv run --frozen pytest -m \"not integration\"",
+    "docker:init": "node scripts/init-docker-env.mjs",
+    "docker:up": "docker compose --env-file .env.docker up -d --build",
+    "docker:down": "docker compose --env-file .env.docker down",
+    "docker:logs": "docker compose --env-file .env.docker logs -f --tail 100",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "catalog:sync": "node scripts/sync-catalog.mjs && node scripts/build-catalog.mjs"
+    "data:lol:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-lol-catalog",
+    "data:oracle:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-oracles-elixir",
+    "catalog:sync": "npm run data:lol:sync"
   },
   "workspaces": [
     "apps/*"

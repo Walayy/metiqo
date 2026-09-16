@@ -43,6 +43,7 @@ import { ValueDetail } from '@/features/values/value-detail';
 import { FilterDialog } from '@/features/values/filter-dialog';
 import { HelpDialog } from '@/features/values/help-dialog';
 import { CatalogDialog } from '@/features/catalog/catalog-dialog';
+import { Account } from '@/features/auth/account';
 
 const emptyCatalog: Catalog = { retrievedAt: '', source: '', leagues: [], teams: [] };
 const pageSize = 6;
@@ -254,6 +255,7 @@ export function App() {
             >
               <CircleHelp size={18} />
             </Button>
+            <Account />
           </div>
         </header>
         <main id="main-content" className="main-content">
