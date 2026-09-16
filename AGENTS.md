@@ -18,6 +18,8 @@ La demande produit suivante du 16 septembre 2026 supprime entièrement les favor
 
 ## Périmètre et données
 
+- À la demande du 16 septembre 2026, l’identité fournie dans le pack Metiquo remplace l’ancien symbole M. Les sources et empreintes sont conservées sous `assets/brand`, les seuls exports web utilisés sous `apps/web/public/brand` : WebP sans perte avec repli PNG et densités adaptées, ICO pour l’onglet, PNG pour Apple. Sidebar, navigation mobile, fil d’Ariane, pages d’erreur et splash utilisent les variantes claire/sombre du même logo, sans recoloration ni redessin. Le thème initial et explicite pilote aussi les icônes du navigateur. Le pack complet importé reste archivé localement hors build.
+
 - À la demande produit du 16 septembre 2026, les erreurs réelles ont des écrans de reprise cohérents : liens inconnus, accès, suspension, limites de requêtes et indisponibilités. Respecter `Retry-After` sans relancer automatiquement une écriture ni rediriger silencieusement. Le statut 423 d’un compte n’est révélé qu’après preuve d’accès (code email validé ou session existante) ; la demande initiale de code reste uniforme.
 
 - Ne contredis jamais ce fichier. Faire évoluer ces règles explicitement lorsque le besoin produit évolue.

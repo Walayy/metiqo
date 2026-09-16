@@ -424,17 +424,7 @@ function ProfitChart({
   const cursorTransition = reduced
     ? { duration: 0 }
     : { type: 'spring' as const, stiffness: 440, damping: 40 };
-  const container = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(888);
-  useLayoutEffect(() => {
-    const node = container.current;
-    if (!node) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) setWidth(Math.max(240, entry.contentRect.width));
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+  const [container, width] = useChartWidth();
   const points = [
     { at: simulation.rows[0]!.record.observedAt, value: 0 },
     ...simulation.rows.map((row) => ({ at: row.record.settledAt, value: row.cumulative })),
@@ -583,22 +573,39 @@ function ProfitChart({
   );
 }
 
+function useChartWidth() {
+  const container = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(888);
+  useLayoutEffect(() => {
+    const node = container.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setWidth(Math.max(240, entry.contentRect.width));
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return [container, width] as const;
+}
+
 function ProfitChartSkeleton() {
+  const [container, width] = useChartWidth();
   return (
     <div
       className="profit-chart profit-chart-skeleton"
+      ref={container}
       role="status"
       aria-label="Chargement de l’historique"
     >
-      <svg viewBox="0 0 888 278" preserveAspectRatio="none" aria-hidden="true">
+      <svg viewBox={`0 0 ${width} 278`} aria-hidden="true">
         {[18, 130, 242].map((y) => (
           <g key={y}>
             <rect x="12" y={y - 4} width="40" height="8" rx="4" />
-            <line x1="64" x2="872" y1={y} y2={y} />
+            <line x1="64" x2={width - 16} y1={y} y2={y} />
           </g>
         ))}
         <rect x="64" y="263" width="52" height="8" rx="4" />
-        <rect x="820" y="263" width="52" height="8" rx="4" />
+        <rect x={width - 68} y="263" width="52" height="8" rx="4" />
       </svg>
       <div className="chart-scrubber chart-scrubber-skeleton" aria-hidden="true">
         <span className="skeleton" />

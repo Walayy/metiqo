@@ -457,34 +457,7 @@
 .admin-user-row .button {
   min-height: var(--touch-target);
 }
-.admin-skeleton {
-  min-height: 420px;
-  padding: var(--space-xl);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-}
-.admin-skeleton span {
-  display: block;
-  height: 42px;
-  margin-bottom: var(--space-xl);
-}
-.admin-skeleton span:last-child {
-  height: 160px;
-}
-.admin-users-loading {
-  margin-top: var(--space-xl);
-}
-.admin-users-loading .admin-skeleton {
-  min-height: 84px;
-}
-.admin-users-loading .admin-skeleton span {
-  height: 20px;
-  margin: 0;
-}
-.admin-users-loading .admin-skeleton span + span {
-  display: none;
-}
+
 .admin-nav-label {
   margin-top: var(--space-xl);
 }

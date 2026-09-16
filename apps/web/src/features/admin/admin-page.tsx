@@ -49,21 +49,86 @@ const feedbackReserve = [
 function ErrorState({ error, retry, busy }: { error: Error; retry: () => void; busy: boolean }) {
   return <StatusPanel error={error} onRetry={retry} busy={busy} headingLevel={2} />;
 }
-function Loading({ users = false }: { users?: boolean }) {
+function Loading({ users = false, count = 6 }: { users?: boolean; count?: number }) {
   return (
-    <div
-      className={users ? 'admin-users-loading' : 'script-grid'}
-      aria-busy="true"
-      aria-label="Chargement de l’administration"
-    >
-      {[0, 1, 2].map((id) => (
-        <div className="admin-skeleton" key={id}>
-          <span className="skeleton" />
-          <span className="skeleton" />
-          <span className="skeleton" />
-        </div>
-      ))}
-    </div>
+    <ContentTransition id="admin-loading">
+      <div aria-busy="true" role="status" aria-label="Chargement de l’administration">
+        {users ? (
+          <div className="admin-users">
+            <div className="admin-user-head" aria-hidden="true">
+              <span>UTILISATEUR</span>
+              <span>RÔLE</span>
+              <span>STATUT</span>
+              <span>SESSIONS</span>
+              <span />
+            </div>
+            {Array.from({ length: count }, (_, id) => (
+              <div className="admin-user-row" key={id} aria-hidden="true">
+                <div className="admin-user-identity">
+                  <span className="admin-avatar skeleton" />
+                  <div>
+                    <span className="skeleton skeleton-user-email" />
+                    <span className="skeleton skeleton-medium" />
+                  </div>
+                </div>
+                <span className="skeleton skeleton-short" />
+                <span className="skeleton skeleton-short" />
+                <span className="skeleton skeleton-short" />
+                <span className="skeleton skeleton-admin-action" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="admin-section-heading">
+              <div>
+                <h2>Scripts de collecte</h2>
+                <p>Planifiez les mises à jour ou lancez une collecte à la demande.</p>
+              </div>
+              <span className="skeleton skeleton-medium" />
+            </div>
+            <div className="admin-action-feedback" />
+            <div className="script-grid">
+              {[0, 1, 2].map((id) => (
+                <div className="script-card" key={id} aria-hidden="true">
+                  <div className="script-top">
+                    <span className="script-icon skeleton" />
+                    <span className="skeleton skeleton-short" />
+                  </div>
+                  <h3>
+                    <span className="skeleton skeleton-medium" />
+                  </h3>
+                  <p className="script-description">
+                    <span className="skeleton skeleton-medium" />
+                  </p>
+                  <div className="script-schedule">
+                    <CalendarClock size={17} />
+                    <div>
+                      <strong className="skeleton skeleton-copy">Tous les jours</strong>
+                      <span className="skeleton skeleton-copy">Heure de Paris</span>
+                    </div>
+                  </div>
+                  <div className="script-next">
+                    <span>PROCHAINE EXÉCUTION</span>
+                    <strong className="skeleton skeleton-copy">00 septembre à 00:00</strong>
+                    <small>
+                      <span className="skeleton skeleton-medium" />
+                    </small>
+                  </div>
+                  <div className="script-last">
+                    <span className="skeleton skeleton-medium" />
+                  </div>
+                  <div className="script-actions">
+                    <span className="skeleton skeleton-admin-action" />
+                    <span className="skeleton skeleton-admin-action" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </ContentTransition>
   );
 }
 export function AdminPage({ userId, section }: { userId: string; section: 'scripts' | 'users' }) {
@@ -126,7 +191,7 @@ function Scripts() {
   const { items, worker } = query.data;
   const historyScript = items.find((item) => item.id === history?.id) ?? history;
   return (
-    <>
+    <ContentTransition id="scripts-ready">
       <div className="admin-section-heading">
         <div>
           <h2>Scripts de collecte</h2>
@@ -286,7 +351,7 @@ function Scripts() {
           </div>
         </Modal>
       )}
-    </>
+    </ContentTransition>
   );
 }
 
@@ -534,7 +599,7 @@ function UserList({ userId }: { userId: string }) {
       </div>
       <ContentTransition id={loading ? 'loading' : 'ready'}>
         {!query.error && (loading || query.isPending) ? (
-          <Loading users />
+          <Loading users count={query.data?.items.length || 6} />
         ) : query.error ? (
           <ErrorState
             error={query.error}

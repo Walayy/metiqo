@@ -1,0 +1,26 @@
+.brand > .brand-mark,
+.brand-mark {
+  display: block;
+  position: relative;
+  width: var(--brand-mark-size);
+  height: var(--brand-mark-size);
+  flex: 0 0 var(--brand-mark-size);
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--logo-bg);
+}
+.brand-mark picture,
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.brand-mark .brand-dark {
+  display: none;
+}
+:root[data-theme='dark'] .brand-mark .brand-light {
+  display: none;
+}
+:root[data-theme='dark'] .brand-mark .brand-dark {
+  display: block;
+}

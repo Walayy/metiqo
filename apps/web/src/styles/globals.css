@@ -275,10 +275,7 @@ h3 {
   margin-bottom: 34px;
   color: var(--brand);
 }
-.brand > svg {
-  width: 28px;
-  height: 28px;
-}
+
 .brand > span {
   font-family: var(--font-display);
   font-size: 27px;
@@ -1404,15 +1401,6 @@ h2 {
   height: 25px;
 }
 
-.featured-skeleton {
-  height: 444px;
-  border-radius: 11px;
-}
-.trend-skeleton {
-  margin-top: 17px;
-  height: 224px;
-  border-radius: 10px;
-}
 .is-spinning {
   animation: spin 1s linear infinite;
 }
@@ -2239,9 +2227,7 @@ button.catalog-item:hover {
   .trend-card {
     min-height: 190px;
   }
-  .insights-placeholder {
-    display: none;
-  }
+
   .table-heading,
   .value-row {
     grid-template-columns: minmax(205px, 2.2fr) minmax(115px, 1.3fr) 0.7fr 0.65fr 0.8fr 54px;
@@ -2833,42 +2819,7 @@ button.catalog-item:hover {
   width: 90px;
   max-width: 100%;
 }
-.skeleton-team {
-  width: 49px;
-  height: 49px;
-  border-radius: 50%;
-  margin-top: 18px;
-}
-.skeleton-feature-number {
-  width: 110px;
-  height: 44px;
-  margin: 58px auto 0;
-}
-.skeleton-feature-label {
-  width: 120px;
-  height: 10px;
-  margin: 17px auto 0;
-}
-.skeleton-feature-pick {
-  height: 42px;
-  margin-top: 43px;
-}
-.skeleton-feature-button {
-  height: 36px;
-  margin-top: 24px;
-}
-.skeleton-chart {
-  height: 105px;
-  margin-top: 25px;
-}
-.insights-placeholder {
-  padding-top: 2px;
-}
-@media (max-width: 1330px) and (min-width: 1101px) {
-  .featured-skeleton {
-    height: 438px;
-  }
-}
+
 html,
 body {
   min-width: 0;

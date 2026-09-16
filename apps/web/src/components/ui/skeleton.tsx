@@ -55,21 +55,69 @@ export function InsightsSkeleton() {
   return (
     <>
       <div className="featured-card featured-skeleton" aria-hidden="true">
-        <div className="skeleton skeleton-medium" />
-        <div className="featured-teams">
-          <span className="skeleton skeleton-team" />
-          <span className="skeleton skeleton-team" />
+        <div className="featured-eyebrow">
+          <span className="skeleton skeleton-copy">LA VALUE À SUIVRE</span>
         </div>
-        <div className="skeleton skeleton-feature-number" />
-        <div className="skeleton skeleton-feature-label" />
-        <div className="skeleton skeleton-feature-pick" />
-        <div className="skeleton skeleton-feature-button" />
+        <div className="featured-teams">
+          <div>
+            <span className="logo-frame skeleton" />
+            <strong className="skeleton skeleton-copy">XXX</strong>
+          </div>
+          <span>vs</span>
+          <div>
+            <span className="logo-frame skeleton" />
+            <strong className="skeleton skeleton-copy">XXX</strong>
+          </div>
+        </div>
+        <p className="featured-league">
+          <span className="skeleton skeleton-copy">Ligue · BO3</span>
+        </p>
+        <div className="featured-value">
+          <span className="skeleton skeleton-copy">
+            +00,0<small>%</small>
+          </span>
+          <p>de value estimée</p>
+        </div>
+        <div className="featured-pick">
+          <div>
+            <span>NOTRE SÉLECTION</span>
+            <strong>
+              <span className="skeleton skeleton-copy">XXX</span>
+              <small className="skeleton skeleton-copy">Vainqueur du match</small>
+            </strong>
+          </div>
+          <strong className="skeleton skeleton-copy">0,00</strong>
+        </div>
+        <div className="featured-cta skeleton" />
       </div>
       <div className="trend-card trend-skeleton" aria-hidden="true">
-        <div className="skeleton skeleton-medium" />
-        <div className="skeleton skeleton-feature-label" />
-        <div className="skeleton skeleton-chart" />
+        <div className="section-mini-title">
+          <h3>Le mouvement de cote</h3>
+        </div>
+        <div className="trend-value">
+          <strong className="skeleton skeleton-copy">0,00</strong>
+        </div>
+        <p>
+          <span className="skeleton skeleton-copy">XXX · Stake</span>
+        </p>
+        <div className="odds-chart odds-chart--compact">
+          <svg viewBox="0 0 320 100">
+            <rect className="skeleton-plot" x="0" y="12" width="320" height="72" rx="4" />
+          </svg>
+          <div className="chart-labels">
+            <span className="skeleton skeleton-copy">00 sept. · 00:00</span>
+            <span className="skeleton skeleton-copy">00 sept. · 00:00</span>
+          </div>
+        </div>
       </div>
+      <div className="learn-card" aria-hidden="true">
+        <span className="learn-icon skeleton" />
+        <span>
+          <strong>Une cote. Une opportunité.</strong>
+          <small>Comprendre la value en 1 minute</small>
+        </span>
+      </div>
+      <p className="insights-note">Une value positive ne garantit pas un gain.</p>
     </>
   );
 }

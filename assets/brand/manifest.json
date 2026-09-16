@@ -1,0 +1,112 @@
+{
+  "importedAt": "2026-09-16",
+  "source": {
+    "file": "assets/brand/original-logo.png",
+    "packFile": "source/original-logo.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7ee673e77851119fac031517647d244c917a2542b21b6acc89aa573d863e23a8"
+  },
+  "assets": [
+    {
+      "source": "light/webp/logo-light-32x32.webp",
+      "file": "apps/web/public/brand/light/mark-32.webp",
+      "sha256": "5054e0f9d9b25e5e8e47137869fd312e42d9c6f973a54a795b711fa3c4a0cb71"
+    },
+    {
+      "source": "light/png/logo-light-32x32.png",
+      "file": "apps/web/public/brand/light/mark-32.png",
+      "sha256": "0c135ff2902c93a967d2d479227c475b6bffc57e148c0e184fac0f6caed215fe"
+    },
+    {
+      "source": "light/webp/logo-light-64x64.webp",
+      "file": "apps/web/public/brand/light/mark-64.webp",
+      "sha256": "d5f01431a4008d2c7fd5472c785883dd59235ffcee039f1596ee7ef1a7f786bc"
+    },
+    {
+      "source": "light/png/logo-light-64x64.png",
+      "file": "apps/web/public/brand/light/mark-64.png",
+      "sha256": "0e31d3119663d8159fe25c2d1cd0abc23ad837e073f7ee555be5e9a02815fd99"
+    },
+    {
+      "source": "light/webp/logo-light-128x128.webp",
+      "file": "apps/web/public/brand/light/mark-128.webp",
+      "sha256": "55ba2324fba75fc242500d8e020ded700ae5544462a2f2e3030122046a62c99a"
+    },
+    {
+      "source": "light/png/logo-light-128x128.png",
+      "file": "apps/web/public/brand/light/mark-128.png",
+      "sha256": "40a4edb69a8e2166294db9fa3a432b463a85594fe58462750733c3f8fdfb07d5"
+    },
+    {
+      "source": "light/webp/logo-light-256x256.webp",
+      "file": "apps/web/public/brand/light/mark-256.webp",
+      "sha256": "2555ab82bf29602e93d7b9872789812e10383547039609f0232050a84e0c267f"
+    },
+    {
+      "source": "light/png/logo-light-256x256.png",
+      "file": "apps/web/public/brand/light/mark-256.png",
+      "sha256": "177ae9c6dc4c9a83bb50f3f900eb5014324b2070835c11fd7d74404f730f5b57"
+    },
+    {
+      "source": "light/icons/logo-light.ico",
+      "file": "apps/web/public/brand/light/favicon.ico",
+      "sha256": "b9d763ef2bde3fa41e7255d7b9c5ce9d8e4959ef1197a43db27a8b6b407217a6"
+    },
+    {
+      "source": "light/png/logo-light-180x180.png",
+      "file": "apps/web/public/brand/light/apple-touch-icon.png",
+      "sha256": "a7561959bc57f2dfc89b85f3e7b94c655cf6f4f4ce9bd1b34e863636bb798171"
+    },
+    {
+      "source": "dark/webp/logo-dark-32x32.webp",
+      "file": "apps/web/public/brand/dark/mark-32.webp",
+      "sha256": "12f2b3de9e9b87e00d1339fd2814d225d5fdabcbed6f8720c7648b2f89706428"
+    },
+    {
+      "source": "dark/png/logo-dark-32x32.png",
+      "file": "apps/web/public/brand/dark/mark-32.png",
+      "sha256": "041c99ad2639ec1220a28e9a0516f10f33583bc6fecf4558f961e926e5117fa2"
+    },
+    {
+      "source": "dark/webp/logo-dark-64x64.webp",
+      "file": "apps/web/public/brand/dark/mark-64.webp",
+      "sha256": "cc65536742deb488be49e406ed88a2200140880687d0b4452838b1e067269397"
+    },
+    {
+      "source": "dark/png/logo-dark-64x64.png",
+      "file": "apps/web/public/brand/dark/mark-64.png",
+      "sha256": "6cf988f84a86f052c75a660a5bfe3118a426d6f6a593eae1175d1acb9a9b1ea5"
+    },
+    {
+      "source": "dark/webp/logo-dark-128x128.webp",
+      "file": "apps/web/public/brand/dark/mark-128.webp",
+      "sha256": "d193e21e666c9d9edf2287a8a2137f0ffaacf213cb3a4ff5f9771ccf1ca42e53"
+    },
+    {
+      "source": "dark/png/logo-dark-128x128.png",
+      "file": "apps/web/public/brand/dark/mark-128.png",
+      "sha256": "bb2c7214f7ab93e6358fc5b141d0829f2f46a9b7bfbc0b85c07379feaae4bca2"
+    },
+    {
+      "source": "dark/webp/logo-dark-256x256.webp",
+      "file": "apps/web/public/brand/dark/mark-256.webp",
+      "sha256": "9e3382e03189a7b63ca6f1e3975ff7bf8c05b9b580d7c72198777dee8be2d4d9"
+    },
+    {
+      "source": "dark/png/logo-dark-256x256.png",
+      "file": "apps/web/public/brand/dark/mark-256.png",
+      "sha256": "93d265c0e020d1ca04303c35a5fd6aa533e1a6f4799d7c9896bf408e44e380c7"
+    },
+    {
+      "source": "dark/icons/logo-dark.ico",
+      "file": "apps/web/public/brand/dark/favicon.ico",
+      "sha256": "56816e5f6d2ec59178cd5765ae95ad1c4159bde4df78ebdcd15fcc853ed75015"
+    },
+    {
+      "source": "dark/png/logo-dark-180x180.png",
+      "file": "apps/web/public/brand/dark/apple-touch-icon.png",
+      "sha256": "fb319230e7a180b657e79965621e9ed4584eb0b1bbe31799480c3a2b9ea9625d"
+    }
+  ]
+}

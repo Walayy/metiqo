@@ -1,3 +1,4 @@
+import { BrandMark } from '@/components/ui/brand-mark';
 import { useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
@@ -230,9 +231,7 @@ function ExplorerApp() {
             >
               <Menu size={20} />
             </Button>
-            <span className="breadcrumb-mark">
-              <Radar size={17} />
-            </span>
+            <BrandMark size={28} />
             <span>{adminOpen ? 'Gestion' : view === 'matches' ? 'Esport' : 'Analyse'}</span>
             <ChevronRight size={13} />
             <strong>{viewLabels[view]}</strong>
@@ -595,7 +594,7 @@ function ExplorerApp() {
                       onHelp={() => setPanel('help')}
                     />
                   ) : (
-                    <aside className="insights-placeholder" aria-hidden="true">
+                    <aside className="insights-column insights-placeholder" aria-hidden="true">
                       {isLoading && <InsightsSkeleton />}
                     </aside>
                   )}

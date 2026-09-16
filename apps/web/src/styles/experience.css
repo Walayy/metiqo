@@ -85,6 +85,39 @@
 }
 
 /* Skeletons reuse the final component grids and dimensions at every breakpoint. */
+.featured-card.featured-skeleton,
+.trend-card.trend-skeleton {
+  height: auto;
+}
+.trend-card.trend-skeleton {
+  margin-top: 0;
+}
+.insights-placeholder {
+  padding-top: 0;
+  animation: none;
+}
+.skeleton-copy,
+.skeleton-copy * {
+  color: transparent !important;
+}
+.skeleton-copy {
+  display: inline-block;
+}
+.featured-pick .skeleton-copy {
+  display: block;
+}
+.skeleton-plot {
+  fill: var(--border);
+}
+.skeleton-user-email {
+  width: min(160px, 100%);
+  height: 14px;
+  margin-bottom: var(--space-sm);
+}
+.skeleton-admin-action {
+  width: 74px;
+  height: var(--touch-target);
+}
 .skeleton-metric {
   height: 1em;
   width: 2.4ch;

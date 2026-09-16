@@ -26,8 +26,14 @@ function apply(theme: Theme) {
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
   document
+    .querySelector<HTMLLinkElement>('#brand-favicon')
+    ?.setAttribute('href', `/brand/${theme}/favicon.ico`);
+  document
+    .querySelector<HTMLLinkElement>('#brand-touch-icon')
+    ?.setAttribute('href', `/brand/${theme}/apple-touch-icon.png`);
+  document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'dark' ? '#101211' : '#f6f7f5');
+    ?.setAttribute('content', theme === 'dark' ? '#111411' : '#f6f7f5');
 }
 export function useTheme() {
   const theme = useSyncExternalStore(

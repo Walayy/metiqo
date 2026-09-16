@@ -8,7 +8,19 @@
       name="description"
       content="Metiquo — analysez les values sur League of Legends et suivez l’évolution des cotes Stake."
     />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      id="brand-favicon"
+      rel="icon"
+      type="image/x-icon"
+      href="/brand/light/favicon.ico"
+      sizes="16x16 24x24 32x32 48x48 64x64 128x128 256x256"
+    />
+    <link
+      id="brand-touch-icon"
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/brand/light/apple-touch-icon.png"
+    />
     <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
     <title>Les values · Metiquo</title>
@@ -21,7 +33,11 @@
         const dark =
           preference === 'dark' ||
           (preference !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        const theme = dark ? 'dark' : 'light';
+        document.getElementById('brand-favicon').href = `/brand/${theme}/favicon.ico`;
+        document.getElementById('brand-touch-icon').href = `/brand/${theme}/apple-touch-icon.png`;
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#111411' : '#f6f7f5';
+        document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
       })();
     </script>
@@ -61,9 +77,26 @@
         color: var(--boot-brand);
         animation: boot-arrive 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
-      .boot-symbol svg {
-        width: 56px;
-        height: 56px;
+      .boot-brand-mark {
+        display: block;
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .boot-brand-mark img {
+        display: block;
+        width: 80px;
+        height: 80px;
+      }
+      .boot-brand-mark .brand-dark {
+        display: none;
+      }
+      :root[data-theme='dark'] .boot-brand-mark .brand-light {
+        display: none;
+      }
+      :root[data-theme='dark'] .boot-brand-mark .brand-dark {
+        display: block;
       }
       .boot-spinner {
         box-sizing: border-box;
@@ -157,10 +190,36 @@
   <body>
     <div id="boot-splash" class="boot-splash" role="status" aria-label="Chargement de Metiquo">
       <div class="boot-symbol" aria-hidden="true">
-        <svg viewBox="0 0 48 48" width="56" height="56">
-          <rect width="48" height="48" rx="13" fill="currentColor" />
-          <path d="M10 33V15h6l8 10 8-10h6v18h-7V25l-7 8-7-8v8z" fill="var(--boot-ink)" />
-        </svg>
+        <span class="boot-brand-mark">
+          <picture class="brand-light"
+            ><source
+              type="image/webp"
+              srcset="/brand/light/mark-128.webp 128w, /brand/light/mark-256.webp 256w"
+              sizes="80px" />
+            <img
+              src="/brand/light/mark-128.png"
+              srcset="/brand/light/mark-128.png 128w, /brand/light/mark-256.png 256w"
+              sizes="80px"
+              width="80"
+              height="80"
+              alt=""
+              fetchpriority="high"
+          /></picture>
+          <picture class="brand-dark"
+            ><source
+              type="image/webp"
+              srcset="/brand/dark/mark-128.webp 128w, /brand/dark/mark-256.webp 256w"
+              sizes="80px" />
+            <img
+              src="/brand/dark/mark-128.png"
+              srcset="/brand/dark/mark-128.png 128w, /brand/dark/mark-256.png 256w"
+              sizes="80px"
+              width="80"
+              height="80"
+              alt=""
+              fetchpriority="high"
+          /></picture>
+        </span>
         <span class="boot-spinner"></span>
       </div>
       <section class="boot-failure" aria-labelledby="boot-failure-title">

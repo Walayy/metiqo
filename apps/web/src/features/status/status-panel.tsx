@@ -1,3 +1,4 @@
+import { BrandMark } from '@/components/ui/brand-mark';
 import { useContext, useEffect, useId, useRef, useState } from 'react';
 import {
   ArrowRight,
@@ -166,10 +167,7 @@ export function StatusPage({ error, onRetry }: { error: Error; onRetry?: () => v
       </a>
       <header className="status-header">
         <a href="/" className="brand" aria-label="Metiquo, retour aux values">
-          <svg viewBox="0 0 48 48" aria-hidden="true">
-            <rect width="48" height="48" rx="13" fill="currentColor" />
-            <path d="M10 33V15h6l8 10 8-10h6v18h-7V25l-7 8-7-8v8z" fill="var(--brand-ink)" />
-          </svg>
+          <BrandMark size={40} />
           <span>
             metiquo<span className="brand-period">.</span>
           </span>
