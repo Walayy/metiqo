@@ -1,4 +1,4 @@
-import { catalog, opportunities } from './fixtures';
+import { catalog, opportunities, WORLD_STAR_LEAGUE_ID } from './fixtures';
 import champions from './data/champions.json';
 import { matchesSchema } from '@/domain/matches';
 import type { EsportMatch, MapSide, MatchMap } from '@/domain/matches';
@@ -17,6 +17,9 @@ function side(teamId: string, color: 'blue' | 'red', seed: number, rosterOffset:
     towers: color === 'blue' ? 5 : 3,
     dragons: color === 'blue' ? 2 : 1,
     barons: color === 'blue' ? 1 : 0,
+    heralds: 0,
+    grubs: 0,
+    inhibitors: 0,
     players: roles.map((role, i) => ({
       id: `${teamId}-${role}`,
       name: names[rosterOffset + i]!,
@@ -37,6 +40,7 @@ function maps(
   format: EsportMatch['format'],
   status: EsportMatch['status'],
   seed: number,
+  finishedWinnerId: string | null = null,
 ): MatchMap[] {
   const max = Number(format.slice(2));
   const won = Math.ceil(max / 2);
@@ -58,7 +62,8 @@ function maps(
       number: i + 1,
       status: state,
       durationSeconds: started ? (state === 'live' ? 1634 : 1927 + i * 37) : 0,
-      winnerId: state === 'finished' ? homeId : null,
+      winnerId: state === 'finished' ? finishedWinnerId ?? homeId : null,
+      bans: [],
       sides: started
         ? [
             side(i % 2 ? awayId : homeId, 'blue', seed + i, i % 2 ? 5 : 0),
@@ -92,9 +97,88 @@ const items = opportunities.items
       maps: maps(item.homeId, item.awayId, item.format, status, index),
     };
   });
+
+type WscResult = 'home' | 'away' | null;
+type WscFixture = readonly [string, string, string, WscResult, string];
+
+// Schedule checked on SofaScore on 20 September 2026. The five completed
+// games retain only the explicit results visible in that source; the rest
+// stay scheduled until a source reports a result.
+const worldStarSchedule: readonly WscFixture[] = [
+  ['2026-09-20T08:00:00+02:00', 'edward-gaming-youth-team', 't1-esports-academy', 'home', 'A'],
+  ['2026-09-20T09:00:00+02:00', 'fuego', 'dn-soopers-challengers', 'away', 'A'],
+  ['2026-09-20T10:15:00+02:00', 'kt-rolster-challengers', 'bilibili-gaming-junior', 'home', 'B'],
+  ['2026-09-20T11:15:00+02:00', 'movistar-koi-fenix', 'ctbc-flying-oyster-academy', 'home', 'B'],
+  ['2026-09-20T12:15:00+02:00', 'dn-soopers-challengers', 't1-esports-academy', 'away', 'A'],
+  ['2026-09-20T13:15:00+02:00', 'fuego', 'edward-gaming-youth-team', null, 'A'],
+  ['2026-09-20T14:15:00+02:00', 'ctbc-flying-oyster-academy', 'bilibili-gaming-junior', null, 'B'],
+  ['2026-09-20T15:15:00+02:00', 'movistar-koi-fenix', 'kt-rolster-challengers', null, 'B'],
+  ['2026-09-21T08:00:00+02:00', 'vivo-keyd-stars-academy', 'dplus-kia-challengers', null, 'C'],
+  ['2026-09-21T09:00:00+02:00', 'fennel', 'cupid-esports', null, 'C'],
+  ['2026-09-21T10:00:00+02:00', 'galions', 'saigon-warriors', null, 'D'],
+  ['2026-09-21T11:00:00+02:00', 'solary', 'zsk', null, 'D'],
+  ['2026-09-21T12:00:00+02:00', 'cupid-esports', 'dplus-kia-challengers', null, 'C'],
+  ['2026-09-21T13:00:00+02:00', 'fennel', 'vivo-keyd-stars-academy', null, 'C'],
+  ['2026-09-21T14:00:00+02:00', 'zsk', 'saigon-warriors', null, 'D'],
+  ['2026-09-21T15:00:00+02:00', 'solary', 'galions', null, 'D'],
+  ['2026-09-22T08:00:00+02:00', 'movistar-koi-fenix', 'bilibili-gaming-junior', null, 'B'],
+  ['2026-09-22T09:00:00+02:00', 'ctbc-flying-oyster-academy', 'kt-rolster-challengers', null, 'B'],
+  ['2026-09-22T10:00:00+02:00', 'fuego', 't1-esports-academy', null, 'A'],
+  ['2026-09-22T11:00:00+02:00', 'dn-soopers-challengers', 'edward-gaming-youth-team', null, 'A'],
+  ['2026-09-22T12:00:00+02:00', 'kt-rolster-challengers', 'bilibili-gaming-junior', null, 'B'],
+  ['2026-09-22T13:00:00+02:00', 'movistar-koi-fenix', 'ctbc-flying-oyster-academy', null, 'B'],
+  ['2026-09-22T14:00:00+02:00', 'edward-gaming-youth-team', 't1-esports-academy', null, 'A'],
+  ['2026-09-22T15:00:00+02:00', 'fuego', 'dn-soopers-challengers', null, 'A'],
+  ['2026-09-24T08:00:00+02:00', 'dn-soopers-challengers', 't1-esports-academy', null, 'A'],
+  ['2026-09-24T09:00:00+02:00', 'fuego', 'edward-gaming-youth-team', null, 'A'],
+  ['2026-09-24T10:00:00+02:00', 'ctbc-flying-oyster-academy', 'bilibili-gaming-junior', null, 'B'],
+  ['2026-09-24T11:00:00+02:00', 'movistar-koi-fenix', 'kt-rolster-challengers', null, 'B'],
+  ['2026-09-24T12:00:00+02:00', 'fuego', 't1-esports-academy', null, 'A'],
+  ['2026-09-24T13:00:00+02:00', 'dn-soopers-challengers', 'edward-gaming-youth-team', null, 'A'],
+  ['2026-09-24T14:00:00+02:00', 'movistar-koi-fenix', 'bilibili-gaming-junior', null, 'B'],
+  ['2026-09-24T15:00:00+02:00', 'ctbc-flying-oyster-academy', 'kt-rolster-challengers', null, 'B'],
+  ['2026-09-25T08:00:00+02:00', 'cupid-esports', 'dplus-kia-challengers', null, 'C'],
+  ['2026-09-25T09:00:00+02:00', 'fennel', 'vivo-keyd-stars-academy', null, 'C'],
+  ['2026-09-25T10:00:00+02:00', 'zsk', 'saigon-warriors', null, 'D'],
+  ['2026-09-25T11:00:00+02:00', 'solary', 'galions', null, 'D'],
+  ['2026-09-25T12:00:00+02:00', 'fennel', 'dplus-kia-challengers', null, 'C'],
+  ['2026-09-25T13:00:00+02:00', 'cupid-esports', 'vivo-keyd-stars-academy', null, 'C'],
+  ['2026-09-25T14:00:00+02:00', 'solary', 'saigon-warriors', null, 'D'],
+  ['2026-09-25T15:00:00+02:00', 'zsk', 'galions', null, 'D'],
+];
+
+const worldStarMatches = worldStarSchedule.map(
+  ([startsAt, homeSlug, awaySlug, result, group], index): EsportMatch => {
+    const home = catalog.teams.find((team) => team.slug === homeSlug);
+    const away = catalog.teams.find((team) => team.slug === awaySlug);
+    if (!home || !away) throw new Error(`Équipe WSCI absente : ${homeSlug} ou ${awaySlug}`);
+    const status: EsportMatch['status'] = result ? 'finished' : 'scheduled';
+    return {
+      id: `match-wsci-${index + 1}`,
+      leagueId: WORLD_STAR_LEAGUE_ID,
+      homeId: home.id,
+      awayId: away.id,
+      startsAt: new Date(startsAt).toISOString(),
+      updatedAt: new Date(now).toISOString(),
+      format: 'BO1',
+      status,
+      patch: null,
+      stage: `World Star Challengers Invitational · Groupe ${group}`,
+      maps: maps(
+        home.id,
+        away.id,
+        'BO1',
+        status,
+        index + 100,
+        result === 'home' ? home.id : result === 'away' ? away.id : null,
+      ),
+    };
+  },
+);
+const allItems = [...items, ...worldStarMatches];
 export const matches = matchesSchema.parse({
   generatedAt: new Date(now).toISOString(),
-  items: items.filter(
+  items: allItems.filter(
     (item) =>
       ![-3, 3].some((offset) => dayKey(item.startsAt) === shiftDay(dayKey(new Date(now)), offset)),
   ),

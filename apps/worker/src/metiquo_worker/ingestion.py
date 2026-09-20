@@ -24,6 +24,7 @@ from metiquo_worker.archive import (
 )
 from metiquo_worker.jobs import CollectionBusy as CollectionBusy
 from metiquo_worker.jobs import source_lock
+from metiquo_worker.oracle_match_sync import sync_oracle_match_details
 from metiquo_worker.sources.oracle import discover, export_url, select_files
 
 SOURCE = "oracles-elixir"
@@ -162,6 +163,16 @@ def collect(
                         )
                     )
                 logger.info("Collection %s succeeded: %s", run_id, details)
+            try:
+                match_details = sync_oracle_match_details(engine)
+            except Exception as error:
+                match_details = {"status": "failed", "error": type(error).__name__}
+                logger.exception("Oracle match detail projection failed")
+            details = {**details, "matchDetails": match_details}
+            with Session(engine) as session, session.begin():
+                session.execute(
+                    update(IngestionRun).where(IngestionRun.id == run_id).values(details=details)
+                )
             return run_id
         except Exception as error:
             # Browser/HTTP exception strings can contain signed URLs; persist only a safe category.

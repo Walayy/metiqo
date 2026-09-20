@@ -61,6 +61,21 @@ La chaîne existante reste unique : découverte Drive, export ZIP groupé anonym
 
 Les valeurs source restent en JSONB, sans confusion entre année du fichier, champ `year` et date. Les données partielles restent identifiées. Le fuseau des dates CSV n’est pas inventé. Voir [l’exploitation backend](backend.md) et [l’audit source](oracles-elixir-audit.md).
 
+## SofaScore : rencontres J−7 à J+7 et directs
+
+La commande `sync-sofascore-matches` lit les pages LoL SofaScore avec Patchright, sans client HTTP d’API SofaScore. Elle découvre les liens rendus sur chaque journée de la fenêtre J−7 à J+7, ouvre chaque fiche, extrait le statut, l’horaire, les équipes, la compétition et les scores explicitement exposés, puis publie un snapshot durable. Elle tente aussi d’ouvrir l’onglet rendu `Matchs`/`Matches` pour les détails d’une carte. Les statistiques de carte (bans, kills, CS, niveaux, champions, joueurs et objectifs) restent inconnues si la fiche ne les rend pas ; le worker ne les invente pas.
+
+Oracle’s Elixir complète les cartes terminées après chaque import. Une carte n’est publiée que si Oracle fournit ses deux camps, cinq joueurs et les champs statistiques requis. L’API utilise le dernier état SofaScore pour le direct et le dernier snapshot non vide pour les cartes : un relevé live partiel ne supprime donc pas les cartes historiques déjà publiées.
+
+```sh
+docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-sofascore-matches
+uv run metiquo-worker sync-sofascore-matches
+```
+
+La planification par défaut est `*/1 * * * *` en heure de Paris. Elle est persistée dans `script_schedules` et modifiable dans **Admin → Scripts & planifications** ; cette cadence fréquente sert notamment aux rencontres en direct. `METIQUO_SOFASCORE_ENABLED` est l’interrupteur du worker. Le script ne contacte jamais Stake.
+
+Chaque événement est rattaché à `match_source_links` par fournisseur et identifiant SofaScore. En l’absence de lien connu, le matching compare les équipes et leurs alias, l’ordre des camps, la compétition et une fenêtre horaire de 72 heures ; les cas ambigus sont refusés. Les snapshots `match_snapshots` sont dédupliqués par empreinte, avec URL et horodatage, et `/api/v1/sources/sofascore` expose les bilans.
+
 ## Planification intégrée ou cron
 
 `metiquo-worker serve` consomme les planifications et la file persistées en PostgreSQL, configurables dans **Admin → Scripts & planifications** :
@@ -97,6 +112,12 @@ Ces exemples ne créent aucun cron sur la machine. Le cron externe doit supervis
 - `METIQUO_CATALOG_MAX_IMAGE_PIXELS=80000000` : limite de décodage, réglable à la baisse. Les grandes images sont décodées une par une puis réduites avant conversion pour borner la mémoire ; l’original LOUD sourcé mesure 8334 × 8334 px.
 - `METIQUO_CATALOG_TIMEOUT_SECONDS=60` : délai réseau par requête.
 - `METIQUO_ORACLE_ENABLED=true` : activation des collectes Oracle. Les anciennes variables d’intervalle ne pilotent plus le planificateur.
+- `METIQUO_SOFASCORE_ENABLED=true` : activation du scraping rendu SofaScore et du suivi des rencontres.
+- `METIQUO_SOFASCORE_MIN_DELAY_SECONDS=2` et `METIQUO_SOFASCORE_MAX_DELAY_SECONDS=5` : délai aléatoire entre deux navigations du navigateur ; le minimum et le maximum sont bornés pour éviter les rafales.
+- `METIQUO_SOFASCORE_LISTING_DAYS_PER_RUN=2` : nombre maximal de pages de journées découvertes par exécution ; la fenêtre J−7 à J+7 est remplie progressivement.
+- `METIQUO_SOFASCORE_EVENTS_PER_RUN=12` : nombre maximal de fiches de rencontres ouvertes par exécution ; les rencontres non encore découvertes restent dans la file mémoire.
+- `METIQUO_SOFASCORE_LISTING_INTERVAL_SECONDS=300` : durée de cache des pages de découverte de la fenêtre J−7 à J+7. `METIQUO_SOFASCORE_SCHEDULED_REFRESH_SECONDS=300` limite la relecture des rencontres à venir proches de leur horaire ; une rencontre live utilise `METIQUO_SOFASCORE_LIVE_REFRESH_SECONDS=60`.
+- `METIQUO_SOFASCORE_BLOCK_COOLDOWN_SECONDS=900` : après un `403` ou `429`, le worker arrête les navigations SofaScore pendant cette durée et conserve les derniers relevés connus. Il ne tente ni proxy, ni contournement, ni endpoint API.
 - `METIQUO_ARTIFACT_DIR` : volume commun aux CSV, pages et logos ; écriture worker, lecture seule API.
 
 Compose transmet les interrupteurs d’activation depuis `.env.docker` ; les cadences viennent de PostgreSQL. Les paramètres avancés peuvent être ajoutés à `environment` ou passés avec `docker compose run -e METIQUO_…=…`. Un paramètre ajouté uniquement au fichier `.env.docker` n’est pas automatiquement injecté dans le conteneur.

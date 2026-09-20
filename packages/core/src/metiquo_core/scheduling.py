@@ -39,6 +39,13 @@ SCRIPTS = {
         "sync-oracles-elixir",
         "0 3 * * 0",
     ),
+    "sofascore-matches": ScriptDefinition(
+        "SofaScore · matchs LoL",
+        "Scrape les rencontres de J−7 à J+7, avec un relevé fréquent des directs.",
+        "sofascore",
+        "sync-sofascore-matches",
+        "*/1 * * * *",
+    ),
 }
 
 

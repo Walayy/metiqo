@@ -7,8 +7,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "npm run dev --workspace @metiquo/web",
-    "build": "npm run build --workspace @metiquo/web",
+    "dev": "npm run dev:mock",
+    "dev:mock": "npm run dev --workspace @metiquo/web -- --mode mock",
+    "dev:api": "npm run dev --workspace @metiquo/web -- --mode api",
+    "build": "npm run build:mock",
+    "build:mock": "npm run build --workspace @metiquo/web -- --mode mock",
+    "build:api": "npm run build --workspace @metiquo/web -- --mode api",
     "preview": "npm run preview --workspace @metiquo/web",
     "lint": "npm run lint --workspace @metiquo/web",
     "test": "npm run test --workspace @metiquo/web",
@@ -16,13 +20,17 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run check:backend",
     "check:backend": "uv run --frozen ruff check packages apps/api apps/worker migrations tests/backend && uv run --frozen ruff format --check packages apps/api apps/worker migrations tests/backend && uv run --frozen mypy && uv run --frozen pytest -m \"not integration\"",
     "docker:init": "node scripts/init-docker-env.mjs",
-    "docker:up": "docker compose --env-file .env.docker up -d --build",
+    "docker:up": "npm run docker:mock",
+    "docker:mock": "npm run docker:init && docker compose --env-file .env.docker -f compose.yaml -f compose.mock.yaml up -d --build",
+    "docker:api": "npm run docker:init && docker compose --env-file .env.docker -f compose.yaml -f compose.api.yaml up -d --build",
     "docker:down": "docker compose --env-file .env.docker down",
     "docker:logs": "docker compose --env-file .env.docker logs -f --tail 100",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "data:lol:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-lol-catalog",
     "data:oracle:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-oracles-elixir",
+    "data:sofascore:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-sofascore-matches",
+    "data:champions:sync": "node scripts/sync-lol-champions.mjs",
     "catalog:sync": "npm run data:lol:sync"
   },
   "workspaces": [

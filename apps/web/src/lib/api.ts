@@ -25,7 +25,8 @@ export const matchesQuery = queryOptions({
   queryKey: ['matches'],
   queryFn: ({ signal }) => get('/matches', matchesSchema, signal),
   staleTime: 15_000,
-  refetchInterval: (query) => (query.state.error ? false : 30_000),
+  refetchInterval: (query) =>
+    query.state.error ? false : query.state.data?.items.some((match) => match.status === 'live') ? 15_000 : 30_000,
 });
 export const performanceQuery = queryOptions({
   queryKey: ['performance'],

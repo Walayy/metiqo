@@ -10,7 +10,9 @@ ARG VITE_DONATION_URL=
 ARG VITE_STAKE_REFERRAL_URL=
 ENV VITE_DATA_MODE=$VITE_DATA_MODE VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_DONATION_URL=$VITE_DONATION_URL VITE_STAKE_REFERRAL_URL=$VITE_STAKE_REFERRAL_URL
-RUN npm run build
+# The compose overlay supplies VITE_DATA_MODE (mock or api). Use a neutral Vite
+# mode so the root package's local mock default cannot override that build arg.
+RUN npm run build --workspace @metiquo/web -- --mode production
 
 FROM nginx:stable-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
 COPY infra/docker/nginx.conf /etc/nginx/nginx.conf

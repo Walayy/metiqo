@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from metiquo_worker.catalog_sync import sync_catalog
 from metiquo_worker.ingestion import SOURCE, CollectionBusy, collect
 from metiquo_worker.scheduler import serve_schedules
+from metiquo_worker.sofascore_sync import sync_sofascore
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ def main() -> None:
     scheduler.add_argument(
         "--only",
         action="append",
-        choices=["lol-catalog", "oracles-elixir"],
+        choices=["lol-catalog", "oracles-elixir", "sofascore"],
         help="Schedule only the selected source (repeatable)",
     )
     catalog = commands.add_parser(
@@ -102,8 +103,14 @@ def main() -> None:
     scope.add_argument(
         "--latest", action="store_true", help="Latest discovered year; default is all years"
     )
+    commands.add_parser(
+        "sync-sofascore-matches",
+        help="Scrape les matchs LoL SofaScore de J-7 à J+7 et les directs",
+    )
     args = parser.parse_args()
     settings = Settings()
+    if args.command == "sync-sofascore-matches" and not settings.sofascore_enabled:
+        settings.sofascore_enabled = True
     logging.basicConfig(
         level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s"
     )
@@ -118,13 +125,15 @@ def main() -> None:
                     run_id = sync_catalog(
                         engine, settings, allow_coverage_drop=args.allow_coverage_drop
                     )
-                else:
+                elif args.command == "sync-oracles-elixir":
                     run_id = collect(
                         engine,
                         settings,
                         set(args.years) if args.years else None,
                         latest=args.latest,
                     )
+                else:
+                    run_id = sync_sofascore(engine, settings)
                 with Session(engine) as session:
                     run = session.get(IngestionRun, run_id)
                     assert run is not None

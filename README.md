@@ -14,9 +14,9 @@ La sidebar suit **Esport → Matchs**, **Analyse → Les values / Performance**,
 
 **Performance** (`?view=performance`) est une simulation historique et non le relevé de paris personnels. Elle trace les gains nets cumulés avec une mise fixe, un seuil strict de value, une période de règlement, une ligue, plusieurs équipes sélectionnées (équipe sur laquelle porte la value) et un marché. Les paramètres de mise/seuil s’appliquent avec le bouton du formulaire, les autres filtres directement. La cote et la probabilité sont figées avant le début du match ; un seul engagement par marché, pas de résultats futurs. Le gain gagné vaut mise × cote − mise ; une perte vaut −mise ; une annulation vaut zéro et est exclue des mises réglées/du rendement. Calculs au centime. Le curseur du graphique fonctionne au clavier et le détail liste chaque règlement. Pas de capital initial, de réinvestissement automatique ni de promesse de rendement.
 
-Ces vues utilisent des contrats Zod et des requêtes séparées `/catalog`, `/opportunities`, `/matches` et `/performance`, avec MSW uniquement en mode `mock`. Les rencontres, rosters, scores et 120 règlements historiques du scénario sont fictifs ; les noms de joueurs sont des alias et ne prétendent pas décrire les effectifs réels. Dix portraits officiels Data Dragon sont conservés localement avec provenance. En API, `/matches` lit les rencontres stockées sans dépendre des marchés et laisse les statistiques inconnues ; `/performance` reste vide faute de source de règlements reliée aux décisions pré-match. Aucun collecteur live ou résultat n’est inventé. Les erreurs restent explicites. La vue Values ne présente plus d’encart date ni de date dans les lignes ; les horodatages d’analyse restent disponibles dans le détail.
+Ces vues utilisent des contrats Zod et des requêtes séparées `/catalog`, `/opportunities`, `/matches` et `/performance`, avec MSW uniquement en mode `mock`. Les rencontres, rosters, scores et 120 règlements historiques du scénario sont fictifs ; les noms de joueurs sont des alias et ne prétendent pas décrire les effectifs réels. Le catalogue complet des portraits officiels Data Dragon est conservé localement avec provenance et se met à jour avec `npm run data:champions:sync` (version et date de récupération dans `apps/web/src/mocks/data/champions.json`). En API, `/matches` lit les rencontres stockées sans dépendre des marchés et laisse les statistiques inconnues ; `/performance` reste vide faute de source de règlements reliée aux décisions pré-match. Aucun collecteur live ou résultat n’est inventé. Les erreurs restent explicites. La vue Values ne présente plus d’encart date ni de date dans les lignes ; les horodatages d’analyse restent disponibles dans le détail.
 
-Les destinations de soutien sont des variables publiques de construction, disponibles dans `apps/web/.env.example`, `.env.docker.example` et les arguments Docker. Après modification en mode API, reconstruire le frontend (`npm run build` ou `npm run docker:up`). N’y placer aucun secret.
+Les destinations de soutien sont des variables publiques de construction, disponibles dans `apps/web/.env.example`, `.env.docker.example` et les arguments Docker. Après modification en mode API, reconstruire le frontend (`npm run build:api` ou `npm run docker:api`). N’y placer aucun secret.
 
 ## Application complète avec Docker
 
@@ -33,6 +33,16 @@ Ouvrir [l’application](http://127.0.0.1:8080) et [la documentation API](http:/
 `npm run docker:down` arrête l’application **en conservant les volumes**. Ne pas ajouter `-v` pour un arrêt normal. Les secrets sont exclus de Git et des images. PostgreSQL n’expose aucun port dans la configuration standard.
 
 Le [guide backend et exploitation](docs/backend.md) détaille la collecte manuelle, l’import du catalogue, le développement, les sauvegardes et les limites avant un déploiement public.
+
+### Matchs live et à venir
+
+Le worker utilise le navigateur Patchright pour lire le HTML rendu des pages LoL SofaScore de la fenêtre J−7 à J+7. Il ne consomme aucun endpoint API SofaScore et ne visite pas Stake. Le script `sofascore-matches` est planifié chaque minute par défaut ; l’administrateur peut modifier ou suspendre cette fréquence dans **Gestion → Scripts & planifications**. Une exécution manuelle est possible avec `npm run data:sofascore:sync` ou `metiquo-worker sync-sofascore-matches`.
+
+Le scraper applique une discipline de trafic : délai aléatoire borné entre navigations, cache de la découverte des journées pendant cinq minutes, rafraîchissement prioritaire des rencontres live, absence de revisite des matchs terminés, et circuit breaker de quinze minutes après un `403` ou `429`. Ces garde-fous réduisent la charge sans modifier le cron métier ; une source qui demande l’arrêt n’est pas martelée et aucune donnée de repli n’est inventée.
+
+Les rencontres sont réconciliées avec les équipes, ligues et rencontres existantes par identifiants de provenance, noms normalisés, sens de l’affiche, ligue et proximité horaire. Chaque relevé est conservé avec son URL, son empreinte et son horodatage dans `match_source_links` et `match_snapshots`; cela permet de relier Oracle’s Elixir, SofaScore et de futurs fournisseurs sans faire confiance au nom seul. L’API expose le dernier relevé dans `/api/v1/matches` et l’état des collectes dans `/api/v1/sources/sofascore`.
+
+Les scores et statuts live viennent du dernier relevé SofaScore. Pour un match terminé, le worker projette aussi les cartes complètes d’Oracle’s Elixir lorsque les cinq joueurs et les statistiques obligatoires de chaque camp sont présents. L’API fusionne alors le statut live le plus récent avec le meilleur relevé de cartes complet : un relevé SofaScore ultérieur sans détail ne peut pas effacer l’historique déjà acquis. Compositions, champions, niveaux, K/D/A, CS, or, bans et objectifs ne sont affichés que lorsqu’ils sont présents dans une source et validés par le contrat. Une donnée absente reste inconnue : aucun kill, champion ou résultat n’est inventé. La couverture dépend donc du contenu réellement rendu par SofaScore et du chargement du match ; les pages vides, les rencontres non résolues et les détails non publiés restent observables dans le journal de collecte.
 
 ### Espace Admin
 
@@ -73,7 +83,8 @@ Node.js **22.12+** (ou 24+) et npm. Depuis la racine du dépôt :
 
 ```sh
 npm install
-npm run dev
+npm run dev:mock       # frontend mocké + API réelle pour l’authentification
+# npm run dev:api      # frontend branché sur les données FastAPI
 ```
 
 Ouvrir <http://127.0.0.1:5173>. Le port est fixe : Vite signale s’il est déjà occupé. Le serveur écoute uniquement en local.
@@ -82,11 +93,26 @@ L’authentification nécessite la stack Docker démarrée : Vite transmet `/api
 
 ```sh
 npm run check        # Frontend + backend ; installer uv puis exécuter uv sync auparavant
-npm run build
+npm run build:mock   # build avec MSW pour les données esport
+npm run build:api    # build avec les endpoints de données FastAPI
 npm run preview      # Production locale sur http://127.0.0.1:4173
 npm run format
 npm run format:check
 ```
+
+Les deux modes frontend sont sélectionnés explicitement avec `mock` ou `api`. Dans les deux modes, `/api/v1/auth` reste l’API réelle.
+
+### Docker
+
+Initialiser les secrets locaux puis démarrer la stack avec le frontend souhaité :
+
+```sh
+npm run docker:mock    # MSW pour les données esport, API réelle pour l’authentification
+npm run docker:api     # données esport servies par FastAPI
+npm run docker:down
+```
+
+Les scripts utilisent respectivement `compose.mock.yaml` et `compose.api.yaml`. Changer de mode reconstruit l’image web ; les volumes PostgreSQL, artefacts et pgAdmin sont conservés.
 
 ## Stack retenue
 

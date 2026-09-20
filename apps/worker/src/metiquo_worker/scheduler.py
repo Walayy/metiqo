@@ -15,17 +15,22 @@ from sqlalchemy.orm import Session
 from metiquo_worker.catalog_sync import sync_catalog
 from metiquo_worker.ingestion import collect
 from metiquo_worker.jobs import CollectionBusy, source_lock
+from metiquo_worker.sofascore_sync import sync_sofascore
 
 logger = logging.getLogger(__name__)
 SCHEDULER_LOCK = 62883200
 
 
 def enabled_scripts(settings: Settings, only: list[str] | None) -> list[str]:
+    enabled_by_source = {
+        "lol-catalog": settings.catalog_enabled,
+        "oracles-elixir": settings.oracle_enabled,
+        "sofascore": settings.sofascore_enabled,
+    }
     return [
         key
         for key, definition in SCRIPTS.items()
-        if (settings.catalog_enabled if key == "lol-catalog" else settings.oracle_enabled)
-        and (not only or definition.source in only)
+        if enabled_by_source[definition.source] and (not only or definition.source in only)
     ]
 
 
@@ -108,6 +113,8 @@ def tick(engine: Engine, settings: Settings, scripts: list[str], stopping: threa
                     ingestion_id = sync_catalog(engine, settings)
                 elif script_id in {"oracle-latest", "oracle-full"}:
                     ingestion_id = collect(engine, settings, latest=script_id == "oracle-latest")
+                elif script_id == "sofascore-matches":
+                    ingestion_id = sync_sofascore(engine, settings)
                 else:
                     raise ValueError("Unregistered script")
                 with Session(engine) as db, db.begin():

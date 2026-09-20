@@ -41,6 +41,7 @@ export function MatchesPage({
 }) {
   const query = useQuery(matchesQuery);
   const items = query.data?.items ?? [];
+  const [stickyError, setStickyError] = useState<Error | null>(null);
   const selectionId = useId();
   const [refreshing, setRefreshing] = useState(false);
   async function refresh() {
@@ -96,11 +97,20 @@ export function MatchesPage({
         !catalog.leagues.some((l) => l.id === item.leagueId) ||
         [item.homeId, item.awayId].some((id) => !catalog.teams.some((t) => t.id === id)),
     );
-  if (query.error || invalid)
+  const invalidError = invalid ? new HttpError(0, { kind: 'invalid-response' }) : null;
+  function retry() {
+    const currentError = query.error ?? invalidError;
+    if (currentError) setStickyError(currentError);
+    void query.refetch().then((result) => {
+      setStickyError(result.error ?? null);
+    });
+  }
+  const visibleError = query.error ?? invalidError ?? (query.isFetching ? stickyError : null);
+  if (visibleError || invalid)
     return (
       <StatusPanel
-        error={query.error ?? new HttpError(0, { kind: 'invalid-response' })}
-        onRetry={() => void query.refetch()}
+        error={visibleError ?? new HttpError(0, { kind: 'invalid-response' })}
+        onRetry={retry}
         busy={query.isFetching}
       />
     );
@@ -319,6 +329,8 @@ export function MatchesPage({
                         {rows.map((match) => {
                           const home = catalog.teams.find((t) => t.id === match.homeId)!;
                           const away = catalog.teams.find((t) => t.id === match.awayId)!;
+                          const hasMapScore =
+                            Boolean(match.seriesScore) || match.maps.some((map) => map.winnerId);
                           return (
                             <button
                               key={match.id}
@@ -341,12 +353,20 @@ export function MatchesPage({
                               <span className="fixture-score">
                                 {match.status === 'scheduled' ? (
                                   <span className="fixture-vs">vs</span>
-                                ) : (
+                                ) : hasMapScore ? (
                                   <>
                                     {seriesScore(match, home.id)}
                                     <span>:</span>
                                     {seriesScore(match, away.id)}
                                   </>
+                                ) : match.currentScore ? (
+                                  <>
+                                    {match.currentScore.home}
+                                    <span>:</span>
+                                    {match.currentScore.away}
+                                  </>
+                                ) : (
+                                  <span>—</span>
                                 )}
                               </span>
                               <span className="fixture-team away">

@@ -225,6 +225,39 @@ class EsportMatch(Base):
     )
 
 
+class MatchSourceLink(Base):
+    __tablename__ = "match_source_links"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    match_id: Mapped[UUID] = mapped_column(ForeignKey("matches.id"))
+    provider: Mapped[str]
+    source_id: Mapped[str]
+    source_url: Mapped[str]
+    source_names: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        UniqueConstraint("provider", "source_id"),
+        Index("ix_match_source_links_match", "match_id"),
+    )
+
+
+class MatchSnapshot(Base):
+    __tablename__ = "match_snapshots"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    match_id: Mapped[UUID] = mapped_column(ForeignKey("matches.id"))
+    source: Mapped[str]
+    source_id: Mapped[str]
+    source_url: Mapped[str]
+    status: Mapped[str]
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    sha256: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB)
+    __table_args__ = (
+        UniqueConstraint("match_id", "sha256"),
+        Index("ix_match_snapshots_latest", "match_id", "observed_at"),
+    )
+
+
 class Market(Base):
     __tablename__ = "markets"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

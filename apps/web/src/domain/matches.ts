@@ -5,8 +5,9 @@ export const playerSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   role: z.enum(['TOP', 'JGL', 'MID', 'BOT', 'SUP']),
-  champion: z.string().min(1),
+  champion: z.string().min(1).nullable(),
   championImage: z.string(),
+  level: count.nullable().optional(),
   kills: count,
   deaths: count,
   assists: count,
@@ -20,20 +21,30 @@ const sideSchema = z
     towers: count.max(11),
     dragons: count,
     barons: count,
-    players: z.array(playerSchema).length(5),
+    players: z.array(playerSchema).max(5),
+    heralds: count.default(0),
+    grubs: count.default(0),
+    inhibitors: count.default(0),
   })
   .refine(
     (side) =>
-      new Set(side.players.map((p) => p.role)).size === 5 &&
-      new Set(side.players.map((p) => p.id)).size === 5,
+      side.players.length === 0 ||
+      (new Set(side.players.map((p) => p.role)).size === side.players.length &&
+        new Set(side.players.map((p) => p.id)).size === side.players.length),
     'Une composition contient cinq rôles et joueurs distincts.',
   );
+const banSchema = z.object({
+  teamId: z.string(),
+  champion: z.string().min(1),
+  championImage: z.string(),
+});
 const mapSchema = z
   .object({
     number: z.number().int().min(1).max(5),
     status: z.enum(['scheduled', 'live', 'finished', 'skipped']),
     durationSeconds: count,
     winnerId: z.string().nullable(),
+    bans: z.array(banSchema).max(10).default([]),
     sides: z.array(sideSchema).max(2),
   })
   .superRefine((map, ctx) => {
@@ -49,14 +60,14 @@ const mapSchema = z
         message: 'Une carte commencée requiert deux camps distincts.',
       });
     if (
-      (map.status === 'finished') !== (map.winnerId !== null) ||
+      (map.status === 'finished' && map.sides.length > 0) !== (map.winnerId !== null) ||
       (map.winnerId && !map.sides.some((s) => s.teamId === map.winnerId))
     )
       ctx.addIssue({
         code: 'custom',
         message: 'Le vainqueur est requis uniquement pour une carte terminée.',
       });
-    if (!started && (map.sides.length || map.durationSeconds))
+    if (!started && (map.sides.length || map.durationSeconds || map.bans.length))
       ctx.addIssue({ code: 'custom', message: 'Aucune statistique avant le début de la carte.' });
   });
 export const matchSchema = z
@@ -71,6 +82,8 @@ export const matchSchema = z
     status: z.enum(['scheduled', 'live', 'finished']),
     patch: z.string().nullable(),
     stage: z.string().nullable(),
+    currentScore: z.object({ home: count, away: count }).nullable().optional(),
+    seriesScore: z.object({ home: count, away: count }).nullable().optional(),
     maps: z.array(mapSchema),
   })
   .superRefine((match, ctx) => {
@@ -98,12 +111,12 @@ export const matchSchema = z
     );
     if (
       (match.status === 'scheduled' && match.maps.some((map) => map.status !== 'scheduled')) ||
-      (match.status !== 'scheduled' && match.maps.length !== Number(match.format.slice(2))) ||
       (match.status === 'finished' &&
+        match.maps.length > 0 &&
         (!scores.includes(target) ||
           scores.every((score) => score >= target) ||
           match.maps.some((map) => map.status === 'scheduled'))) ||
-      (match.status === 'live' && scores.some((score) => score >= target))
+      (match.status === 'live' && match.maps.length > 0 && scores.some((score) => score >= target))
     )
       ctx.addIssue({
         code: 'custom',
@@ -120,7 +133,11 @@ export type EsportMatch = z.infer<typeof matchSchema>;
 export type MatchMap = z.infer<typeof mapSchema>;
 export type MapSide = z.infer<typeof sideSchema>;
 export const seriesScore = (match: EsportMatch, teamId: string) =>
-  match.maps.filter((map) => map.winnerId === teamId).length;
+  match.seriesScore
+    ? teamId === match.homeId
+      ? match.seriesScore.home
+      : match.seriesScore.away
+    : match.maps.filter((map) => map.winnerId === teamId).length;
 export const sideKills = (side: MapSide) =>
   side.players.reduce((sum, player) => sum + player.kills, 0);
 export const sideGold = (side: MapSide) =>

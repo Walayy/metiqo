@@ -1,0 +1,6 @@
+# Frontend with deterministic MSW data. Authentication still uses the real API.
+services:
+  web:
+    build:
+      args:
+        VITE_DATA_MODE: mock

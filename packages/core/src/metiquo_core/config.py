@@ -19,6 +19,21 @@ class Settings(BaseSettings):
     oracle_max_archive_bytes: int = Field(default=1_500_000_000, ge=1024)
     oracle_max_expanded_bytes: int = Field(default=5_000_000_000, ge=1024)
     browser_headless: bool = True
+    # Docker enables it explicitly; local commands stay opt-in to avoid an
+    # unexpected browser launch during unrelated worker tests and tooling.
+    sofascore_enabled: bool = False
+    sofascore_timeout_seconds: int = Field(default=45, ge=10, le=180)
+    sofascore_max_events: int = Field(default=120, ge=1, le=500)
+    # Discovery is deliberately incremental: a run must not open every day
+    # and every event page in the J-7/J+7 window in one burst.
+    sofascore_listing_days_per_run: int = Field(default=2, ge=1, le=4)
+    sofascore_events_per_run: int = Field(default=12, ge=1, le=120)
+    sofascore_min_delay_seconds: float = Field(default=2.0, ge=0.5, le=30.0)
+    sofascore_max_delay_seconds: float = Field(default=5.0, ge=0.5, le=60.0)
+    sofascore_listing_interval_seconds: int = Field(default=300, ge=60, le=3600)
+    sofascore_scheduled_refresh_seconds: int = Field(default=300, ge=60, le=3600)
+    sofascore_live_refresh_seconds: int = Field(default=60, ge=30, le=900)
+    sofascore_block_cooldown_seconds: int = Field(default=900, ge=60, le=86_400)
     catalog_enabled: bool = True
     catalog_interval_seconds: int = Field(default=86400, ge=300)
     catalog_max_pages: int = Field(default=200, ge=1, le=2000)

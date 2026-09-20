@@ -1,0 +1,6 @@
+# Frontend backed by the FastAPI data endpoints.
+services:
+  web:
+    build:
+      args:
+        VITE_DATA_MODE: api
