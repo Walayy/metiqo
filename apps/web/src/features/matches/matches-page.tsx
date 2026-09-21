@@ -2,7 +2,7 @@ import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { ContentTransition } from '@/components/ui/content-transition';
 import { SelectionIndicator } from '@/components/ui/selection-indicator';
 import { useId, useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Accordion } from 'radix-ui';
 import { ChevronDown, ChevronLeft, ChevronRight, Search, Swords, ArrowUpRight } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -10,7 +10,7 @@ import type { Catalog } from '@/domain/schemas';
 import type { EsportMatch } from '@/domain/matches';
 import { countdown, matchWinnerId, seriesScore } from '@/domain/matches';
 import { normalize, time } from '@/lib/format';
-import { matchesQuery } from '@/lib/api';
+import { catalogQuery, matchesQuery } from '@/lib/api';
 import { HttpError } from '@/lib/http-error';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
@@ -40,6 +40,30 @@ export function MatchesPage({
   loading: boolean;
 }) {
   const query = useQuery(matchesQuery);
+  const queryClient = useQueryClient();
+  const [catalogCheckedAt, setCatalogCheckedAt] = useState(0);
+  const missingIdentities = Boolean(
+    query.data?.items.some(
+      (item) =>
+        !catalog.leagues.some((l) => l.id === item.leagueId) ||
+        [item.homeId, item.awayId].some((id) => !catalog.teams.some((t) => t.id === id)),
+    ),
+  );
+  const reconcilingCatalog = missingIdentities && catalogCheckedAt !== query.dataUpdatedAt;
+  useEffect(() => {
+    if (!reconcilingCatalog || catalogLoading) return;
+    let active = true;
+    const observedAt = query.dataUpdatedAt;
+    void queryClient
+      .fetchQuery({ ...catalogQuery, staleTime: 0 })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setCatalogCheckedAt(observedAt);
+      });
+    return () => {
+      active = false;
+    };
+  }, [reconcilingCatalog, catalogLoading, query.dataUpdatedAt, queryClient]);
   const items = query.data?.items ?? [];
   const [stickyError, setStickyError] = useState<Error | null>(null);
   const selectionId = useId();
@@ -52,7 +76,7 @@ export function MatchesPage({
       setRefreshing(false);
     }
   }
-  const dataPending = query.isPending || catalogLoading;
+  const dataPending = query.isPending || catalogLoading || reconcilingCatalog;
   const [now, setNow] = useState(() => Date.now());
   const today = dayKey(new Date(now));
   const [league, setLeague] = useState('all');
@@ -318,7 +342,11 @@ export function MatchesPage({
                               {countdown(upcoming.startsAt, now)}
                             </span>
                           ) : (
-                            <span className="match-finished">Terminés</span>
+                            <span className="match-finished">
+                              {rows.every((m) => m.status === 'finished')
+                                ? 'Terminés'
+                                : 'Programme modifié'}
+                            </span>
                           )}
                         </span>
                         <ChevronDown size={18} className="accordion-chevron" />
@@ -403,6 +431,12 @@ export function MatchesPage({
                                   <LiveBadge />
                                 ) : match.status === 'finished' ? (
                                   <span>Terminé</span>
+                                ) : match.status === 'cancelled' || match.status === 'postponed' ? (
+                                  <span>
+                                    {match.status === 'cancelled'
+                                      ? 'Annulé'
+                                      : 'Reporté / interrompu'}
+                                  </span>
                                 ) : (
                                   <span>{countdown(match.startsAt, now)}</span>
                                 )}

@@ -883,6 +883,14 @@ h2 {
   padding: 5px;
   pointer-events: none;
 }
+
+.logo-frame > .logo-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--muted);
+}
 .logo-frame > span {
   font-size: 10px;
   font-weight: 700;

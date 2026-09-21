@@ -1,5 +1,36 @@
 # Vérifications de la première version
 
+## Réduction des délais de cache SofaScore — 21 septembre 2026
+
+Les caches des journées passent à 3 minutes / 15 minutes / 1 heure pour aujourd'hui / futur / passé. Les fiches proches / programmées / terminées avec cartes / terminées sans cartes passent à 3 minutes / 15 minutes / 1 heure / 5 minutes ; le live reste à 2 minutes. Code, Compose, exemple et `.env.docker` local sont alignés. Les tests existants de fraîcheur et de sélection des journées ont été adaptés et `npm run check` passe : 59 tests frontend, 106 tests backend hors intégration, build et contrôles statiques. Compose est valide. Aucun comportement navigateur ni parcours UI changé, aucune collecte réelle, worker confirmé arrêté en attente du « go ». Les suites PostgreSQL et navigateur de la modification précédente n'ont pas été répétées pour cet ajustement de configuration.
+
+## Session SofaScore persistante, cache et pauses — 21 septembre 2026
+
+- `npm run check` réussi : TypeScript, ESLint, build, Ruff, mypy, 59 tests frontend et 106 tests backend hors intégration. La première suite PostgreSQL 18 isolée a validé 152 tests ; le test ajouté ensuite sur l'échec de publication a été validé avec quatre régressions d'intégration existantes, soit 153 cas backend distincts validés, dont 47 intégrations. Le conteneur PostgreSQL temporaire et son volume ont été supprimés.
+- Régressions couvertes : ne relire que les journées dues ; dédupliquer les recommandations et les URLs alternatives ; ne jamais retenter une page pendant le même cycle ; terminer le cycle dès le premier document 403 ; conserver la pause après un onglet échoué ; ne rouvrir que les nouvelles cartes live ; ne pas republier les anciennes cartes comme fraîches ; démarrer la pause après lecture complète et conserver son horodatage entre instances ; invalider les cartes non publiées après échec de transaction.
+- Test navigateur explicite `tests/backend/browser_sofascore_smoke.py`, exécuté dans une instance de test avec `--network none`, sources du workspace en lecture seule et profil temporaire. Seul un serveur HTTP sur loopback est accessible. Trois pages utilisent un même contexte et téléchargent leur script partagé une seule fois. Après fermeture/réouverture de Chromium, le cookie persistant et le cache sont retrouvés. Un fetch 403 synthétique ferme la page, empêche son prochain appel différé et interdit toute nouvelle navigation du cycle. Les requêtes déjà parties avant réception de l'événement par le collecteur ne peuvent pas être annulées rétroactivement.
+- Configuration Compose validée sans démarrage ; `.env.docker` local aligné sur les nouvelles pauses et échéances de cache sans modification de ses secrets. Le volume de profil est déclaré pour le prochain démarrage, sans monter ce profil dans l'API.
+- Aucun parcours UI modifié. Aucun appel de validation à SofaScore, aucune reconstruction/déploiement du service applicatif, aucune relance du worker : son état Docker reste `Exited (0)` après l'arrêt volontaire. **Attendre le « go » de l'utilisateur pour les essais réels et la relance.** Les avertissements Starlette et le bundle MSW de plus de 500 kB restent préexistants.
+
+## Scraping des picks et bans, sans plafond de matchs — 21 septembre 2026
+
+- `npm run check` réussi : 59 tests frontend, 99 tests backend hors intégration, TypeScript, ESLint, Ruff, mypy et build. Suite PostgreSQL 18 isolée : 144 tests réussis, dont 45 intégrations. Le test supplémentaire du pipeline complet sur le DOM réellement observé a ensuite passé la suite ciblée portraits (4 tests) ; 145 cas distincts validés au total. La base temporaire et son volume ont été supprimés.
+- Régression de couverture hors réseau : 15 journées et 135 matchs parcourus une fois dans une exécution ; aucun nouvel accès au second passage lorsque le cache est frais. Tests des bans sans nom, déduplication, conservation des identifications récentes, ambiguïtés visuelles et absence de lecture des corps API.
+- Sur la page réelle Team Liquid–FlyQuest, le script DOM relève dix portraits de joueurs et dix bans, répartis 5/5. Neuf des dix images exportées correspondent au catalogue local ; un artwork différent reste inconnu. La projection hors ligne conserve les statistiques et les dix bans, même lorsque le nom ou les octets du portrait sont indisponibles.
+- Chromium dans la nouvelle image worker, avec réseau désactivé et réponses images contrôlées : deux panneaux, dont un injecté après un délai, sont lus correctement ; dix bans par carte, noms reconnus et référentiel de 173 portraits présents. Ce test exécute le fichier JavaScript réellement empaqueté et le lecteur Python.
+- Navigateur sur le frontend API local : modale LCS en clair/sombre, 390 × 844, 768 × 1024 et 1440 × 1050 ; dix bans conservés, aucun débordement horizontal de page/modale, changement de carte par flèche, fermeture Échap et retour du focus au bouton de rencontre. Ces contrôles utilisent les observations historiques déjà stockées ; le repli d’un ban sans nom est vérifié par le contrat, sans injecter de faux relevé en base métier.
+- Worker, API et web reconstruits et redémarrés en mode API local. Référentiel présent, client `curl_cffi` absent et paramètres de plafonds absents du worker actif. Cadences et données conservées.
+
+Limite externe vérifiée : le worker déjà sans appels API directs a reçu un **403 document à 10:20:10 UTC (12:20 à Paris)** sur la journée du 21 septembre. L’attente persistée jusqu’à **11:20:10 UTC (13:20 à Paris)** et les trois refus consécutifs sont conservés lors du remplacement. Aucun déblocage ni collecte complète depuis Docker n’est annoncé sur la seule base du navigateur manuel et des tests hors ligne. Les avertissements préexistants Starlette et taille du bundle MSW subsistent.
+
+## Résilience SofaScore et rapprochement Oracle — 21 septembre 2026
+
+`npm run check` réussi : 58 tests frontend, 96 tests backend hors intégration, TypeScript, ESLint, Ruff, mypy et build. Suite PostgreSQL 18 isolée : **141 tests réussis**. Les migrations `0009–0010` et les nouvelles images sont appliquées à Docker local ; services sains, délai SofaScore conservé au redémarrage. Contrôles navigateur sur Matchs et sa modale en clair/sombre, à 390/820/1440 px et au clavier ; reprise après interruption du serveur vérifiée. Catalogue exposé : 56 logos locaux sur 58 ligues LoL. La recherche Oracle réelle est passée d’une annulation après 166,97 s à 0,603 s ; les 414 cartes sans fuseau vérifié restent explicitement non rapprochées. Voir les [preuves et limites détaillées](sofascore-resilience-audit.md).
+
+## Audit v1-ajout-live — 21 septembre 2026
+
+Voir le [rapport dédié](review-v1-ajout-live.md) : 58 tests frontend, 129 tests backend avec PostgreSQL, collectes réelles Riot / Oracle / Data Dragon, validation du flux local de 74 matchs LoL et vérification navigateur. L’essai SofaScore a répondu HTTP 403 ; sa disponibilité externe reste une limite explicite.
+
 ## Filtres de ligue sur mobile — 16 septembre 2026
 
 - `npm run check` réussi : TypeScript, ESLint, build, 37 tests frontend et 51 tests backend hors intégration. Les deux avertissements de dépréciation Starlette préexistants subsistent.

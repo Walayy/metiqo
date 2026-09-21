@@ -22,6 +22,12 @@ class Base(DeclarativeBase):
     pass
 
 
+class CollectorState(Base):
+    __tablename__ = "collector_state"
+    source: Mapped[str] = mapped_column(primary_key=True)
+    data: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict)
+
+
 class IngestionRun(Base):
     __tablename__ = "ingestion_runs"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -72,7 +78,10 @@ class OracleRow(Base):
     game_id: Mapped[str]
     participant_id: Mapped[str]
     payload: Mapped[dict[str, str]] = mapped_column(JSONB)
-    __table_args__ = (Index("ix_oracle_rows_version_game", "version_id", "game_id"),)
+    __table_args__ = (
+        Index("ix_oracle_rows_version_game", "version_id", "game_id"),
+        Index("ix_oracle_rows_version_date", "version_id", text("left(payload ->> 'date', 10)")),
+    )
 
 
 class CatalogMetadata(Base):
@@ -252,10 +261,7 @@ class MatchSnapshot(Base):
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     sha256: Mapped[str] = mapped_column(String(64))
     payload: Mapped[dict[str, object]] = mapped_column(JSONB)
-    __table_args__ = (
-        UniqueConstraint("match_id", "sha256"),
-        Index("ix_match_snapshots_latest", "match_id", "observed_at"),
-    )
+    __table_args__ = (Index("ix_match_snapshots_latest", "match_id", "observed_at"),)
 
 
 class Market(Base):

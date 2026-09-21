@@ -1,5 +1,5 @@
 import { catalog, opportunities, WORLD_STAR_LEAGUE_ID } from './fixtures';
-import champions from './data/champions.json';
+import champions from '@/domain/data/champions.json';
 import { matchesSchema } from '@/domain/matches';
 import type { EsportMatch, MapSide, MatchMap } from '@/domain/matches';
 import { performanceSchema } from '@/features/performance/simulation';
@@ -73,7 +73,7 @@ function maps(
       number: i + 1,
       status: state,
       durationSeconds: started ? (state === 'live' ? 1634 : 1927 + i * 37) : 0,
-      winnerId: state === 'finished' ? finishedWinnerId ?? homeId : null,
+      winnerId: state === 'finished' ? (finishedWinnerId ?? homeId) : null,
       bans: started ? bans(homeId, awayId, seed + i) : [],
       sides: started
         ? [

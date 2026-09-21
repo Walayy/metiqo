@@ -1,5 +1,6 @@
 import io
 import threading
+import time
 import warnings
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
@@ -9,6 +10,7 @@ from metiquo_core.config import Settings
 from PIL import Image
 
 from metiquo_worker.artifacts import store_bytes, verify_artifact
+from metiquo_worker.sofascore_policy import SofaScorePolicy
 
 _decode_lock = threading.Lock()
 
@@ -62,22 +64,43 @@ def webp(data: bytes, max_pixels: int = 80_000_000) -> bytes:
 
 
 def fetch_image(
-    client: httpx.Client, source: str, previous: dict[str, object], settings: Settings
+    client: httpx.Client,
+    source: str,
+    previous: dict[str, object],
+    settings: Settings,
+    policy: SofaScorePolicy | None = None,
 ) -> dict[str, object]:
     url = image_url(source)
     root = settings.artifact_dir
     cached = cache_valid(root, previous)
+    checked_at = previous.get("checkedAt", 0)
+    if cached and isinstance(checked_at, (int, float)) and time.time() - checked_at < 86400:
+        return previous
     headers: dict[str, str] = {}
     if cached:
         for cache_key, header in (("etag", "If-None-Match"), ("lastModified", "If-Modified-Since")):
             value = previous.get(cache_key)
             if isinstance(value, str) and value:
                 headers[header] = value
+    if policy is not None and urlsplit(url).hostname == "img.sofascore.com":
+        policy.before_request()
     with client.stream("GET", url, headers=headers) as response:
+        if (
+            policy is not None
+            and urlsplit(url).hostname == "img.sofascore.com"
+            and response.status_code in {403, 429}
+        ):
+            raise policy.block(
+                response.status_code,
+                "catalog-logo",
+                response.headers.get("retry-after"),
+                request_url=url,
+                resource_type="image",
+            )
         if response.status_code == 304:
             if not cached or not headers:
                 raise ValueError("Unsolicited logo cache response")
-            return previous
+            return {**previous, "checkedAt": time.time()}
         raw = read_response(response, settings.catalog_max_image_bytes)
         encoded = webp(raw, settings.catalog_max_image_pixels)
         source_sha, source_path = store_bytes(root, "originals", raw, "bin")
@@ -91,6 +114,7 @@ def fetch_image(
             "path": path,
             "etag": response.headers.get("etag"),
             "lastModified": response.headers.get("last-modified"),
+            "checkedAt": time.time(),
         }
 
 

@@ -9,16 +9,26 @@ from typing import cast
 from uuid import UUID, uuid4
 
 import httpx
-from metiquo_core.catalog import CATALOG_LOCK_ID, import_catalog
+from metiquo_core.catalog import CATALOG_LOCK_ID, import_catalog, other_game_identities
 from metiquo_core.config import Settings
 from metiquo_core.contracts import Catalog, LeagueData, TeamData
-from metiquo_core.models import CatalogMetadata, CatalogVersion, IngestionRun, League, Team
+from metiquo_core.models import (
+    CatalogMetadata,
+    CatalogVersion,
+    EsportMatch,
+    IngestionRun,
+    League,
+    MatchSnapshot,
+    Team,
+)
 from sqlalchemy import Engine, func, select, update
 from sqlalchemy.orm import Session
 
 from metiquo_worker.artifacts import store_bytes
 from metiquo_worker.catalog_images import cache_valid, fetch_image, read_response
 from metiquo_worker.jobs import fail_run, source_lock, start_run
+from metiquo_worker.sofascore_policy import SofaScorePolicy
+from metiquo_worker.sofascore_sync import _competition_brand_from_source
 from metiquo_worker.sources.lol import ROOT_URL, SOURCE, Reference, parse_page, text
 
 logger = logging.getLogger(__name__)
@@ -95,6 +105,34 @@ def retain_known_identities(
         coverage["retainedKnownTeams"] = retained_teams
 
 
+def repair_known_brands(session: Session, leagues: list[League]) -> list[dict[str, object]]:
+    """Reuse stored source parent metadata; no extra SofaScore navigation."""
+    payloads = {
+        league_id: payload
+        for league_id, payload in session.execute(
+            select(EsportMatch.league_id, MatchSnapshot.payload)
+            .join(MatchSnapshot, MatchSnapshot.match_id == EsportMatch.id)
+            .where(MatchSnapshot.source == "sofascore")
+            .distinct(EsportMatch.league_id)
+            .order_by(
+                EsportMatch.league_id, MatchSnapshot.observed_at.desc(), MatchSnapshot.id.desc()
+            )
+        ).all()
+    }
+    result = []
+    for league in leagues:
+        data = dict(league.data)
+        brand = _competition_brand_from_source(
+            str(data.get("name", "")), payloads.get(league.id, {}), leagues
+        )
+        if brand is not None and brand.id != league.id:
+            for field in ("image", "sourceImage"):
+                if not data.get(field) and brand.data.get(field):
+                    data[field] = brand.data[field]
+        result.append(data)
+    return result
+
+
 def discover_catalog(
     client: httpx.Client, settings: Settings
 ) -> tuple[Reference, list[dict[str, object]]]:
@@ -134,7 +172,11 @@ def discover_catalog(
 
 
 def attach_images(
-    client: httpx.Client, document: dict[str, object], cache: dict[str, object], settings: Settings
+    client: httpx.Client,
+    document: dict[str, object],
+    cache: dict[str, object],
+    settings: Settings,
+    policy: SofaScorePolicy | None = None,
 ) -> dict[str, object]:
     catalog = Catalog.model_validate(document["catalog"])
     assets: list[LeagueData | TeamData] = [*catalog.leagues, *catalog.teams]
@@ -144,7 +186,7 @@ def attach_images(
         previous = cache.get(url, {})
         item = cast(dict[str, object], previous) if isinstance(previous, dict) else {}
         try:
-            return url, fetch_image(client, url, item, settings)
+            return url, fetch_image(client, url, item, settings, policy=policy)
         except Exception as error:
             logger.error("LoL logo failed: %s (%s: %s)", url, type(error).__name__, error)
             return (url, item) if cache_valid(settings.artifact_dir, item) else (url, None)
@@ -156,9 +198,18 @@ def attach_images(
             asset.image = f"/api/v1/catalog/logos/{images[asset.source_image]['sha256']}.webp"
     document["catalog"] = catalog.model_dump(mode="json", by_alias=True)
     document["images"] = [
-        {key: value for key, value in item.items() if key not in ("etag", "lastModified")}
+        {
+            key: value
+            for key, value in item.items()
+            if key not in ("etag", "lastModified", "checkedAt")
+        }
         for item in images.values()
     ]
+    document["logoCoverage"] = {
+        "leagues": len(catalog.leagues),
+        "localLeagueLogos": sum(bool(league.image) for league in catalog.leagues),
+        "missingLeagueIds": [league.id for league in catalog.leagues if not league.image],
+    }
     return cast(dict[str, object], images)
 
 
@@ -235,8 +286,20 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
             with Session(engine) as session:
                 metadata = session.get(CatalogMetadata, 1)
                 cache = metadata.image_cache if metadata else {}
-                known_leagues = [dict(item.data) for item in session.scalars(select(League)).all()]
-                known_teams = [dict(item.data) for item in session.scalars(select(Team)).all()]
+                excluded_leagues, excluded_teams = other_game_identities(session)
+                known_leagues = repair_known_brands(
+                    session,
+                    [
+                        item
+                        for item in session.scalars(select(League)).all()
+                        if item.id not in excluded_leagues
+                    ],
+                )
+                known_teams = [
+                    dict(item.data)
+                    for item in session.scalars(select(Team)).all()
+                    if item.id not in excluded_teams and item.league_id not in excluded_leagues
+                ]
                 previous = (
                     session.get(CatalogVersion, metadata.active_version_id)
                     if metadata and metadata.active_version_id
@@ -251,8 +314,24 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
             ) as client:
                 reference, pages = discover_catalog(client, settings)
                 document = reference.document(datetime.now(UTC).date().isoformat())
-                retain_known_identities(document, known_leagues, known_teams)
                 current = Catalog.model_validate(document["catalog"])
+                coverage = cast(dict[str, object], document["coverage"])
+                coverage["discoveredLeagues"] = len(current.leagues)
+                coverage["discoveredTeams"] = len(current.teams)
+                previous_coverage = previous.document.get("coverage", {}) if previous else {}
+                previous_coverage = previous_coverage if isinstance(previous_coverage, dict) else {}
+                previous_leagues = previous_coverage.get("discoveredLeagues")
+                previous_teams = previous_coverage.get("discoveredTeams")
+                if previous_catalog:
+                    if not isinstance(previous_leagues, int):
+                        previous_leagues = sum(
+                            not item.id.startswith("sofascore:")
+                            for item in previous_catalog.leagues
+                        )
+                    if not isinstance(previous_teams, int):
+                        previous_teams = sum(
+                            not item.id.startswith("sofascore:") for item in previous_catalog.teams
+                        )
                 with Session(engine) as session, session.begin():
                     session.execute(
                         update(IngestionRun)
@@ -269,15 +348,18 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
                     not allow_coverage_drop
                     and previous_catalog
                     and (
-                        len(current.leagues) < len(previous_catalog.leagues) * 0.8
-                        or len(current.teams) < len(previous_catalog.teams) * 0.8
+                        len(current.leagues) < cast(int, previous_leagues) * 0.8
+                        or len(current.teams) < cast(int, previous_teams) * 0.8
                     )
                 ):
                     raise ValueError(
                         "Riot coverage dropped by more than 20%; inspect source before publication"
                     )
+                retain_known_identities(document, known_leagues, known_teams)
                 stage = "logos"
-                images = attach_images(client, document, cache, settings)
+                images = attach_images(
+                    client, document, cache, settings, SofaScorePolicy(engine, settings)
+                )
             stage = "database publication"
             with Session(engine) as session, session.begin():
                 details = publish(session, document, images, pages, run_id)

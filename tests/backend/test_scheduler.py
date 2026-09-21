@@ -74,13 +74,14 @@ def test_scheduler_coalesces_missed_runs_and_continues_after_failure(database, m
 
     monkeypatch.setattr(scheduler, "sync_catalog", fail)
     monkeypatch.setattr(scheduler, "collect", collect)
+    monkeypatch.setattr(scheduler, "sync_sofascore", fail)
     for _ in range(2):
         scheduler.tick(engine, settings, list(scheduler.SCRIPTS), threading.Event())
     assert sorted(calls) == [False, True]
     with Session(engine) as db:
         runs = db.scalars(select(ScriptRun)).all()
-        assert len(runs) == 3
-        assert sorted(row.status for row in runs) == ["failed", "succeeded", "succeeded"]
+        assert len(runs) == 4
+        assert sorted(row.status for row in runs) == ["failed", "failed", "succeeded", "succeeded"]
         assert all("secret" not in (row.error or "") for row in runs)
         assert all(
             row.next_run_at > datetime.now(UTC) for row in db.scalars(select(ScriptSchedule))

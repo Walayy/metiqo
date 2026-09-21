@@ -10,24 +10,27 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from metiquo_core.matches import completed_series_summary
 from metiquo_core.models import (
     Dataset,
     DatasetVersion,
     EsportMatch,
+    League,
     MatchSnapshot,
     MatchSourceLink,
     OracleRow,
     Team,
 )
-from sqlalchemy import Engine, and_, or_, select
+from sqlalchemy import Engine, and_, func, or_, select
 from sqlalchemy.orm import Session
 
-from metiquo_worker.matching import name_score, normalize_name
+from metiquo_worker.matching import normalize_name, resolve_team
 
 SOURCE = "oracles-elixir"
 SOURCE_URL = "https://oracleselixir.com/tools/downloads"
@@ -67,7 +70,7 @@ def _integer(payload: dict[str, str], key: str) -> int | None:
     return int(number) if number.is_integer() and number >= 0 else None
 
 
-def _timestamp(payload: dict[str, str]) -> datetime | None:
+def _timestamp(payload: dict[str, str], source_timezone: str | None = None) -> datetime | None:
     value = _value(payload, "date")
     if value is None:
         return None
@@ -75,7 +78,11 @@ def _timestamp(payload: dict[str, str]) -> datetime | None:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return None
-    return parsed.replace(tzinfo=parsed.tzinfo or UTC).astimezone(UTC)
+    if parsed.tzinfo is None:
+        if source_timezone is None:
+            return None
+        parsed = parsed.replace(tzinfo=ZoneInfo(source_timezone))
+    return parsed.astimezone(UTC)
 
 
 def _team_name(row: OracleRow) -> str | None:
@@ -83,21 +90,31 @@ def _team_name(row: OracleRow) -> str | None:
 
 
 def _team_score(name: str, team: Team) -> float:
-    return name_score(
-        name,
-        str(team.data.get("name", "")),
-        str(team.data.get("code", "")),
-        str(team.data.get("slug", "")),
-    )
+    resolved = resolve_team(name, [team])
+    return resolved.score if resolved is not None else 0.0
 
 
 def _best_name(rows: list[OracleRow], team: Team) -> tuple[str, float] | None:
     names = sorted({value for row in rows if (value := _team_name(row)) is not None})
     if not names:
         return None
-    scored = sorted(((_team_score(name, team), name) for name in names), reverse=True)
+    ids = team.data.get("sourceIds")
+    provider_ids = ids.get(SOURCE) if isinstance(ids, dict) else None
+    sourced_names = {
+        name
+        for row in rows
+        if (name := _team_name(row)) is not None
+        and isinstance(provider_ids, list)
+        and _value(row.payload, "teamid") in provider_ids
+    }
+    scored = sorted(
+        ((1.0 if name in sourced_names else _team_score(name, team), name) for name in names),
+        reverse=True,
+    )
     score, name = scored[0]
-    return (name, score) if score >= 0.57 else None
+    if len(scored) > 1 and score - scored[1][0] < 0.08:
+        return None
+    return (name, score) if score >= 0.9 else None
 
 
 def _side(value: str | None) -> str | None:
@@ -200,10 +217,15 @@ def _map_for_game(
                     "deaths": _required(row.payload, "deaths"),
                     "assists": _required(row.payload, "assists"),
                     "cs": _required(row.payload, "total cs"),
-                    "gold": _required(row.payload, "totalgold"),
+                    "gold": _integer(row.payload, "totalgold"),
                 }
             )
         bans: list[dict[str, object]] = []
+        if (
+            len({player["role"] for player in players}) != 5
+            or len({player["id"] for player in players}) != 5
+        ):
+            return None
         for index in range(1, 6):
             champion = _value(team_row.payload, f"ban{index}")
             if champion is not None:
@@ -216,12 +238,12 @@ def _map_for_game(
             {
                 "teamId": team_id,
                 "side": side,
-                "towers": _required(team_row.payload, "towers"),
-                "dragons": _required(team_row.payload, "dragons"),
-                "barons": _required(team_row.payload, "barons"),
-                "heralds": _required(team_row.payload, "heralds"),
-                "grubs": _required(team_row.payload, "void_grubs"),
-                "inhibitors": _required(team_row.payload, "inhibitors"),
+                "towers": _integer(team_row.payload, "towers"),
+                "dragons": _integer(team_row.payload, "dragons"),
+                "barons": _integer(team_row.payload, "barons"),
+                "heralds": _integer(team_row.payload, "heralds"),
+                "grubs": _integer(team_row.payload, "void_grubs"),
+                "inhibitors": _integer(team_row.payload, "inhibitors"),
                 "players": players,
             }
         )
@@ -246,7 +268,11 @@ def _build_map(
     match: EsportMatch,
     teams: dict[str, Team],
 ) -> tuple[dict[str, object], str | None] | None:
-    result = _map_for_game(game_id, rows, match, teams)
+    try:
+        result = _map_for_game(game_id, rows, match, teams)
+    except ValueError:
+        # An incomplete game must not roll back every other projected match.
+        return None
     if result is None:
         return None
     return result
@@ -268,41 +294,126 @@ def _map_number(map_data: dict[str, object]) -> int:
     return value if isinstance(value, int) else 0
 
 
+def _league_matches(name: str, league: League, leagues: dict[str, League]) -> bool:
+    """Use sourced names, slugs and explicit aliases; never a similar league."""
+    candidates = [league]
+    parent_id = league.data.get("parentLeagueId")
+    if isinstance(parent_id, str) and parent_id in leagues:
+        candidates.append(leagues[parent_id])
+    from metiquo_worker.sofascore_sync import _competition_base_name
+
+    incoming = normalize_name(name)
+    for candidate in candidates:
+        aliases = candidate.data.get("aliases")
+        names = [str(candidate.data.get("name", "")), str(candidate.data.get("slug", ""))]
+        if isinstance(aliases, list):
+            names.extend(value for value in aliases if isinstance(value, str))
+        if incoming and any(incoming == _competition_base_name(value) for value in names):
+            return True
+    return False
+
+
+def _date_ranges(matches: list[EsportMatch]) -> list[tuple[date, date]]:
+    """Merge overlapping SQL windows before loading the large raw row store.
+
+    One extra calendar day covers source offsets; actual ownership still
+    requires a verified timestamp and MATCH_WINDOW below.
+    """
+    ranges: list[tuple[date, date]] = []
+    padding = MATCH_WINDOW + timedelta(days=1)
+    for match in sorted(matches, key=lambda item: item.starts_at):
+        first, last = (match.starts_at - padding).date(), (match.starts_at + padding).date()
+        if ranges and first <= ranges[-1][1] + timedelta(days=1):
+            ranges[-1] = ranges[-1][0], max(last, ranges[-1][1])
+        else:
+            ranges.append((first, last))
+    return ranges
+
+
 def sync_oracle_match_details(
     engine: Engine,
     observed_at: datetime | None = None,
     match_ids: set[UUID] | None = None,
+    source_timezone: str | None = None,
 ) -> dict[str, object]:
     """Publish complete Oracle maps for matches already known by Metiquo."""
     now = observed_at or datetime.now(UTC)
     with Session(engine) as session, session.begin():
-        match_query = select(EsportMatch)
-        if match_ids:
-            match_query = match_query.where(EsportMatch.id.in_(match_ids))
-        matches = list(session.scalars(match_query).all())
+        session.execute(select(func.pg_advisory_xact_lock(7_346_810_208)))
+        known_matches = list(
+            session.scalars(select(EsportMatch).order_by(EsportMatch.starts_at)).all()
+        )
+        known_starts = [match.starts_at for match in known_matches]
+        matches = [match for match in known_matches if match_ids is None or match.id in match_ids]
         if not matches:
             return {"matches": 0, "published": 0, "games": 0}
         teams = {team.id: team for team in session.scalars(select(Team)).all()}
+        leagues = {league.id: league for league in session.scalars(select(League)).all()}
+        date_ranges = _date_ranges(matches)
+        version_times = {
+            version_id: checked_at
+            for version_id, checked_at in session.execute(
+                select(DatasetVersion.id, Dataset.checked_at)
+                .join(Dataset, Dataset.active_version_id == DatasetVersion.id)
+                .where(
+                    Dataset.source == SOURCE,
+                    Dataset.file_year >= date_ranges[0][0].year,
+                    Dataset.file_year <= date_ranges[-1][1].year,
+                )
+            ).all()
+        }
         ranges = [
             and_(
-                OracleRow.payload["date"].astext
-                >= (match.starts_at - MATCH_WINDOW).strftime("%Y-%m-%d %H:%M:%S"),
-                OracleRow.payload["date"].astext
-                <= (match.starts_at + MATCH_WINDOW).strftime("%Y-%m-%d %H:%M:%S"),
+                func.left(OracleRow.payload["date"].astext, 10) >= first.isoformat(),
+                func.left(OracleRow.payload["date"].astext, 10) <= last.isoformat(),
             )
-            for match in matches
+            for first, last in date_ranges
         ]
         rows = list(
             session.scalars(
-                select(OracleRow)
-                .join(DatasetVersion, DatasetVersion.id == OracleRow.version_id)
-                .join(Dataset, Dataset.active_version_id == DatasetVersion.id)
-                .where(Dataset.source == SOURCE, or_(*ranges))
+                select(OracleRow).where(OracleRow.version_id.in_(version_times), or_(*ranges))
             ).all()
         )
         groups: dict[str, list[OracleRow]] = defaultdict(list)
         for row in rows:
             groups[row.game_id].append(row)
+        # Resolve each game once across all plausible fixtures, never once per
+        # fixture: rematches must not receive the same historical game.
+        owners: dict[str, UUID] = {}
+        skipped_timezone = 0
+        ambiguous_games = 0
+        for game_id, game_rows in groups.items():
+            dates = [at for row in game_rows if (at := _timestamp(row.payload, source_timezone))]
+            if not dates:
+                skipped_timezone += 1
+                continue
+            start = min(dates)
+            ranked: list[tuple[float, UUID]] = []
+            for candidate in known_matches[
+                bisect_left(known_starts, start - MATCH_WINDOW) : bisect_right(
+                    known_starts, start + MATCH_WINDOW
+                )
+            ]:
+                league = leagues.get(candidate.league_id)
+                source_leagues = {_value(row.payload, "league") for row in game_rows}
+                if league is None or not any(
+                    _league_matches(value, league, leagues) for value in source_leagues if value
+                ):
+                    continue
+                home, away = teams.get(candidate.home_id), teams.get(candidate.away_id)
+                if home is None or away is None:
+                    continue
+                names = (_best_name(game_rows, home), _best_name(game_rows, away))
+                if names[0] is None or names[1] is None or names[0][0] == names[1][0]:
+                    continue
+                delta = abs((start - candidate.starts_at).total_seconds())
+                if delta <= MATCH_WINDOW.total_seconds():
+                    ranked.append((delta, candidate.id))
+            ranked.sort(key=lambda item: item[0])
+            if ranked and (len(ranked) == 1 or ranked[1][0] - ranked[0][0] >= 6 * 3600):
+                owners[game_id] = ranked[0][1]
+            elif ranked:
+                ambiguous_games += 1
         published = 0
         games = 0
         for match in matches:
@@ -312,16 +423,23 @@ def sync_oracle_match_details(
             if home is None or away is None:
                 continue
             for game_id, game_rows in groups.items():
-                dates = [timestamp for row in game_rows if (timestamp := _timestamp(row.payload))]
+                if owners.get(game_id) != match.id:
+                    continue
+                dates = [
+                    timestamp
+                    for row in game_rows
+                    if (timestamp := _timestamp(row.payload, source_timezone))
+                ]
                 if not dates:
                     continue
                 start = min(dates)
                 delta = abs((start - match.starts_at).total_seconds())
                 if delta > MATCH_WINDOW.total_seconds():
                     continue
-                home_score = max((_team_score(name, home) for name in _names(game_rows)), default=0)
-                away_score = max((_team_score(name, away) for name in _names(game_rows)), default=0)
-                if home_score < 0.57 or away_score < 0.57:
+                home_name, away_name = _best_name(game_rows, home), _best_name(game_rows, away)
+                home_score = home_name[1] if home_name else 0
+                away_score = away_name[1] if away_name else 0
+                if home_score < 0.9 or away_score < 0.9:
                     continue
                 candidates.append(
                     (
@@ -336,7 +454,15 @@ def sync_oracle_match_details(
             patches: list[str] = []
             game_ids: list[str] = []
             source_url = SOURCE_URL
+            duplicate_numbers = {
+                number
+                for _, _, group in candidates
+                if (number := _integer(group[0].payload, "game")) is not None
+                and sum(_integer(g[0].payload, "game") == number for _, _, g in candidates) > 1
+            }
             for _, game_id, game_rows in sorted(candidates, key=lambda item: item[1]):
+                if _integer(game_rows[0].payload, "game") in duplicate_numbers:
+                    continue
                 built = _build_map(game_id, game_rows, match, teams)
                 if built is None:
                     continue
@@ -355,18 +481,18 @@ def sync_oracle_match_details(
             if not maps:
                 continue
             maps.sort(key=_map_number)
-            summary = completed_series_summary(maps, match.home_id, match.away_id)
+            summary = completed_series_summary(maps, match.home_id, match.away_id, match.format)
             if summary is None:
                 logger.info(
                     "Oracle history is incomplete for match %s; keeping the live snapshot",
                     match.id,
                 )
                 continue
+            signature = (match.home_id, match.away_id, match.starts_at, match.format)
+            session.refresh(match, with_for_update=True)
+            if signature != (match.home_id, match.away_id, match.starts_at, match.format):
+                continue
             format_name, home_wins, away_wins = summary
-            # Oracle contains the completed series and is authoritative when its
-            # maps form a coherent result. This also repairs a stale SofaScore
-            # best-of value (for example BO5 with a completed 2-0 series).
-            match.format = format_name
             payload: dict[str, object] = {
                 "status": "finished",
                 "startsAt": match.starts_at.isoformat(),
@@ -377,8 +503,12 @@ def sync_oracle_match_details(
                 "patch": patches[0] if patches else None,
                 "stage": None,
                 "sourceUrl": source_url,
+                "completionBasis": "sourced-format",
             }
             source_id = _source_id(match.id, game_ids)
+            source_checked_at = min(
+                version_times[row.version_id] for game_id in game_ids for row in groups[game_id]
+            )
             link = session.scalar(
                 select(MatchSourceLink).where(
                     MatchSourceLink.provider == SOURCE, MatchSourceLink.match_id == match.id
@@ -392,24 +522,22 @@ def sync_oracle_match_details(
                         source_id=source_id,
                         source_url=source_url,
                         source_names={"matchId": str(match.id), "games": game_ids},
-                        first_seen_at=now,
-                        last_seen_at=now,
+                        first_seen_at=source_checked_at,
+                        last_seen_at=source_checked_at,
                     )
                 )
             else:
                 link.source_id = source_id
                 link.source_url = source_url
                 link.source_names = {"matchId": str(match.id), "games": game_ids}
-                link.last_seen_at = now
-            if (
-                session.scalar(
-                    select(MatchSnapshot.id).where(
-                        MatchSnapshot.match_id == match.id,
-                        MatchSnapshot.sha256 == _fingerprint(payload),
-                    )
-                )
-                is None
-            ):
+                link.last_seen_at = source_checked_at
+            latest_digest = session.scalar(
+                select(MatchSnapshot.sha256)
+                .where(MatchSnapshot.match_id == match.id, MatchSnapshot.source == SOURCE)
+                .order_by(MatchSnapshot.observed_at.desc(), MatchSnapshot.id.desc())
+                .limit(1)
+            )
+            if latest_digest != _fingerprint(payload):
                 session.add(
                     MatchSnapshot(
                         match_id=match.id,
@@ -424,7 +552,14 @@ def sync_oracle_match_details(
                 )
                 published += 1
             games += len(maps)
-        return {"matches": len(matches), "published": published, "games": games}
+        return {
+            "matches": len(matches),
+            "published": published,
+            "games": games,
+            "unverifiedDateGames": skipped_timezone,
+            "ambiguousGames": ambiguous_games,
+            "unmatchedGames": len(groups) - len(owners) - skipped_timezone,
+        }
 
 
 def _names(rows: list[OracleRow]) -> set[str]:

@@ -1,6 +1,44 @@
-# Collecteurs LoL et Oracle’s Elixir
+# Collecteurs LoL Esports, Oracle’s Elixir et SofaScore
 
-Les deux commandes s’exécutent dans `apps/worker`, publient dans PostgreSQL et écrivent leurs fichiers dans `METIQUO_ARTIFACT_DIR`. L’API les lit sans accès aux sites sources. Elles ne modifient ni les composants, ni les fixtures, ni les logos historiques du frontend.
+## Session persistante et cache renforcé — 21 septembre 2026
+
+Les valeurs du tableau intègrent la correction suivante demandée par l'utilisateur : abandon des caches de 6/24 heures et réduction de celui d'aujourd'hui. Une échéance de cache rend la page éligible au prochain passage disponible ; elle ne remplace pas le cron et ne garantit pas un intervalle réel identique quand une collecte est longue. Les pauses après chaque page et la suspension après refus restent inchangées.
+
+Cette demande remplace les anciennes cadences SofaScore mentionnées dans les sections historiques. Chromium utilise un profil persistant dédié, réutilisé entre pages et cycles. Son cache HTTP et ses cookies sont conservés entre redémarrages. Le volume Docker `sofascore_browser` est monté uniquement dans le worker sur `/data/browser` ; il ne contient pas de données à publier et n'est pas partagé avec le navigateur personnel. Aucun `page.route()` n'est installé. Les ressources du site chargent normalement ; les réponses JSON ne sont jamais exploitées.
+
+Chaque cycle visite une page au plus une fois, y compris après une erreur ; les liens alternatifs et recommandations sont dédupliqués par identifiant SofaScore. Les cartes terminées d'une série live ne sont plus activées pour récupérer les mêmes données. Les mises à jour des autres cartes sont publiées avec leur nouvelle provenance, tandis que les cartes historiques restent celles de leurs observations originales. Les journées découvertes sont enregistrées progressivement ; le cache des matchs est validé après leur publication. Une publication échouée ne marque pas ses cartes comme déjà acquises.
+
+| Variable `METIQUO_…`                                          | Valeur par défaut                                                     | Rôle                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `SOFASCORE_BROWSER_PROFILE_DIR`                               | `.cache/backend/sofascore-browser` ; Docker `/data/browser/sofascore` | Profil Chromium privé, persistant                                 |
+| `SOFASCORE_MIN_DELAY_SECONDS` / `SOFASCORE_MAX_DELAY_SECONDS` | 15 / 30                                                               | Pause après fin de lecture et mise au repos de la page précédente |
+| `SOFASCORE_LISTING_INTERVAL_SECONDS`                          | 180                                                                   | Relecture de la journée courante                                  |
+| `SOFASCORE_PAST_LISTING_INTERVAL_SECONDS`                     | 3600                                                                  | Relecture des journées passées                                    |
+| `SOFASCORE_FUTURE_LISTING_INTERVAL_SECONDS`                   | 900                                                                   | Relecture des journées futures                                    |
+| `SOFASCORE_LIVE_REFRESH_SECONDS`                              | 120                                                                   | Intervalle minimal entre relevés live                             |
+| `SOFASCORE_SCHEDULED_REFRESH_SECONDS`                         | 180                                                                   | Match proche du début, reporté, ou tentative non interprétable    |
+| `SOFASCORE_UPCOMING_REFRESH_SECONDS`                          | 900                                                                   | Match programmé à plus de trente minutes                          |
+| `SOFASCORE_FINISHED_REFRESH_SECONDS`                          | 3600                                                                  | Match terminé avec cartes                                         |
+| `SOFASCORE_INCOMPLETE_REFRESH_SECONDS`                        | 300                                                                   | Match terminé encore sans cartes                                  |
+| `SOFASCORE_BLOCK_COOLDOWN_SECONDS`                            | 900                                                                   | Base du délai progressif après refus, prolongé par `Retry-After`  |
+
+Les pauses de 4–8 secondes entre tentatives d'onglets s'appliquent aussi après un clic échoué. L'onglet déjà sélectionné n'est pas recliqué. Le premier 403/429 observé coupe le réseau du contexte, ferme ses pages et termine le cycle : aucune navigation suivante ou relance interne. Les requêtes du site déjà émises avant la détection peuvent néanmoins atteindre le serveur. La suspension reste enregistrée en PostgreSQL et partagée avec les logos. L'ordonnanceur respecte son échéance sans accumuler plusieurs collectes concurrentes ; aucun plafond de matchs n'est réintroduit.
+
+Une page vide `about:blank` arrête les actualisations de fond pendant l'attente et entre cycles, sans recréer le contexte. La couverture J−7/J+7 est conservée, mais ces pauses et caches peuvent retarder la découverte d'une modification et prolonger un passage au-delà du cron. Ces durées sont un compromis de charge, pas une garantie d'acceptation par SofaScore.
+
+Le worker de l'application a été arrêté pour cette modification. **Attendre le « go » explicite de l'utilisateur avant de reconstruire/redémarrer le service ou de lancer une collecte réelle.** Les tests hors ligne utilisent un profil temporaire et des ressources synthétiques, jamais le profil Docker de production.
+
+## Reprise et robustesse — 21 septembre 2026
+
+Appliquer **0009** avant le nouveau worker. `collector_state` conserve le délai après refus, le dernier accès explicite et le checkpoint de découverte. Le délai est commun au navigateur et aux téléchargements de logos ; `Retry-After` est respecté, avec attente progressive en cas de refus répétés. Une commande manuelle ne contourne pas cette attente. Le planificateur reporte le job en file jusqu’à `available_at`. Les paramètres de cadence existants sont inchangés.
+
+Les sources disposent désormais de files d’exécution indépendantes et de verrous par source ; un import Oracle long n’arrête pas la cadence SofaScore. Les relectures du cache ne produisent aucune observation. Les lots partiellement lus sont conservés en cas de refus ultérieur et les fiches terminées restent éligibles à une revisite après six heures. Les corps JSON des requêtes du site ne sont pas exploités et le navigateur reste sur une page vide entre deux exécutions, en conservant son contexte durant le processus.
+
+Appliquer également la migration `0010` : son index concurrent sur la version et la date brute Oracle évite de parcourir toutes les années pour rapprocher quelques jours. Le worker fusionne les plages de dates qui se recouvrent avant la requête, puis applique les mêmes critères stricts d’identité et d’horaire. Aucune convention de fuseau n’est déduite de l’index.
+
+Les logos officiels déjà vérifiés sont réutilisés pendant 24 heures, puis révalidés. Les tournois peuvent hériter du logo de leur parent explicitement observé. `logoCoverage` liste les ligues dépourvues de logo local ; l’interface leur attribue une icône générique accessible. Voir [l’audit détaillé](sofascore-resilience-audit.md) pour les sources, les compteurs et les limites Oracle encore présentes.
+
+Les collecteurs s’exécutent dans `apps/worker` et publient dans PostgreSQL. Les fichiers du catalogue et d’Oracle sont versionnés dans `METIQUO_ARTIFACT_DIR` ; SofaScore conserve ses observations dans les snapshots PostgreSQL. L’API les lit sans accès aux sites sources. Ces commandes ne modifient ni les composants, ni les fixtures, ni les logos historiques du frontend.
 
 ## Démarrage et noms des commandes
 
@@ -65,20 +103,20 @@ Les valeurs source restent en JSONB, sans confusion entre année du fichier, cha
 
 ## SofaScore : rencontres J−7 à J+7 et directs
 
-La commande `sync-sofascore-matches` lit les pages LoL SofaScore avec Patchright. Elle découvre les liens rendus sur chaque journée de la fenêtre J−7 à J+7, ouvre chaque fiche, extrait le statut, l’horaire, les équipes, la compétition et les scores explicitement exposés, puis publie un snapshot durable. Elle parcourt aussi chaque onglet rendu `Carte`/`Game` et interprète les libellés français ou anglais. Un enrichissement HTTP très limité, exécuté avec `curl-cffi` et une empreinte TLS Chrome, consulte les lineups et la phase de bans de la carte afin d’associer les noms officiels aux portraits et interdictions rendus ; il est facultatif et n’empêche jamais la publication du relevé DOM. Les cartes déjà terminées sont publiées pendant la série avec objectifs, joueurs, niveaux, K/D/A, CS, or, noms, images de champions et bans lorsqu’ils sont disponibles. Une draft live peut être publiée partiellement puis complétée jusqu’aux dix bans ; les durées, bans ou noms non exposés restent inconnus et leur absence ne supprime plus les autres informations de la carte.
+La commande `sync-sofascore-matches` lit les pages LoL SofaScore avec Patchright. Elle découvre les liens rendus sur chaque journée de la fenêtre J−7 à J+7, ouvre chaque fiche, extrait le statut, l’horaire, les équipes, la compétition et les scores explicitement exposés, puis publie un snapshot durable. Elle parcourt aussi chaque onglet rendu `Carte`/`Game` et interprète les libellés français ou anglais. Depuis la demande suivante du 21 septembre, aucun enrichissement HTTP ni interception de corps JSON n’est utilisé. Le parseur conserve le DOM rendu et le JSON SSR `__NEXT_DATA__` embarqué dans le HTML. Les requêtes naturelles du site restent autorisées ; leurs refus sont surveillés sans lire les données API. Les portraits sans libellé identifiable gardent un nom inconnu ; les bans auparavant fournis uniquement par l’API ne sont plus collectés par cette voie. Les cartes déjà terminées sont publiées pendant la série avec objectifs, joueurs, niveaux, K/D/A, CS, or, noms, images de champions et bans lorsqu’ils sont disponibles. Les durées, bans ou noms non exposés restent inconnus et leur absence ne supprime plus les autres informations de la carte.
 
 Le réseau Docker `ingestion` active IPv4 et IPv6. Sur l’environnement de validation du 20 septembre 2026, le frontal Fastly de SofaScore refusait le chemin IPv4 public avec un `403`, alors que le même Chromium, le même code et la même machine obtenaient `200` par IPv6. Cette configuration n’est ni un proxy ni une falsification d’en-têtes ; elle laisse le navigateur utiliser la connectivité dual-stack déjà disponible sur l’hôte. Sans connectivité IPv6 sortante, Chromium revient à IPv4 et un refus propre à cette adresse reste possible.
 
-Oracle’s Elixir complète les cartes terminées après chaque import. Une carte n’est publiée que si Oracle fournit ses deux camps, cinq joueurs et les champs statistiques requis. L’API utilise le dernier état SofaScore pour le direct et le dernier snapshot non vide pour les cartes : un relevé live partiel ne supprime donc pas les cartes historiques déjà publiées.
+Oracle’s Elixir complète les cartes terminées après chaque import. Une carte n’est publiée que si Oracle fournit ses deux camps, cinq joueurs et les champs statistiques requis. L’API utilise le dernier état SofaScore et conserve chaque carte compatible déjà publiée. Le score de série vient de la source, pas du nombre de cartes disponibles. Oracle ne clôture une série que si les cartes satisfont le format sourcé indépendant ; un historique partiel ne transforme jamais un BO5 en BO1 ou BO3.
 
 ```sh
 docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-sofascore-matches
 uv run metiquo-worker sync-sofascore-matches
 ```
 
-La planification par défaut est `*/5 * * * *` en heure de Paris. Elle est persistée dans `script_schedules` et modifiable dans **Admin → Scripts & planifications** ; cette cadence fréquente sert notamment aux rencontres en direct. `METIQUO_SOFASCORE_ENABLED` est l’interrupteur du worker. Le script ne contacte jamais Stake.
+La planification par défaut est `*/1 * * * *` en heure de Paris. Elle est persistée dans `script_schedules` et modifiable dans **Admin → Scripts & planifications** ; cette cadence fréquente sert notamment aux rencontres en direct. `METIQUO_SOFASCORE_ENABLED` est l’interrupteur du worker. Le script ne contacte jamais Stake.
 
-Chaque événement est rattaché à `match_source_links` par fournisseur et identifiant SofaScore. En l’absence de lien connu, le matching compare les équipes et leurs alias observés, l’ordre des camps, la compétition et une fenêtre horaire de 72 heures. Un cas ambigu n’est pas fusionné avec un autre fournisseur, mais son identifiant SofaScore distinct reste publié comme rencontre sourcée. Les phases `Regular Season`, `Playoffs`, `Play-ins`, `Group Stage` et `Qualifiers` héritent du logo local uniquement lorsque leur nom de base correspond exactement à une ligue du catalogue. Un match terminé sans cartes n’est pas considéré stable : il est revisité afin de réparer un relevé incomplet. Les snapshots `match_snapshots` sont dédupliqués par empreinte, avec URL et horodatage, tandis que `match_source_links.last_seen_at` est actualisé à chaque observation ; l’API utilise ce dernier champ pour l’heure « Relevé à ». `/api/v1/sources/sofascore` expose les bilans.
+Chaque événement est rattaché à `match_source_links` par fournisseur et identifiant SofaScore. En l’absence de lien connu, le matching compare les équipes et leurs alias observés, l’ordre des camps, la compétition et une fenêtre horaire de 72 heures. Un cas ambigu n’est pas fusionné avec un autre fournisseur, mais son identifiant SofaScore distinct reste publié comme rencontre sourcée. Les phases `Regular Season`, `Playoffs`, `Play-ins`, `Group Stage`, `Qualifiers` et `Promotion` héritent du logo local lorsque leur nom de base, leur slug ou le tournoi parent explicitement publié correspond à une ligue du catalogue. Un match terminé sans cartes n’est pas considéré stable : il est revisité afin de réparer un relevé incomplet. Les snapshots `match_snapshots` sont dédupliqués par empreinte, avec URL et horodatage, tandis que `match_source_links.last_seen_at` est actualisé à chaque observation ; l’API utilise ce dernier champ pour l’heure « Relevé à ». `/api/v1/sources/sofascore` expose les bilans.
 
 ## Planification intégrée ou cron
 
@@ -90,7 +128,7 @@ Chaque événement est rattaché à `match_source_links` par fournisseur et iden
 - La migration crée une prochaine échéance future ; un premier import immédiat se lance manuellement.
 - Les échéances survivent aux redémarrages. Après une panne, une seule collecte rattrape les échéances manquées pour chaque script.
 - Les échecs restent visibles et n’empêchent pas les autres scripts de s’exécuter. Le prochain cron ou une action manuelle permet une nouvelle tentative. Si une commande CLI détient le verrou de la source, la file réessaie après une minute.
-- Les jobs de la file s’exécutent en série, avec un verrou PostgreSQL qui empêche deux workers de consommer le même job. `serve --only lol-catalog` ou `serve --only oracles-elixir` limite le processus à une source ; l’interface est prévue pour un worker supervisé unique.
+- Les jobs d’une même source s’exécutent en série, avec un verrou PostgreSQL qui empêche deux workers de consommer le même job ; les sources distinctes disposent de boucles indépendantes. `serve --only lol-catalog` ou `serve --only oracles-elixir` limite le processus à une source ; l’interface est prévue pour un worker supervisé unique.
 - Le heartbeat est actualisé toutes les 20 secondes, même pendant une collecte longue ; après 90 secondes sans contact, les lancements manuels sont désactivés. Le worker vérifie la file toutes les cinq secondes entre deux collectes.
 - Les anciens intervalles en secondes ne configurent plus `serve`. Les interrupteurs `*_ENABLED` restent prioritaires. La pause Admin arrête les futures échéances, sans annuler une demande déjà en file ni une collecte en cours.
 
@@ -109,6 +147,13 @@ Ces exemples ne créent aucun cron sur la machine. Le cron externe doit supervis
 
 ## Configuration et état
 
+- `METIQUO_ORACLE_DATE_TIMEZONE` : fuseau IANA des dates CSV dépourvues d’offset, à renseigner seulement après vérification de la convention source. Vide par défaut : les CSV restent conservés, mais ces dates ne sont pas utilisées pour le rapprochement temporel. Les dates avec offset restent exploitables.
+- La déduplication SofaScore concerne uniquement les états consécutifs identiques. Un retour A → B → A produit trois observations ; la migration `0008` retire l’unicité globale de l’empreinte. Les snapshots restent immuables et le rôle worker ne peut toujours ni les modifier ni les supprimer. La migration rétablit également les formats depuis le champ `bestOf` explicite de la dernière observation SofaScore.
+- Seules les fiches dont la catégorie source est `lol` sont admises. Les anciennes recommandations d’autres jeux restent archivées et sont exclues du calendrier et des identités SofaScore du catalogue LoL.
+- Un cache non revisité ne met jamais `last_seen_at` à jour. Les blocages de navigation restent des échecs visibles, même en présence d’un cache. Aucun enrichissement API SofaScore ne subsiste.
+- Le score d’éliminations n’établit pas le vainqueur ; sans marqueur de victoire, la carte terminée n’est pas publiée. Home/away n’indique pas le côté bleu/rouge : ce côté reste `null` dans le relevé SofaScore. Les doublons de bans sont dédupliqués avant projection.
+- Le contrôle de chute de couverture Riot compare les identités réellement redécouvertes avant réintégration des identités historiques. La conservation de l’historique ne peut donc plus masquer une perte de couverture.
+
 - `METIQUO_CATALOG_ENABLED=true` : autorise le collecteur, manuel et planifié.
 - Les cadences sont stockées dans `script_schedules` et modifiées depuis Admin.
 - `METIQUO_CATALOG_MAX_PAGES=200` : plafond de découverte, échec explicite si dépassé.
@@ -118,10 +163,9 @@ Ces exemples ne créent aucun cron sur la machine. Le cron externe doit supervis
 - `METIQUO_ORACLE_ENABLED=true` : activation des collectes Oracle. Les anciennes variables d’intervalle ne pilotent plus le planificateur.
 - `METIQUO_SOFASCORE_ENABLED=true` : activation du scraping rendu SofaScore et du suivi des rencontres.
 - `METIQUO_SOFASCORE_MIN_DELAY_SECONDS=2` et `METIQUO_SOFASCORE_MAX_DELAY_SECONDS=5` : délai aléatoire entre deux navigations du navigateur ; le minimum et le maximum sont bornés pour éviter les rafales.
-- `METIQUO_SOFASCORE_LISTING_DAYS_PER_RUN=2` : nombre maximal de pages de journées découvertes par exécution ; la fenêtre J−7 à J+7 est remplie progressivement.
-- `METIQUO_SOFASCORE_EVENTS_PER_RUN=12` : nombre maximal de fiches de rencontres ouvertes par exécution ; les liens découverts restent dans la file mémoire, et les événements stables déjà publiés en base sont sautés après un redémarrage afin de reprendre sur les journées encore absentes.
+- Aucun plafond de journées ou de fiches par passage : toutes les pages dues de J−7 à J+7 sont visitées séquentiellement. Les anciennes variables `METIQUO_SOFASCORE_MAX_EVENTS`, `METIQUO_SOFASCORE_EVENTS_PER_RUN` et `METIQUO_SOFASCORE_LISTING_DAYS_PER_RUN` sont ignorées et peuvent être retirées des fichiers locaux. Le cron peut échoir pendant un passage long ; aucun passage concurrent de la même source n’est lancé.
 - `METIQUO_SOFASCORE_LISTING_INTERVAL_SECONDS=300` : durée de cache des pages de découverte de la fenêtre J−7 à J+7. `METIQUO_SOFASCORE_SCHEDULED_REFRESH_SECONDS=300` limite la relecture des rencontres à venir proches de leur horaire ; une rencontre live utilise `METIQUO_SOFASCORE_LIVE_REFRESH_SECONDS=60`.
-- `METIQUO_SOFASCORE_BLOCK_COOLDOWN_SECONDS=900` : après un `403` ou `429`, le worker arrête les navigations SofaScore pendant cette durée et conserve les derniers relevés connus. L’enrichissement des lineups est également abandonné sans effacer le relevé rendu.
+- `METIQUO_SOFASCORE_BLOCK_COOLDOWN_SECONDS=900` : après un `403` ou `429`, le worker arrête les accès explicites SofaScore au moins pendant cette durée, respecte Retry-After et augmente l’attente si le refus se répète et conserve les derniers relevés connus. Le refus conserve aussi l’URL sans paramètres et le type de ressource dans `collector_state` ; les anciennes entrées ne permettent pas toujours de distinguer document et XHR. Aucun appel API direct n’est utilisé pour compléter un relevé.
 - `METIQUO_ARTIFACT_DIR` : volume commun aux CSV, pages et logos ; écriture worker, lecture seule API.
 
 Compose transmet les interrupteurs d’activation depuis `.env.docker` ; les cadences viennent de PostgreSQL. Les paramètres avancés peuvent être ajoutés à `environment` ou passés avec `docker compose run -e METIQUO_…=…`. Un paramètre ajouté uniquement au fichier `.env.docker` n’est pas automatiquement injecté dans le conteneur.
@@ -133,3 +177,9 @@ Compose transmet les interrupteurs d’activation depuis `.env.docker` ; les cad
 - `/api/v1/sources/oracles-elixir` et `/datasets` : exécutions et versions actives Oracle.
 
 `retrievedAt` date la version conservée ; `checkedAt` date la dernière vérification réussie. Une ancienne version disponible ne signifie pas que la source est à jour. Les erreurs ne déclenchent aucun passage en mock côté API.
+
+## Champions et bans sans API SofaScore — 21 septembre 2026
+
+Le navigateur attend les contrôles rendus, puis le panneau sélectionné et ses portraits (jusqu’au timeout de 45 secondes). Les cinq bans de chaque équipe sont lus dans leur colonne DOM, sans déduire les camps bleu/rouge ni l’ordre chronologique du draft. Les libellés connus sont prioritaires ; à défaut, seuls les octets des portraits déjà chargés par le site sont comparés au catalogue Riot local. Aucun appel JSON ou téléchargement supplémentaire de portrait n’est lancé par cette étape.
+
+Le référentiel `apps/worker/src/metiquo_worker/data/champion-portraits.json` se construit avec `npm run data:champions:reference`, sans réseau. Les empreintes de l’image source et du référentiel, la méthode et les octets d’origine sont conservés dans les preuves du relevé et le volume d’artefacts. Un artwork différent, illisible ou ambigu reste sans nom ; les bans visibles restent présents. Les seuils conservateurs ne garantissent pas la reconnaissance de tous les portraits.

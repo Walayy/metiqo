@@ -8,8 +8,8 @@ of silently linking the wrong Oracle, SofaScore or future bookmaker match.
 import re
 import unicodedata
 from dataclasses import dataclass
+from datetime import datetime
 from difflib import SequenceMatcher
-from typing import Any
 
 from metiquo_core.models import EsportMatch, League, Team
 
@@ -18,7 +18,7 @@ def normalize_name(value: str) -> str:
     decomposed = unicodedata.normalize("NFKD", value)
     ascii_value = "".join(char for char in decomposed if not unicodedata.combining(char))
     value = ascii_value.casefold().replace("&", " and ")
-    value = re.sub(r"[^a-z0-9]+", " ", value)
+    value = "".join(char if char.isalnum() else " " for char in value)
     return re.sub(r"\s+", " ", value).strip()
 
 
@@ -55,7 +55,14 @@ TEAM_QUALIFIERS = {
     "feminine",
     "fenix",
     "reserve",
+    "b",
+    "ii",
+    "2",
+    "cl",
+    "women",
+    "female",
 }
+TEAM_GENERIC_WORDS = {"team", "esports", "gaming", "club", "e", "sports"}
 
 
 @dataclass(frozen=True)
@@ -74,24 +81,38 @@ def resolve_team(name: str, teams: list[Team]) -> TeamResolution | None:
         identity_names = [canonical_name]
         if isinstance(aliases, list):
             identity_names.extend(alias for alias in aliases if isinstance(alias, str))
+        explicit_names = [
+            *identity_names,
+            str(team.data.get("code", "")),
+            str(team.data.get("slug", "")),
+        ]
+        if normalize_name(name) and any(
+            normalize_name(name) == normalize_name(value) for value in explicit_names
+        ):
+            scored.append((1.0, team.id))
+            continue
         identity_tokens = [tokens(value) for value in identity_names if value]
         # A qualifier changes the identity: Bilibili Gaming Junior is not
         # Bilibili Gaming, and T1 Academy is not T1. Let the source team
         # identity be provisioned instead of silently linking the parent. An
         # explicitly sourced alias carrying the same qualifier remains valid.
         if identity_tokens and all(
-            candidate < incoming_tokens and bool((incoming_tokens - candidate) & TEAM_QUALIFIERS)
+            (candidate & TEAM_QUALIFIERS) != (incoming_tokens & TEAM_QUALIFIERS)
             for candidate in identity_tokens
         ):
             continue
         identity_scores = [
-            name_score(
-                name,
-                candidate,
+            1.0
+            if normalize_name(name) == normalize_name(candidate)
+            else 0.94
+            if incoming_tokens - TEAM_GENERIC_WORDS
+            and incoming_tokens - TEAM_GENERIC_WORDS == tokens(candidate) - TEAM_GENERIC_WORDS
+            else 0.0
+            for candidate in [
+                *identity_names,
                 str(team.data.get("code", "")),
                 str(team.data.get("slug", "")),
-            )
-            for candidate in identity_names
+            ]
         ]
         scored.append(
             (
@@ -106,7 +127,7 @@ def resolve_team(name: str, teams: list[Team]) -> TeamResolution | None:
     score, team_id = scored[0]
     second = scored[1][0] if len(scored) > 1 else 0.0
     margin = score - second
-    if score < 0.57 or (score < 0.9 and margin < 0.08):
+    if score < 0.9 or margin < 0.08:
         return None
     return TeamResolution(team_id=team_id, score=score, margin=margin)
 
@@ -115,7 +136,7 @@ def resolve_team(name: str, teams: list[Team]) -> TeamResolution | None:
 class MatchIdentity:
     home_name: str
     away_name: str
-    starts_at: Any
+    starts_at: datetime
     competition: str
     provider: str
     provider_id: str
@@ -158,11 +179,15 @@ def resolve_match(
         # because it is the closest string. The caller may provision the
         # source competition first, after which this score becomes exact.
         return None
+    if len(league_scores) > 1 and league_scores[-1][0] - league_scores[-2][0] < 0.08:
+        return None
     league_id = league_scores[-1][1]
     competition_score = league_scores[-1][0]
 
     candidates: list[tuple[float, EsportMatch]] = []
     for match in existing:
+        if match.league_id != league_id:
+            continue
         same_direction = match.home_id == home.team_id and match.away_id == away.team_id
         reversed_direction = match.home_id == away.team_id and match.away_id == home.team_id
         if not same_direction and not reversed_direction:

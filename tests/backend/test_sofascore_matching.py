@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from typing import cast
 from uuid import uuid4
 
+from metiquo_core.config import Settings
 from metiquo_core.models import EsportMatch, League, OracleRow, Team
 from metiquo_worker.matching import MatchIdentity, normalize_name, resolve_match, resolve_team
 from metiquo_worker.oracle_match_sync import _map_for_game
@@ -16,11 +17,6 @@ from metiquo_worker.sources.sofascore import (
     SofaEvent,
     SofaLink,
     _event_from_next,
-    _maps_need_bans,
-    _maps_need_champion_enrichment,
-    _maps_need_detail_enrichment,
-    _merge_lineup_bans,
-    _merge_lineup_champions,
     _refresh_sort_key,
     _rendered_map,
 )
@@ -42,54 +38,6 @@ def test_live_events_are_first_in_the_refresh_queue() -> None:
     )
 
     assert [link.source_id for link in ordered] == ["live", "scheduled"]
-
-
-def test_lineup_resolves_the_name_hidden_behind_a_rendered_character_icon() -> None:
-    game_map = {
-        "sides": [
-            {
-                "position": "home",
-                "players": [
-                    {
-                        "name": "Morgan",
-                        "champion": None,
-                        "championImage": "https://img.sofascore.com/api/v1/character/1854/image",
-                    }
-                ],
-            }
-        ]
-    }
-    lineup = {
-        "homeTeamPlayers": [
-            {
-                "player": {"name": "Morgan"},
-                "character": {"id": 1854, "name": "K'Sante"},
-            }
-        ]
-    }
-
-    _merge_lineup_champions(game_map, lineup)
-
-    player = cast(
-        dict[str, object], cast(list[dict[str, object]], game_map["sides"])[0]["players"][0]
-    )
-    assert player["champion"] == "K'Sante"
-
-
-def test_ban_lineup_is_kept_with_source_team_references() -> None:
-    game_map: dict[str, object] = {"bans": []}
-    _merge_lineup_bans(
-        game_map,
-        {
-            "homeTeamBans": [{"id": 1662, "name": "Shyvana"}],
-            "awayTeamBans": [{"id": 1576, "name": "Lee Sin"}],
-        },
-    )
-
-    bans = cast(list[dict[str, object]], game_map["bans"])
-    assert [ban["teamId"] for ban in bans] == ["home", "away"]
-    assert [ban["champion"] for ban in bans] == ["Shyvana", "Lee Sin"]
-    assert bans[0]["championImage"] == "https://img.sofascore.com/api/v1/character/1662/image"
 
 
 def test_rendered_bans_are_projected_to_metiquo_team_ids() -> None:
@@ -140,70 +88,6 @@ def test_rendered_bans_are_projected_to_metiquo_team_ids() -> None:
     maps = _rendered_maps(event, home, away)
 
     assert maps[0]["bans"] == [{"teamId": home.id, "champion": "Shyvana", "championImage": ""}]
-
-
-def test_icon_only_snapshot_is_marked_for_champion_backfill() -> None:
-    payload = {
-        "rendered": {
-            "maps": [
-                {
-                    "sides": [
-                        {
-                            "players": [
-                                {
-                                    "champion": None,
-                                    "championImage": (
-                                        "https://img.sofascore.com/api/v1/character/1854/image"
-                                    ),
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    }
-    assert _maps_need_champion_enrichment(payload)
-
-
-def test_named_snapshot_does_not_need_champion_backfill() -> None:
-    payload = {
-        "rendered": {
-            "maps": [
-                {
-                    "sides": [
-                        {
-                            "players": [
-                                {
-                                    "champion": "K'Sante",
-                                    "championImage": (
-                                        "https://img.sofascore.com/api/v1/character/1854/image"
-                                    ),
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    }
-    assert not _maps_need_champion_enrichment(payload)
-
-
-def test_started_map_without_bans_is_revisited_for_detail_enrichment() -> None:
-    payload = {
-        "rendered": {
-            "maps": [
-                {
-                    "status": "live",
-                    "bans": [{"teamId": "home", "champion": "Ahri"}],
-                    "sides": [{"players": []}, {"players": []}],
-                }
-            ]
-        }
-    }
-    assert _maps_need_bans(payload)
-    assert _maps_need_detail_enrichment(payload)
 
 
 def test_sofascore_match_reuses_another_provider_match() -> None:
@@ -426,7 +310,7 @@ def test_distinct_sofascore_event_is_created_without_cross_provider_match() -> N
     assert saved[0].id != previous.id
 
 
-def test_finished_and_distant_scheduled_events_are_stable_after_restart() -> None:
+def test_finished_and_distant_scheduled_events_honor_freshness_after_restart() -> None:
     class FakeResult:
         def all(self):
             return [
@@ -434,7 +318,7 @@ def test_finished_and_distant_scheduled_events_are_stable_after_restart() -> Non
                     "finished",
                     datetime(2026, 9, 20, 8, tzinfo=UTC),
                     "finished",
-                    5,
+                    datetime(2026, 9, 20, 8, tzinfo=UTC),
                     {"maps": [{"number": 1}]},
                 ),
                 (
@@ -444,7 +328,13 @@ def test_finished_and_distant_scheduled_events_are_stable_after_restart() -> Non
                     4,
                     {"maps": []},
                 ),
-                ("future", datetime(2026, 9, 21, 8, tzinfo=UTC), "scheduled", 3, {"maps": []}),
+                (
+                    "future",
+                    datetime(2026, 9, 21, 8, tzinfo=UTC),
+                    "scheduled",
+                    datetime(2026, 9, 20, 9, 50, tzinfo=UTC),
+                    {"maps": []},
+                ),
                 ("soon", datetime(2026, 9, 20, 10, 20, tzinfo=UTC), "scheduled", 2, {"maps": []}),
                 ("live", datetime(2026, 9, 20, 9, tzinfo=UTC), "live", 1, {"maps": []}),
             ]
@@ -454,10 +344,13 @@ def test_finished_and_distant_scheduled_events_are_stable_after_restart() -> Non
             return FakeResult()
 
     stable = _known_stable_event_ids(
-        cast(Session, FakeSession()), datetime(2026, 9, 20, 10, tzinfo=UTC)
+        cast(Session, FakeSession()),
+        datetime(2026, 9, 20, 10, tzinfo=UTC),
+        Settings(database_url="postgresql://unused"),
     )
 
-    assert stable == {"finished", "future"}
+    # The two-hour-old result is due again; the distant fixture is still cached.
+    assert stable == {"future"}
 
 
 def test_event_parser_keeps_explicit_score_and_teams() -> None:
@@ -522,7 +415,12 @@ def test_rendered_game_panel_keeps_progressive_map_data_and_unknown_fields() -> 
     players = cast(list[dict[str, object]], sides[0]["players"])
     assert players[0]["name"] == "BrokenBlade"
     assert players[0]["gold"] is None
+    assert players[0]["champion"] is None
+    assert players[0]["championImage"] == capture["championImages"][0]
     assert players[1]["kills"] == 9
+    assert sides[0]["side"] is None and sides[1]["side"] is None
+    capture["scoreClasses"] = ["score", "score"]
+    assert _rendered_map(capture, number=1, status="finished", source_id="17139011") is None
 
 
 def test_oracle_game_is_projected_as_a_complete_map() -> None:

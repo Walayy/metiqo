@@ -1,3 +1,4 @@
+import copy
 import json
 from datetime import UTC, datetime, timedelta
 
@@ -77,6 +78,28 @@ def test_failed_collection_preserves_previous_catalog_and_logos(database, monkey
         assert failed.error == "discovery: ValueError"
     with TestClient(create_app(settings)) as client:
         assert client.get(document["catalog"]["teams"][0]["image"]).status_code == 200
+
+
+def test_retained_identities_cannot_hide_a_source_coverage_drop(database, monkeypatch):
+    engine, settings = database
+    document, cache = prepared(settings)
+    run_id = start_run(engine, "lol-esports", "all")
+    with Session(engine) as session, session.begin():
+        previous = publish(session, document, cache, [], run_id)
+    reduced = copy.deepcopy(document)
+    reduced["catalog"]["leagues"] = [
+        league for league in reduced["catalog"]["leagues"] if league["id"] == "new-league"
+    ]
+
+    class ReducedReference:
+        def document(self, _):
+            return reduced
+
+    monkeypatch.setattr(catalog_sync, "discover_catalog", lambda *_: (ReducedReference(), []))
+    with pytest.raises(RuntimeError, match="discovery"):
+        catalog_sync.sync_catalog(engine, settings)
+    with Session(engine) as session:
+        assert str(session.get(CatalogMetadata, 1).active_version_id) == previous["versionId"]
 
 
 def test_api_projects_supplemental_source_identities_onto_public_contract(database):

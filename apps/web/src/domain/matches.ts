@@ -17,7 +17,7 @@ export const playerSchema = z.object({
 const sideSchema = z
   .object({
     teamId: z.string(),
-    side: z.enum(['blue', 'red']),
+    side: z.enum(['blue', 'red']).nullable(),
     towers: count.nullable(),
     dragons: count.nullable(),
     barons: count.nullable(),
@@ -33,11 +33,16 @@ const sideSchema = z
         new Set(side.players.map((p) => p.id)).size === side.players.length),
     'Une composition contient cinq rôles et joueurs distincts.',
   );
-const banSchema = z.object({
-  teamId: z.string(),
-  champion: z.string().min(1),
-  championImage: z.string(),
-});
+const banSchema = z
+  .object({
+    teamId: z.string(),
+    champion: z.string().min(1).nullable(),
+    championImage: z.string(),
+  })
+  .refine(
+    (ban) => ban.champion !== null || ban.championImage.length > 0,
+    'Un ban doit être sourcé.',
+  );
 const mapSchema = z
   .object({
     number: z.number().int().min(1).max(5),
@@ -52,7 +57,8 @@ const mapSchema = z
     if (
       started &&
       (map.sides.length !== 2 ||
-        new Set(map.sides.map((s) => s.side)).size !== 2 ||
+        (map.sides.every((s) => s.side !== null) &&
+          new Set(map.sides.map((s) => s.side)).size !== 2) ||
         new Set(map.sides.map((s) => s.teamId)).size !== 2)
     )
       ctx.addIssue({
@@ -79,7 +85,7 @@ export const matchSchema = z
     startsAt: z.iso.datetime({ offset: true }),
     updatedAt: z.iso.datetime({ offset: true }),
     format: z.enum(['BO1', 'BO3', 'BO5']),
-    status: z.enum(['scheduled', 'live', 'finished']),
+    status: z.enum(['scheduled', 'live', 'finished', 'cancelled', 'postponed']),
     patch: z.string().nullable(),
     stage: z.string().nullable(),
     currentScore: z.object({ home: count, away: count }).nullable().optional(),
@@ -113,7 +119,7 @@ export const matchSchema = z
       (match.status === 'scheduled' && match.maps.some((map) => map.status !== 'scheduled')) ||
       (match.status === 'finished' &&
         match.maps.length > 0 &&
-        (!scores.includes(target) ||
+        (scores.some((score) => score > target) ||
           scores.every((score) => score >= target) ||
           match.maps.some((map) => map.status === 'scheduled'))) ||
       (match.status === 'live' && match.maps.length > 0 && scores.some((score) => score >= target))
@@ -122,6 +128,24 @@ export const matchSchema = z
         code: 'custom',
         message: 'Le statut de la série doit correspondre aux cartes et au score.',
       });
+    const score = match.seriesScore ?? match.currentScore;
+    if (
+      score &&
+      (scores[0]! > score.home ||
+        scores[1]! > score.away ||
+        Math.max(score.home, score.away) > target ||
+        (match.status === 'finished' &&
+          (Math.max(score.home, score.away) !== target || score.home === score.away)) ||
+        (match.status === 'live' && Math.max(score.home, score.away) >= target) ||
+        (match.status === 'scheduled' && (score.home !== 0 || score.away !== 0)))
+    )
+      ctx.addIssue({ code: 'custom', message: 'Score de série incohérent.' });
+    if (
+      match.maps.some((map) =>
+        map.bans.some((ban) => ![match.homeId, match.awayId].includes(ban.teamId)),
+      )
+    )
+      ctx.addIssue({ code: 'custom', message: 'Équipe de ban inconnue.' });
   });
 export const matchesSchema = z
   .object({ generatedAt: z.iso.datetime({ offset: true }), items: z.array(matchSchema) })
@@ -133,10 +157,10 @@ export type EsportMatch = z.infer<typeof matchSchema>;
 export type MatchMap = z.infer<typeof mapSchema>;
 export type MapSide = z.infer<typeof sideSchema>;
 export const seriesScore = (match: EsportMatch, teamId: string) =>
-  match.seriesScore
+  (match.seriesScore ?? match.currentScore)
     ? teamId === match.homeId
-      ? match.seriesScore.home
-      : match.seriesScore.away
+      ? (match.seriesScore ?? match.currentScore)!.home
+      : (match.seriesScore ?? match.currentScore)!.away
     : match.maps.filter((map) => map.winnerId === teamId).length;
 export const matchWinnerId = (match: EsportMatch) => {
   if (match.status !== 'finished') return null;
@@ -148,9 +172,9 @@ export const matchWinnerId = (match: EsportMatch) => {
   return null;
 };
 export const sideKills = (side: MapSide) =>
-  side.players.reduce((sum, player) => sum + player.kills, 0);
+  side.players.length === 5 ? side.players.reduce((sum, player) => sum + player.kills, 0) : null;
 export const sideGold = (side: MapSide) =>
-  side.players.some((player) => player.gold == null)
+  side.players.length !== 5 || side.players.some((player) => player.gold == null)
     ? null
     : side.players.reduce((sum, player) => sum + (player.gold ?? 0), 0);
 export function countdown(startsAt: string, now: number) {

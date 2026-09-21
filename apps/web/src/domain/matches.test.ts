@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { matches, performance } from '@/mocks/esport';
 import { catalog } from '@/mocks/fixtures';
-import { countdown, matchSchema, matchWinnerId, seriesScore, sideKills } from './matches';
+import { countdown, matchSchema, matchWinnerId, seriesScore, sideKills, sideGold } from './matches';
 import { performanceSchema } from '@/features/performance/simulation';
 describe('Rencontres et données de simulation', () => {
   const live = matches.items.find((m) => m.status === 'live')!;
@@ -70,10 +70,44 @@ describe('Rencontres et données de simulation', () => {
       true,
     );
   });
+  it('accepte un score final sourcé avec des cartes partiellement publiées', () => {
+    const map = live.maps[0]!;
+    const result = {
+      ...live,
+      format: 'BO3',
+      status: 'finished',
+      currentScore: { home: 2, away: 0 },
+      seriesScore: { home: 2, away: 0 },
+      maps: [{ ...map, number: 2, winnerId: live.homeId }],
+    };
+    const parsed = matchSchema.parse(result);
+    expect(matchWinnerId(parsed)).toBe(live.homeId);
+    expect(seriesScore(parsed, live.homeId)).toBe(2);
+    expect(matchSchema.safeParse({ ...result, seriesScore: { home: 1, away: 0 } }).success).toBe(
+      false,
+    );
+  });
+  it('conserve les côtés et totaux inconnus sans inventer de zéro', () => {
+    const map = live.maps[0]!;
+    const sides = map.sides.map((side) => ({ ...side, side: null, players: [] }));
+    expect(
+      matchSchema.safeParse({ ...live, maps: [{ ...map, sides }, ...live.maps.slice(1)] }).success,
+    ).toBe(true);
+    expect(sideGold(sides[0]!)).toBeNull();
+    expect(sideKills(sides[0]!)).toBeNull();
+  });
   it('affiche un décompte sans nombre négatif ni direct inféré', () => {
     const at = '2026-09-16T12:00:00Z';
     expect(countdown(at, Date.parse(at) - 65000)).toBe('Dans 1 min 05 s');
     expect(countdown(at, Date.parse(at) + 1000)).toBe('Début attendu');
     expect(countdown(at, Date.parse(at) - 3660000)).toBe('Dans 1 h 01');
+  });
+  it('conserve les dix bans visibles même si leurs portraits ne sont pas tous identifiés', () => {
+    const map = live.maps[0]!;
+    const bans = map.bans.map((ban) => ({ ...ban, champion: null }));
+    const partial = { ...live, maps: [{ ...map, bans }, ...live.maps.slice(1)] };
+    expect(matchSchema.parse(partial).maps[0]!.bans).toHaveLength(10);
+    partial.maps[0]!.bans[0]!.championImage = '';
+    expect(matchSchema.safeParse(partial).success).toBe(false);
   });
 });

@@ -164,7 +164,9 @@ def collect(
                     )
                 logger.info("Collection %s succeeded: %s", run_id, details)
             try:
-                match_details = sync_oracle_match_details(engine)
+                match_details = sync_oracle_match_details(
+                    engine, source_timezone=settings.oracle_date_timezone
+                )
             except Exception as error:
                 match_details = {"status": "failed", "error": type(error).__name__}
                 logger.exception("Oracle match detail projection failed")

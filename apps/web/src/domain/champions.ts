@@ -1,4 +1,4 @@
-import championManifest from '@/mocks/data/champions.json';
+import championManifest from './data/champions.json';
 
 type ChampionAsset = (typeof championManifest)[number];
 

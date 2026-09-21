@@ -28,7 +28,8 @@ def database(monkeypatch, tmp_path):
     with engine.begin() as connection:
         connection.execute(
             text(
-                "TRUNCATE oracle_rows, dataset_versions, datasets, ingestion_runs, "
+                "TRUNCATE collector_state, oracle_rows, dataset_versions, datasets, "
+                "ingestion_runs, "
                 "odds_observations, probability_estimates, markets, matches, teams, leagues, "
                 "catalog_metadata, app_users, auth_challenges, auth_sessions, auth_rate_limits "
                 ", script_schedules, script_runs, worker_status, admin_audit "

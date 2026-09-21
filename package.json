@@ -30,7 +30,8 @@
     "data:lol:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-lol-catalog",
     "data:oracle:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-oracles-elixir",
     "data:sofascore:sync": "docker compose --env-file .env.docker run --rm --no-deps worker metiquo-worker sync-sofascore-matches",
-    "data:champions:sync": "node scripts/sync-lol-champions.mjs",
+    "data:champions:sync": "node scripts/sync-lol-champions.mjs && npm run data:champions:reference",
+    "data:champions:reference": "uv run --frozen python scripts/build-champion-reference.py",
     "catalog:sync": "npm run data:lol:sync"
   },
   "workspaces": [

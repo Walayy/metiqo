@@ -168,9 +168,11 @@ def test_logos_revalidate_cache_and_publish_new_immutable_paths(tmp_path):
         url = "http://static.lolesports.com/logo.png"
         first = fetch_image(client, url, {}, settings)
         second = fetch_image(client, url, first, settings)
-        assert first == second and count["notModified"] == 1
+        assert first == second and count["requests"] == 1
+        second = fetch_image(client, url, {**first, "checkedAt": 0}, settings)
+        assert first["sha256"] == second["sha256"] and count["notModified"] == 1
         revision[0] = '"v2"'
-        third = fetch_image(client, url, second, settings)
+        third = fetch_image(client, url, {**second, "checkedAt": 0}, settings)
         assert third["sha256"] != first["sha256"]
         assert (tmp_path / first["path"]).is_file()
         with Image.open(tmp_path / third["path"]) as result:

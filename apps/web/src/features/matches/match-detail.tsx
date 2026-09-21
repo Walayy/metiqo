@@ -45,7 +45,7 @@ type ObjectiveKey = (typeof objectiveMeta)[number]['key'];
 function ObjectiveStats({ side }: { side: MapSide }) {
   const gold = sideGold(side);
   const values: Record<ObjectiveKey, number | string> = {
-    kills: sideKills(side),
+    kills: sideKills(side) ?? '—',
     gold: gold == null ? '—' : `${decimal(gold / 1000, 1)} k`,
     towers: side.towers ?? '—',
     dragons: side.dragons ?? '—',
@@ -85,13 +85,17 @@ function TeamStats({
   return (
     <section
       className={`map-team side-${side.side}`}
-      aria-label={`${team.name}, côté ${side.side === 'blue' ? 'bleu' : 'rouge'}`}
+      aria-label={`${team.name}, ${side.side === null ? 'côté non renseigné' : `côté ${side.side === 'blue' ? 'bleu' : 'rouge'}`}`}
     >
       <div className="map-team-heading">
         <Logo src={team.image} name={team.name} code={team.code} />
         <div>
           <h3>{team.name}</h3>
-          <span>Côté {side.side === 'blue' ? 'bleu' : 'rouge'}</span>
+          <span>
+            {side.side === null
+              ? 'Côté non renseigné'
+              : `Côté ${side.side === 'blue' ? 'bleu' : 'rouge'}`}
+          </span>
         </div>
         {winner && (
           <span className="map-winner">
@@ -117,41 +121,41 @@ function TeamStats({
             player.champion ?? (player.championImage ? 'Nom indisponible' : 'Champion non publié');
           return (
             <div className="roster-row" role="row" key={player.id}>
-            <div className="roster-player" role="cell">
-              <span
-                className="roster-role-icon"
-                title={roleMeta[player.role].label}
-                aria-label={`Poste : ${roleMeta[player.role].label}`}
-              >
-                <img src={roleMeta[player.role].icon} alt="" width="20" height="20" />
-              </span>
-              <Logo
-                src={championAsset(player.champion, player.championImage)}
-                name={championLabel}
-                code={player.champion?.slice(0, 2) ?? '—'}
-                className="champion-portrait"
-              />
-              <div>
-                <strong>{player.name}</strong>
-                <span className="roster-player-meta">
-                  <span className="roster-role-label">{roleMeta[player.role].label}</span>
-                  <span>{championLabel}</span>
-                  {player.level != null && ` · niv. ${player.level}`}
+              <div className="roster-player" role="cell">
+                <span
+                  className="roster-role-icon"
+                  title={roleMeta[player.role].label}
+                  aria-label={`Poste : ${roleMeta[player.role].label}`}
+                >
+                  <img src={roleMeta[player.role].icon} alt="" width="20" height="20" />
                 </span>
+                <Logo
+                  src={championAsset(player.champion, player.championImage)}
+                  name={championLabel}
+                  code={player.champion?.slice(0, 2) ?? '—'}
+                  className="champion-portrait"
+                />
+                <div>
+                  <strong>{player.name}</strong>
+                  <span className="roster-player-meta">
+                    <span className="roster-role-label">{roleMeta[player.role].label}</span>
+                    <span>{championLabel}</span>
+                    {player.level != null && ` · niv. ${player.level}`}
+                  </span>
+                </div>
               </div>
-            </div>
-            <span role="cell" className="roster-kda">
-              <span className="mobile-stat-label">K/D/A</span>
-              {player.kills} / {player.deaths} / {player.assists}
-            </span>
-            <span role="cell">
-              <span className="mobile-stat-label">CS</span>
-              {player.cs}
-            </span>
-            <span role="cell">
-              <span className="mobile-stat-label">Or</span>
-              {player.gold == null ? '—' : `${decimal(player.gold / 1000, 1)} k`}
-            </span>
+              <span role="cell" className="roster-kda">
+                <span className="mobile-stat-label">K/D/A</span>
+                {player.kills} / {player.deaths} / {player.assists}
+              </span>
+              <span role="cell">
+                <span className="mobile-stat-label">CS</span>
+                {player.cs}
+              </span>
+              <span role="cell">
+                <span className="mobile-stat-label">Or</span>
+                {player.gold == null ? '—' : `${decimal(player.gold / 1000, 1)} k`}
+              </span>
             </div>
           );
         })}
@@ -213,15 +217,15 @@ function DraftBans({ active, catalog }: { active: MatchMap; catalog: Catalog }) 
                   <span
                     className="ban-chip"
                     key={`${ban.teamId}-${ban.champion}-${index}`}
-                    title={`${team?.name ?? 'Équipe'} · ${ban.champion}`}
+                    title={`${team?.name ?? 'Équipe'} · ${ban.champion ?? 'Nom indisponible'}`}
                   >
                     <Logo
                       src={championAsset(ban.champion, ban.championImage)}
-                      name={ban.champion}
-                      code={ban.champion.slice(0, 2)}
+                      name={ban.champion ?? 'Champion non identifié'}
+                      code={ban.champion?.slice(0, 2) ?? ''}
                       className="ban-icon"
                     />
-                    <span>{ban.champion}</span>
+                    <span>{ban.champion ?? 'Nom indisponible'}</span>
                   </span>
                 ))}
               </div>
@@ -306,9 +310,13 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
             <span>
               {match.status === 'finished'
                 ? 'Terminé'
-                : match.currentScore && !hasSeriesScore
-                  ? 'Score courant'
-                  : 'À venir'}
+                : match.status === 'cancelled'
+                  ? 'Annulé'
+                  : match.status === 'postponed'
+                    ? 'Reporté / interrompu'
+                    : match.currentScore && !hasSeriesScore
+                      ? 'Score courant'
+                      : 'À venir'}
             </span>
           )}
         </div>
@@ -343,9 +351,13 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
                     ? 'En direct'
                     : map?.status === 'finished'
                       ? 'Terminée'
-                      : map?.status === 'skipped'
+                      : map?.status === 'skipped' ||
+                          (match.status === 'finished' &&
+                            i + 1 > seriesScore(match, home.id) + seriesScore(match, away.id))
                         ? 'Non jouée'
-                        : 'À venir'}
+                        : match.status === 'finished'
+                          ? 'Non publiée'
+                          : 'À venir'}
                 </span>
               </Tabs.Trigger>
             );
@@ -390,11 +402,25 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
         ) : (
           <div className="match-pending">
             <Clock3 size={25} />
-            <h3>{match.status === 'live' ? 'Le direct est en cours.' : 'Le match se prépare.'}</h3>
+            <h3>
+              {match.status === 'live'
+                ? 'Le direct est en cours.'
+                : match.status === 'finished'
+                  ? 'Le match est terminé.'
+                  : match.status === 'cancelled'
+                    ? 'Le match est annulé.'
+                    : match.status === 'postponed'
+                      ? 'Le programme a changé.'
+                      : 'Le match se prépare.'}
+            </h3>
             <p>
               {match.status === 'live'
                 ? 'Le dernier score est affiché dès qu’il est rendu par SofaScore. Les compositions, bans et statistiques restent vides tant que la source ne les publie pas.'
-                : 'Compositions, choix des côtés et statistiques apparaîtront dès le premier relevé de la partie.'}
+                : match.status === 'finished'
+                  ? 'Les détails des cartes ne sont pas encore disponibles pour cette rencontre.'
+                  : match.status === 'cancelled' || match.status === 'postponed'
+                    ? 'Le statut sera actualisé dès que la source publiera une nouvelle information.'
+                    : 'Compositions, choix des côtés et statistiques apparaîtront dès le premier relevé de la partie.'}
             </p>
           </div>
         )}

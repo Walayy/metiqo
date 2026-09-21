@@ -25,7 +25,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/browsers
 RUN uv sync --frozen --no-dev --package metiquo-worker --no-install-workspace \
     && uv run --no-sync patchright install --with-deps chromium \
     && groupadd --gid 10001 metiquo && useradd --uid 10001 --gid 10001 --create-home metiquo \
-    && mkdir -p /data/artifacts && chown -R 10001:10001 /data /opt/browsers
+    && mkdir -p /data/artifacts /data/browser && chown -R 10001:10001 /data /opt/browsers
 COPY packages/core packages/core
 COPY apps/worker apps/worker
 RUN uv sync --frozen --no-dev --package metiquo-worker --no-editable

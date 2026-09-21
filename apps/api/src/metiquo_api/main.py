@@ -10,13 +10,20 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
+from metiquo_core.catalog import other_game_identities
 from metiquo_core.config import Settings
 from metiquo_core.contracts import Catalog, LeagueData, Opportunities, Opportunity, TeamData
 from metiquo_core.db import create_db
-from metiquo_core.matches import completed_series_summary
+from metiquo_core.matches import (
+    completed_series_summary,
+    merge_completed_map,
+    source_game,
+    unique_bans,
+)
 from metiquo_core.models import (
     CatalogMetadata,
     CatalogVersion,
+    CollectorState,
     Dataset,
     DatasetVersion,
     EsportMatch,
@@ -70,8 +77,10 @@ def _snapshot_format(snapshot: MatchSnapshot, match: EsportMatch) -> str | None:
     maps = snapshot.payload.get("maps")
     if not isinstance(maps, list):
         return None
-    if maps and snapshot.status == "finished":
-        summary = completed_series_summary(maps, match.home_id, match.away_id)
+    if snapshot.source == "oracles-elixir":
+        if snapshot.payload.get("completionBasis") != "sourced-format":
+            return None
+        summary = completed_series_summary(maps, match.home_id, match.away_id, match.format)
         if summary is None or summary[0] != format_name:
             return None
     return format_name
@@ -83,6 +92,68 @@ def _is_complete_oracle_snapshot(snapshot: MatchSnapshot, match: EsportMatch) ->
     format_name = _snapshot_format(snapshot, match)
     maps = snapshot.payload.get("maps")
     return format_name is not None and isinstance(maps, list) and bool(maps)
+
+
+def _snapshot_score(snapshot: MatchSnapshot | None, match: EsportMatch) -> object:
+    if snapshot is None:
+        return None
+    if snapshot.source == "oracles-elixir":
+        summary = completed_series_summary(
+            snapshot.payload.get("maps"), match.home_id, match.away_id, match.format
+        )
+        return {"home": summary[1], "away": summary[2]} if summary else None
+    return snapshot.payload.get("currentScore")
+
+
+def _match_maps(
+    history: list[MatchSnapshot], match: EsportMatch, status: str, snapshot: MatchSnapshot | None
+) -> list[dict[str, object]]:
+    """Keep independently captured maps without mixing impossible live states."""
+    if status in {"scheduled", "cancelled", "postponed"} or snapshot is None:
+        return []
+    by_number: dict[int, dict[str, object]] = {}
+    format_name = _snapshot_format(snapshot, match)
+    if format_name is None:
+        return []
+    for observation in history:
+        maps = observation.payload.get("maps")
+        if not isinstance(maps, list):
+            continue
+        for item in maps:
+            if not isinstance(item, dict):
+                continue
+            number = item.get("number")
+            if not isinstance(number, int) or not 1 <= number <= int(format_name[2:]):
+                continue
+            sides = item.get("sides")
+            if not isinstance(sides, list) or len(sides) != 2:
+                continue
+            if {side.get("teamId") for side in sides if isinstance(side, dict)} != {
+                match.home_id,
+                match.away_id,
+            }:
+                continue
+            if item.get("status") == "live" and (status != "live" or observation.id != snapshot.id):
+                continue
+            # Legacy SofaScore records assigned blue/red from home/away order.
+            # Those labels were never sourced and must not be displayed as facts.
+            normalized: dict[str, object] = {
+                **item,
+                "bans": unique_bans(item.get("bans")),
+                "sides": [
+                    {**side, "side": None} if observation.source == "sofascore" else side
+                    for side in sides
+                ],
+            }
+            by_number[number] = merge_completed_map(by_number.get(number, {}), normalized)
+    maps_out = [by_number[number] for number in sorted(by_number)]
+    score = _snapshot_score(snapshot, match)
+    if isinstance(score, dict) and any(
+        sum(item.get("winnerId") == team_id for item in maps_out) > score.get(label, 0)
+        for label, team_id in (("home", match.home_id), ("away", match.away_id))
+    ):
+        return []
+    return maps_out
 
 
 def create_app(
@@ -161,6 +232,7 @@ def create_app(
 
     @app.get("/api/v1/catalog", response_model=Catalog)
     def catalog(session: Annotated[Session, Depends(get_session)]) -> Catalog:
+        excluded_leagues, excluded_teams = other_game_identities(session)
         snapshot = session.scalar(
             select(CatalogVersion)
             .join(CatalogMetadata, CatalogMetadata.active_version_id == CatalogVersion.id)
@@ -195,8 +267,14 @@ def create_app(
                 )
             for team in session.scalars(select(Team).order_by(Team.id)):
                 known_teams.setdefault(team.id, _catalog_record(team.data, _TEAM_CONTRACT_FIELDS))
-            document["leagues"] = list(known_leagues.values())
-            document["teams"] = list(known_teams.values())
+            document["leagues"] = [
+                item for key, item in known_leagues.items() if key not in excluded_leagues
+            ]
+            document["teams"] = [
+                item
+                for key, item in known_teams.items()
+                if key not in excluded_teams and item.get("leagueId") not in excluded_leagues
+            ]
             return Catalog.model_validate(document)
         metadata = session.get(CatalogMetadata, 1)
         if metadata is None:
@@ -210,10 +288,12 @@ def create_app(
                 "leagues": [
                     _catalog_record(league.data, _LEAGUE_CONTRACT_FIELDS)
                     for league in session.scalars(select(League).order_by(League.id))
+                    if league.id not in excluded_leagues
                 ],
                 "teams": [
                     _catalog_record(team.data, _TEAM_CONTRACT_FIELDS)
                     for team in session.scalars(select(Team).order_by(Team.id))
+                    if team.id not in excluded_teams and team.league_id not in excluded_leagues
                 ],
             }
         )
@@ -303,7 +383,7 @@ def create_app(
             .order_by(EsportMatch.starts_at, EsportMatch.id)
         ).all()
         snapshots: dict[UUID, list[MatchSnapshot]] = {}
-        last_seen: dict[UUID, datetime] = {}
+        last_seen: dict[tuple[UUID, str], datetime] = {}
         if rows:
             for item in session.scalars(
                 select(MatchSnapshot)
@@ -316,9 +396,10 @@ def create_app(
                     MatchSourceLink.match_id.in_([match.id for match in rows])
                 )
             ).all():
-                previous = last_seen.get(link.match_id)
+                key = (link.match_id, link.provider)
+                previous = last_seen.get(key)
                 if previous is None or link.last_seen_at > previous:
-                    last_seen[link.match_id] = link.last_seen_at
+                    last_seen[key] = link.last_seen_at
 
         def snapshot_value(snapshot: MatchSnapshot | None, key: str) -> object:
             if snapshot is None:
@@ -328,6 +409,11 @@ def create_app(
         items: list[dict[str, object]] = []
         for match in rows:
             history = snapshots.get(match.id, [])
+            if any(
+                item.source == "sofascore" and source_game(item.payload) not in {None, "lol"}
+                for item in history
+            ):
+                continue
             usable_history = [item for item in history if _snapshot_format(item, match) is not None]
             oracle_snapshot = next(
                 (
@@ -350,7 +436,7 @@ def create_app(
             )
             selected_format = _snapshot_format(snapshot, match) if snapshot is not None else None
             status = snapshot.status if snapshot else "scheduled"
-            if status not in {"scheduled", "live", "finished"}:
+            if status not in {"scheduled", "live", "finished", "cancelled", "postponed"}:
                 status = "scheduled"
             items.append(
                 {
@@ -361,9 +447,10 @@ def create_app(
                     "startsAt": match.starts_at,
                     # A deduplicated snapshot records the last *changed* payload,
                     # while the source link records every observation. Display the
-                    # latter so a live 0-1 remains visibly polled every five minutes.
+                    # latter without fabricating a new snapshot for an unchanged score.
                     "updatedAt": last_seen.get(
-                        match.id, snapshot.observed_at if snapshot else match.registered_at
+                        (match.id, snapshot.source if snapshot else match.source),
+                        snapshot.observed_at if snapshot else match.registered_at,
                     ),
                     "format": selected_format or match.format,
                     "status": status,
@@ -371,17 +458,31 @@ def create_app(
                     or snapshot_value(detail_snapshot, "patch"),
                     "stage": snapshot_value(snapshot, "stage")
                     or snapshot_value(detail_snapshot, "stage"),
-                    "currentScore": snapshot_value(snapshot, "currentScore")
-                    or snapshot_value(detail_snapshot, "currentScore"),
-                    "seriesScore": snapshot_value(snapshot, "seriesScore")
-                    or snapshot_value(detail_snapshot, "seriesScore"),
-                    "maps": snapshot_value(detail_snapshot or snapshot, "maps") or [],
+                    "currentScore": _snapshot_score(snapshot, match)
+                    if status != "scheduled"
+                    else None,
+                    "seriesScore": _snapshot_score(snapshot, match)
+                    if status != "scheduled"
+                    else None,
+                    "maps": _match_maps(
+                        [
+                            *[item for item in usable_history if item.source != "oracles-elixir"],
+                            oracle_snapshot,
+                        ]
+                        if oracle_snapshot
+                        else usable_history,
+                        match,
+                        status,
+                        snapshot,
+                    ),
                 }
             )
         return {"generatedAt": now, "items": items}
 
     @app.get("/api/v1/sources/sofascore")
     def sofascore_status(session: Annotated[Session, Depends(get_session)]) -> dict[str, object]:
+        state = session.get(CollectorState, "sofascore")
+        control = state.data if state else {}
         runs = session.scalars(
             select(IngestionRun)
             .where(IngestionRun.source == "sofascore")
@@ -390,6 +491,17 @@ def create_app(
         ).all()
         return {
             "source": "sofascore",
+            "collection": {
+                key: control.get(key)
+                for key in (
+                    "blockedUntil",
+                    "lastBlockAt",
+                    "lastBlockStatus",
+                    "lastBlockReason",
+                    "consecutiveBlocks",
+                    "lastRequestAt",
+                )
+            },
             "runs": [
                 {
                     "id": run.id,

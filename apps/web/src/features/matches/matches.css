@@ -458,11 +458,14 @@
   font-size: 13px;
 }
 .map-team-heading > div > span {
-  color: var(--side-blue);
+  color: var(--muted);
   font-size: 11px;
 }
 .side-red .map-team-heading > div > span {
   color: var(--side-red);
+}
+.side-blue .map-team-heading > div > span {
+  color: var(--side-blue);
 }
 .map-winner {
   margin-left: auto;
@@ -662,7 +665,7 @@
     display: none;
   }
 }
-@media (max-width: 760px) {
+@media (max-width: 960px) {
   .map-teams {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1065,7 +1068,7 @@
   object-position: center;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 960px) {
   .ban-teams {
     grid-template-columns: minmax(0, 1fr);
   }

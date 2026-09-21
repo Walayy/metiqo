@@ -6,10 +6,6 @@ dependencies = [
     "metiquo-core",
     "patchright>=1.55,<2",
     "httpx>=0.28,<1",
-    # SofaScore's API edge rejects the standard HTTP TLS fingerprint with 403.
-    # curl-cffi impersonates Chrome and is used only as a best-effort enrichment
-    # fallback; rendered-page scraping remains the source of the match record.
-    "curl-cffi>=0.14,<1",
     "beautifulsoup4>=4.13,<5",
     "pillow>=11.3,<13",
 ]

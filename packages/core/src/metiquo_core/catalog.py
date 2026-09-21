@@ -1,13 +1,34 @@
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from metiquo_core.contracts import Catalog
-from metiquo_core.models import CatalogMetadata, League, Team
+from metiquo_core.models import CatalogMetadata, EsportMatch, League, MatchSnapshot, Team
 
 CATALOG_LOCK_ID = 7_346_810_206
+CATALOG_WRITE_LOCK_ID = 7_346_810_209
+
+
+def other_game_identities(session: Session) -> tuple[set[str], set[str]]:
+    """Quarantine legacy recommendations while keeping their original evidence."""
+    rows = session.execute(
+        select(EsportMatch.league_id, EsportMatch.home_id, EsportMatch.away_id)
+        .join(MatchSnapshot, MatchSnapshot.match_id == EsportMatch.id)
+        .where(
+            MatchSnapshot.source == "sofascore",
+            MatchSnapshot.payload["event"]["tournament"]["category"]["slug"].astext != "lol",
+        )
+        .distinct()
+    ).all()
+    leagues = {league for league, _, _ in rows if league.startswith("sofascore:")}
+    teams = {
+        team for _, home, away in rows for team in (home, away) if team.startswith("sofascore:")
+    }
+    return leagues, teams
 
 
 def import_catalog(session: Session, catalog: Catalog) -> None:
     """Explicit import of sourced identities; never loads frontend fixtures at runtime."""
+    session.execute(select(func.pg_advisory_xact_lock(CATALOG_WRITE_LOCK_ID)))
     for league in catalog.leagues:
         incoming = league.model_dump(by_alias=True)
         existing_league = session.get(League, league.id)
@@ -16,7 +37,7 @@ def import_catalog(session: Session, catalog: Catalog) -> None:
         else:
             private = {
                 key: existing_league.data[key]
-                for key in ("aliases", "sourceIds", "sourceImages")
+                for key in ("aliases", "sourceIds", "sourceImages", "sourceId", "parentLeagueId")
                 if key in existing_league.data
             }
             existing_league.data = {**incoming, **private}
