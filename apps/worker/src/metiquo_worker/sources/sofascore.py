@@ -1022,15 +1022,10 @@ def _observe_response(response: Response) -> None:
             status=response.status,
             reason="browser-response",
         )
-        _stop_source_network()
-        if _POLICY is not None:
-            _BLOCK_ERROR = _POLICY.block(
-                response.status,
-                "browser-response",
-                retry_after,
-                request_url=response.url,
-                resource_type=resource_type,
-            )
+        # Closing the page uses the synchronous browser bridge and can resume
+        # the interrupted goto/cycle before this callback returns. Record the
+        # refusal first, while the cycle's policy is still bound, or cleanup can
+        # clear it and lose the URL, Retry-After and progressive cooldown.
         logger.warning(
             "SofaScore refused %s %s%s (HTTP %s)",
             resource_type,
@@ -1038,6 +1033,17 @@ def _observe_response(response: Response) -> None:
             parsed.path,
             response.status,
         )
+        try:
+            if _POLICY is not None:
+                _BLOCK_ERROR = _POLICY.block(
+                    response.status,
+                    "browser-response",
+                    retry_after,
+                    request_url=response.url,
+                    resource_type=resource_type,
+                )
+        finally:
+            _stop_source_network()
         return
 
 

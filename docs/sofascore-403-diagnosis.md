@@ -1,5 +1,7 @@
 # SofaScore : origine des 403 et collecte sans appels API directs
 
+Dernière actualisation : [refus de 15:46:40 après huit journées](sofascore-403-2026-09-21-1546.md), navigateur personnel également bloqué, absence d'appels API JSON directs et défaut d'enregistrement reproduit puis corrigé hors réseau.
+
 Actualisation après redémarrage : [analyse du nouveau refus de 13:22:54](sofascore-403-2026-09-21-1322.md), avec chronologie des 34 navigations tentées, distinction des appels du site et du worker, et reproduction locale de la désactivation du cache HTTP.
 
 Audit du 21 septembre 2026. Sources locales : historique Git, fichiers du workspace,

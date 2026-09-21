@@ -26,7 +26,9 @@ Les pauses de 4–8 secondes entre tentatives d'onglets s'appliquent aussi aprè
 
 Une page vide `about:blank` arrête les actualisations de fond pendant l'attente et entre cycles, sans recréer le contexte. La couverture J−7/J+7 est conservée, mais ces pauses et caches peuvent retarder la découverte d'une modification et prolonger un passage au-delà du cron. Ces durées sont un compromis de charge, pas une garantie d'acceptation par SofaScore.
 
-Le worker de l'application a été arrêté pour cette modification. **Attendre le « go » explicite de l'utilisateur avant de reconstruire/redémarrer le service ou de lancer une collecte réelle.** Les tests hors ligne utilisent un profil temporaire et des ressources synthétiques, jamais le profil Docker de production.
+Le worker de l'application a été arrêté pour cette modification. Le « go » explicite reçu le 21 septembre après la refonte des cartes autorise sa reconstruction et son redémarrage, ainsi que la reprise des collectes planifiées avec ces protections. Les tests hors ligne utilisent un profil temporaire et des ressources synthétiques, jamais le profil Docker de production.
+
+La relance à 15:43 reçoit toutefois un [nouveau 403 à 15:46:40](sofascore-403-2026-09-21-1546.md). Le worker est arrêté pendant ce diagnostic. La correction locale enregistre les métadonnées et le délai du refus avant la fermeture des pages : celle-ci peut rendre la main à la navigation interrompue et au nettoyage du cycle. L'ancien ordre pouvait perdre cette persistance et laisser l'ordonnanceur utiliser son délai de repli. Correction reproduite et vérifiée hors réseau, pas encore déployée ; aucune garantie de déblocage côté source.
 
 ## Reprise et robustesse — 21 septembre 2026
 

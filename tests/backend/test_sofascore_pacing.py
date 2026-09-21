@@ -127,6 +127,40 @@ def test_first_refusal_ends_the_pass_before_next_day(monkeypatch, isolated_scrap
     assert len(calls) == len(stopped) == 1
 
 
+@pytest.mark.parametrize("status,resource_type", [(403, "document"), (429, "xhr")])
+def test_refusal_is_persisted_before_closing_page_can_resume_cycle(
+    monkeypatch, isolated_scraper, caplog, status, resource_type
+):
+    saved = []
+
+    def block(status, reason, retry_after, **metadata):
+        saved.append({"status": status, "retry_after": retry_after, **metadata})
+        return SofaScoreBlocked("persisted", status=status, reason=reason, retry_at=12345678999)
+
+    monkeypatch.setattr(sofascore, "_POLICY", SimpleNamespace(block=block))
+    # A synchronous browser call in this callback can yield to the interrupted
+    # goto/cycle before the callback resumes. The durable refusal must be ready.
+    monkeypatch.setattr(sofascore, "_stop_source_network", sofascore._raise_if_blocked)
+    response = SimpleNamespace(
+        url="https://www.sofascore.com/fr/esports/lol/2026-09-17",
+        status=status,
+        headers={"retry-after": "120", "content-type": "text/html"},
+        request=SimpleNamespace(resource_type=resource_type),
+    )
+    with pytest.raises(SofaScoreBlocked) as caught:
+        sofascore._observe_response(response)
+    assert caught.value.retry_at == 12345678999
+    assert saved == [
+        {
+            "status": status,
+            "retry_after": "120",
+            "request_url": response.url,
+            "resource_type": resource_type,
+        }
+    ]
+    assert "SofaScore refused" in caplog.text
+
+
 def test_live_refresh_reads_only_new_maps_and_cache_is_not_fresh(monkeypatch, isolated_scraper):
     old = {"number": 1, "status": "finished"}
     base = replace(event(), status="live", payload={"rendered": {"maps": [old]}})

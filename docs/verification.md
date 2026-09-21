@@ -1,5 +1,25 @@
 # Vérifications de la première version
 
+## Diagnostic du refus SofaScore de 15:46:40 — 21 septembre 2026
+
+Le [rapport détaillé](sofascore-403-2026-09-21-1546.md) reconstitue huit lectures de journées avant un nouveau 403, sans fiche de match ni appel API JSON direct. Le worker a été arrêté à 15:48:49 pendant l'analyse pour empêcher la reprise prévue à 16:01:40. Aucun accès de diagnostic à SofaScore ni changement du délai conservé en base.
+
+Une reproduction Chromium avec `--network none` établit que fermer la page avant de persister le refus peut reprendre et nettoyer le cycle avant le retour du callback. La correction inverse cet ordre et garantit la coupure dans un `finally`. La reproduction avec l'ancien code perd le refus ; avec le code corrigé, elle conserve ses métadonnées et transmet le délai. Les deux tests de régression 403/document et 429/XHR échouent avant la correction et passent après.
+
+`npm run check` passe : 59 tests frontend, 108 tests backend hors intégration, TypeScript, ESLint, build, Ruff et mypy. Les 47 intégrations PostgreSQL ne sont pas relancées. Aucun parcours UI modifié ni nouvelle vérification visuelle nécessaire pour cette correction du worker. Avertissements préexistants du bundle et de Starlette/httpx. La correction n'est pas déployée ; le worker demeure arrêté et aucun déblocage côté SofaScore n'est annoncé.
+
+## Relance du worker après autorisation — 21 septembre 2026
+
+Après le « go » explicite de l’utilisateur, seul le service `worker` est reconstruit et redémarré avec `--no-deps`, à 15 h 43 (Paris). Son healthcheck et son heartbeat PostgreSQL sont valides. Le volume dédié `sofascore_browser` est monté sur `/data/browser`, le profil Chromium est créé, et les réglages effectifs correspondent aux caches et pauses documentés. L’ancien délai jusqu’à 15 h 22 n’a pas été réinitialisé. Les trois premières pages de journées (21, 22 et 20 septembre) sont relues à 15:43:23, 15:43:55 et 15:44:19 ; aucun nouveau 403 n’est enregistré à ce stade, le dernier reste celui de 13:22:54. Le cycle SofaScore est encore en cours : ce contrôle de démarrage ne prouve pas l’achèvement d’un cycle ni l’absence de blocage ultérieur. Oracle termine son import planifié dans sa file indépendante. Aucun code applicatif n’est changé lors de cette relance ; les contrôles complets de la refonte ci-dessous restent la dernière validation du code.
+
+## Détail des cartes épuré — 21 septembre 2026
+
+- Bans sans cartes ni noms permanents : portraits circulaires, cibles de 44 × 44 px, nom au survol et bulle Radix au clic/Entrée ; cinq portraits par ligne lorsque cinq bans sont publiés. Équipes, bans et statistiques suivent les identifiants gauche/droite de la rencontre. Une abréviation vide laisse place au nom complet.
+- Comparaison unique des huit statistiques globales, inconnues `—` distinctes des zéros, et compositions sur deux colonnes puis une seule. Les détails joueurs restent accessibles, y compris les rôles, niveaux, K/D/A, CS et or ; les en-têtes de tableau restent exposés aux technologies d’assistance sur mobile.
+- Navigateur en mode API sur les relevés locaux Team Liquid–FlyQuest et MVK–Saigon Warriors : thèmes clair/sombre, largeurs 320, 390, 768 et 1440 px ; aucun débordement horizontal du contenu de la modale aux dimensions vérifiées. Les onglets de cartes gardent leur propre défilement horizontal sur petit écran. Changement de carte par flèche, cartes non jouées désactivées, ouverture du nom d’un ban au clic et avec Entrée, fermeture Échap et restitution du focus au portrait puis à la rencontre vérifiés. Aucune erreur/warning console observée dans le parcours Vite. Les règles CSS désactivent les nouvelles animations avec `prefers-reduced-motion`.
+- `npm run check` passe : TypeScript, ESLint, 59 tests frontend, build, Ruff, mypy et 106 tests backend hors intégration. Pas de nouvelle suite PostgreSQL ni de collecte réelle pour cette refonte d’affichage. Avertissements existants : taille du bundle mock et dépréciations Starlette/httpx.
+- Seul le service Docker `web` est reconstruit en mode API avec `--no-deps`. Le worker SofaScore reste arrêté, en attente du « go » explicite ; les données affichées sont celles déjà enregistrées.
+
 ## Réduction des délais de cache SofaScore — 21 septembre 2026
 
 Les caches des journées passent à 3 minutes / 15 minutes / 1 heure pour aujourd'hui / futur / passé. Les fiches proches / programmées / terminées avec cartes / terminées sans cartes passent à 3 minutes / 15 minutes / 1 heure / 5 minutes ; le live reste à 2 minutes. Code, Compose, exemple et `.env.docker` local sont alignés. Les tests existants de fraîcheur et de sélection des journées ont été adaptés et `npm run check` passe : 59 tests frontend, 106 tests backend hors intégration, build et contrôles statiques. Compose est valide. Aucun comportement navigateur ni parcours UI changé, aucune collecte réelle, worker confirmé arrêté en attente du « go ». Les suites PostgreSQL et navigateur de la modification précédente n'ont pas été répétées pour cet ajustement de configuration.

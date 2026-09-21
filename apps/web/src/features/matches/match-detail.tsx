@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Tabs } from 'radix-ui';
+import { Popover, Tabs } from 'radix-ui';
 import {
-  Ban,
   Bug,
   Check,
   Clock3,
@@ -42,69 +41,76 @@ const objectiveMeta = [
 
 type ObjectiveKey = (typeof objectiveMeta)[number]['key'];
 
-function ObjectiveStats({ side }: { side: MapSide }) {
-  const gold = sideGold(side);
-  const values: Record<ObjectiveKey, number | string> = {
-    kills: sideKills(side) ?? '—',
+function objectiveValues(side: MapSide | undefined): Record<ObjectiveKey, number | string> {
+  const gold = side ? sideGold(side) : null;
+  return {
+    kills: side ? (sideKills(side) ?? '—') : '—',
     gold: gold == null ? '—' : `${decimal(gold / 1000, 1)} k`,
-    towers: side.towers ?? '—',
-    dragons: side.dragons ?? '—',
-    barons: side.barons ?? '—',
-    heralds: side.heralds ?? '—',
-    grubs: side.grubs ?? '—',
-    inhibitors: side.inhibitors ?? '—',
+    towers: side?.towers ?? '—',
+    dragons: side?.dragons ?? '—',
+    barons: side?.barons ?? '—',
+    heralds: side?.heralds ?? '—',
+    grubs: side?.grubs ?? '—',
+    inhibitors: side?.inhibitors ?? '—',
   };
+}
+
+function ObjectiveComparison({
+  active,
+  home,
+  away,
+}: {
+  active: MatchMap;
+  home: Catalog['teams'][number];
+  away: Catalog['teams'][number];
+}) {
+  const homeValues = objectiveValues(active.sides.find((side) => side.teamId === home.id));
+  const awayValues = objectiveValues(active.sides.find((side) => side.teamId === away.id));
   return (
-    <dl className="map-objectives">
-      {objectiveMeta.map(({ key, label, icon: Icon, className }) => (
-        <div className={`objective-stat objective-stat--${className}`} key={key}>
-          <dt>
-            <span className="objective-icon" aria-hidden="true">
-              <Icon size={14} strokeWidth={1.8} />
-            </span>
-            <span className="objective-label">{label}</span>
-          </dt>
-          <dd>{values[key]}</dd>
-        </div>
-      ))}
-    </dl>
+    <table className="map-comparison" aria-label={`Statistiques de la carte ${active.number}`}>
+      <thead>
+        <tr>
+          <th scope="col" aria-label={home.name}>
+            {home.code.trim() || home.name}
+          </th>
+          <td>
+            <span className="map-unavailable-key">— Non publié</span>
+          </td>
+          <th scope="col" aria-label={away.name}>
+            {away.code.trim() || away.name}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {objectiveMeta.map(({ key, label, icon: Icon, className }) => (
+          <tr className={`comparison-row comparison-row--${className}`} key={key}>
+            <td>{homeValues[key]}</td>
+            <th scope="row">
+              <span>
+                <Icon size={14} strokeWidth={1.6} aria-hidden="true" />
+                {label}
+              </span>
+            </th>
+            <td>{awayValues[key]}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
-function TeamStats({
-  side,
-  catalog,
-  winner,
-}: {
-  side: MapSide;
-  catalog: Catalog;
-  winner: boolean;
-}) {
+function TeamStats({ side, catalog }: { side: MapSide; catalog: Catalog }) {
   const team = catalog.teams.find((t) => t.id === side.teamId);
   if (!team) return null;
   return (
     <section
-      className={`map-team side-${side.side}`}
+      className="map-team"
       aria-label={`${team.name}, ${side.side === null ? 'côté non renseigné' : `côté ${side.side === 'blue' ? 'bleu' : 'rouge'}`}`}
     >
-      <div className="map-team-heading">
+      <div className="roster-team-heading">
         <Logo src={team.image} name={team.name} code={team.code} />
-        <div>
-          <h3>{team.name}</h3>
-          <span>
-            {side.side === null
-              ? 'Côté non renseigné'
-              : `Côté ${side.side === 'blue' ? 'bleu' : 'rouge'}`}
-          </span>
-        </div>
-        {winner && (
-          <span className="map-winner">
-            <Trophy size={14} />
-            Victoire
-          </span>
-        )}
+        <h4>{team.name}</h4>
       </div>
-      <ObjectiveStats side={side} />
       <div className="roster-table" role="table" aria-label={`Composition ${team.name}`}>
         <div className="roster-head" role="row">
           <span role="columnheader">Joueur / champion</span>
@@ -124,6 +130,7 @@ function TeamStats({
               <div className="roster-player" role="cell">
                 <span
                   className="roster-role-icon"
+                  role="img"
                   title={roleMeta[player.role].label}
                   aria-label={`Poste : ${roleMeta[player.role].label}`}
                 >
@@ -138,22 +145,29 @@ function TeamStats({
                 <div>
                   <strong>{player.name}</strong>
                   <span className="roster-player-meta">
-                    <span className="roster-role-label">{roleMeta[player.role].label}</span>
                     <span>{championLabel}</span>
-                    {player.level != null && ` · niv. ${player.level}`}
+                    {player.level != null && (
+                      <span className="roster-level">niv. {player.level}</span>
+                    )}
                   </span>
                 </div>
               </div>
               <span role="cell" className="roster-kda">
-                <span className="mobile-stat-label">K/D/A</span>
+                <span className="mobile-stat-label" aria-hidden="true">
+                  K/D/A
+                </span>
                 {player.kills} / {player.deaths} / {player.assists}
               </span>
               <span role="cell">
-                <span className="mobile-stat-label">CS</span>
+                <span className="mobile-stat-label" aria-hidden="true">
+                  CS
+                </span>
                 {player.cs}
               </span>
               <span role="cell">
-                <span className="mobile-stat-label">Or</span>
+                <span className="mobile-stat-label" aria-hidden="true">
+                  Or
+                </span>
                 {player.gold == null ? '—' : `${decimal(player.gold / 1000, 1)} k`}
               </span>
             </div>
@@ -169,70 +183,80 @@ function TeamStats({
   );
 }
 
-function DraftBans({ active, catalog }: { active: MatchMap; catalog: Catalog }) {
-  if (!active.bans.length)
-    return (
-      <section className="map-bans" aria-label="Champions bannis">
-        <div className="ban-heading">
-          <span className="ban-heading-icon" aria-hidden="true">
-            <Ban size={15} />
-          </span>
-          <div>
-            <strong>Draft &amp; bans</strong>
-            <span>Bans indisponibles pour le moment.</span>
-          </div>
-        </div>
-      </section>
-    );
-  const teamIds = Array.from(new Set(active.bans.map((ban) => ban.teamId)));
+function MapTeamSummary({
+  active,
+  team,
+  position,
+}: {
+  active: MatchMap;
+  team: Catalog['teams'][number];
+  position: 'home' | 'away';
+}) {
+  const side = active.sides.find((item) => item.teamId === team.id);
+  const bans = active.bans.filter((ban) => ban.teamId === team.id);
   return (
-    <section className="map-bans" aria-label="Champions bannis">
-      <div className="ban-heading">
-        <span className="ban-heading-icon" aria-hidden="true">
-          <Ban size={15} />
-        </span>
+    <section className={`map-team-summary map-team-summary--${position}`} aria-label={team.name}>
+      <div className="map-team-identity">
+        <Logo src={team.image} name={team.name} />
         <div>
-          <strong>Draft &amp; bans</strong>
-          <span>
-            {active.bans.length} interdiction{active.bans.length > 1 ? 's' : ''} publiée
-            {active.bans.length > 1 ? 's' : ''}
+          <h4>{team.name}</h4>
+          <span className="map-team-meta">
+            {active.winnerId === team.id && (
+              <span className="map-winner">
+                <Trophy size={12} aria-hidden="true" />
+                Victoire
+              </span>
+            )}
+            {side?.side && (
+              <span className={`map-camp map-camp--${side.side}`}>
+                Côté {side.side === 'blue' ? 'bleu' : 'rouge'}
+              </span>
+            )}
           </span>
         </div>
       </div>
-      <div className="ban-teams">
-        {teamIds.map((teamId) => {
-          const team = catalog.teams.find((item) => item.id === teamId);
-          const teamBans = active.bans.filter((ban) => ban.teamId === teamId);
-          return (
-            <div className="ban-team" key={teamId}>
-              <div className="ban-team-label">
-                {team && <Logo src={team.image} name={team.name} code={team.code} />}
-                <strong>{team?.code ?? 'Équipe'}</strong>
-                <span>
-                  {teamBans.length} ban{teamBans.length > 1 ? 's' : ''}
-                </span>
-              </div>
-              <div className="ban-list">
-                {teamBans.map((ban, index) => (
-                  <span
-                    className="ban-chip"
-                    key={`${ban.teamId}-${ban.champion}-${index}`}
-                    title={`${team?.name ?? 'Équipe'} · ${ban.champion ?? 'Nom indisponible'}`}
-                  >
-                    <Logo
-                      src={championAsset(ban.champion, ban.championImage)}
-                      name={ban.champion ?? 'Champion non identifié'}
-                      code={ban.champion?.slice(0, 2) ?? ''}
-                      className="ban-icon"
-                    />
-                    <span>{ban.champion ?? 'Nom indisponible'}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {bans.length ? (
+        <ul className="ban-portraits" aria-label={`Champions bannis par ${team.name}`}>
+          {bans.map((ban, index) => {
+            const label = ban.champion ?? 'Champion non identifié';
+            return (
+              <li key={`${ban.champion}-${index}`}>
+                <Popover.Root>
+                  <Popover.Trigger asChild>
+                    <button
+                      type="button"
+                      className="ban-portrait-button"
+                      aria-label={`${label}, banni par ${team.name}`}
+                      title={`${label} · Banni par ${team.name}`}
+                    >
+                      <Logo
+                        src={championAsset(ban.champion, ban.championImage)}
+                        name={label}
+                        className="ban-portrait"
+                      />
+                    </button>
+                  </Popover.Trigger>
+                  <Popover.Portal>
+                    <Popover.Content
+                      className="ban-popover"
+                      side="top"
+                      sideOffset={8}
+                      collisionPadding={16}
+                      aria-label="Champion banni"
+                    >
+                      <strong>{label}</strong>
+                      <span>Banni par {team.name}</span>
+                      <Popover.Arrow className="ban-popover-arrow" />
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover.Root>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="bans-unavailable">Bans non publiés</p>
+      )}
     </section>
   );
 }
@@ -364,7 +388,7 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
           })}
         </Tabs.List>
         {active ? (
-          <Tabs.Content value={String(active.number)} className="map-content">
+          <Tabs.Content key={active.number} value={String(active.number)} className="map-content">
             <div className="map-caption">
               <h3>Carte {active.number}</h3>
               <span>
@@ -376,18 +400,30 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
                     }`}
               </span>
             </div>
-            <DraftBans active={active} catalog={catalog} />
+            <div className="map-team-summaries">
+              <MapTeamSummary active={active} team={home} position="home" />
+              <MapTeamSummary active={active} team={away} position="away" />
+            </div>
             {active.sides.length ? (
-              <div className="map-teams">
-                {active.sides.map((side) => (
-                  <TeamStats
-                    key={`${active.number}-${side.teamId}`}
-                    side={side}
-                    catalog={catalog}
-                    winner={active.winnerId === side.teamId}
-                  />
-                ))}
-              </div>
+              <>
+                <ObjectiveComparison active={active} home={home} away={away} />
+                <div className="map-rosters-heading">
+                  <h3>Joueurs</h3>
+                  <span>Composition &amp; statistiques</span>
+                </div>
+                <div className="map-teams">
+                  {[home, away]
+                    .map((team) => active.sides.find((side) => side.teamId === team.id))
+                    .filter((side): side is MapSide => Boolean(side))
+                    .map((side) => (
+                      <TeamStats
+                        key={`${active.number}-${side.teamId}`}
+                        side={side}
+                        catalog={catalog}
+                      />
+                    ))}
+                </div>
+              </>
             ) : (
               <div className="match-pending">
                 <Clock3 size={25} />
