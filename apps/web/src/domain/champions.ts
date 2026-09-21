@@ -21,3 +21,6 @@ export const championAsset = (name: string | null, preferredImage = '') => {
 };
 
 export const championManifestVersion = championManifest[0]?.version ?? null;
+
+export const championName = (name: string | null) =>
+  name ? (assets.get(compactName(name))?.name ?? name) : null;

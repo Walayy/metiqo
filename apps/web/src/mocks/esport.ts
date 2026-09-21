@@ -48,7 +48,7 @@ function side(teamId: string, color: 'blue' | 'red', seed: number, rosterOffset:
 function maps(
   homeId: string,
   awayId: string,
-  format: EsportMatch['format'],
+  format: NonNullable<EsportMatch['format']>,
   status: EsportMatch['status'],
   seed: number,
   finishedWinnerId: string | null = null,
@@ -112,7 +112,7 @@ const items = opportunities.items
 type WscResult = 'home' | 'away' | null;
 type WscFixture = readonly [string, string, string, WscResult, string];
 
-// Schedule checked on SofaScore on 20 September 2026. The five completed
+// Schedule checked on LoLTV on 20 September 2026. The five completed
 // games retain only the explicit results visible in that source; the rest
 // stay scheduled until a source reports a result.
 const worldStarSchedule: readonly WscFixture[] = [

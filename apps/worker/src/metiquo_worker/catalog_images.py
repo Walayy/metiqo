@@ -10,7 +10,7 @@ from metiquo_core.config import Settings
 from PIL import Image
 
 from metiquo_worker.artifacts import store_bytes, verify_artifact
-from metiquo_worker.sofascore_policy import SofaScorePolicy
+from metiquo_worker.loltv_policy import LoltvPolicy
 
 _decode_lock = threading.Lock()
 
@@ -19,7 +19,7 @@ def image_url(source: str) -> str:
     parsed = urlsplit(source)
     if (
         parsed.scheme not in ("http", "https")
-        or parsed.hostname not in {"static.lolesports.com", "img.sofascore.com"}
+        or parsed.hostname not in {"static.lolesports.com", "cdn.loltv.gg"}
         or parsed.username
         or parsed.password
         or parsed.port not in (None, 80, 443)
@@ -68,7 +68,7 @@ def fetch_image(
     source: str,
     previous: dict[str, object],
     settings: Settings,
-    policy: SofaScorePolicy | None = None,
+    policy: LoltvPolicy | None = None,
 ) -> dict[str, object]:
     url = image_url(source)
     root = settings.artifact_dir
@@ -82,12 +82,12 @@ def fetch_image(
             value = previous.get(cache_key)
             if isinstance(value, str) and value:
                 headers[header] = value
-    if policy is not None and urlsplit(url).hostname == "img.sofascore.com":
+    if policy is not None and urlsplit(url).hostname == "cdn.loltv.gg":
         policy.before_request()
     with client.stream("GET", url, headers=headers) as response:
         if (
             policy is not None
-            and urlsplit(url).hostname == "img.sofascore.com"
+            and urlsplit(url).hostname == "cdn.loltv.gg"
             and response.status_code in {403, 429}
         ):
             raise policy.block(

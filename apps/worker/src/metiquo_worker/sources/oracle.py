@@ -63,7 +63,7 @@ def export_url(settings: Settings, selected: list[SourceFile]) -> str:
         route.abort()
 
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=settings.browser_headless)
+        browser = playwright.chromium.launch(headless=settings.browser_headless, channel="chromium")
         try:
             context = browser.new_context(locale="en-US", accept_downloads=True)
             context.route("https://storage.googleapis.com/drive-bulk-export-anonymous/**", capture)

@@ -1,27 +1,17 @@
-"""Durable publication of rendered SofaScore LoL match snapshots."""
+"""Transactional LoLTV identity reconciliation and immutable publication."""
 
 import copy
 import hashlib
 import json
-import logging
 import re
 from datetime import UTC, datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from metiquo_core.catalog import CATALOG_WRITE_LOCK_ID
-from metiquo_core.config import Settings
-from metiquo_core.models import (
-    EsportMatch,
-    IngestionRun,
-    League,
-    MatchSnapshot,
-    MatchSourceLink,
-    Team,
-)
+from metiquo_core.models import EsportMatch, League, MatchSnapshot, MatchSourceLink, Team
 from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import Session
 
-from metiquo_worker.jobs import source_lock, start_run
 from metiquo_worker.matching import (
     MatchIdentity,
     MatchResolution,
@@ -30,19 +20,8 @@ from metiquo_worker.matching import (
     resolve_team,
     serializable_source_names,
 )
-from metiquo_worker.oracle_match_sync import sync_oracle_match_details
-from metiquo_worker.sofascore_policy import SofaScorePolicy
-from metiquo_worker.sources import sofascore as source
-from metiquo_worker.sources.sofascore import (
-    SOURCE,
-    SofaEvent,
-    SofaLink,
-    SofaScoreBlocked,
-    scrape,
-)
+from metiquo_worker.sources.loltv import SOURCE, LoltvEvent, image_url
 
-logger = logging.getLogger(__name__)
-LOCK_ID = 7_346_810_207
 COMPETITION_PHASE_SUFFIX = re.compile(
     r"\s+(?:regular season|playoffs?|play[ -]?ins?|group stage|qualifiers?|promotion)$"
 )
@@ -50,16 +29,20 @@ COMPETITION_PHASE_SUFFIX = re.compile(
 
 def _source_key(kind: str, value: str) -> str:
     normalized = re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")
-    return f"sofascore:{kind}:{normalized or 'unknown'}"
+    return f"loltv:{kind}:{normalized or 'unknown'}"
 
 
 def _competition_base_name(value: str) -> str:
     normalized = normalize_name(value)
+    normalized = re.sub(r"\s+20\d{2}\b", "", normalized)
+    normalized = re.sub(
+        r"\s+(?:(?:spring|summer|winter|fall|autumn)(?:\s+split)?|split\s+\d+)$", "", normalized
+    )
     normalized = re.sub(r"\s+(?:group|groupe)\s+[a-z0-9]+$", "", normalized).strip()
     return COMPETITION_PHASE_SUFFIX.sub("", normalized).strip()
 
 
-def _competition_brand(event: SofaEvent, leagues: list[League]) -> League | None:
+def _competition_brand(event: LoltvEvent, leagues: list[League]) -> League | None:
     return _competition_brand_from_source(event.competition, event.payload, leagues)
 
 
@@ -69,20 +52,25 @@ def _competition_brand_from_source(
     event_name = normalize_name(name)
     event_base_name = _competition_base_name(name)
     names = {event_base_name}
-    raw = payload.get("event")
-    tournament = raw.get("tournament") if isinstance(raw, dict) else None
-    parent = tournament.get("uniqueTournament") if isinstance(tournament, dict) else None
-    if isinstance(parent, dict):
-        names.update(
-            normalize_name(value)
-            for key in ("name", "slug")
-            if isinstance(value := parent.get(key), str)
-        )
+    raw = payload.get("sourceMatch")
+    stage = raw.get("stage") if isinstance(raw, dict) else None
+    tournament = stage.get("tournament") if isinstance(stage, dict) else None
+    logo = image_url(tournament.get("image")) if isinstance(tournament, dict) else ""
+    official = [
+        candidate for candidate in leagues if not candidate.id.startswith(("loltv:", "sofascore:"))
+    ]
+    same_logo = [
+        candidate
+        for candidate in official
+        if logo and image_url(candidate.data.get("sourceImage")) == logo
+    ]
+    if len(same_logo) == 1:
+        return same_logo[0]
     # Prefer the sourced catalogue brand over a stage with the same label.
     for candidate in sorted(
         leagues,
         key=lambda item: (
-            item.id.startswith("sofascore:"),
+            item.id.startswith(("loltv:", "sofascore:")),
             not bool(item.data.get("image")),
             item.id,
         ),
@@ -99,7 +87,7 @@ def _competition_brand_from_source(
     return None
 
 
-def _ensure_competition(session: Session, event: SofaEvent) -> League:
+def _ensure_competition(session: Session, event: LoltvEvent) -> League:
     competition_id = _source_key("tournament", event.competition_source_id)
     league = session.get(League, competition_id)
     leagues = list(session.scalars(select(League)).all())
@@ -115,11 +103,7 @@ def _ensure_competition(session: Session, event: SofaEvent) -> League:
         )
     ):
         # Exact competitions and WSCI groups share one stable catalogue identity.
-        if (
-            event_name == event_base_name
-            or "world star challengers invitational" in event_base_name
-        ):
-            return brand
+        return brand
     if league is None:
         brand_data = brand.data if brand is not None else {}
         league = League(
@@ -139,7 +123,7 @@ def _ensure_competition(session: Session, event: SofaEvent) -> League:
         session.add(league)
         session.flush()
     elif brand is not None:
-        # SofaScore's tournament object often has no image. Refresh an already
+        # LoLTV's tournament object often has no image. Refresh an already
         # provisioned stage from the versioned catalogue without losing its
         # source identity or stage label.
         brand_data = brand.data
@@ -160,7 +144,7 @@ def _ensure_competition(session: Session, event: SofaEvent) -> League:
 def _ensure_team(
     session: Session,
     teams: list[Team],
-    event: SofaEvent,
+    event: LoltvEvent,
     competition: League,
     *,
     home: bool,
@@ -204,6 +188,14 @@ def _ensure_team(
                 "code": "",
                 "slug": re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-"),
                 "leagueId": competition_id,
+                "leagueAssignment": "participation",
+                "participationEvidence": {
+                    "provider": SOURCE,
+                    "matchId": event.source_id,
+                    "url": event.url,
+                    "leagueId": competition_id,
+                    "startsAt": event.starts_at.isoformat(),
+                },
                 "image": "",
                 "sourceImage": image,
                 "sourceId": source_id,
@@ -272,11 +264,11 @@ def _fingerprint(payload: dict[str, object]) -> str:
     ).hexdigest()
 
 
-def _format(best_of: int) -> str:
-    return f"BO{best_of}" if best_of in {1, 3, 5} else "BO1"
+def _format(best_of: int | None) -> str | None:
+    return f"BO{best_of}" if best_of in {1, 3, 5} else None
 
 
-def _rendered_maps(event: SofaEvent, home_team: Team, away_team: Team) -> list[dict[str, object]]:
+def _rendered_maps(event: LoltvEvent, home_team: Team, away_team: Team) -> list[dict[str, object]]:
     rendered = event.payload.get("rendered")
     source_maps = rendered.get("maps") if isinstance(rendered, dict) else None
     if not isinstance(source_maps, list):
@@ -334,6 +326,8 @@ def _rendered_maps(event: SofaEvent, home_team: Team, away_team: Team) -> list[d
         result.append(
             {
                 "number": source_map.get("number"),
+                "sourceGameId": source_map.get("sourceGameId"),
+                "sourceObservedAt": source_map.get("sourceObservedAt"),
                 "status": source_map.get("status"),
                 "durationSeconds": source_map.get("durationSeconds"),
                 "winnerId": winner_id,
@@ -344,7 +338,7 @@ def _rendered_maps(event: SofaEvent, home_team: Team, away_team: Team) -> list[d
     return result
 
 
-def _payload(event: SofaEvent, home_team: Team, away_team: Team) -> dict[str, object]:
+def _payload(event: LoltvEvent, home_team: Team, away_team: Team) -> dict[str, object]:
     result = copy.deepcopy(event.payload)
     current_score = None
     if event.home_score is not None and event.away_score is not None:
@@ -362,7 +356,7 @@ def _payload(event: SofaEvent, home_team: Team, away_team: Team) -> dict[str, ob
             "currentScore": current_score,
             "maps": maps,
             "seriesScore": series_score,
-            "patch": None,
+            "patch": event.payload.get("patch"),
             "stage": event.competition,
             "matchIdentity": {
                 "home": event.home_name,
@@ -374,88 +368,9 @@ def _payload(event: SofaEvent, home_team: Team, away_team: Team) -> dict[str, ob
     return result
 
 
-def _known_stable_event_ids(session: Session, now: datetime, settings: Settings) -> set[str]:
-    rows = session.execute(
-        select(
-            MatchSourceLink.source_id,
-            EsportMatch.starts_at,
-            MatchSnapshot.status,
-            MatchSourceLink.last_seen_at,
-            MatchSnapshot.payload,
-        )
-        .join(EsportMatch, EsportMatch.id == MatchSourceLink.match_id)
-        .join(MatchSnapshot, MatchSnapshot.match_id == EsportMatch.id)
-        .where(
-            MatchSourceLink.provider == SOURCE,
-            MatchSnapshot.source == SOURCE,
-            EsportMatch.starts_at >= now - timedelta(days=8),
-            EsportMatch.starts_at <= now + timedelta(days=8),
-        )
-        .distinct(MatchSourceLink.source_id)
-        .order_by(
-            MatchSourceLink.source_id, MatchSnapshot.observed_at.desc(), MatchSnapshot.id.desc()
-        )
-    ).all()
-    seen: set[str] = set()
-    stable: set[str] = set()
-    for source_id, starts_at, status, observed_at, payload in rows:
-        if source_id in seen:
-            continue
-        seen.add(source_id)
-        maps = payload.get("maps") if isinstance(payload, dict) else None
-        if (
-            status == "finished"
-            and isinstance(maps, list)
-            and bool(maps)
-            and observed_at > now - timedelta(seconds=settings.sofascore_finished_refresh_seconds)
-        ) or (
-            status == "scheduled"
-            and starts_at > now + timedelta(minutes=30)
-            and observed_at > now - timedelta(seconds=settings.sofascore_upcoming_refresh_seconds)
-        ):
-            stable.add(source_id)
-    return stable
-
-
-def _restore_known_links(session: Session, now: datetime) -> None:
-    """Existing fixtures remain refreshable even if absent from today's listing."""
-    start = datetime.combine(
-        now.astimezone(source.PARIS).date() - timedelta(days=7), datetime.min.time(), source.PARIS
-    )
-    rows = session.execute(
-        select(MatchSourceLink, EsportMatch.starts_at, MatchSnapshot.status)
-        .join(EsportMatch, EsportMatch.id == MatchSourceLink.match_id)
-        .join(MatchSnapshot, MatchSnapshot.match_id == EsportMatch.id)
-        .where(
-            MatchSourceLink.provider == SOURCE,
-            MatchSnapshot.source == SOURCE,
-            EsportMatch.starts_at >= start,
-            EsportMatch.starts_at < start + timedelta(days=15),
-            func.coalesce(
-                MatchSnapshot.payload["event"]["tournament"]["category"]["slug"].astext, "lol"
-            )
-            == "lol",
-        )
-        .distinct(MatchSourceLink.source_id)
-        .order_by(
-            MatchSourceLink.source_id, MatchSnapshot.observed_at.desc(), MatchSnapshot.id.desc()
-        )
-    ).all()
-    links = dict(source._STATE.links or {})
-    live_ids = []
-    for link, starts_at, status in rows:
-        links[link.source_id] = SofaLink(
-            link.source_url, link.source_id, starts_at.astimezone(source.PARIS).date(), ""
-        )
-        if status == "live":
-            live_ids.append(link.source_id)
-    source._STATE.links = links
-    source._STATE.priority_live_ids = live_ids
-
-
 def _save_event(
     session: Session,
-    event: SofaEvent,
+    event: LoltvEvent,
     competition: League,
     home_team: Team,
     away_team: Team,
@@ -489,21 +404,30 @@ def _save_event(
     if linked_match is not None:
         match = linked_match
         created = False
-        match.home_id = home_team.id
-        match.away_id = away_team.id
-        match.league_id = competition.id
     else:
-        # A stable SofaScore event id always represents a schedulable match.
+        # A stable LoLTV event id always represents a schedulable match.
         # Resolution is only used to reuse a match from another provider; a
-        # different SofaScore id must never collapse onto an earlier fixture.
+        # different LoLTV id must never collapse onto an earlier fixture.
+        already_linked = set(
+            session.scalars(
+                select(MatchSourceLink.match_id).where(MatchSourceLink.provider == SOURCE)
+            )
+        )
         resolution = resolve_match(
             identity,
             teams,
             leagues,
-            [candidate for candidate in existing if candidate.source != SOURCE],
+            [
+                candidate
+                for candidate in existing
+                if candidate.source != SOURCE and candidate.id not in already_linked
+            ],
         )
         match = resolution.existing_match if resolution is not None else None
         created = match is None
+    reversed_order = (
+        match is not None and match.home_id == away_team.id and match.away_id == home_team.id
+    )
     if match is None:
         match = EsportMatch(
             id=uuid4(),
@@ -521,10 +445,12 @@ def _save_event(
         existing.append(match)
     else:
         match.starts_at = event.starts_at
-        match.format = _format(event.best_of)
+        if event.best_of is not None:
+            match.format = _format(event.best_of)
         match.league_id = competition.id
-        match.home_id = home_team.id
-        match.away_id = away_team.id
+        if not reversed_order:
+            match.home_id = home_team.id
+            match.away_id = away_team.id
 
     names = serializable_source_names(identity)
     names.update(
@@ -532,6 +458,7 @@ def _save_event(
             "competitionSourceId": event.competition_source_id,
             "homeSourceId": event.home_source_id,
             "awaySourceId": event.away_source_id,
+            "resolution": resolution.reason if resolution is not None else "source-id",
         }
     )
     if link is None:
@@ -552,6 +479,11 @@ def _save_event(
         link.source_names = names
         link.last_seen_at = now
     payload = _payload(event, home_team, away_team)
+    if reversed_order:
+        for field in ("currentScore", "seriesScore"):
+            score = payload.get(field)
+            if isinstance(score, dict):
+                payload[field] = {"home": score["away"], "away": score["home"]}
     digest = _fingerprint(payload)
     latest_digest = session.scalar(
         select(MatchSnapshot.sha256)
@@ -575,137 +507,41 @@ def _save_event(
     return True, created
 
 
-def sync_sofascore(engine: Engine, settings: Settings) -> UUID:
-    with source_lock(engine, LOCK_ID):
-        policy = SofaScorePolicy(engine, settings)
-        policy.check()
-        source._POLICY = policy
-        source._BLOCK_ERROR = None
-        source.restore_checkpoint(policy.read().get("checkpoint"))
-        try:
-            return _sync_sofascore(engine, settings)
-        finally:
-            try:
-                source.idle_browser()
-                policy.checkpoint(source.checkpoint())
-            finally:
-                source._POLICY = None
-                source._BLOCK_ERROR = None
-
-
-def _sync_sofascore(engine: Engine, settings: Settings) -> UUID:
-    run_id = start_run(engine, SOURCE, "days:-7..+7")
-    started_at = datetime.now(UTC)
-    try:
-        with Session(engine) as session:
-            known_stable_ids = _known_stable_event_ids(session, started_at, settings)
-            _restore_known_links(session, started_at)
-        blocked: SofaScoreBlocked | None = None
-        try:
-            events = scrape(settings, known_stable_ids=known_stable_ids)
-            if source._POLICY is not None:
-                source._POLICY.check()
-        except SofaScoreBlocked as error:
-            # Publish observations completed before a later source refusal.
-            # Never count old cache entries as newly fetched matches.
-            blocked = error
-            events = list(source._STATE.fresh or [])
-        observed_at = datetime.now(UTC)
-        with Session(engine) as session, session.begin():
-            session.execute(select(func.pg_advisory_xact_lock(CATALOG_WRITE_LOCK_ID)))
-            teams = list(session.scalars(select(Team)).all())
-            leagues = list(session.scalars(select(League)).all())
-            existing = list(session.scalars(select(EsportMatch)).all())
-            matched = 0
-            created = 0
-            for event in events:
-                competition = _ensure_competition(session, event)
-                if all(league.id != competition.id for league in leagues):
-                    leagues.append(competition)
-                home_team = _ensure_team(session, teams, event, competition, home=True)
-                away_team = _ensure_team(session, teams, event, competition, home=False)
-                did_match, did_create = _save_event(
-                    session,
-                    event,
-                    competition,
-                    home_team,
-                    away_team,
-                    teams,
-                    leagues,
-                    existing,
-                    observed_at,
+def _publish_events(engine: Engine, events: list[LoltvEvent]) -> tuple[int, int]:
+    observed_at = datetime.now(UTC)
+    with Session(engine) as session, session.begin():
+        session.execute(select(func.pg_advisory_xact_lock(CATALOG_WRITE_LOCK_ID)))
+        teams = list(session.scalars(select(Team)).all())
+        leagues = list(session.scalars(select(League)).all())
+        existing = list(
+            session.scalars(
+                select(EsportMatch).where(
+                    EsportMatch.starts_at
+                    >= min(event.starts_at for event in events) - timedelta(hours=72),
+                    EsportMatch.starts_at
+                    <= max(event.starts_at for event in events) + timedelta(hours=72),
                 )
-                matched += int(did_match)
-                created += int(did_create)
-            details: dict[str, object] = {
-                "events": len(events),
-                "matched": matched,
-                "created": created,
-                "live": sum(event.status == "live" for event in events),
-                "unmatched": len(events) - matched,
-            }
-            run = session.get(IngestionRun, run_id)
-            assert run is not None
-            run.status = "succeeded"
-            run.finished_at = datetime.now(UTC)
-            run.details = details
-        source._STATE.fresh = []
-        # A live page can be the last observation before SofaScore stops
-        # listing the event. Oracle may already contain the completed maps;
-        # include live events in the reconciliation so the next collection
-        # can backfill them immediately.
-        detail_source_ids = {
-            event.source_id for event in events if event.status in {"live", "finished"}
-        }
-        match_ids: set[UUID] = set()
-        if detail_source_ids:
-            with Session(engine) as session:
-                match_ids = set(
-                    session.scalars(
-                        select(MatchSourceLink.match_id).where(
-                            MatchSourceLink.provider == SOURCE,
-                            MatchSourceLink.source_id.in_(detail_source_ids),
-                        )
-                    ).all()
-                )
-        if match_ids:
-            try:
-                match_details = sync_oracle_match_details(
-                    engine, match_ids=match_ids, source_timezone=settings.oracle_date_timezone
-                )
-            except Exception as error:
-                match_details = {"status": "failed", "error": type(error).__name__}
-                logger.exception("Oracle match detail projection failed after SofaScore sync")
-            with Session(engine) as session, session.begin():
-                run = session.get(IngestionRun, run_id)
-                assert run is not None
-                run.details = {**details, "matchDetails": match_details}
-        if blocked is not None:
-            raise blocked
-        if source._POLICY is not None and events:
-            source._POLICY.healthy()
-        return run_id
-    except Exception as error:
-        # If publication failed, the cache must not suppress another attempt.
-        for event in source._STATE.fresh or []:
-            (source._STATE.event_fetched_at or {}).pop(event.source_id, None)
-            # Unpublished completed maps must not suppress their next DOM read.
-            (source._STATE.events or {}).pop(event.source_id, None)
-        with Session(engine) as session, session.begin():
-            run = session.get(IngestionRun, run_id)
-            assert run is not None
-            run.status = "failed"
-            run.finished_at = datetime.now(UTC)
-            run.error = str(error) if isinstance(error, SofaScoreBlocked) else type(error).__name__
-            if isinstance(error, SofaScoreBlocked):
-                run.details = {
-                    **run.details,
-                    "blocked": True,
-                    "reason": error.reason,
-                    "httpStatus": error.status,
-                    "retryAt": error.retry_at,
-                }
-        if isinstance(error, SofaScoreBlocked):
-            raise
-        detail = str(error) if isinstance(error, SofaScoreBlocked) else type(error).__name__
-        raise RuntimeError(f"SofaScore collection failed: {detail}") from None
+            ).all()
+        )
+        matched = 0
+        created = 0
+        for event in events:
+            competition = _ensure_competition(session, event)
+            if all(league.id != competition.id for league in leagues):
+                leagues.append(competition)
+            home_team = _ensure_team(session, teams, event, competition, home=True)
+            away_team = _ensure_team(session, teams, event, competition, home=False)
+            did_match, did_create = _save_event(
+                session,
+                event,
+                competition,
+                home_team,
+                away_team,
+                teams,
+                leagues,
+                existing,
+                observed_at,
+            )
+            matched += int(did_match)
+            created += int(did_create)
+    return matched, created

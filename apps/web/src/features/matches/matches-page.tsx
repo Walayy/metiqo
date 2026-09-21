@@ -375,7 +375,7 @@ export function MatchesPage({
                             >
                               <span className="fixture-time">
                                 <time dateTime={match.startsAt}>{time(match.startsAt)}</time>
-                                <small>{match.format}</small>
+                                <small>{match.format ?? 'Format inconnu'}</small>
                               </span>
                               <span
                                 className={clsx(

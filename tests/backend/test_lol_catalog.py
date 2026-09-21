@@ -193,8 +193,8 @@ def test_logo_destinations_are_limited_to_official_source(url):
         image_url(url)
 
 
-def test_sofascore_rendered_logo_host_is_approved() -> None:
-    url = "https://img.sofascore.com/api/v1/team/363905/image"
+def test_loltv_rendered_logo_host_is_approved() -> None:
+    url = "https://cdn.loltv.gg/teams/example.png"
     assert image_url(url) == url
 
 
@@ -204,7 +204,7 @@ def test_catalog_retains_observed_source_identities_without_inventing_affiliatio
         document,
         [
             {
-                "id": "sofascore:tournament:42",
+                "id": "loltv:tournament:42",
                 "slug": "observed-cup",
                 "name": "Observed Cup",
                 "region": "INTERNATIONAL",
@@ -216,22 +216,22 @@ def test_catalog_retains_observed_source_identities_without_inventing_affiliatio
         ],
         [
             {
-                "id": "sofascore:team:7",
+                "id": "loltv:team:7",
                 "name": "Observed Team",
                 "code": "",
                 "slug": "observed-team",
-                "leagueId": "sofascore:tournament:42",
+                "leagueId": "loltv:tournament:42",
                 "image": "",
                 "sourceImage": "",
-                "sourceImages": {"sofascore": ["https://img.sofascore.com/api/v1/team/7/image"]},
+                "sourceImages": {"loltv": ["https://cdn.loltv.gg/teams/team-7.png"]},
             }
         ],
     )
 
     catalog = document["catalog"]
-    team = next(item for item in catalog["teams"] if item["id"] == "sofascore:team:7")
-    assert team["leagueId"] == "sofascore:tournament:42"
-    assert team["sourceImage"].endswith("/team/7/image")
+    team = next(item for item in catalog["teams"] if item["id"] == "loltv:team:7")
+    assert team["leagueId"] == "loltv:tournament:42"
+    assert team["sourceImage"].endswith("/teams/team-7.png")
     assert document["coverage"]["retainedKnownTeams"] == 1
 
 

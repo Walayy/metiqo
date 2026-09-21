@@ -25,7 +25,7 @@ def test_quote_requires_timezone():
 
 def test_catalog_projection_keeps_source_metadata_private():
     stored = {
-        "id": "sofascore:tournament:90739",
+        "id": "loltv:tournament:90739",
         "slug": "vcs",
         "name": "VCS",
         "region": "INTERNATIONAL",

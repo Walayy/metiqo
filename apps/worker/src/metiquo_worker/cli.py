@@ -14,8 +14,8 @@ from sqlalchemy.orm import Session
 
 from metiquo_worker.catalog_sync import sync_catalog
 from metiquo_worker.ingestion import SOURCE, CollectionBusy, collect
+from metiquo_worker.loltv_sync import sync_loltv
 from metiquo_worker.scheduler import serve_schedules
-from metiquo_worker.sofascore_sync import sync_sofascore
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ def main() -> None:
     scheduler.add_argument(
         "--only",
         action="append",
-        choices=["lol-catalog", "oracles-elixir", "sofascore"],
+        choices=["lol-catalog", "oracles-elixir", "loltv"],
         help="Schedule only the selected source (repeatable)",
     )
     catalog = commands.add_parser(
@@ -104,13 +104,13 @@ def main() -> None:
         "--latest", action="store_true", help="Latest discovered year; default is all years"
     )
     commands.add_parser(
-        "sync-sofascore-matches",
-        help="Scrape les matchs LoL SofaScore de J-7 à J+7 et les directs",
+        "sync-loltv-matches",
+        help="Scrape les matchs LoL LoLTV de J-7 à J+7 et les directs",
     )
     args = parser.parse_args()
     settings = Settings()
-    if args.command == "sync-sofascore-matches" and not settings.sofascore_enabled:
-        settings.sofascore_enabled = True
+    if args.command == "sync-loltv-matches":
+        settings.loltv_enabled = True
     logging.basicConfig(
         level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s"
     )
@@ -125,7 +125,7 @@ def main() -> None:
                     run_id = sync_catalog(
                         engine, settings, allow_coverage_drop=args.allow_coverage_drop
                     )
-                elif args.command == "sync-oracles-elixir":
+                elif args.command in {"sync-oracles-elixir", "collect"}:
                     run_id = collect(
                         engine,
                         settings,
@@ -133,7 +133,7 @@ def main() -> None:
                         latest=args.latest,
                     )
                 else:
-                    run_id = sync_sofascore(engine, settings)
+                    run_id = sync_loltv(engine, settings)
                 with Session(engine) as session:
                     run = session.get(IngestionRun, run_id)
                     assert run is not None
@@ -148,6 +148,8 @@ def main() -> None:
                             }
                         )
                     )
+                    if run.status == "failed":
+                        parser.exit(1, "Collection finished with source errors.\n")
             except CollectionBusy as error:
                 parser.exit(75, f"Collection busy: {error}\n")
             except (RuntimeError, ValueError) as error:

@@ -16,7 +16,7 @@ def _maps(*winners: str) -> list[dict[str, object]]:
 def _match() -> EsportMatch:
     return EsportMatch(
         id=uuid4(),
-        source="sofascore",
+        source="loltv",
         source_id="source-match",
         league_id="league",
         home_id="home",
@@ -83,9 +83,9 @@ def test_live_snapshot_accepts_finished_and_in_progress_map_details() -> None:
     snapshot = MatchSnapshot(
         id=uuid4(),
         match_id=match.id,
-        source="sofascore",
+        source="loltv",
         source_id="source-match",
-        source_url="https://www.sofascore.com/fr/esports/match/example#id:1",
+        source_url="https://loltv.gg/match/test-1",
         status="live",
         observed_at=datetime(2026, 9, 20, tzinfo=UTC),
         sha256="b" * 64,

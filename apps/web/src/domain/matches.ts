@@ -46,6 +46,7 @@ const banSchema = z
 const mapSchema = z
   .object({
     number: z.number().int().min(1).max(5),
+    updatedAt: z.iso.datetime({ offset: true }).optional(),
     status: z.enum(['scheduled', 'live', 'finished', 'skipped']),
     durationSeconds: count.nullable(),
     winnerId: z.string().nullable(),
@@ -84,7 +85,7 @@ export const matchSchema = z
     awayId: z.string(),
     startsAt: z.iso.datetime({ offset: true }),
     updatedAt: z.iso.datetime({ offset: true }),
-    format: z.enum(['BO1', 'BO3', 'BO5']),
+    format: z.enum(['BO1', 'BO3', 'BO5']).nullable(),
     status: z.enum(['scheduled', 'live', 'finished', 'cancelled', 'postponed']),
     patch: z.string().nullable(),
     stage: z.string().nullable(),
@@ -98,7 +99,7 @@ export const matchSchema = z
       new Set(match.maps.map((m) => m.number)).size !== match.maps.length ||
       match.maps.some(
         (m) =>
-          m.number > Number(match.format.slice(2)) ||
+          (match.format !== null && m.number > Number(match.format.slice(2))) ||
           m.sides.some((s) => ![match.homeId, match.awayId].includes(s.teamId)),
       )
     )
@@ -111,7 +112,7 @@ export const matchSchema = z
       (match.status !== 'live' && match.maps.some((m) => m.status === 'live'))
     )
       ctx.addIssue({ code: 'custom', message: 'État du direct incohérent.' });
-    const target = Math.ceil(Number(match.format.slice(2)) / 2);
+    const target = match.format ? Math.ceil(Number(match.format.slice(2)) / 2) : Infinity;
     const scores = [match.homeId, match.awayId].map(
       (id) => match.maps.filter((map) => map.winnerId === id).length,
     );
@@ -135,6 +136,7 @@ export const matchSchema = z
         scores[1]! > score.away ||
         Math.max(score.home, score.away) > target ||
         (match.status === 'finished' &&
+          match.format !== null &&
           (Math.max(score.home, score.away) !== target || score.home === score.away)) ||
         (match.status === 'live' && Math.max(score.home, score.away) >= target) ||
         (match.status === 'scheduled' && (score.home !== 0 || score.away !== 0)))
@@ -163,7 +165,7 @@ export const seriesScore = (match: EsportMatch, teamId: string) =>
       : (match.seriesScore ?? match.currentScore)!.away
     : match.maps.filter((map) => map.winnerId === teamId).length;
 export const matchWinnerId = (match: EsportMatch) => {
-  if (match.status !== 'finished') return null;
+  if (match.status !== 'finished' || match.format === null) return null;
   const target = Math.ceil(Number(match.format.slice(2)) / 2);
   const homeScore = seriesScore(match, match.homeId);
   const awayScore = seriesScore(match, match.awayId);

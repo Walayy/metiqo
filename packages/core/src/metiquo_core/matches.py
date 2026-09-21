@@ -21,6 +21,11 @@ def merge_completed_map(
         or current.get("status") != "finished"
         or previous.get("winnerId") != current.get("winnerId")
         or previous.get("number") != current.get("number")
+        or (
+            previous.get("sourceGameId")
+            and current.get("sourceGameId")
+            and previous["sourceGameId"] != current["sourceGameId"]
+        )
     ):
         return result
     if result.get("durationSeconds") is None:
@@ -51,6 +56,11 @@ def merge_completed_map(
                 side[key] = old.get(key)
         players, old_players = side.get("players"), old.get("players")
         if not isinstance(players, list) or not isinstance(old_players, list):
+            continue
+        if not players and len(old_players) == 5:
+            side["players"] = deepcopy(old_players)
+            if previous.get("updatedAt"):
+                result["updatedAt"] = previous["updatedAt"]
             continue
         for player in players:
             if not isinstance(player, dict):
@@ -136,7 +146,7 @@ def unique_bans(value: object) -> list[dict[str, object]]:
 
 
 def completed_series_summary(
-    maps: object, home_id: str, away_id: str, format_name: str
+    maps: object, home_id: str, away_id: str, format_name: str | None
 ) -> tuple[str, int, int] | None:
     """Validate completion against the independently sourced series format.
 
@@ -144,8 +154,14 @@ def completed_series_summary(
     Never infer a smaller format from a partial historical import.
     """
 
-    target = {"BO1": 1, "BO3": 2, "BO5": 3}.get(format_name)
-    if target is None or not isinstance(maps, list) or not maps or home_id == away_id:
+    target = {"BO1": 1, "BO3": 2, "BO5": 3}.get(format_name or "")
+    if (
+        format_name is None
+        or target is None
+        or not isinstance(maps, list)
+        or not maps
+        or home_id == away_id
+    ):
         return None
     games: list[tuple[int, str]] = []
     for item in maps:

@@ -74,7 +74,7 @@ def test_scheduler_coalesces_missed_runs_and_continues_after_failure(database, m
 
     monkeypatch.setattr(scheduler, "sync_catalog", fail)
     monkeypatch.setattr(scheduler, "collect", collect)
-    monkeypatch.setattr(scheduler, "sync_sofascore", fail)
+    monkeypatch.setattr(scheduler, "sync_loltv", fail)
     for _ in range(2):
         scheduler.tick(engine, settings, list(scheduler.SCRIPTS), threading.Event())
     assert sorted(calls) == [False, True]

@@ -226,7 +226,7 @@ class EsportMatch(Base):
     away_id: Mapped[str] = mapped_column(ForeignKey("teams.id"))
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     registered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    format: Mapped[str]
+    format: Mapped[str | None]
     __table_args__ = (
         UniqueConstraint("source", "source_id"),
         CheckConstraint("home_id <> away_id"),

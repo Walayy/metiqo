@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 from pydantic import Field, SecretStr, field_validator
@@ -23,21 +24,25 @@ class Settings(BaseSettings):
     browser_headless: bool = True
     # Docker enables it explicitly; local commands stay opt-in to avoid an
     # unexpected browser launch during unrelated worker tests and tooling.
-    sofascore_enabled: bool = False
-    sofascore_timeout_seconds: int = Field(default=45, ge=10, le=180)
-    sofascore_browser_profile_dir: Path = Path(".cache/backend/sofascore-browser")
-    # All due pages in the window are visited sequentially, without a count cap.
-    sofascore_min_delay_seconds: float = Field(default=15.0, ge=10, le=300)
-    sofascore_max_delay_seconds: float = Field(default=30.0, ge=10, le=600)
-    sofascore_listing_interval_seconds: int = Field(default=180, ge=60, le=86400)
-    sofascore_past_listing_interval_seconds: int = Field(default=3600, ge=300, le=604800)
-    sofascore_future_listing_interval_seconds: int = Field(default=900, ge=300, le=604800)
-    sofascore_scheduled_refresh_seconds: int = Field(default=180, ge=60, le=3600)
-    sofascore_live_refresh_seconds: int = Field(default=120, ge=60, le=900)
-    sofascore_upcoming_refresh_seconds: int = Field(default=900, ge=300, le=86400)
-    sofascore_finished_refresh_seconds: int = Field(default=3600, ge=300, le=604800)
-    sofascore_incomplete_refresh_seconds: int = Field(default=300, ge=60, le=86400)
-    sofascore_block_cooldown_seconds: int = Field(default=900, ge=60, le=86_400)
+    loltv_enabled: bool = False
+    loltv_timeout_seconds: int = Field(default=30, ge=5, le=120)
+    loltv_browser_profile_dir: Path = Path(".cache/backend/loltv-browser")
+    loltv_browser_channel: Literal["chromium", "chrome"] = "chromium"
+    loltv_feed_enabled: bool = True
+    loltv_render_live: bool = False
+    loltv_min_delay_seconds: float = Field(default=2, ge=1, le=60)
+    loltv_max_delay_seconds: float = Field(default=4, ge=1, le=120)
+    loltv_listing_interval_seconds: int = Field(default=60, ge=30, le=3600)
+    loltv_results_interval_seconds: int = Field(default=300, ge=60, le=86400)
+    loltv_future_listing_interval_seconds: int = Field(default=900, ge=300, le=86400)
+    loltv_live_refresh_seconds: int = Field(default=30, ge=30, le=900)
+    loltv_finished_refresh_seconds: int = Field(default=21600, ge=900, le=604800)
+    loltv_incomplete_refresh_seconds: int = Field(default=900, ge=300, le=86400)
+    loltv_block_cooldown_seconds: int = Field(default=900, ge=60, le=86400)
+    loltv_request_budget: int = Field(default=120, ge=10, le=600)
+    loltv_browser_request_budget: int = Field(default=600, ge=50, le=3000)
+    loltv_budget_window_seconds: int = Field(default=600, ge=60, le=3600)
+    loltv_cycle_seconds: int = Field(default=90, ge=15, le=600)
     catalog_enabled: bool = True
     catalog_interval_seconds: int = Field(default=86400, ge=300)
     catalog_max_pages: int = Field(default=200, ge=1, le=2000)

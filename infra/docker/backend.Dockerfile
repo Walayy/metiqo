@@ -20,10 +20,22 @@ USER 10001:10001
 EXPOSE 8000
 CMD ["uvicorn", "metiquo_api.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
 
+FROM base AS test
+RUN uv sync --frozen --no-install-workspace
+COPY packages/core packages/core
+COPY apps/api apps/api
+COPY apps/worker apps/worker
+COPY alembic.ini ./
+COPY migrations migrations
+COPY tests/backend tests/backend
+RUN uv sync --frozen
+ENV PATH="/app/.venv/bin:$PATH"
+CMD ["pytest", "-m", "integration", "-q"]
+
 FROM base AS worker
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/browsers
 RUN uv sync --frozen --no-dev --package metiquo-worker --no-install-workspace \
-    && uv run --no-sync patchright install --with-deps chromium \
+    && uv run --no-sync patchright install --with-deps --no-shell chromium \
     && groupadd --gid 10001 metiquo && useradd --uid 10001 --gid 10001 --create-home metiquo \
     && mkdir -p /data/artifacts /data/browser && chown -R 10001:10001 /data /opt/browsers
 COPY packages/core packages/core

@@ -27,8 +27,8 @@ from sqlalchemy.orm import Session
 from metiquo_worker.artifacts import store_bytes
 from metiquo_worker.catalog_images import cache_valid, fetch_image, read_response
 from metiquo_worker.jobs import fail_run, source_lock, start_run
-from metiquo_worker.sofascore_policy import SofaScorePolicy
-from metiquo_worker.sofascore_sync import _competition_brand_from_source
+from metiquo_worker.loltv_policy import LoltvPolicy
+from metiquo_worker.loltv_publication import _competition_brand_from_source
 from metiquo_worker.sources.lol import ROOT_URL, SOURCE, Reference, parse_page, text
 
 logger = logging.getLogger(__name__)
@@ -83,10 +83,10 @@ def retain_known_identities(
         if not enriched.get("sourceImage"):
             source_images = enriched.get("sourceImages")
             if isinstance(source_images, dict):
-                sofa_images = source_images.get("sofascore")
-                if isinstance(sofa_images, list):
+                live_images = source_images.get("loltv")
+                if isinstance(live_images, list):
                     enriched["sourceImage"] = next(
-                        (value for value in sofa_images if isinstance(value, str) and value), ""
+                        (value for value in live_images if isinstance(value, str) and value), ""
                     )
         try:
             item = TeamData.model_validate(
@@ -106,13 +106,13 @@ def retain_known_identities(
 
 
 def repair_known_brands(session: Session, leagues: list[League]) -> list[dict[str, object]]:
-    """Reuse stored source parent metadata; no extra SofaScore navigation."""
+    """Reuse stored source parent metadata; no extra LoLTV navigation."""
     payloads = {
         league_id: payload
         for league_id, payload in session.execute(
             select(EsportMatch.league_id, MatchSnapshot.payload)
             .join(MatchSnapshot, MatchSnapshot.match_id == EsportMatch.id)
-            .where(MatchSnapshot.source == "sofascore")
+            .where(MatchSnapshot.source == "loltv")
             .distinct(EsportMatch.league_id)
             .order_by(
                 EsportMatch.league_id, MatchSnapshot.observed_at.desc(), MatchSnapshot.id.desc()
@@ -176,7 +176,7 @@ def attach_images(
     document: dict[str, object],
     cache: dict[str, object],
     settings: Settings,
-    policy: SofaScorePolicy | None = None,
+    policy: LoltvPolicy | None = None,
 ) -> dict[str, object]:
     catalog = Catalog.model_validate(document["catalog"])
     assets: list[LeagueData | TeamData] = [*catalog.leagues, *catalog.teams]
@@ -325,12 +325,13 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
                 if previous_catalog:
                     if not isinstance(previous_leagues, int):
                         previous_leagues = sum(
-                            not item.id.startswith("sofascore:")
+                            not item.id.startswith(("sofascore:", "loltv:"))
                             for item in previous_catalog.leagues
                         )
                     if not isinstance(previous_teams, int):
                         previous_teams = sum(
-                            not item.id.startswith("sofascore:") for item in previous_catalog.teams
+                            not item.id.startswith(("sofascore:", "loltv:"))
+                            for item in previous_catalog.teams
                         )
                 with Session(engine) as session, session.begin():
                     session.execute(
@@ -358,7 +359,7 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
                 retain_known_identities(document, known_leagues, known_teams)
                 stage = "logos"
                 images = attach_images(
-                    client, document, cache, settings, SofaScorePolicy(engine, settings)
+                    client, document, cache, settings, LoltvPolicy(engine, settings)
                 )
             stage = "database publication"
             with Session(engine) as session, session.begin():

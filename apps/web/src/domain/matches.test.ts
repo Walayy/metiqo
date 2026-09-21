@@ -5,6 +5,19 @@ import { countdown, matchSchema, matchWinnerId, seriesScore, sideKills, sideGold
 import { performanceSchema } from '@/features/performance/simulation';
 describe('Rencontres et données de simulation', () => {
   const live = matches.items.find((m) => m.status === 'live')!;
+  it('conserve un format inconnu sans déduire de vainqueur ou de cartes manquantes', () => {
+    const finished = matches.items.find((m) => m.status === 'finished')!;
+    const partial = {
+      ...finished,
+      format: null,
+      maps: finished.maps.filter((m) => m.status === 'finished'),
+    };
+    expect(matchSchema.safeParse(partial).success).toBe(true);
+    expect(matchWinnerId(partial)).toBeNull();
+    expect(
+      matchSchema.safeParse({ ...partial, maps: [{ ...partial.maps[0], number: 6 }] }).success,
+    ).toBe(false);
+  });
   it('dérive le score des cartes terminées uniquement', () => {
     expect(seriesScore(live, live.homeId)).toBe(1);
     expect(seriesScore(live, live.awayId)).toBe(0);

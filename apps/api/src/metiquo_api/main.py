@@ -17,7 +17,6 @@ from metiquo_core.db import create_db
 from metiquo_core.matches import (
     completed_series_summary,
     merge_completed_map,
-    source_game,
     unique_bans,
 )
 from metiquo_core.models import (
@@ -113,7 +112,7 @@ def _match_maps(
         return []
     by_number: dict[int, dict[str, object]] = {}
     format_name = _snapshot_format(snapshot, match)
-    if format_name is None:
+    if format_name is None and snapshot.source != "loltv":
         return []
     for observation in history:
         maps = observation.payload.get("maps")
@@ -123,7 +122,9 @@ def _match_maps(
             if not isinstance(item, dict):
                 continue
             number = item.get("number")
-            if not isinstance(number, int) or not 1 <= number <= int(format_name[2:]):
+            if not isinstance(number, int) or not 1 <= number <= (
+                int(format_name[2:]) if format_name else 5
+            ):
                 continue
             sides = item.get("sides")
             if not isinstance(sides, list) or len(sides) != 2:
@@ -133,19 +134,31 @@ def _match_maps(
                 match.away_id,
             }:
                 continue
-            if item.get("status") == "live" and (status != "live" or observation.id != snapshot.id):
-                continue
-            # Legacy SofaScore records assigned blue/red from home/away order.
-            # Those labels were never sourced and must not be displayed as facts.
+            if item.get("status") == "live":
+                current_score = _snapshot_score(snapshot, match)
+                if (
+                    status != "live"
+                    or _snapshot_score(observation, match) != current_score
+                    or not isinstance(current_score, dict)
+                    or number != current_score.get("home", 0) + current_score.get("away", 0) + 1
+                ):
+                    continue
             normalized: dict[str, object] = {
                 **item,
                 "bans": unique_bans(item.get("bans")),
-                "sides": [
-                    {**side, "side": None} if observation.source == "sofascore" else side
-                    for side in sides
-                ],
+                "sides": sides,
+                "updatedAt": item.get("sourceObservedAt") or observation.observed_at.isoformat(),
             }
-            by_number[number] = merge_completed_map(by_number.get(number, {}), normalized)
+            previous = by_number.get(number, {})
+            if (
+                normalized.get("status") == previous.get("status") == "live"
+                and normalized.get("sourceGameId")
+                and normalized.get("sourceGameId") == previous.get("sourceGameId")
+                and all(not side.get("players") for side in sides)
+            ):
+                # A metadata refresh cannot erase or re-date the last live frame.
+                continue
+            by_number[number] = merge_completed_map(previous, normalized)
     maps_out = [by_number[number] for number in sorted(by_number)]
     score = _snapshot_score(snapshot, match)
     if isinstance(score, dict) and any(
@@ -257,9 +270,9 @@ def create_app(
                 for item in team_items
                 if isinstance(item, dict) and "id" in item
             }
-            # SofaScore can expose a cross-region tournament before the next
+            # LoLTV can expose a cross-region tournament before the next
             # Riot catalog publication. Keep the Riot version immutable, but
-            # expose newly sourced SofaScore identities in the same read
+            # expose newly sourced LoLTV identities in the same read
             # contract so a valid match is never hidden or reclassified.
             for league in session.scalars(select(League).order_by(League.id)):
                 known_leagues.setdefault(
@@ -409,12 +422,15 @@ def create_app(
         items: list[dict[str, object]] = []
         for match in rows:
             history = snapshots.get(match.id, [])
-            if any(
-                item.source == "sofascore" and source_game(item.payload) not in {None, "lol"}
-                for item in history
-            ):
+            if match.source == "sofascore" and not any(item.source == "loltv" for item in history):
                 continue
-            usable_history = [item for item in history if _snapshot_format(item, match) is not None]
+            # Retired observations are evidence only; active details use LoLTV and Oracle.
+            history = [item for item in history if item.source != "sofascore"]
+            usable_history = [
+                item
+                for item in history
+                if _snapshot_format(item, match) is not None or item.source == "loltv"
+            ]
             oracle_snapshot = next(
                 (
                     item
@@ -479,18 +495,18 @@ def create_app(
             )
         return {"generatedAt": now, "items": items}
 
-    @app.get("/api/v1/sources/sofascore")
-    def sofascore_status(session: Annotated[Session, Depends(get_session)]) -> dict[str, object]:
-        state = session.get(CollectorState, "sofascore")
+    @app.get("/api/v1/sources/loltv")
+    def loltv_status(session: Annotated[Session, Depends(get_session)]) -> dict[str, object]:
+        state = session.get(CollectorState, "loltv")
         control = state.data if state else {}
         runs = session.scalars(
             select(IngestionRun)
-            .where(IngestionRun.source == "sofascore")
+            .where(IngestionRun.source == "loltv")
             .order_by(IngestionRun.started_at.desc())
             .limit(20)
         ).all()
         return {
-            "source": "sofascore",
+            "source": "loltv",
             "collection": {
                 key: control.get(key)
                 for key in (

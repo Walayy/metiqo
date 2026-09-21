@@ -2,7 +2,7 @@
 
 Oracle's Elixir is a historical source: it is authoritative for completed maps
 when a complete row set exists, but it must never replace a newer live
-SofaScore snapshot with an empty or partial payload.
+LoLTV snapshot with an empty or partial payload.
 """
 
 from __future__ import annotations
@@ -300,7 +300,7 @@ def _league_matches(name: str, league: League, leagues: dict[str, League]) -> bo
     parent_id = league.data.get("parentLeagueId")
     if isinstance(parent_id, str) and parent_id in leagues:
         candidates.append(leagues[parent_id])
-    from metiquo_worker.sofascore_sync import _competition_base_name
+    from metiquo_worker.loltv_publication import _competition_base_name
 
     incoming = normalize_name(name)
     for candidate in candidates:
@@ -330,6 +330,43 @@ def _date_ranges(matches: list[EsportMatch]) -> list[tuple[date, date]]:
     return ranges
 
 
+def game_signature(game: object) -> tuple[object, ...] | None:
+    """An exact completed-game identity, independent of an unverified timezone."""
+    if not isinstance(game, dict) or game.get("status") != "finished":
+        return None
+    sides = game.get("sides")
+    if not isinstance(sides, list) or len(sides) != 2 or not game.get("winnerId"):
+        return None
+    players = []
+    for side in sides:
+        if not isinstance(side, dict) or not isinstance(side.get("players"), list):
+            return None
+        if len(side["players"]) != 5 or not side.get("teamId"):
+            return None
+        for player in side["players"]:
+            if not isinstance(player, dict) or not player.get("champion"):
+                return None
+            if any(not isinstance(player.get(key), int) for key in ("kills", "deaths", "assists")):
+                return None
+            players.append(
+                (
+                    str(side["teamId"]),
+                    str(player.get("role")),
+                    # Riot IDs omit spaces/punctuation (JarvanIV, Kaisa).
+                    # MonkeyKing is Riot's ID for the published name Wukong.
+                    "".join(normalize_name(str(player["champion"])).split()).replace(
+                        "monkeyking", "wukong"
+                    ),
+                    player["kills"],
+                    player["deaths"],
+                    player["assists"],
+                )
+            )
+    if len({(player[0], player[1]) for player in players}) != 10:
+        return None
+    return (game.get("number"), game["winnerId"], tuple(sorted(players)))
+
+
 def sync_oracle_match_details(
     engine: Engine,
     observed_at: datetime | None = None,
@@ -339,7 +376,8 @@ def sync_oracle_match_details(
     """Publish complete Oracle maps for matches already known by Metiquo."""
     now = observed_at or datetime.now(UTC)
     with Session(engine) as session, session.begin():
-        session.execute(select(func.pg_advisory_xact_lock(7_346_810_208)))
+        if not session.scalar(select(func.pg_try_advisory_xact_lock(7_346_810_208))):
+            return {"deferred": "oracle-projection-busy", "published": 0, "games": 0}
         known_matches = list(
             session.scalars(select(EsportMatch).order_by(EsportMatch.starts_at)).all()
         )
@@ -380,12 +418,52 @@ def sync_oracle_match_details(
         # Resolve each game once across all plausible fixtures, never once per
         # fixture: rematches must not receive the same historical game.
         owners: dict[str, UUID] = {}
+        ownership_basis: dict[str, str] = {}
+        signatures: dict[UUID, set[tuple[object, ...]]] = defaultdict(set)
+        latest_maps: dict[tuple[UUID, int], object] = {}
+        for observation in session.scalars(
+            select(MatchSnapshot)
+            .where(MatchSnapshot.source == "loltv")
+            .order_by(MatchSnapshot.observed_at, MatchSnapshot.id)
+        ):
+            observed_maps = observation.payload.get("maps")
+            if isinstance(observed_maps, list):
+                for game in observed_maps:
+                    if isinstance(game, dict) and isinstance(game.get("number"), int):
+                        if game_signature(game) is not None:
+                            latest_maps[(observation.match_id, game["number"])] = game
+        for (match_id, _), game in latest_maps.items():
+            if (signature := game_signature(game)) is not None:
+                signatures[match_id].add(signature)
         skipped_timezone = 0
         ambiguous_games = 0
         for game_id, game_rows in groups.items():
             dates = [at for row in game_rows if (at := _timestamp(row.payload, source_timezone))]
             if not dates:
-                skipped_timezone += 1
+                # A naive timestamp never becomes UTC by assumption. Ten exact
+                # champions, roles, K/D/A, team identities, number and winner can
+                # independently prove ownership; more than one match rejects it.
+                exact = []
+                for candidate in known_matches:
+                    if not signatures.get(candidate.id):
+                        continue
+                    league = leagues.get(candidate.league_id)
+                    if league is None or not any(
+                        _league_matches(value, league, leagues)
+                        for row in game_rows
+                        if (value := _value(row.payload, "league"))
+                    ):
+                        continue
+                    built = _build_map(game_id, game_rows, candidate, teams)
+                    if built and game_signature(built[0]) in signatures[candidate.id]:
+                        exact.append(candidate.id)
+                if len(exact) == 1:
+                    owners[game_id] = exact[0]
+                    ownership_basis[game_id] = "exact-game-statistics"
+                elif exact:
+                    ambiguous_games += 1
+                else:
+                    skipped_timezone += 1
                 continue
             start = min(dates)
             ranked: list[tuple[float, UUID]] = []
@@ -412,6 +490,7 @@ def sync_oracle_match_details(
             ranked.sort(key=lambda item: item[0])
             if ranked and (len(ranked) == 1 or ranked[1][0] - ranked[0][0] >= 6 * 3600):
                 owners[game_id] = ranked[0][1]
+                ownership_basis[game_id] = "teams-league-verified-time"
             elif ranked:
                 ambiguous_games += 1
         published = 0
@@ -430,10 +509,10 @@ def sync_oracle_match_details(
                     for row in game_rows
                     if (timestamp := _timestamp(row.payload, source_timezone))
                 ]
-                if not dates:
+                exact_stats = ownership_basis.get(game_id) == "exact-game-statistics"
+                if not dates and not exact_stats:
                     continue
-                start = min(dates)
-                delta = abs((start - match.starts_at).total_seconds())
+                delta = abs((min(dates) - match.starts_at).total_seconds()) if dates else 0.0
                 if delta > MATCH_WINDOW.total_seconds():
                     continue
                 home_name, away_name = _best_name(game_rows, home), _best_name(game_rows, away)
@@ -504,6 +583,7 @@ def sync_oracle_match_details(
                 "stage": None,
                 "sourceUrl": source_url,
                 "completionBasis": "sourced-format",
+                "matchingEvidence": {game_id: ownership_basis[game_id] for game_id in game_ids},
             }
             source_id = _source_id(match.id, game_ids)
             source_checked_at = min(

@@ -1,3 +1,4 @@
+import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
@@ -159,9 +160,9 @@ def test_admin_queue_and_reads_work_with_restricted_api_role(auth):
     client, engine, config, _, _ = auth
     login_admin(auth)
     settings = Settings(
-        database_url=engine.url.set(username="metiquo_api", password="test-api").render_as_string(
-            hide_password=False
-        )
+        database_url=engine.url.set(
+            username="metiquo_api", password=os.environ.get("TEST_API_PASSWORD", "test-api")
+        ).render_as_string(hide_password=False)
     )
     with TestClient(create_app(settings, config), base_url=ORIGIN, headers=HEADERS) as restricted:
         restricted.cookies.set(config.session_cookie, client.cookies[config.session_cookie])

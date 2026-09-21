@@ -2,7 +2,7 @@
 
 The resolver deliberately prefers an explicit provider link and stable internal ids.
 Names are only used as a scored fallback; ambiguous candidates are rejected instead
-of silently linking the wrong Oracle, SofaScore or future bookmaker match.
+of silently linking the wrong Oracle, LoLTV or future bookmaker match.
 """
 
 import re
@@ -193,10 +193,10 @@ def resolve_match(
         if not same_direction and not reversed_direction:
             continue
         delta_hours = abs((match.starts_at - identity.starts_at).total_seconds()) / 3600
-        if delta_hours > 72:
+        if delta_hours > 6:
             continue
         direction_score = 1.0 if same_direction else 0.94
-        time_score = max(0.0, 1.0 - delta_hours / 72)
+        time_score = max(0.0, 1.0 - delta_hours / 6)
         league_bonus = 0.08 if match.league_id == league_id else 0.0
         candidates.append((direction_score * 0.62 + time_score * 0.3 + league_bonus, match))
     candidates.sort(key=lambda item: item[0], reverse=True)

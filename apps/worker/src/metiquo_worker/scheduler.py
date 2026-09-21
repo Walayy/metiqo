@@ -6,7 +6,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from metiquo_core.config import Settings
-from metiquo_core.models import IngestionRun, ScriptRun, ScriptSchedule, WorkerStatus
+from metiquo_core.models import (
+    CollectorState,
+    IngestionRun,
+    ScriptRun,
+    ScriptSchedule,
+    WorkerStatus,
+)
 from metiquo_core.scheduling import SCRIPTS, upcoming
 from sqlalchemy import Engine, select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -15,16 +21,16 @@ from sqlalchemy.orm import Session
 from metiquo_worker.catalog_sync import sync_catalog
 from metiquo_worker.ingestion import collect
 from metiquo_worker.jobs import CollectionBusy, source_lock
-from metiquo_worker.sofascore_policy import SofaScoreBlocked
-from metiquo_worker.sofascore_sync import sync_sofascore
-from metiquo_worker.sources.sofascore import _close_browser
+from metiquo_worker.loltv_browser import close_browser
+from metiquo_worker.loltv_policy import LoltvBlocked
+from metiquo_worker.loltv_sync import next_live_due, sync_loltv
 
 logger = logging.getLogger(__name__)
 SCHEDULER_LOCK = 62883200
 SOURCE_SCHEDULER_LOCKS = {
     "lol-catalog": SCHEDULER_LOCK + 1,
     "oracles-elixir": SCHEDULER_LOCK + 2,
-    "sofascore": SCHEDULER_LOCK + 3,
+    "loltv": SCHEDULER_LOCK + 3,
 }
 
 
@@ -32,7 +38,7 @@ def enabled_scripts(settings: Settings, only: list[str] | None) -> list[str]:
     enabled_by_source = {
         "lol-catalog": settings.catalog_enabled,
         "oracles-elixir": settings.oracle_enabled,
-        "sofascore": settings.sofascore_enabled,
+        "loltv": settings.loltv_enabled,
     }
     return [
         key
@@ -85,7 +91,20 @@ def _tick_source(
                 .with_for_update()
             ).all()
             for row in rows:
-                if row.enabled and row.next_run_at <= now:
+                live_due = None
+                # The default minute schedule is a continuous live service. Its
+                # durable per-match deadlines can wake it between cron ticks.
+                # A paused or custom cron remains under the administrator's control.
+                if (
+                    row.id == "loltv-matches"
+                    and row.enabled
+                    and row.cron in {"* * * * *", "*/1 * * * *"}
+                ):
+                    state = db.get(CollectorState, "loltv")
+                    live_due = next_live_due(state.data, settings) if state else None
+                if row.enabled and (
+                    row.next_run_at <= now or live_due is not None and live_due <= now.timestamp()
+                ):
                     active = db.scalar(
                         select(ScriptRun.id).where(
                             ScriptRun.script_id == row.id,
@@ -130,8 +149,8 @@ def _tick_source(
                     ingestion_id = sync_catalog(engine, settings)
                 elif script_id in {"oracle-latest", "oracle-full"}:
                     ingestion_id = collect(engine, settings, latest=script_id == "oracle-latest")
-                elif script_id == "sofascore-matches":
-                    ingestion_id = sync_sofascore(engine, settings)
+                elif script_id == "loltv-matches":
+                    ingestion_id = sync_loltv(engine, settings)
                 else:
                     raise ValueError("Unregistered script")
                 with Session(engine) as db, db.begin():
@@ -143,16 +162,14 @@ def _tick_source(
                     run.finished_at = datetime.now(UTC)
                     if ingestion.status != "succeeded":
                         run.error = "La collecte a échoué. Consultez les journaux du worker."
-            except SofaScoreBlocked as error:
+            except LoltvBlocked as error:
                 retry_at = (
                     datetime.fromtimestamp(error.retry_at, UTC)
                     if error.retry_at
                     else datetime.now(UTC)
-                    + timedelta(seconds=settings.sofascore_block_cooldown_seconds)
+                    + timedelta(seconds=settings.loltv_block_cooldown_seconds)
                 )
-                logger.warning(
-                    "SofaScore deferred until %s (%s)", retry_at.isoformat(), error.reason
-                )
+                logger.warning("Loltv deferred until %s (%s)", retry_at.isoformat(), error.reason)
                 with Session(engine) as db, db.begin():
                     db.execute(
                         update(ScriptRun)
@@ -161,7 +178,7 @@ def _tick_source(
                             status="queued",
                             started_at=None,
                             available_at=retry_at,
-                            error="SofaScore indisponible. Reprise après le délai source.",
+                            error="Loltv indisponible. Reprise après le délai source.",
                         )
                     )
             except CollectionBusy:
@@ -220,11 +237,11 @@ def serve_schedules(
                     logger.error("Scheduler failed (%s)", type(error).__name__)
                 stopping.wait(5)
         finally:
-            if "sofascore-matches" in group:
-                _close_browser()
+            if "loltv-matches" in group:
+                close_browser()
 
     # Independent sources keep separate browser threads and durable locks.
-    # A large Oracle ZIP must not suspend the SofaScore live refresh queue.
+    # A large Oracle ZIP must not suspend the Loltv live refresh queue.
     workers = [
         threading.Thread(
             target=source_loop,

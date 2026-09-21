@@ -214,7 +214,7 @@ def test_api_contract_quotes_and_estimate_expiry(database):
         session.add(
             MatchSourceLink(
                 match_id=match_id,
-                provider="sofascore",
+                provider="loltv",
                 source_id="test1",
                 source_url="https://example.test/match/test1",
                 first_seen_at=now - timedelta(hours=1),
@@ -224,7 +224,7 @@ def test_api_contract_quotes_and_estimate_expiry(database):
         session.add(
             MatchSnapshot(
                 match_id=match_id,
-                source="sofascore",
+                source="loltv",
                 source_id="test1",
                 source_url="https://example.test/match/test1",
                 status="scheduled",

@@ -1,0 +1,141 @@
+{
+  "id": "6bc1e82f6ecd05e2b7366c40",
+  "type": "feed",
+  "state": "COMPLETED",
+  "teams": [
+    {
+      "side": "BLUE",
+      "barons": 0,
+      "dragons": ["cloud", "ocean"],
+      "inhibitors": 1,
+      "towers": 7,
+      "total_gold": 63027,
+      "total_kills": 10,
+      "players": [
+        {
+          "summoner_name": "SC Yeti",
+          "role": "TOP",
+          "champion_id": "Camille",
+          "level": 18,
+          "kills": 0,
+          "deaths": 2,
+          "assists": 5,
+          "creep_score": 292,
+          "total_gold_earned": 11584
+        },
+        {
+          "summoner_name": "SC SPOOKY",
+          "role": "JUNGLE",
+          "champion_id": "JarvanIV",
+          "level": 16,
+          "kills": 3,
+          "deaths": 4,
+          "assists": 7,
+          "creep_score": 231,
+          "total_gold_earned": 13244
+        },
+        {
+          "summoner_name": "SC Nafkelah",
+          "role": "MID",
+          "champion_id": "Ahri",
+          "level": 16,
+          "kills": 5,
+          "deaths": 0,
+          "assists": 2,
+          "creep_score": 309,
+          "total_gold_earned": 15363
+        },
+        {
+          "summoner_name": "SC EXOFENG",
+          "role": "BOTTOM",
+          "champion_id": "Kaisa",
+          "level": 16,
+          "kills": 2,
+          "deaths": 4,
+          "assists": 5,
+          "creep_score": 318,
+          "total_gold_earned": 15183
+        },
+        {
+          "summoner_name": "SC SteeelBack",
+          "role": "SUPPORT",
+          "champion_id": "Rakan",
+          "level": 12,
+          "kills": 0,
+          "deaths": 1,
+          "assists": 7,
+          "creep_score": 36,
+          "total_gold_earned": 7653
+        }
+      ]
+    },
+    {
+      "side": "RED",
+      "barons": 1,
+      "dragons": ["chemtech", "ocean", "ocean"],
+      "inhibitors": 0,
+      "towers": 4,
+      "total_gold": 58347,
+      "total_kills": 11,
+      "players": [
+        {
+          "summoner_name": "AP Nille",
+          "role": "TOP",
+          "champion_id": "Shen",
+          "level": 18,
+          "kills": 2,
+          "deaths": 1,
+          "assists": 5,
+          "creep_score": 272,
+          "total_gold_earned": 11628
+        },
+        {
+          "summoner_name": "AP DIBU",
+          "role": "JUNGLE",
+          "champion_id": "Nocturne",
+          "level": 15,
+          "kills": 0,
+          "deaths": 4,
+          "assists": 8,
+          "creep_score": 225,
+          "total_gold_earned": 10984
+        },
+        {
+          "summoner_name": "AP Simpli",
+          "role": "MID",
+          "champion_id": "Cassiopeia",
+          "level": 17,
+          "kills": 2,
+          "deaths": 2,
+          "assists": 3,
+          "creep_score": 272,
+          "total_gold_earned": 11487
+        },
+        {
+          "summoner_name": "AP Kehvo",
+          "role": "BOTTOM",
+          "champion_id": "Zeri",
+          "level": 14,
+          "kills": 7,
+          "deaths": 2,
+          "assists": 4,
+          "creep_score": 319,
+          "total_gold_earned": 15789
+        },
+        {
+          "summoner_name": "AP Boltox",
+          "role": "SUPPORT",
+          "champion_id": "Yuumi",
+          "level": 14,
+          "kills": 0,
+          "deaths": 1,
+          "assists": 11,
+          "creep_score": 15,
+          "total_gold_earned": 8459
+        }
+      ]
+    }
+  ],
+  "patch_version": "16.18.819",
+  "timestamp": "2026-09-21T17:17:04.182Z"
+}

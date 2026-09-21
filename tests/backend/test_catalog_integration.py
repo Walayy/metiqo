@@ -108,7 +108,7 @@ def test_api_projects_supplemental_source_identities_onto_public_contract(databa
     run_id = start_run(engine, "lol-esports", "all")
     with Session(engine) as session, session.begin():
         publish(session, document, cache, [], run_id)
-        league_id = "sofascore:tournament:90739"
+        league_id = "loltv:tournament:90739"
         session.add(
             League(
                 id=league_id,
@@ -126,10 +126,10 @@ def test_api_projects_supplemental_source_identities_onto_public_contract(databa
         )
         session.add(
             Team(
-                id="sofascore:team:1173944",
+                id="loltv:team:1173944",
                 league_id=league_id,
                 data={
-                    "id": "sofascore:team:1173944",
+                    "id": "loltv:team:1173944",
                     "name": "Team Secret Whales",
                     "code": "",
                     "slug": "team-secret-whales",
@@ -147,7 +147,7 @@ def test_api_projects_supplemental_source_identities_onto_public_contract(databa
     assert response.status_code == 200
     catalog = response.json()
     league = next(item for item in catalog["leagues"] if item["id"] == league_id)
-    team = next(item for item in catalog["teams"] if item["id"] == "sofascore:team:1173944")
+    team = next(item for item in catalog["teams"] if item["id"] == "loltv:team:1173944")
     assert "sourceId" not in league
     assert "sourceId" not in team
 

@@ -9,8 +9,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
 from metiquo_api.main import _match_maps, create_app
-from metiquo_core.config import Settings
-from metiquo_core.matches import source_game, unique_bans
+from metiquo_core.matches import unique_bans
 from metiquo_core.models import (
     Dataset,
     DatasetVersion,
@@ -22,10 +21,10 @@ from metiquo_core.models import (
     OracleRow,
     Team,
 )
+from metiquo_worker.loltv_publication import _payload, _save_event
 from metiquo_worker.matching import MatchIdentity, resolve_match, resolve_team
 from metiquo_worker.oracle_match_sync import _build_map, _timestamp, sync_oracle_match_details
-from metiquo_worker.sofascore_sync import _payload, _save_event
-from metiquo_worker.sources import sofascore
+from metiquo_worker.sources import loltv
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -38,9 +37,9 @@ def identities():
 
 
 def event():
-    return sofascore.SofaEvent(
+    return loltv.LoltvEvent(
         source_id="42",
-        url="https://www.sofascore.com/esports/match/alpha-beta#id:42",
+        url="https://loltv.gg/match/alpha-beta",
         home_name="Alpha",
         away_name="Beta",
         competition="Cup",
@@ -85,7 +84,7 @@ def test_other_competition_match_is_not_reused():
         id=uuid4(), home_id=home.id, away_id=away.id, league_id="other", starts_at=at, format="BO3"
     )
     result = resolve_match(
-        MatchIdentity("Alpha", "Beta", at, "Cup", "sofascore", "42"),
+        MatchIdentity("Alpha", "Beta", at, "Cup", "loltv", "42"),
         [home, away],
         [league],
         [match],
@@ -154,76 +153,10 @@ def test_optional_oracle_objectives_stay_unknown_and_bad_game_is_isolated():
     assert _build_map("game", rows, match, {home.id: home, away.id: away}) is None
 
 
-def test_sofascore_score_does_not_replace_missing_side_with_zero():
+def test_loltv_score_does_not_replace_missing_side_with_zero():
     _, home, away = identities()
     assert _payload(replace(event(), away_score=None), home, away)["currentScore"] is None
     assert _payload(event(), home, away)["seriesScore"] == {"home": 1, "away": 0}
-
-
-def test_sofascore_cooldown_does_not_return_cached_observations(monkeypatch):
-    monkeypatch.setattr(
-        sofascore,
-        "_STATE",
-        sofascore._ScrapeState(blocked_until=float("inf"), events={"42": event()}),
-    )
-    settings = Settings(database_url="postgresql://unused", sofascore_enabled=True)
-    with pytest.raises(sofascore.SofaScoreBlocked):
-        sofascore.scrape(settings)
-
-
-def test_finished_event_without_maps_is_retried(monkeypatch):
-    finished = replace(event(), status="finished")
-    monkeypatch.setattr(
-        sofascore,
-        "_STATE",
-        sofascore._ScrapeState(events={"42": finished}, event_fetched_at={"42": 1}),
-    )
-    settings = Settings(database_url="postgresql://unused")
-    link = sofascore.SofaLink(finished.url, "42", finished.starts_at.date(), "Alpha - Beta")
-    assert not sofascore._should_refresh_event(link, 120, settings)
-    assert sofascore._should_refresh_event(link, 302, settings)
-
-
-def test_cached_schedule_is_not_returned_as_a_new_observation(monkeypatch):
-    now = datetime.now(sofascore.PARIS)
-    current = now.date()
-    days = tuple(current + timedelta(days=i) for i in [*range(8), *range(-7, 0)])
-    cached = replace(event(), status="scheduled", starts_at=now + timedelta(hours=10))
-    link = sofascore.SofaLink(cached.url, "42", current, "Alpha - Beta")
-    monkeypatch.setattr(
-        sofascore,
-        "_STATE",
-        sofascore._ScrapeState(
-            listing_days=days,
-            listing_cursor=15,
-            listing_complete_at=sofascore.clock.monotonic(),
-            day_fetched_at={day.isoformat(): sofascore.clock.monotonic() for day in days},
-            links={"42": link},
-            events={"42": cached},
-            event_fetched_at={"42": sofascore.clock.monotonic()},
-        ),
-    )
-    monkeypatch.setattr(sofascore, "_browser_page", lambda _: object())
-    assert (
-        sofascore.scrape(Settings(database_url="postgresql://unused", sofascore_enabled=True)) == []
-    )
-
-
-def test_game_category_is_read_from_the_event_not_the_listing_link(monkeypatch):
-    raw = {"tournament": {"category": {"slug": "dota2"}}}
-    assert source_game({"event": raw}) == "dota2"
-    monkeypatch.setattr(sofascore, "_event_from_next", lambda _: raw)
-
-    class Page:
-        def content(self):
-            return "source"
-
-    assert (
-        sofascore._event_from_page(
-            Page(), sofascore.SofaLink("lol-listing", "42", datetime.now(UTC).date(), "PGL")
-        )
-        is None
-    )
 
 
 @pytest.mark.integration
@@ -260,7 +193,7 @@ def snapshot(match, number, *, status="finished", score=None, observed_at=None):
     return MatchSnapshot(
         id=uuid4(),
         match_id=match.id,
-        source="sofascore",
+        source="loltv",
         status="finished",
         observed_at=observed_at or datetime.now(UTC),
         payload={
@@ -295,7 +228,38 @@ def test_partial_snapshots_preserve_each_completed_map_without_inventing_sides()
     first, second = snapshot(match, 1), snapshot(match, 2)
     maps = _match_maps([first, second], match, "finished", second)
     assert [item["number"] for item in maps] == [1, 2]
-    assert all(side["side"] is None for item in maps for side in item["sides"])
+    assert all({side["side"] for side in item["sides"]} == {"blue", "red"} for item in maps)
+
+
+def test_live_frame_survives_metadata_refresh_but_not_new_score_or_remake():
+    match = EsportMatch(id=uuid4(), home_id="home", away_id="away", format="BO3")
+    frame = snapshot(match, 1, status="live", score={"home": 0, "away": 0})
+    frame.status = "live"
+    game = frame.payload["maps"][0]
+    game["sourceGameId"] = "game-a"
+    game["sourceObservedAt"] = "2026-09-21T18:00:00+00:00"
+    for side in game["sides"]:
+        side["players"] = [{"name": f"player-{i}"} for i in range(5)]
+    listing = snapshot(match, 1, status="live", score={"home": 0, "away": 0})
+    listing.status = "live"
+    listing.payload["maps"] = []
+    result = _match_maps([frame, listing], match, "live", listing)
+    assert len(result[0]["sides"][0]["players"]) == 5
+    assert result[0]["updatedAt"] == game["sourceObservedAt"]
+    placeholder = snapshot(match, 1, status="live", score={"home": 0, "away": 0})
+    placeholder.status = "live"
+    placeholder.payload["maps"][0]["sourceGameId"] = "game-a"
+    assert (
+        _match_maps([frame, placeholder], match, "live", placeholder)[0]["updatedAt"]
+        == game["sourceObservedAt"]
+    )
+    placeholder.payload["maps"][0]["sourceGameId"] = "game-remade"
+    assert (
+        _match_maps([frame, placeholder], match, "live", placeholder)[0]["sides"][0]["players"]
+        == []
+    )
+    listing.payload["currentScore"] = {"home": 1, "away": 0}
+    assert _match_maps([frame, listing], match, "live", listing) == []
 
 
 @pytest.mark.integration
@@ -310,7 +274,7 @@ def test_finished_api_match_keeps_sourced_score_with_partial_map_details(databas
         session.flush()
         match = EsportMatch(
             id=uuid4(),
-            source="sofascore",
+            source="loltv",
             source_id="42",
             league_id=league.id,
             home_id=home.id,
@@ -335,7 +299,8 @@ def test_finished_api_match_keeps_sourced_score_with_partial_map_details(databas
 
 @pytest.mark.integration
 @pytest.mark.parametrize("format_name, expected", [("BO1", 1), ("BO3", 0), ("BO5", 0)])
-def test_oracle_projection_never_closes_a_partial_series(database, format_name, expected):
+@pytest.mark.parametrize("proof", ["timestamp", "statistics", "conflicting-statistics"])
+def test_oracle_projection_never_closes_a_partial_series(database, format_name, expected, proof):
     engine, _ = database
     league, home, away = identities()
     at = datetime(2026, 9, 20, 12, tzinfo=UTC)
@@ -374,7 +339,7 @@ def test_oracle_projection_never_closes_a_partial_series(database, format_name, 
         session.add(
             EsportMatch(
                 id=match_id,
-                source="sofascore",
+                source="loltv",
                 source_id="42",
                 league_id=league.id,
                 home_id=home.id,
@@ -388,7 +353,23 @@ def test_oracle_projection_never_closes_a_partial_series(database, format_name, 
         session.get(Dataset, "oracle:2026").active_version_id = version_id
         for number, row in enumerate(oracle_rows(), 1):
             row.version_id, row.row_number = version_id, number
+            if proof != "timestamp":
+                row.payload = {**row.payload, "date": "2026-09-20 12:00:00", "champion": "Ahri"}
             session.add(row)
+        if proof != "timestamp":
+            session.flush()
+            match = session.get(EsportMatch, match_id)
+            rows = list(session.scalars(select(OracleRow)))
+            game, _ = _build_map("game", rows, match, {home.id: home, away.id: away})
+            if proof == "conflicting-statistics":
+                game["sides"][0]["players"][0]["kills"] = 99
+            observation = snapshot(match, 1)
+            observation.payload = {"maps": [game], "format": format_name}
+            observation.source_id, observation.source_url = "42", event().url
+            observation.sha256 = "b" * 64
+            session.add(observation)
+    if proof == "conflicting-statistics":
+        expected = 0
     result = sync_oracle_match_details(engine, observed_at=at + timedelta(days=1))
     assert result["published"] == expected
     assert sync_oracle_match_details(engine)["published"] == 0
@@ -399,6 +380,50 @@ def test_oracle_projection_never_closes_a_partial_series(database, format_name, 
             assert link.last_seen_at == at
         else:
             assert link is None
+
+
+@pytest.mark.integration
+def test_two_loltv_ids_cannot_share_a_legacy_match_and_reversed_score_is_preserved(database):
+    engine, _ = database
+    league, home, away = identities()
+    value = event()
+    with Session(engine) as session, session.begin():
+        session.add(league)
+        session.flush()
+        session.add_all([home, away])
+        session.flush()
+        old = EsportMatch(
+            id=uuid4(),
+            source="lol-esports",
+            source_id="official",
+            league_id=league.id,
+            home_id=away.id,
+            away_id=home.id,
+            starts_at=value.starts_at,
+            registered_at=value.starts_at,
+            format="BO3",
+        )
+        session.add(old)
+        session.flush()
+        existing = [old]
+        for incoming in [value, replace(value, source_id="another-fixture")]:
+            _save_event(
+                session,
+                incoming,
+                league,
+                home,
+                away,
+                [home, away],
+                [league],
+                existing,
+                value.starts_at,
+            )
+            session.flush()
+        links = list(session.scalars(select(MatchSourceLink)))
+        assert len({link.match_id for link in links}) == 2
+        assert old.home_id == away.id and old.away_id == home.id
+        first = session.scalar(select(MatchSnapshot).where(MatchSnapshot.match_id == old.id))
+        assert first.payload["currentScore"] == {"home": 0, "away": 1}
 
 
 @pytest.mark.integration
@@ -427,6 +452,7 @@ def test_legacy_other_game_is_excluded_without_deleting_evidence(database):
         row = snapshot(match, 1)
         row.source_id, row.source_url, row.sha256 = "42", event().url, "a" * 64
         row.payload["event"] = {"tournament": {"category": {"slug": "dota2"}}}
+        row.source = "sofascore"
         session.add(row)
     with TestClient(create_app(settings)) as client:
         assert client.get("/api/v1/matches").json()["items"] == []
@@ -461,6 +487,7 @@ def test_migration_repairs_inferred_format_from_explicit_source(database):
         row = snapshot(match, 1)
         row.source_id, row.source_url, row.sha256 = "42", event().url, "a" * 64
         row.payload["event"] = {"bestOf": 5}
+        row.source = "sofascore"
         session.add(row)
     command.upgrade(Config("alembic.ini"), "head")
     with Session(engine) as session:
