@@ -70,21 +70,32 @@ def resolve_team(name: str, teams: list[Team]) -> TeamResolution | None:
     scored: list[tuple[float, str]] = []
     for team in teams:
         canonical_name = str(team.data.get("name", ""))
-        canonical_tokens = tokens(canonical_name)
-        extra_tokens = incoming_tokens - canonical_tokens
+        aliases = team.data.get("aliases")
+        identity_names = [canonical_name]
+        if isinstance(aliases, list):
+            identity_names.extend(alias for alias in aliases if isinstance(alias, str))
+        identity_tokens = [tokens(value) for value in identity_names if value]
         # A qualifier changes the identity: Bilibili Gaming Junior is not
         # Bilibili Gaming, and T1 Academy is not T1. Let the source team
-        # identity be provisioned instead of silently linking the parent.
-        if canonical_tokens < incoming_tokens and extra_tokens & TEAM_QUALIFIERS:
+        # identity be provisioned instead of silently linking the parent. An
+        # explicitly sourced alias carrying the same qualifier remains valid.
+        if identity_tokens and all(
+            candidate < incoming_tokens and bool((incoming_tokens - candidate) & TEAM_QUALIFIERS)
+            for candidate in identity_tokens
+        ):
             continue
+        identity_scores = [
+            name_score(
+                name,
+                candidate,
+                str(team.data.get("code", "")),
+                str(team.data.get("slug", "")),
+            )
+            for candidate in identity_names
+        ]
         scored.append(
             (
-                name_score(
-                    name,
-                    canonical_name,
-                    str(team.data.get("code", "")),
-                    str(team.data.get("slug", "")),
-                ),
+                max(identity_scores, default=0.0),
                 team.id,
             )
         )

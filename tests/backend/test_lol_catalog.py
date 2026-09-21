@@ -6,7 +6,7 @@ import httpx
 import pytest
 from metiquo_core.config import Settings
 from metiquo_worker.catalog_images import fetch_image, image_url, webp
-from metiquo_worker.catalog_sync import discover_catalog, fingerprint
+from metiquo_worker.catalog_sync import discover_catalog, fingerprint, retain_known_identities
 from metiquo_worker.sources.lol import ROOT_URL, Reference, league_registry, parse_page
 from PIL import Image
 
@@ -189,6 +189,48 @@ def test_logos_revalidate_cache_and_publish_new_immutable_paths(tmp_path):
 def test_logo_destinations_are_limited_to_official_source(url):
     with pytest.raises(ValueError, match="official"):
         image_url(url)
+
+
+def test_sofascore_rendered_logo_host_is_approved() -> None:
+    url = "https://img.sofascore.com/api/v1/team/363905/image"
+    assert image_url(url) == url
+
+
+def test_catalog_retains_observed_source_identities_without_inventing_affiliation() -> None:
+    document = source_document()
+    retain_known_identities(
+        document,
+        [
+            {
+                "id": "sofascore:tournament:42",
+                "slug": "observed-cup",
+                "name": "Observed Cup",
+                "region": "INTERNATIONAL",
+                "image": "",
+                "sourceImage": "",
+                "tier": "international",
+                "sourceId": "42",
+            }
+        ],
+        [
+            {
+                "id": "sofascore:team:7",
+                "name": "Observed Team",
+                "code": "",
+                "slug": "observed-team",
+                "leagueId": "sofascore:tournament:42",
+                "image": "",
+                "sourceImage": "",
+                "sourceImages": {"sofascore": ["https://img.sofascore.com/api/v1/team/7/image"]},
+            }
+        ],
+    )
+
+    catalog = document["catalog"]
+    team = next(item for item in catalog["teams"] if item["id"] == "sofascore:team:7")
+    assert team["leagueId"] == "sofascore:tournament:42"
+    assert team["sourceImage"].endswith("/team/7/image")
+    assert document["coverage"]["retainedKnownTeams"] == 1
 
 
 def test_html_or_oversized_logo_does_not_create_an_asset(tmp_path):

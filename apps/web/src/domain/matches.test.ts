@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { matches, performance } from '@/mocks/esport';
 import { catalog } from '@/mocks/fixtures';
-import { countdown, matchSchema, seriesScore, sideKills } from './matches';
+import { countdown, matchSchema, matchWinnerId, seriesScore, sideKills } from './matches';
 import { performanceSchema } from '@/features/performance/simulation';
 describe('Rencontres et données de simulation', () => {
   const live = matches.items.find((m) => m.status === 'live')!;
@@ -28,6 +28,21 @@ describe('Rencontres et données de simulation', () => {
     }
     expect(performanceSchema.safeParse(performance).success).toBe(true);
   });
+  it('expose le vainqueur de série et les bans uniquement pour les cartes commencées', () => {
+    const finished = matches.items.find((m) => m.status === 'finished')!;
+    expect(matchWinnerId(finished)).toBeTruthy();
+    expect(
+      finished.maps
+        .filter((map) => map.status === 'finished')
+        .every((map) => map.bans.length === 10),
+    ).toBe(true);
+    expect(
+      matches.items
+        .flatMap((match) => match.maps)
+        .filter((map) => map.status === 'scheduled')
+        .every((map) => map.bans.length === 0),
+    ).toBe(true);
+  });
   it('refuse les cartes incohérentes, les côtés identiques et les faux vainqueurs', () => {
     const finished = live.maps[0]!;
     for (const map of [
@@ -37,6 +52,23 @@ describe('Rencontres et données de simulation', () => {
       { ...finished, sides: finished.sides.map((s) => ({ ...s, side: 'blue' })) },
     ])
       expect(matchSchema.safeParse({ ...live, maps: [map] }).success).toBe(false);
+  });
+  it('conserve explicitement les statistiques que la source ne publie pas encore', () => {
+    const sourceMap = live.maps[0]!;
+    const partial = {
+      ...sourceMap,
+      durationSeconds: null,
+      bans: [],
+      sides: sourceMap.sides.map((side) => ({
+        ...side,
+        heralds: null,
+        grubs: null,
+        players: side.players.map((player) => ({ ...player, gold: null })),
+      })),
+    };
+    expect(matchSchema.safeParse({ ...live, maps: [partial, ...live.maps.slice(1)] }).success).toBe(
+      true,
+    );
   });
   it('affiche un décompte sans nombre négatif ni direct inféré', () => {
     const at = '2026-09-16T12:00:00Z';

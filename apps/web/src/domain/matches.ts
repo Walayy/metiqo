@@ -12,19 +12,19 @@ export const playerSchema = z.object({
   deaths: count,
   assists: count,
   cs: count,
-  gold: count,
+  gold: count.nullable(),
 });
 const sideSchema = z
   .object({
     teamId: z.string(),
     side: z.enum(['blue', 'red']),
-    towers: count.max(11),
-    dragons: count,
-    barons: count,
+    towers: count.nullable(),
+    dragons: count.nullable(),
+    barons: count.nullable(),
     players: z.array(playerSchema).max(5),
-    heralds: count.default(0),
-    grubs: count.default(0),
-    inhibitors: count.default(0),
+    heralds: count.nullable().default(null),
+    grubs: count.nullable().default(null),
+    inhibitors: count.nullable().default(null),
   })
   .refine(
     (side) =>
@@ -42,7 +42,7 @@ const mapSchema = z
   .object({
     number: z.number().int().min(1).max(5),
     status: z.enum(['scheduled', 'live', 'finished', 'skipped']),
-    durationSeconds: count,
+    durationSeconds: count.nullable(),
     winnerId: z.string().nullable(),
     bans: z.array(banSchema).max(10).default([]),
     sides: z.array(sideSchema).max(2),
@@ -138,10 +138,21 @@ export const seriesScore = (match: EsportMatch, teamId: string) =>
       ? match.seriesScore.home
       : match.seriesScore.away
     : match.maps.filter((map) => map.winnerId === teamId).length;
+export const matchWinnerId = (match: EsportMatch) => {
+  if (match.status !== 'finished') return null;
+  const target = Math.ceil(Number(match.format.slice(2)) / 2);
+  const homeScore = seriesScore(match, match.homeId);
+  const awayScore = seriesScore(match, match.awayId);
+  if (homeScore >= target && homeScore > awayScore) return match.homeId;
+  if (awayScore >= target && awayScore > homeScore) return match.awayId;
+  return null;
+};
 export const sideKills = (side: MapSide) =>
   side.players.reduce((sum, player) => sum + player.kills, 0);
 export const sideGold = (side: MapSide) =>
-  side.players.reduce((sum, player) => sum + player.gold, 0);
+  side.players.some((player) => player.gold == null)
+    ? null
+    : side.players.reduce((sum, player) => sum + (player.gold ?? 0), 0);
 export function countdown(startsAt: string, now: number) {
   const seconds = Math.max(0, Math.ceil((Date.parse(startsAt) - now) / 1000));
   if (!seconds) return 'Début attendu';

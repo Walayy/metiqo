@@ -193,5 +193,6 @@ networks:
   database: { internal: true }
   frontend:
   ingestion:
+    enable_ipv6: true
   mail:
   administration:

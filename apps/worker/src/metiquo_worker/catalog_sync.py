@@ -12,17 +12,87 @@ import httpx
 from metiquo_core.catalog import CATALOG_LOCK_ID, import_catalog
 from metiquo_core.config import Settings
 from metiquo_core.contracts import Catalog, LeagueData, TeamData
-from metiquo_core.models import CatalogMetadata, CatalogVersion, IngestionRun
+from metiquo_core.models import CatalogMetadata, CatalogVersion, IngestionRun, League, Team
 from sqlalchemy import Engine, func, select, update
 from sqlalchemy.orm import Session
 
 from metiquo_worker.artifacts import store_bytes
-from metiquo_worker.catalog_images import fetch_image, read_response
+from metiquo_worker.catalog_images import cache_valid, fetch_image, read_response
 from metiquo_worker.jobs import fail_run, source_lock, start_run
 from metiquo_worker.sources.lol import ROOT_URL, SOURCE, Reference, parse_page, text
 
 logger = logging.getLogger(__name__)
 LOCK_ID = CATALOG_LOCK_ID
+LEAGUE_FIELDS = {"id", "slug", "name", "region", "image", "sourceImage", "tier"}
+TEAM_FIELDS = {"id", "name", "code", "slug", "leagueId", "image", "sourceImage"}
+
+
+def retain_known_identities(
+    document: dict[str, object],
+    leagues: list[dict[str, object]],
+    teams: list[dict[str, object]],
+) -> None:
+    """Keep valid historical/source identities absent from today's Riot pages.
+
+    Riot pages are the primary discovery source, while teams already observed
+    through another approved source remain useful for existing matches. They
+    keep their explicit league relation and provenance; no new affiliation is
+    inferred here.
+    """
+    catalog = cast(dict[str, object], document["catalog"])
+    league_items = cast(list[dict[str, object]], catalog["leagues"])
+    team_items = cast(list[dict[str, object]], catalog["teams"])
+    known_leagues = {str(item["id"]) for item in league_items}
+    known_teams = {str(item["id"]) for item in team_items}
+    retained_leagues = 0
+    retained_teams = 0
+    for data in leagues:
+        identity = data.get("id")
+        if not isinstance(identity, str) or identity in known_leagues:
+            continue
+        try:
+            item = LeagueData.model_validate(
+                {key: value for key, value in data.items() if key in LEAGUE_FIELDS}
+            ).model_dump(mode="json", by_alias=True)
+        except Exception:
+            continue
+        league_items.append(item)
+        known_leagues.add(identity)
+        retained_leagues += 1
+    for data in teams:
+        identity = data.get("id")
+        league_id = data.get("leagueId")
+        if (
+            not isinstance(identity, str)
+            or identity in known_teams
+            or not isinstance(league_id, str)
+            or league_id not in known_leagues
+        ):
+            continue
+        enriched = dict(data)
+        if not enriched.get("sourceImage"):
+            source_images = enriched.get("sourceImages")
+            if isinstance(source_images, dict):
+                sofa_images = source_images.get("sofascore")
+                if isinstance(sofa_images, list):
+                    enriched["sourceImage"] = next(
+                        (value for value in sofa_images if isinstance(value, str) and value), ""
+                    )
+        try:
+            item = TeamData.model_validate(
+                {key: value for key, value in enriched.items() if key in TEAM_FIELDS}
+            ).model_dump(mode="json", by_alias=True)
+        except Exception:
+            continue
+        team_items.append(item)
+        known_teams.add(identity)
+        retained_teams += 1
+    league_items.sort(key=lambda item: str(item["id"]))
+    team_items.sort(key=lambda item: str(item["id"]))
+    coverage = document.get("coverage")
+    if isinstance(coverage, dict):
+        coverage["retainedKnownLeagues"] = retained_leagues
+        coverage["retainedKnownTeams"] = retained_teams
 
 
 def discover_catalog(
@@ -70,19 +140,19 @@ def attach_images(
     assets: list[LeagueData | TeamData] = [*catalog.leagues, *catalog.teams]
     urls = sorted({asset.source_image for asset in assets if asset.source_image})
 
-    def fetch(url: str) -> tuple[str, dict[str, object]]:
+    def fetch(url: str) -> tuple[str, dict[str, object] | None]:
         previous = cache.get(url, {})
         item = cast(dict[str, object], previous) if isinstance(previous, dict) else {}
         try:
             return url, fetch_image(client, url, item, settings)
         except Exception as error:
             logger.error("LoL logo failed: %s (%s: %s)", url, type(error).__name__, error)
-            raise
+            return (url, item) if cache_valid(settings.artifact_dir, item) else (url, None)
 
     with ThreadPoolExecutor(max_workers=6) as executor:
-        images = dict(executor.map(fetch, urls))
+        images = {url: item for url, item in executor.map(fetch, urls) if item is not None}
     for asset in assets:
-        if asset.source_image:
+        if asset.source_image and asset.source_image in images:
             asset.image = f"/api/v1/catalog/logos/{images[asset.source_image]['sha256']}.webp"
     document["catalog"] = catalog.model_dump(mode="json", by_alias=True)
     document["images"] = [
@@ -165,6 +235,8 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
             with Session(engine) as session:
                 metadata = session.get(CatalogMetadata, 1)
                 cache = metadata.image_cache if metadata else {}
+                known_leagues = [dict(item.data) for item in session.scalars(select(League)).all()]
+                known_teams = [dict(item.data) for item in session.scalars(select(Team)).all()]
                 previous = (
                     session.get(CatalogVersion, metadata.active_version_id)
                     if metadata and metadata.active_version_id
@@ -179,6 +251,7 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
             ) as client:
                 reference, pages = discover_catalog(client, settings)
                 document = reference.document(datetime.now(UTC).date().isoformat())
+                retain_known_identities(document, known_leagues, known_teams)
                 current = Catalog.model_validate(document["catalog"])
                 with Session(engine) as session, session.begin():
                     session.execute(

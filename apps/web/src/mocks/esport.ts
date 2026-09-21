@@ -9,6 +9,17 @@ import { dayKey, shiftDay } from '@/features/matches/calendar';
 const now = Date.now();
 const roles = ['TOP', 'JGL', 'MID', 'BOT', 'SUP'] as const;
 const names = ['Aster', 'Nox', 'Solis', 'Vega', 'Echo', 'Orion', 'Kiro', 'Nova', 'Lynx', 'Rune'];
+const banPool = [12, 27, 41, 58, 73, 89, 104, 121, 138, 157];
+function bans(homeId: string, awayId: string, seed: number) {
+  return banPool.map((championIndex, index) => {
+    const champion = champions[(championIndex + seed) % champions.length]!;
+    return {
+      teamId: index < 5 ? homeId : awayId,
+      champion: champion.name,
+      championImage: champion.image,
+    };
+  });
+}
 function side(teamId: string, color: 'blue' | 'red', seed: number, rosterOffset: number): MapSide {
   const offset = color === 'blue' ? 0 : 5;
   return {
@@ -63,7 +74,7 @@ function maps(
       status: state,
       durationSeconds: started ? (state === 'live' ? 1634 : 1927 + i * 37) : 0,
       winnerId: state === 'finished' ? finishedWinnerId ?? homeId : null,
-      bans: [],
+      bans: started ? bans(homeId, awayId, seed + i) : [],
       sides: started
         ? [
             side(i % 2 ? awayId : homeId, 'blue', seed + i, i % 2 ? 5 : 0),

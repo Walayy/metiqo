@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
+from metiquo_api.main import _LEAGUE_CONTRACT_FIELDS, _catalog_record
 from metiquo_core.contracts import Quote, value_percent
 from pydantic import ValidationError
 
@@ -20,3 +21,20 @@ def test_invalid_odds_rejected(odds):
 def test_quote_requires_timezone():
     with pytest.raises(ValidationError):
         Quote(recorded_at=datetime(2026, 9, 15), odds=2)
+
+
+def test_catalog_projection_keeps_source_metadata_private():
+    stored = {
+        "id": "sofascore:tournament:90739",
+        "slug": "vcs",
+        "name": "VCS",
+        "region": "INTERNATIONAL",
+        "image": "",
+        "sourceImage": "https://example.com/vcs.png",
+        "tier": "international",
+        "sourceId": "90739",
+    }
+
+    projected = _catalog_record(stored, _LEAGUE_CONTRACT_FIELDS)
+
+    assert projected == {key: value for key, value in stored.items() if key != "sourceId"}

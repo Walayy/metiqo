@@ -14,6 +14,8 @@ from metiquo_core.models import (
     EsportMatch,
     IngestionRun,
     Market,
+    MatchSnapshot,
+    MatchSourceLink,
     OddsObservation,
     OracleRow,
     ProbabilityEstimate,
@@ -210,6 +212,29 @@ def test_api_contract_quotes_and_estimate_expiry(database):
         )
         session.flush()
         session.add(
+            MatchSourceLink(
+                match_id=match_id,
+                provider="sofascore",
+                source_id="test1",
+                source_url="https://example.test/match/test1",
+                first_seen_at=now - timedelta(hours=1),
+                last_seen_at=now,
+            )
+        )
+        session.add(
+            MatchSnapshot(
+                match_id=match_id,
+                source="sofascore",
+                source_id="test1",
+                source_url="https://example.test/match/test1",
+                status="scheduled",
+                observed_at=now - timedelta(minutes=20),
+                sha256="a" * 64,
+                payload={"format": "BO3", "maps": [], "status": "scheduled"},
+            )
+        )
+        session.flush()
+        session.add(
             Market(
                 id=market_id,
                 match_id=match_id,
@@ -250,6 +275,7 @@ def test_api_contract_quotes_and_estimate_expiry(database):
         assert schedule[0]["id"] == str(match_id)
         assert schedule[0]["status"] == "scheduled"
         assert schedule[0]["maps"] == []
+        assert schedule[0]["updatedAt"] == now.isoformat().replace("+00:00", "Z")
         assert schedule[0]["patch"] is None
         assert client.get("/api/v1/performance").json()["items"] == []
         with Session(engine) as session, session.begin():

@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from metiquo_api.main import create_app
 from metiquo_core import cli as admin_cli
-from metiquo_core.models import CatalogMetadata, CatalogVersion, IngestionRun
+from metiquo_core.models import CatalogMetadata, CatalogVersion, IngestionRun, League, Team
 from metiquo_worker import catalog_sync
 from metiquo_worker.catalog_sync import LOCK_ID, attach_images, publish
 from metiquo_worker.cli import catalog_due
@@ -77,6 +77,56 @@ def test_failed_collection_preserves_previous_catalog_and_logos(database, monkey
         assert failed.error == "discovery: ValueError"
     with TestClient(create_app(settings)) as client:
         assert client.get(document["catalog"]["teams"][0]["image"]).status_code == 200
+
+
+def test_api_projects_supplemental_source_identities_onto_public_contract(database):
+    engine, settings = database
+    document, cache = prepared(settings)
+    run_id = start_run(engine, "lol-esports", "all")
+    with Session(engine) as session, session.begin():
+        publish(session, document, cache, [], run_id)
+        league_id = "sofascore:tournament:90739"
+        session.add(
+            League(
+                id=league_id,
+                data={
+                    "id": league_id,
+                    "slug": "vcs",
+                    "name": "VCS",
+                    "region": "INTERNATIONAL",
+                    "image": "",
+                    "sourceImage": "https://example.com/vcs.png",
+                    "tier": "international",
+                    "sourceId": "90739",
+                },
+            )
+        )
+        session.add(
+            Team(
+                id="sofascore:team:1173944",
+                league_id=league_id,
+                data={
+                    "id": "sofascore:team:1173944",
+                    "name": "Team Secret Whales",
+                    "code": "",
+                    "slug": "team-secret-whales",
+                    "leagueId": league_id,
+                    "image": "",
+                    "sourceImage": "https://example.com/team.png",
+                    "sourceId": "1173944",
+                },
+            )
+        )
+
+    with TestClient(create_app(settings)) as client:
+        response = client.get("/api/v1/catalog")
+
+    assert response.status_code == 200
+    catalog = response.json()
+    league = next(item for item in catalog["leagues"] if item["id"] == league_id)
+    team = next(item for item in catalog["teams"] if item["id"] == "sofascore:team:1173944")
+    assert "sourceId" not in league
+    assert "sourceId" not in team
 
 
 def test_rollback_retains_previous_pointer_and_old_version_remains_readable(database):

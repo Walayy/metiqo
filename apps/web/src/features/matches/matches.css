@@ -822,3 +822,289 @@
     transition: none;
   }
 }
+
+/* Match result hierarchy, draft readability and compact role/champion alignment. */
+.fixture-team-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.fixture-team-copy > span:first-child {
+  overflow-wrap: anywhere;
+}
+.fixture-team-copy small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 550;
+  letter-spacing: 0.02em;
+}
+.fixture-team.is-winner .fixture-team-copy > span:first-child {
+  color: var(--text);
+  font-weight: 750;
+}
+.fixture-team.is-winner .fixture-team-copy small {
+  color: var(--accent);
+}
+.fixture-team.is-winner .logo-frame {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.fixture-team.is-loser {
+  opacity: 0.68;
+}
+.fixture-team.is-loser .fixture-team-copy > span:first-child {
+  font-weight: 500;
+}
+.fixture-score {
+  min-width: 0;
+}
+.scoreboard-team.is-winner .logo-frame {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 5px var(--accent-soft);
+}
+.scoreboard-team.is-loser {
+  opacity: 0.62;
+}
+.scoreboard-team.is-winner > strong {
+  font-weight: 750;
+}
+.scoreboard-outcome {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 650;
+}
+.scoreboard-team.is-loser .scoreboard-outcome {
+  color: var(--muted);
+}
+.map-bans {
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: linear-gradient(135deg, var(--surface-muted), var(--surface));
+}
+.ban-heading {
+  align-items: center;
+  gap: var(--space-sm);
+}
+.ban-heading-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 9px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.ban-heading > div {
+  display: grid;
+  gap: 2px;
+}
+.ban-heading strong {
+  font-size: 12px;
+}
+.ban-heading span {
+  font-size: 11px;
+}
+.ban-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+.ban-team {
+  display: grid;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
+.ban-team-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.ban-team-label .logo-frame {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 0;
+  background: transparent;
+}
+.ban-team-label strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+.ban-team-label > span:last-child {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.ban-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+.ban-chip {
+  min-width: 0;
+  min-height: 30px;
+  justify-content: flex-start;
+  border-radius: 7px;
+  padding: 3px 5px 3px 3px;
+  font-size: 10px;
+}
+.ban-chip > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ban-icon {
+  width: 22px !important;
+  height: 22px !important;
+  flex: 0 0 22px;
+}
+.map-objectives {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-sm);
+  padding: 0 var(--space-lg) var(--space-lg);
+  background: transparent;
+}
+.objective-stat {
+  display: grid;
+  grid-template-rows: auto auto;
+  align-items: start;
+  gap: 0;
+  min-height: 68px;
+  padding: 9px 10px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  text-align: left;
+}
+.objective-stat dt {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-xs);
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.2;
+}
+.objective-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.objective-stat dd {
+  width: 100%;
+  margin: 7px 0 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+.objective-stat--kills,
+.objective-stat--gold {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+.objective-stat--kills dd,
+.objective-stat--gold dd {
+  font-size: 18px;
+}
+.roster-player {
+  gap: var(--space-xs);
+}
+.roster-role-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-muted);
+}
+.roster-role-icon img {
+  display: block;
+  width: 19px;
+  height: 19px;
+  object-fit: contain;
+}
+.roster-player-meta {
+  display: flex !important;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  white-space: nowrap;
+}
+.roster-role-label {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 600;
+}
+.roster-player-meta > span:last-of-type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.game-selector .logo-frame img,
+.game-option .logo-frame img {
+  object-position: center;
+}
+
+@media (max-width: 760px) {
+  .ban-teams {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ban-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .fixture-team-copy small {
+    font-size: 9px;
+  }
+  .map-objectives {
+    padding-inline: var(--space-md);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .objective-stat {
+    min-height: 64px;
+    padding-inline: 8px;
+  }
+  .objective-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .ban-list {
+    gap: 4px;
+  }
+  .ban-chip {
+    padding-right: 3px;
+  }
+  .ban-chip > span:last-child {
+    display: none;
+  }
+  .roster-role-icon {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+  .roster-role-icon img {
+    width: 17px;
+    height: 17px;
+  }
+}

@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator, Mapping
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, time, timedelta
 from typing import Annotated
@@ -11,7 +11,7 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from metiquo_core.config import Settings
-from metiquo_core.contracts import Catalog, Opportunities, Opportunity
+from metiquo_core.contracts import Catalog, LeagueData, Opportunities, Opportunity, TeamData
 from metiquo_core.db import create_db
 from metiquo_core.matches import completed_series_summary
 from metiquo_core.models import (
@@ -24,6 +24,7 @@ from metiquo_core.models import (
     League,
     Market,
     MatchSnapshot,
+    MatchSourceLink,
     OddsObservation,
     OracleRow,
     ProbabilityEstimate,
@@ -43,10 +44,25 @@ from metiquo_api.catalog import create_catalog_router
 logger = logging.getLogger(__name__)
 MATCH_FORMATS = {"BO1", "BO3", "BO5"}
 PARIS = ZoneInfo("Europe/Paris")
+_LEAGUE_CONTRACT_FIELDS = frozenset(
+    field.serialization_alias or field.alias or name
+    for name, field in LeagueData.model_fields.items()
+)
+_TEAM_CONTRACT_FIELDS = frozenset(
+    field.serialization_alias or field.alias or name
+    for name, field in TeamData.model_fields.items()
+)
+
+
+def _catalog_record(
+    data: Mapping[str, object], contract_fields: frozenset[str]
+) -> dict[str, object]:
+    """Project stored source metadata onto the stable public catalog contract."""
+    return {key: value for key, value in data.items() if key in contract_fields}
 
 
 def _snapshot_format(snapshot: MatchSnapshot, match: EsportMatch) -> str | None:
-    """Return a safe snapshot format, rejecting malformed completed details."""
+    """Return a safe format without rejecting valid partial live-map details."""
     value = snapshot.payload.get("format")
     format_name = value if isinstance(value, str) else match.format
     if format_name not in MATCH_FORMATS:
@@ -54,7 +70,7 @@ def _snapshot_format(snapshot: MatchSnapshot, match: EsportMatch) -> str | None:
     maps = snapshot.payload.get("maps")
     if not isinstance(maps, list):
         return None
-    if maps:
+    if maps and snapshot.status == "finished":
         summary = completed_series_summary(maps, match.home_id, match.away_id)
         if summary is None or summary[0] != format_name:
             return None
@@ -160,12 +176,12 @@ def create_app(
             team_items = document.get("teams")
             team_items = team_items if isinstance(team_items, list) else []
             known_leagues = {
-                str(item["id"]): item
+                str(item["id"]): _catalog_record(item, _LEAGUE_CONTRACT_FIELDS)
                 for item in league_items
                 if isinstance(item, dict) and "id" in item
             }
             known_teams = {
-                str(item["id"]): item
+                str(item["id"]): _catalog_record(item, _TEAM_CONTRACT_FIELDS)
                 for item in team_items
                 if isinstance(item, dict) and "id" in item
             }
@@ -174,9 +190,11 @@ def create_app(
             # expose newly sourced SofaScore identities in the same read
             # contract so a valid match is never hidden or reclassified.
             for league in session.scalars(select(League).order_by(League.id)):
-                known_leagues.setdefault(league.id, league.data)
+                known_leagues.setdefault(
+                    league.id, _catalog_record(league.data, _LEAGUE_CONTRACT_FIELDS)
+                )
             for team in session.scalars(select(Team).order_by(Team.id)):
-                known_teams.setdefault(team.id, team.data)
+                known_teams.setdefault(team.id, _catalog_record(team.data, _TEAM_CONTRACT_FIELDS))
             document["leagues"] = list(known_leagues.values())
             document["teams"] = list(known_teams.values())
             return Catalog.model_validate(document)
@@ -190,9 +208,13 @@ def create_app(
                 "retrievedAt": metadata.retrieved_at,
                 "source": metadata.source,
                 "leagues": [
-                    league.data for league in session.scalars(select(League).order_by(League.id))
+                    _catalog_record(league.data, _LEAGUE_CONTRACT_FIELDS)
+                    for league in session.scalars(select(League).order_by(League.id))
                 ],
-                "teams": [team.data for team in session.scalars(select(Team).order_by(Team.id))],
+                "teams": [
+                    _catalog_record(team.data, _TEAM_CONTRACT_FIELDS)
+                    for team in session.scalars(select(Team).order_by(Team.id))
+                ],
             }
         )
 
@@ -281,6 +303,7 @@ def create_app(
             .order_by(EsportMatch.starts_at, EsportMatch.id)
         ).all()
         snapshots: dict[UUID, list[MatchSnapshot]] = {}
+        last_seen: dict[UUID, datetime] = {}
         if rows:
             for item in session.scalars(
                 select(MatchSnapshot)
@@ -288,6 +311,14 @@ def create_app(
                 .order_by(MatchSnapshot.observed_at, MatchSnapshot.id)
             ).all():
                 snapshots.setdefault(item.match_id, []).append(item)
+            for link in session.scalars(
+                select(MatchSourceLink).where(
+                    MatchSourceLink.match_id.in_([match.id for match in rows])
+                )
+            ).all():
+                previous = last_seen.get(link.match_id)
+                if previous is None or link.last_seen_at > previous:
+                    last_seen[link.match_id] = link.last_seen_at
 
         def snapshot_value(snapshot: MatchSnapshot | None, key: str) -> object:
             if snapshot is None:
@@ -328,7 +359,12 @@ def create_app(
                     "homeId": match.home_id,
                     "awayId": match.away_id,
                     "startsAt": match.starts_at,
-                    "updatedAt": snapshot.observed_at if snapshot else match.registered_at,
+                    # A deduplicated snapshot records the last *changed* payload,
+                    # while the source link records every observation. Display the
+                    # latter so a live 0-1 remains visibly polled every five minutes.
+                    "updatedAt": last_seen.get(
+                        match.id, snapshot.observed_at if snapshot else match.registered_at
+                    ),
                     "format": selected_format or match.format,
                     "status": status,
                     "patch": snapshot_value(snapshot, "patch")

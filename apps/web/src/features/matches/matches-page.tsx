@@ -8,7 +8,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, Search, Swords, ArrowUpRight } 
 import { clsx } from 'clsx';
 import type { Catalog } from '@/domain/schemas';
 import type { EsportMatch } from '@/domain/matches';
-import { countdown, seriesScore } from '@/domain/matches';
+import { countdown, matchWinnerId, seriesScore } from '@/domain/matches';
 import { normalize, time } from '@/lib/format';
 import { matchesQuery } from '@/lib/api';
 import { HttpError } from '@/lib/http-error';
@@ -331,6 +331,9 @@ export function MatchesPage({
                           const away = catalog.teams.find((t) => t.id === match.awayId)!;
                           const hasMapScore =
                             Boolean(match.seriesScore) || match.maps.some((map) => map.winnerId);
+                          const winnerId = matchWinnerId(match);
+                          const homeIsWinner = winnerId === home.id;
+                          const awayIsWinner = winnerId === away.id;
                           return (
                             <button
                               key={match.id}
@@ -346,8 +349,19 @@ export function MatchesPage({
                                 <time dateTime={match.startsAt}>{time(match.startsAt)}</time>
                                 <small>{match.format}</small>
                               </span>
-                              <span className="fixture-team home">
-                                <span>{home.name}</span>
+                              <span
+                                className={clsx(
+                                  'fixture-team home',
+                                  homeIsWinner && 'is-winner',
+                                  winnerId && !homeIsWinner && 'is-loser',
+                                )}
+                              >
+                                <span className="fixture-team-copy">
+                                  <span>{home.name}</span>
+                                  {winnerId && (
+                                    <small>{homeIsWinner ? 'Gagnant' : 'Perdant'}</small>
+                                  )}
+                                </span>
                                 <Logo src={home.image} name={home.name} code={home.code} />
                               </span>
                               <span className="fixture-score">
@@ -369,9 +383,20 @@ export function MatchesPage({
                                   <span>—</span>
                                 )}
                               </span>
-                              <span className="fixture-team away">
+                              <span
+                                className={clsx(
+                                  'fixture-team away',
+                                  awayIsWinner && 'is-winner',
+                                  winnerId && !awayIsWinner && 'is-loser',
+                                )}
+                              >
                                 <Logo src={away.image} name={away.name} code={away.code} />
-                                <span>{away.name}</span>
+                                <span className="fixture-team-copy">
+                                  <span>{away.name}</span>
+                                  {winnerId && (
+                                    <small>{awayIsWinner ? 'Gagnant' : 'Perdant'}</small>
+                                  )}
+                                </span>
                               </span>
                               <span className="fixture-status">
                                 {match.status === 'live' ? (

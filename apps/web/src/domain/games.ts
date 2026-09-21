@@ -14,5 +14,12 @@ export const games = [
     image: '/games/cs2.svg',
     available: false,
   },
-  { id: 'dota2', name: 'Dota 2', shortName: 'Dota', image: '/games/dota2.png', available: false },
+  { id: 'dota2', name: 'Dota 2', shortName: 'Dota', image: '/games/dota2.svg', available: false },
+  {
+    id: 'valorant',
+    name: 'VALORANT',
+    shortName: 'VAL',
+    image: '/games/valorant.png',
+    available: false,
+  },
 ] as const;

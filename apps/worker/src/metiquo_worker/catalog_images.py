@@ -17,12 +17,12 @@ def image_url(source: str) -> str:
     parsed = urlsplit(source)
     if (
         parsed.scheme not in ("http", "https")
-        or parsed.hostname != "static.lolesports.com"
+        or parsed.hostname not in {"static.lolesports.com", "img.sofascore.com"}
         or parsed.username
         or parsed.password
         or parsed.port not in (None, 80, 443)
     ):
-        raise ValueError("Logo URL is not on the official Riot logo host")
+        raise ValueError("Logo URL is not on an approved official source host")
     return urlunsplit(("https", parsed.netloc, parsed.path, parsed.query, ""))
 
 

@@ -102,14 +102,14 @@ class CatalogVersion(Base):
 class League(Base):
     __tablename__ = "leagues"
     id: Mapped[str] = mapped_column(primary_key=True)
-    data: Mapped[dict[str, str]] = mapped_column(JSONB)
+    data: Mapped[dict[str, object]] = mapped_column(JSONB)
 
 
 class Team(Base):
     __tablename__ = "teams"
     id: Mapped[str] = mapped_column(primary_key=True)
     league_id: Mapped[str] = mapped_column(ForeignKey("leagues.id"))
-    data: Mapped[dict[str, str]] = mapped_column(JSONB)
+    data: Mapped[dict[str, object]] = mapped_column(JSONB)
 
 
 class AppUser(Base):

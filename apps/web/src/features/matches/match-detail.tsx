@@ -1,34 +1,32 @@
 import { useState } from 'react';
 import { Tabs } from 'radix-ui';
 import {
+  Ban,
   Bug,
-  CircleDot,
+  Check,
   Clock3,
   Coins,
-  Crosshair,
   Eye,
   Flame,
-  Mountain,
   Shield,
   Swords,
   TowerControl,
-  Trees,
   Trophy,
 } from 'lucide-react';
 import type { Catalog } from '@/domain/schemas';
-import type { EsportMatch, MapSide } from '@/domain/matches';
-import { seriesScore, sideKills, sideGold } from '@/domain/matches';
+import type { EsportMatch, MapSide, MatchMap } from '@/domain/matches';
+import { matchWinnerId, seriesScore, sideKills, sideGold } from '@/domain/matches';
 import { championAsset } from '@/domain/champions';
 import { dateTime, decimal, time } from '@/lib/format';
 import { Modal } from '@/components/ui/modal';
 import { Logo } from '@/components/ui/logo';
 
 const roleMeta = {
-  TOP: { label: 'Top', icon: Mountain },
-  JGL: { label: 'Jungle', icon: Trees },
-  MID: { label: 'Mid', icon: CircleDot },
-  BOT: { label: 'ADC', icon: Crosshair },
-  SUP: { label: 'Support', icon: Shield },
+  TOP: { label: 'Top', icon: '/roles/top.svg' },
+  JGL: { label: 'Jungle', icon: '/roles/jungle.svg' },
+  MID: { label: 'Mid', icon: '/roles/middle.svg' },
+  BOT: { label: 'ADC', icon: '/roles/bottom.svg' },
+  SUP: { label: 'Support', icon: '/roles/utility.svg' },
 } as const;
 
 const objectiveMeta = [
@@ -45,15 +43,16 @@ const objectiveMeta = [
 type ObjectiveKey = (typeof objectiveMeta)[number]['key'];
 
 function ObjectiveStats({ side }: { side: MapSide }) {
+  const gold = sideGold(side);
   const values: Record<ObjectiveKey, number | string> = {
     kills: sideKills(side),
-    gold: `${decimal(sideGold(side) / 1000, 1)} k`,
-    towers: side.towers,
-    dragons: side.dragons,
-    barons: side.barons,
-    heralds: side.heralds,
-    grubs: side.grubs,
-    inhibitors: side.inhibitors,
+    gold: gold == null ? '—' : `${decimal(gold / 1000, 1)} k`,
+    towers: side.towers ?? '—',
+    dragons: side.dragons ?? '—',
+    barons: side.barons ?? '—',
+    heralds: side.heralds ?? '—',
+    grubs: side.grubs ?? '—',
+    inhibitors: side.inhibitors ?? '—',
   };
   return (
     <dl className="map-objectives">
@@ -63,7 +62,7 @@ function ObjectiveStats({ side }: { side: MapSide }) {
             <span className="objective-icon" aria-hidden="true">
               <Icon size={14} strokeWidth={1.8} />
             </span>
-            {label}
+            <span className="objective-label">{label}</span>
           </dt>
           <dd>{values[key]}</dd>
         </div>
@@ -113,28 +112,30 @@ function TeamStats({
           </span>
           <span role="columnheader">Or</span>
         </div>
-        {side.players.map((player) => (
-          <div className="roster-row" role="row" key={player.id}>
+        {side.players.map((player) => {
+          const championLabel =
+            player.champion ?? (player.championImage ? 'Nom indisponible' : 'Champion non publié');
+          return (
+            <div className="roster-row" role="row" key={player.id}>
             <div className="roster-player" role="cell">
+              <span
+                className="roster-role-icon"
+                title={roleMeta[player.role].label}
+                aria-label={`Poste : ${roleMeta[player.role].label}`}
+              >
+                <img src={roleMeta[player.role].icon} alt="" width="20" height="20" />
+              </span>
               <Logo
                 src={championAsset(player.champion, player.championImage)}
-                name={player.champion ?? 'Champion non publié'}
+                name={championLabel}
                 code={player.champion?.slice(0, 2) ?? '—'}
                 className="champion-portrait"
               />
               <div>
-                <strong>
-                  {player.name}
-                  <small className={`role-badge role-badge--${player.role.toLowerCase()}`}>
-                    {(() => {
-                      const RoleIcon = roleMeta[player.role].icon;
-                      return <RoleIcon size={11} aria-hidden="true" />;
-                    })()}
-                    {roleMeta[player.role].label}
-                  </small>
-                </strong>
-                <span>
-                  {player.champion ?? 'Champion non publié'}
+                <strong>{player.name}</strong>
+                <span className="roster-player-meta">
+                  <span className="roster-role-label">{roleMeta[player.role].label}</span>
+                  <span>{championLabel}</span>
                   {player.level != null && ` · niv. ${player.level}`}
                 </span>
               </div>
@@ -149,10 +150,11 @@ function TeamStats({
             </span>
             <span role="cell">
               <span className="mobile-stat-label">Or</span>
-              {decimal(player.gold / 1000, 1)} k
+              {player.gold == null ? '—' : `${decimal(player.gold / 1000, 1)} k`}
             </span>
-          </div>
-        ))}
+            </div>
+          );
+        })}
         {!side.players.length && (
           <div className="match-pending roster-empty">
             Statistiques joueurs non publiées par la source pour ce relevé.
@@ -162,6 +164,75 @@ function TeamStats({
     </section>
   );
 }
+
+function DraftBans({ active, catalog }: { active: MatchMap; catalog: Catalog }) {
+  if (!active.bans.length)
+    return (
+      <section className="map-bans" aria-label="Champions bannis">
+        <div className="ban-heading">
+          <span className="ban-heading-icon" aria-hidden="true">
+            <Ban size={15} />
+          </span>
+          <div>
+            <strong>Draft &amp; bans</strong>
+            <span>Bans indisponibles pour le moment.</span>
+          </div>
+        </div>
+      </section>
+    );
+  const teamIds = Array.from(new Set(active.bans.map((ban) => ban.teamId)));
+  return (
+    <section className="map-bans" aria-label="Champions bannis">
+      <div className="ban-heading">
+        <span className="ban-heading-icon" aria-hidden="true">
+          <Ban size={15} />
+        </span>
+        <div>
+          <strong>Draft &amp; bans</strong>
+          <span>
+            {active.bans.length} interdiction{active.bans.length > 1 ? 's' : ''} publiée
+            {active.bans.length > 1 ? 's' : ''}
+          </span>
+        </div>
+      </div>
+      <div className="ban-teams">
+        {teamIds.map((teamId) => {
+          const team = catalog.teams.find((item) => item.id === teamId);
+          const teamBans = active.bans.filter((ban) => ban.teamId === teamId);
+          return (
+            <div className="ban-team" key={teamId}>
+              <div className="ban-team-label">
+                {team && <Logo src={team.image} name={team.name} code={team.code} />}
+                <strong>{team?.code ?? 'Équipe'}</strong>
+                <span>
+                  {teamBans.length} ban{teamBans.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="ban-list">
+                {teamBans.map((ban, index) => (
+                  <span
+                    className="ban-chip"
+                    key={`${ban.teamId}-${ban.champion}-${index}`}
+                    title={`${team?.name ?? 'Équipe'} · ${ban.champion}`}
+                  >
+                    <Logo
+                      src={championAsset(ban.champion, ban.championImage)}
+                      name={ban.champion}
+                      code={ban.champion.slice(0, 2)}
+                      className="ban-icon"
+                    />
+                    <span>{ban.champion}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function MatchDetail({
   match,
   catalog,
@@ -197,14 +268,23 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
     ) ?? initial;
   const home = catalog.teams.find((t) => t.id === match.homeId)!;
   const away = catalog.teams.find((t) => t.id === match.awayId)!;
+  const winnerId = matchWinnerId(match);
   const hasSeriesScore = Boolean(match.seriesScore) || match.maps.some((map) => map.winnerId);
   const hasCurrentScore = Boolean(match.currentScore);
   return (
     <div className="match-detail-scroll">
       <div className="match-scoreboard">
-        <div>
+        <div
+          className={`scoreboard-team ${winnerId === home.id ? 'is-winner' : winnerId ? 'is-loser' : ''}`}
+        >
           <Logo src={home.image} name={home.name} code={home.code} />
           <strong>{home.name}</strong>
+          {winnerId && (
+            <span className="scoreboard-outcome">
+              {winnerId === home.id && <Check size={12} aria-hidden="true" />}
+              {winnerId === home.id ? 'Gagnant' : 'Perdant'}
+            </span>
+          )}
         </div>
         <div className="series-summary">
           <span className="series-format">{match.format}</span>
@@ -232,9 +312,17 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
             </span>
           )}
         </div>
-        <div>
+        <div
+          className={`scoreboard-team ${winnerId === away.id ? 'is-winner' : winnerId ? 'is-loser' : ''}`}
+        >
           <Logo src={away.image} name={away.name} code={away.code} />
           <strong>{away.name}</strong>
+          {winnerId && (
+            <span className="scoreboard-outcome">
+              {winnerId === away.id && <Check size={12} aria-hidden="true" />}
+              {winnerId === away.id ? 'Gagnant' : 'Perdant'}
+            </span>
+          )}
         </div>
       </div>
       <div className="match-information">
@@ -269,39 +357,14 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
               <h3>Carte {active.number}</h3>
               <span>
                 <Clock3 size={14} />
-                {Math.floor(active.durationSeconds / 60)}:
-                {String(active.durationSeconds % 60).padStart(2, '0')} ·{' '}
-                {active.status === 'live' ? 'Temps au dernier relevé' : 'Durée finale'}
+                {active.durationSeconds == null
+                  ? 'Durée indisponible'
+                  : `${Math.floor(active.durationSeconds / 60)}:${String(active.durationSeconds % 60).padStart(2, '0')} · ${
+                      active.status === 'live' ? 'Temps au dernier relevé' : 'Durée finale'
+                    }`}
               </span>
             </div>
-            {active.bans.length > 0 && (
-              <div className="map-bans" aria-label="Champions bannis">
-                <div className="ban-heading">
-                  <strong>Phase de draft</strong>
-                  <span>Champions bannis</span>
-                </div>
-                <div className="ban-list">
-                  {active.bans.map((ban, index) => {
-                    const team = catalog.teams.find((item) => item.id === ban.teamId);
-                    return (
-                      <span
-                        className="ban-chip"
-                        key={`${ban.teamId}-${ban.champion}-${index}`}
-                        title={`${team?.name ?? 'Équipe'} · ${ban.champion}`}
-                      >
-                        <Logo
-                          src={championAsset(ban.champion, ban.championImage)}
-                          name={ban.champion}
-                          code={ban.champion.slice(0, 2)}
-                          className="ban-icon"
-                        />
-                        <span>{ban.champion}</span>
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <DraftBans active={active} catalog={catalog} />
             {active.sides.length ? (
               <div className="map-teams">
                 {active.sides.map((side) => (

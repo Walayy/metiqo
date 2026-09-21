@@ -68,3 +68,26 @@ def test_stale_oracle_format_is_not_selected_as_complete_history() -> None:
     complete = _snapshot(match, "BO3", _maps("home", "home"))
     assert _snapshot_format(complete, match) == "BO3"
     assert _is_complete_oracle_snapshot(complete, match)
+
+
+def test_live_snapshot_accepts_finished_and_in_progress_map_details() -> None:
+    match = _match()
+    snapshot = MatchSnapshot(
+        id=uuid4(),
+        match_id=match.id,
+        source="sofascore",
+        source_id="source-match",
+        source_url="https://www.sofascore.com/fr/esports/match/example#id:1",
+        status="live",
+        observed_at=datetime(2026, 9, 20, tzinfo=UTC),
+        sha256="b" * 64,
+        payload={
+            "format": "BO5",
+            "maps": [
+                {"number": 1, "status": "finished", "winnerId": "home"},
+                {"number": 2, "status": "live", "winnerId": None},
+            ],
+        },
+    )
+
+    assert _snapshot_format(snapshot, match) == "BO5"
