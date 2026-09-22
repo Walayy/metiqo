@@ -184,6 +184,12 @@
   font-size: 11px;
   color: var(--muted);
 }
+.league-picker-section {
+  padding: var(--space-md) var(--space-md) var(--space-xs);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+}
 .league-picker-empty {
   padding: var(--space-xl) var(--space-md);
   color: var(--muted);

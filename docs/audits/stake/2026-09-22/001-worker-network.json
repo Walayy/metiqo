@@ -1,0 +1,63 @@
+[
+  {
+    "at": "2026-09-21T22:02:46.305051+00:00",
+    "url": "https://stake.bet/fr/sports/esports",
+    "status": 307,
+    "type": "document"
+  },
+  {
+    "at": "2026-09-21T22:02:46.325279+00:00",
+    "url": "https://stake.bet/fr/sports/esports",
+    "status": 403,
+    "type": "document",
+    "retryAfter": null
+  },
+  {
+    "at": "2026-09-21T22:02:46.385117+00:00",
+    "url": "https://stake.bet/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "at": "2026-09-21T22:02:46.533925+00:00",
+    "url": "https://challenges.cloudflare.com/turnstile/v0/g/330e41bb475c/api.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "at": "2026-09-21T22:02:46.628559+00:00",
+    "url": "https://stake.bet/cdn-cgi/challenge-platform/h/g/fo/2032144883:1790025017:e34fKaa6_-6Jghu6FV4OGrsKsc7d-UHnuinsMl9R51g/a3ec5b2a6c03d093/dzfN1H7X8BeuEg4r7UX8v9b2pCdbdbsw7n9.T2_Xhvc-1790028166-1.2.1.1-KSm2IRxVvaLlqsgxSeCTPXSPK20G.B.wEoQVt9ad4D_EtXrkwSCfTyimTwNFlDZN",
+    "status": 200,
+    "type": "xhr"
+  },
+  {
+    "at": "2026-09-21T22:02:46.704278+00:00",
+    "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/turnstile/f/av0/rch/wrbln/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal",
+    "status": 200,
+    "type": "document"
+  },
+  {
+    "at": "2026-09-21T22:02:47.263899+00:00",
+    "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/fo/2637785887:1790025019:menWI3GQvit9ABlcFSKDZxQHAAn9BHGY_O1B-tPyduI/a3ec5b2caedf3d10/9GloLVePBB3gLZ6mb26z9S9pQDrobsbFjedI1mYBrpg-1790028167-1.2.1.1-.yEY3xW2AiuxDt.QWeNt6QWsdbrpP3GEDeHVPJy6CNNumVWdjd15bNEDQGci9tvW",
+    "status": 200,
+    "type": "xhr"
+  },
+  {
+    "at": "2026-09-21T22:02:47.450734+00:00",
+    "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/pat/a3ec5b2caedf3d10/1790028167416/e7ee452863e8c2359ab0b657167c3f10d9f3cb0748f4f0ac8ad3c8f3d99e040a/hgYM5TiZZJEbH0teA6LZI.u8w4bAu7Ae0aPleRYvUw4-1790028167-1.3.1.1-4UoZW5Og.bj2zdKTsTVxNaYC7o2wQ570uHcG5YhhalGbw8cYfUkEhhB0K7nE6jZtI7neZNydBCFBt2ZJZaT8Csi21B0RR_ODey74YJ5wMoR1ik.8PVRsCCUb3sz6Uzp8HQW0hOZ9zeSeIplZ1D9X6UH5x_0LIp1l0Zup.HPT9YVnVsMY_hkXdQBqhLauIWBNxQfzfZVKOIul8IqT0tTgu6MY5h_C7p_cE99hpbMiyT4Z3MCiMvocXShmadUgM0HQeb5DEtiWxWtVyFKE.YtG.I06tNRy3tg8GvkBCOcYx3rs6wwdsA5awTv3zoQLZ9SfPDUqLFvNZD.3dejn8NpcjngzEE8NOxC1dYfLfSVKZzpRo6RaiujCeywp5THfI2kqJCIS89LlV9ZQVGKwRFxd.rLWlBw_EXtBJuOjfRPCaOTiCtfWxpBaseEwayIt54OKPB9M3IT2gY.yJmL6HVIAeUEtGM044OgYmxIZQxqBMVpScu1xSGpg1mgccjL_G1IKhs70LUgNZVuWk4Vr5kE2FqmYn2yRkppVmGYNbnim0NDgYrxk9.I8XN2umZyV0oxD5ByKNdE86ne07le6jKpJqvROvKoi1DL3f70XMxc8A_Y9uM38hF8Y55.UT19MVHQCAMkBfMn2nThspynIIgURGGsFgmY1IlTTa9LTQzgdKRrR8IMeHs3vUw4HUAysyhnsGTqw4nb9RWWpd_XkucJXm6dC.XcDoTdF6IyTILn.YsnVMdW6THG4VAP4s1CE73nAbMYqUgefTN_UE7CUqADHwGSBFXbX9vzZDWrd9okH_ncuUdKymFKCEIktazSe6Lf.",
+    "status": 401,
+    "type": "fetch"
+  },
+  {
+    "at": "2026-09-21T22:02:48.001237+00:00",
+    "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/ci/a3ec5b2caedf3d10/1790028167420/S44V5NeYgPLRWfTkQP3_iH.mM3Qaq4vJBBC5jvKUrAw-1790028167-1.3.1.1-yqhBbY75x8epG3bOblIYfdw6a9poqav2Ke2m1qsx1ufC5VREEEhf3u_bLKuAsDtBIe5yQlzCafks7gXriPXeHhilzYqqv2ZvnlnuhWjBHbsxW8pXGQabnPoDrd4oNAZRCk9eEujCVjfwuunMmipFPLU0cxDRQqzmmZ6qgd7QQV0QgC5Fv2t5CSEKij2j3DBYM_O87CoW_2hyQ8H000JiWGh9ewWLjlFsk0KGzfkpGwEHr1rwirqKdhX9AY548gKZhcjcjMZJeRMAdJQA5xrFLEO4051EpQssrQ8cNhFd.FQ5r3toU3guFHULR67dR18Y7Q5eekpnQ3Oxi6ZS1aixhb19GeTg995GZrsio22SH56kSXOKHH8x4u7YCqDq5AgArzYxEHTfWTFAdNlLBdpsCnCiTOT5y3hW0pn0OelGcJnFcU6tVoGOYTCPVZrCGu0txbLgyvLAek88Gwq9m.vtLFKscw0Ep5FtJZjy.L45KCgryUViUcmlddBg0mzlmsc8zlsqhXOok1_6HQ5Y8Pn61Qt4x2FiwacJyGC4krc02TWyqYpjYrHoUALvIHL7RrATfFgDJCgfQynFtubnYsEbzBYrSa4HwCEOiaIHO9LCXVKjbaf4azF67QUqGGsklc4MCcxA.V1f8TOoQbPPJzioWJtflx0yTzNo1961YGnUjeBdSBOgiPz5RJZw_6e3RmZnTqhffc7gjMbwbG75L1wGHdvPt.znPU3ZPKTkSlAdb_g",
+    "status": 200,
+    "type": "image"
+  },
+  {
+    "at": "2026-09-21T22:02:48.394236+00:00",
+    "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/fo/2637785887:1790025019:menWI3GQvit9ABlcFSKDZxQHAAn9BHGY_O1B-tPyduI/a3ec5b2caedf3d10/9GloLVePBB3gLZ6mb26z9S9pQDrobsbFjedI1mYBrpg-1790028167-1.2.1.1-.yEY3xW2AiuxDt.QWeNt6QWsdbrpP3GEDeHVPJy6CNNumVWdjd15bNEDQGci9tvW",
+    "status": 200,
+    "type": "xhr"
+  }
+]

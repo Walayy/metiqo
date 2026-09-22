@@ -1,0 +1,1058 @@
+{
+  "method": "Lecture du DOM public via le navigateur Codex, scripts et styles sans contenu, aucun cookie ou stockage de session. URLs sans paramètres ni fragments. Les captures 002 et 003 sont limitées aux 2000 premiers nœuds exportés ; à partir de 004, transfert de tous les nœuds sélectionnés contrôlé par comptage. Les iframes sont décrites par leurs éléments hôtes ; leur texte accessible figure dans les captures AX lorsqu’il était chargé. DOM, AX et PNG sont successifs, non atomiques. Les paragraphes éditoriaux hors périmètre sont omis, avec signalement explicite ; leurs nœuds et mesures sont conservés. Les src vides du frame Intercom restent inconnus, sans résolution artificielle vers la page courante.",
+  "captures": [
+    {
+      "name": "002-esports-initial",
+      "startedAt": "2026-09-21T22:04:28.153Z",
+      "observedAt": "2026-09-21T22:04:28.486Z",
+      "url": "https://stake.bet/fr/sports/esports",
+      "title": "Paris sur lâ€™eSport et cotes - MarchÃ©s eSport sur Stake",
+      "viewport": {
+        "dpr": 1,
+        "height": 912,
+        "width": 732
+      },
+      "nodes": 2000,
+      "files": [
+        {
+          "path": "002-esports-initial.dom.json.gz",
+          "bytes": 60412,
+          "sha256": "f4f9908911b011825db053551e4cd43460659b9e11578d7598d6e290b3467755"
+        },
+        {
+          "path": "002-esports-initial.ax.txt.gz",
+          "bytes": 8952,
+          "sha256": "cdc049a23f8127292c29031d1da363ee5d99c5fc9917dc3a623a27e8b564cfa0"
+        },
+        {
+          "path": "002-esports-initial.png",
+          "bytes": 47028,
+          "sha256": "bc9cccb5af61b89e96fd4f386bf76c2c7eff06957103692cbe023e1661daa1d6"
+        }
+      ]
+    },
+    {
+      "name": "003-lol-filter-initial",
+      "startedAt": "2026-09-21T22:04:41.319Z",
+      "observedAt": "2026-09-21T22:04:41.594Z",
+      "url": "https://stake.bet/fr/sports/esports/league-of-legends",
+      "title": "Paris sur lâ€™eSport et cotes - MarchÃ©s eSport sur Stake",
+      "viewport": {
+        "dpr": 1,
+        "height": 912,
+        "width": 732
+      },
+      "nodes": 2000,
+      "files": [
+        {
+          "path": "003-lol-filter-initial.dom.json.gz",
+          "bytes": 57726,
+          "sha256": "d8a1149b1f7e5a6b7dd62d1ad25d028807d0860583f4b160a842c20ab7097238"
+        },
+        {
+          "path": "003-lol-filter-initial.ax.txt.gz",
+          "bytes": 8524,
+          "sha256": "596c90fb7e42947afcaa6242ca35b2029a95b3ab3d02d1bdcd1ac0b9c5e40c9a"
+        },
+        {
+          "path": "003-lol-filter-initial.png",
+          "bytes": 48493,
+          "sha256": "0c85753ea428de26fcf4bf8d78858cf7109d36788138126422ace682b2e4329b"
+        }
+      ]
+    },
+    {
+      "name": "004-lol-all-desktop",
+      "startedAt": "2026-09-21T22:05:40.397Z",
+      "observedAt": "2026-09-21T22:05:40.900Z",
+      "url": "https://stake.bet/fr/sports/esports/league-of-legends",
+      "title": "Paris sur lâ€™eSport et cotes - MarchÃ©s eSport sur Stake",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3897,
+      "nodes": 3856,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "004-lol-all-desktop.dom.json.gz",
+          "bytes": 106477,
+          "sha256": "dd61b5b33145083c76065857066ed5365fadb513831a9d782e8640dd4f1fc04d"
+        },
+        {
+          "path": "004-lol-all-desktop.ax.txt.gz",
+          "bytes": 6201,
+          "sha256": "af4b2fd7c54c1600d86f336197b9df224c6538682aac730f174f2018f0d08a60"
+        },
+        {
+          "path": "004-lol-all-desktop.png",
+          "bytes": 94673,
+          "sha256": "49ac50f7e0b2c93a0ffe03b5777ef1e25d49ead51af9f9ab3a2ffdf6a3548a5a"
+        }
+      ],
+      "editorialTextRedactedNodes": 102
+    },
+    {
+      "name": "005-flyquest-principal",
+      "startedAt": "2026-09-21T22:06:21.101Z",
+      "observedAt": "2026-09-21T22:06:21.497Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2947,
+      "nodes": 2900,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "005-flyquest-principal.dom.json.gz",
+          "bytes": 70216,
+          "sha256": "c429d8e052d161bea8ec29fd24fe2dcf962dda7084dbdd9a9c1194f5c541e9c4"
+        },
+        {
+          "path": "005-flyquest-principal.ax.txt.gz",
+          "bytes": 5043,
+          "sha256": "a0b451204af723cc9c2f8d2648be1ecbd16c5b0130f8ebface93d55ea5de54d0"
+        },
+        {
+          "path": "005-flyquest-principal.png",
+          "bytes": 146090,
+          "sha256": "f9cd2361e2972bb6fb29815756cfa8d9c4111dca719f16346d5e30129358b613"
+        }
+      ]
+    },
+    {
+      "name": "006-flyquest-principal-expanded",
+      "startedAt": "2026-09-21T22:06:30.850Z",
+      "observedAt": "2026-09-21T22:06:31.230Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2974,
+      "nodes": 2927,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "006-flyquest-principal-expanded.dom.json.gz",
+          "bytes": 70119,
+          "sha256": "79adfbe8e4e92c11d8b64ace5ba93ab27164c2c53f955384663920f3125cc844"
+        },
+        {
+          "path": "006-flyquest-principal-expanded.ax.txt.gz",
+          "bytes": 5075,
+          "sha256": "106863875650802d1988bb80eaa58554862616ec1c4a3b9cd3ea7c401a8445e6"
+        },
+        {
+          "path": "006-flyquest-principal-expanded.png",
+          "bytes": 135061,
+          "sha256": "c1cc9e0fa961e0aac88d927229fd5bf17338c36a156214c90c8bfd9d03239823"
+        }
+      ]
+    },
+    {
+      "name": "007-flyquest-map1",
+      "startedAt": "2026-09-21T22:07:03.640Z",
+      "observedAt": "2026-09-21T22:07:04.051Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2874,
+      "nodes": 2827,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "007-flyquest-map1.dom.json.gz",
+          "bytes": 68124,
+          "sha256": "1bef8e2e7887b46483d4c4cf6c559b5fafcd74089648d65269e1de16da6b7026"
+        },
+        {
+          "path": "007-flyquest-map1.ax.txt.gz",
+          "bytes": 4978,
+          "sha256": "ff0f854ba21cdcd412080912b9fc98148416e1ee5fc7b1e1136c141d3cf21994"
+        },
+        {
+          "path": "007-flyquest-map1.png",
+          "bytes": 149774,
+          "sha256": "4fad8ed6fb812e1629d03c814d04b58e8e56837c2c3d5eb42d0202e5db68a6a1"
+        }
+      ]
+    },
+    {
+      "name": "008-flyquest-map2",
+      "startedAt": "2026-09-21T22:07:04.525Z",
+      "observedAt": "2026-09-21T22:07:04.885Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2874,
+      "nodes": 2827,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "008-flyquest-map2.dom.json.gz",
+          "bytes": 68119,
+          "sha256": "3af5e77f0fdabbbee7a5074916c1bb5f4af35ea25bf9a4946dba0bda3b88b01f"
+        },
+        {
+          "path": "008-flyquest-map2.ax.txt.gz",
+          "bytes": 4978,
+          "sha256": "14e2380a55ad7b9cbc933a0110bff647adb4533eb7a5eb94704a3bc06c8993da"
+        },
+        {
+          "path": "008-flyquest-map2.png",
+          "bytes": 153175,
+          "sha256": "258fcffc64659dab2e5b49d22019d0609ef0fe942e780556053b0c3cf02c24b7"
+        }
+      ]
+    },
+    {
+      "name": "009-flyquest-map3",
+      "startedAt": "2026-09-21T22:07:05.353Z",
+      "observedAt": "2026-09-21T22:07:05.755Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2874,
+      "nodes": 2827,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "009-flyquest-map3.dom.json.gz",
+          "bytes": 68119,
+          "sha256": "56856df8dbda417a7169aa52e6698d3f3f5fddab357076c6d90f24c7351b89c5"
+        },
+        {
+          "path": "009-flyquest-map3.ax.txt.gz",
+          "bytes": 4978,
+          "sha256": "ff1f7c8c6fa015a4fdf69e7f5d32f28bd0f91f8c838dda7462cf9293b9c5eb9b"
+        },
+        {
+          "path": "009-flyquest-map3.png",
+          "bytes": 153162,
+          "sha256": "7e0382aaf76572a1644970985e9beaebfad11901dbe91aa3ab54f4bc6af0daa9"
+        }
+      ]
+    },
+    {
+      "name": "010-flyquest-map4",
+      "startedAt": "2026-09-21T22:07:06.226Z",
+      "observedAt": "2026-09-21T22:07:06.631Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2874,
+      "nodes": 2827,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "010-flyquest-map4.dom.json.gz",
+          "bytes": 68111,
+          "sha256": "67bc355e413a356002653a71ef1beb0b3d0a829486df2e051f746df0e5ee2da4"
+        },
+        {
+          "path": "010-flyquest-map4.ax.txt.gz",
+          "bytes": 4973,
+          "sha256": "78b64db8606e9ef8274cb0c078dae2e58198bdfa02184e6d1ec017c273a419ec"
+        },
+        {
+          "path": "010-flyquest-map4.png",
+          "bytes": 153174,
+          "sha256": "5e5c46fc387cbb89a95276aafeb999e4179020904c66dd8541e4c30f3f3fd86d"
+        }
+      ]
+    },
+    {
+      "name": "011-flyquest-map5",
+      "startedAt": "2026-09-21T22:07:07.101Z",
+      "observedAt": "2026-09-21T22:07:07.468Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2874,
+      "nodes": 2827,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "011-flyquest-map5.dom.json.gz",
+          "bytes": 68108,
+          "sha256": "4faaa16783008007eaa3329362dd80afe8b17309c37efc10d2be12950813ca57"
+        },
+        {
+          "path": "011-flyquest-map5.ax.txt.gz",
+          "bytes": 4971,
+          "sha256": "37694ec7063cbd25ccf4bc335f4eee46ecfe610553beb3aff3d58930cc590ee6"
+        },
+        {
+          "path": "011-flyquest-map5.png",
+          "bytes": 153127,
+          "sha256": "c5bb04de65126867b2c1eda6b28395b7eb5d4fdb6b2846e2e360ef63abae35b3"
+        }
+      ]
+    },
+    {
+      "name": "012-search-baron",
+      "startedAt": "2026-09-21T22:07:28.879Z",
+      "observedAt": "2026-09-21T22:07:29.226Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2578,
+      "nodes": 2531,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "012-search-baron.dom.json.gz",
+          "bytes": 62443,
+          "sha256": "1e556e62179065444c930eaad7e8e4ab3b99b6a9d0a84d227e16bb3300b2f626"
+        },
+        {
+          "path": "012-search-baron.ax.txt.gz",
+          "bytes": 4706,
+          "sha256": "574ddd63fcea4aa1eacb84b35375c662ada78701ad802b6b14704cd3e668db1d"
+        },
+        {
+          "path": "012-search-baron.png",
+          "bytes": 100589,
+          "sha256": "111dc9e5896c3e234709c69cd3fdbb792a18f6e943a20742430c2733f6836764"
+        }
+      ]
+    },
+    {
+      "name": "013-search-empty",
+      "startedAt": "2026-09-21T22:07:29.376Z",
+      "observedAt": "2026-09-21T22:07:29.713Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 2579,
+      "nodes": 2532,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "013-search-empty.dom.json.gz",
+          "bytes": 62499,
+          "sha256": "fa94b3bd2d138012b813c8260b82edb16b3e91684ece15af6088e070195051f7"
+        },
+        {
+          "path": "013-search-empty.ax.txt.gz",
+          "bytes": 4705,
+          "sha256": "bd9ede9ba4be3a32b592727c1ca8bcd09ee2c54d2aa84d07e2a326fa7954d3da"
+        },
+        {
+          "path": "013-search-empty.png",
+          "bytes": 97529,
+          "sha256": "8903d093619d01f0698099f27b481a4dc9ae543d8576a05d1617bd5a52622a52"
+        }
+      ]
+    },
+    {
+      "name": "014-flyquest-mobile-map1",
+      "startedAt": "2026-09-21T22:07:29.923Z",
+      "observedAt": "2026-09-21T22:07:30.349Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 844,
+        "width": 390
+      },
+      "totalElements": 2356,
+      "nodes": 2309,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "014-flyquest-mobile-map1.dom.json.gz",
+          "bytes": 53041,
+          "sha256": "2a84413bacfd6b1b1022df51ea3c37d0dcff4f93ece1df1baafd70a6ce2512f0"
+        },
+        {
+          "path": "014-flyquest-mobile-map1.ax.txt.gz",
+          "bytes": 2016,
+          "sha256": "dd098a815bd29b57bedae48e365ccb1a90fc92294b770cd2a1eeb7c7ffe1dfd9"
+        },
+        {
+          "path": "014-flyquest-mobile-map1.png",
+          "bytes": 37950,
+          "sha256": "8d12921afd205c03e78b842c37551a0c9302095f77b83206796a8f8c85043028"
+        }
+      ]
+    },
+    {
+      "name": "015-flyquest-mobile-markets",
+      "startedAt": "2026-09-21T22:07:46.938Z",
+      "observedAt": "2026-09-21T22:07:47.277Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 844,
+        "width": 390
+      },
+      "totalElements": 2449,
+      "nodes": 2402,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "015-flyquest-mobile-markets.dom.json.gz",
+          "bytes": 54822,
+          "sha256": "0c830098d2e6f9c893bca3b48bd797f22a649a7f422918f2aff0e38dbc4a43f4"
+        },
+        {
+          "path": "015-flyquest-mobile-markets.ax.txt.gz",
+          "bytes": 2277,
+          "sha256": "cbff4195086ea394427966ccce0f4e608a57c91e722a450ede2b98a7b09476e5"
+        },
+        {
+          "path": "015-flyquest-mobile-markets.png",
+          "bytes": 36594,
+          "sha256": "44a8f03c34fa657ef4b78e5a8330bb0a0a94c18ae9ec8035cf8c377a73a8df23"
+        }
+      ]
+    },
+    {
+      "name": "016-flyquest-tablet",
+      "startedAt": "2026-09-21T22:07:47.465Z",
+      "observedAt": "2026-09-21T22:07:47.948Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "title": "FlyQuest VS Shopify Rebellion - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1024,
+        "width": 768
+      },
+      "totalElements": 2850,
+      "nodes": 2803,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "016-flyquest-tablet.dom.json.gz",
+          "bytes": 66461,
+          "sha256": "f7468b319eda83f92a04a6eb9328f216662fb8d167873bc58e675a7b3a1985b2"
+        },
+        {
+          "path": "016-flyquest-tablet.ax.txt.gz",
+          "bytes": 4665,
+          "sha256": "f15df1337b54c62ac2fe91aaba7cd7634d53631071db272f400b8f12079d0969"
+        },
+        {
+          "path": "016-flyquest-tablet.png",
+          "bytes": 38152,
+          "sha256": "f61c12ecd0fbbef275447f9948ad4c26b2a0253f86939ebad2668fea16bcb78f"
+        }
+      ]
+    },
+    {
+      "name": "017-pyramid-live-principal",
+      "startedAt": "2026-09-21T22:08:01.570Z",
+      "observedAt": "2026-09-21T22:08:02.029Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+      "title": "Pyramid IV Esports VS LODIS - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3702,
+      "nodes": 3671,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "017-pyramid-live-principal.dom.json.gz",
+          "bytes": 82767,
+          "sha256": "a56d158edb5922afe0105f94c3cc908b133367d3dcb743d8f3d59332413edead"
+        },
+        {
+          "path": "017-pyramid-live-principal.ax.txt.gz",
+          "bytes": 4290,
+          "sha256": "d1036d79d845f34511c1707e3924c792e2a449bec83197afa0d83f26477aa948"
+        },
+        {
+          "path": "017-pyramid-live-principal.png",
+          "bytes": 60446,
+          "sha256": "048c7af4d9e0842af49d0302d5a1c697647c97f9f25b9a590d6e392fbfa0d6d3"
+        }
+      ]
+    },
+    {
+      "name": "018-pyramid-live-all-scores",
+      "startedAt": "2026-09-21T22:08:10.249Z",
+      "observedAt": "2026-09-21T22:08:10.792Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+      "title": "Pyramid IV Esports VS LODIS - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3678,
+      "nodes": 3647,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "018-pyramid-live-all-scores.dom.json.gz",
+          "bytes": 82186,
+          "sha256": "b2c89d7ff944734a6d97346da78db86ba17218bea77a1afc139804d955619a08"
+        },
+        {
+          "path": "018-pyramid-live-all-scores.ax.txt.gz",
+          "bytes": 4251,
+          "sha256": "4f9f2e284660e114b22c87e4df521f7a1c72ef14bd40816bf05b47d28a809975"
+        },
+        {
+          "path": "018-pyramid-live-all-scores.png",
+          "bytes": 112140,
+          "sha256": "48728cd0f49b3a89d0c2d16b93bc403937ca1658c00e3634f99e68cb70bc6b7f"
+        }
+      ]
+    },
+    {
+      "name": "019-pyramid-live-map2",
+      "startedAt": "2026-09-21T22:08:11.321Z",
+      "observedAt": "2026-09-21T22:08:11.832Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+      "title": "Pyramid IV Esports VS LODIS - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3699,
+      "nodes": 3668,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "019-pyramid-live-map2.dom.json.gz",
+          "bytes": 82212,
+          "sha256": "65a5053c6c7a2830b7498df864b273d6cebaac997ca0594948c5847079c4fad6"
+        },
+        {
+          "path": "019-pyramid-live-map2.ax.txt.gz",
+          "bytes": 6207,
+          "sha256": "b4f0795f93ad7c06322a364d51cba31b2d134c96b00ba0ea8d3b5147d3805802"
+        },
+        {
+          "path": "019-pyramid-live-map2.png",
+          "bytes": 92450,
+          "sha256": "f8ae23091573b568b3f2a7fb9febfc3abbcc56ddf819f65e5e4ea12c62ee140f"
+        }
+      ]
+    },
+    {
+      "name": "020-pyramid-live-map3",
+      "startedAt": "2026-09-21T22:08:12.510Z",
+      "observedAt": "2026-09-21T22:08:12.985Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+      "title": "Pyramid IV Esports VS LODIS - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3694,
+      "nodes": 3663,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "020-pyramid-live-map3.dom.json.gz",
+          "bytes": 81960,
+          "sha256": "c10adbee8d84b74ee40c8254404883df40e0a4f72940d2e43e6ad792a5d17a41"
+        },
+        {
+          "path": "020-pyramid-live-map3.ax.txt.gz",
+          "bytes": 6207,
+          "sha256": "0ea899e5fa3946bb568633b9eee5a1bf9a70674e94054c3d35c1bdffc6def906"
+        },
+        {
+          "path": "020-pyramid-live-map3.png",
+          "bytes": 92844,
+          "sha256": "803ac6c85ac7d6c0a8e66d0a31d65cf55c9c6b91e600e23a3584e205d36b3d1f"
+        }
+      ]
+    },
+    {
+      "name": "021-cfo-kt-principal",
+      "startedAt": "2026-09-21T22:09:17.938Z",
+      "observedAt": "2026-09-21T22:09:18.414Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845065-cfo-academy-kt-rolster-challengers",
+      "title": "CFO Academy VS KT Rolster Challengers - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3601,
+      "nodes": 3570,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "021-cfo-kt-principal.dom.json.gz",
+          "bytes": 80139,
+          "sha256": "86deaeea454191f231b09d9621cf78c57047acfc9e1aab7f5ccaf47ea3bb02ec"
+        },
+        {
+          "path": "021-cfo-kt-principal.ax.txt.gz",
+          "bytes": 4087,
+          "sha256": "85e56161d98653657c5c436c67c5edd4e6b942414869c7464b7bfb818cd6fc47"
+        },
+        {
+          "path": "021-cfo-kt-principal.png",
+          "bytes": 131241,
+          "sha256": "d671187b8e61e28b18d77dba861e820fe959834e0fdce545cf4de0b8b22008f5"
+        }
+      ]
+    },
+    {
+      "name": "022-fuego-t1-principal",
+      "startedAt": "2026-09-21T22:09:19.489Z",
+      "observedAt": "2026-09-21T22:09:20.318Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845066-fuego-t1-esports-academy",
+      "title": "Fuego VS T1 Esports Academy - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3216,
+      "nodes": 3204,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "022-fuego-t1-principal.dom.json.gz",
+          "bytes": 74107,
+          "sha256": "c2b6fb266d4179318dd5f56b6e9d1760b07c09cfb29356a1c81b66315cf51e33"
+        },
+        {
+          "path": "022-fuego-t1-principal.ax.txt.gz",
+          "bytes": 4068,
+          "sha256": "eb0b13342e82c4e84d975821a2d24dd459b7f10d7fa6908649aa74aae2acab5f"
+        },
+        {
+          "path": "022-fuego-t1-principal.png",
+          "bytes": 10065,
+          "sha256": "1f9c928c53d130db9619aaaf9eac44ace36520279fdc8617e0dca00095731897"
+        }
+      ]
+    },
+    {
+      "name": "022-fuego-t1-principal-repeat",
+      "startedAt": "2026-09-21T22:09:20.924Z",
+      "observedAt": "2026-09-21T22:09:21.421Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845066-fuego-t1-esports-academy",
+      "title": "Fuego VS T1 Esports Academy - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3599,
+      "nodes": 3569,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "022-fuego-t1-principal-repeat.dom.json.gz",
+          "bytes": 80068,
+          "sha256": "780a16d014880d21ecc8028ff644cb2a73f999f3374b3bd5d6cb9d7426b62e3e"
+        },
+        {
+          "path": "022-fuego-t1-principal-repeat.ax.txt.gz",
+          "bytes": 4078,
+          "sha256": "69882dec6fb7f700ffa6011d3e49eeffdfde06a293e4570f2ed8de1a1ccb2a8d"
+        },
+        {
+          "path": "022-fuego-t1-principal-repeat.png",
+          "bytes": 131123,
+          "sha256": "4d541bff4bc7dcaf408a33a95344950e199e69a779c01c809cee39643325824d"
+        }
+      ]
+    },
+    {
+      "name": "023-koi-cfo-principal",
+      "startedAt": "2026-09-21T22:09:22.682Z",
+      "observedAt": "2026-09-21T22:09:23.554Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845067-movistar-koi-academy-cfo-academy",
+      "title": "KOI Academy VS CFO Academy - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3228,
+      "nodes": 3216,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "023-koi-cfo-principal.dom.json.gz",
+          "bytes": 74419,
+          "sha256": "8f80cab0efc19be9bd4227e0a933f0233884d4396c928c17e12c73623057f675"
+        },
+        {
+          "path": "023-koi-cfo-principal.ax.txt.gz",
+          "bytes": 4085,
+          "sha256": "0538cf49d18aaaf004a064d7ae97ade14952d8ebc0b599cbd5eda79f17d489ae"
+        },
+        {
+          "path": "023-koi-cfo-principal.png",
+          "bytes": 10065,
+          "sha256": "1f9c928c53d130db9619aaaf9eac44ace36520279fdc8617e0dca00095731897"
+        }
+      ]
+    },
+    {
+      "name": "023-koi-cfo-principal-repeat",
+      "startedAt": "2026-09-21T22:09:24.188Z",
+      "observedAt": "2026-09-21T22:09:24.679Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845067-movistar-koi-academy-cfo-academy",
+      "title": "KOI Academy VS CFO Academy - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3610,
+      "nodes": 3581,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "023-koi-cfo-principal-repeat.dom.json.gz",
+          "bytes": 80339,
+          "sha256": "331156a096e6bc6ea6983029086993d901df52b9414a318ad1fb52597059a52b"
+        },
+        {
+          "path": "023-koi-cfo-principal-repeat.ax.txt.gz",
+          "bytes": 4096,
+          "sha256": "14833138a204fea61e785553c0a2bee556e84d4e945347c48da3f10ad8cfe247"
+        },
+        {
+          "path": "023-koi-cfo-principal-repeat.png",
+          "bytes": 131367,
+          "sha256": "6ede27eab7580a9e3414f30f659b9d7983670460b58d093babeaa8f5f70ed599"
+        }
+      ]
+    },
+    {
+      "name": "024-fuego-dn-principal",
+      "startedAt": "2026-09-21T22:09:25.795Z",
+      "observedAt": "2026-09-21T22:09:26.832Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845068-fuego-dn-soopers-challengers",
+      "title": "Fuego VS DN SOOPers Challengers - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3228,
+      "nodes": 3216,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "024-fuego-dn-principal.dom.json.gz",
+          "bytes": 74375,
+          "sha256": "aca226eefd2db10af9b2a03468bba765a0aad73033e454aa9cea13c9393a44bf"
+        },
+        {
+          "path": "024-fuego-dn-principal.ax.txt.gz",
+          "bytes": 4076,
+          "sha256": "f7cdfc16a0f93138bc5a1ecc8b3e66a543e0a61de8fd69caa5a6b5c2c283c68a"
+        },
+        {
+          "path": "024-fuego-dn-principal.png",
+          "bytes": 10065,
+          "sha256": "1f9c928c53d130db9619aaaf9eac44ace36520279fdc8617e0dca00095731897"
+        }
+      ]
+    },
+    {
+      "name": "024-fuego-dn-principal-repeat",
+      "startedAt": "2026-09-21T22:09:27.509Z",
+      "observedAt": "2026-09-21T22:09:27.940Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845068-fuego-dn-soopers-challengers",
+      "title": "Fuego VS DN SOOPers Challengers - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3613,
+      "nodes": 3582,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "024-fuego-dn-principal-repeat.dom.json.gz",
+          "bytes": 80383,
+          "sha256": "1fdfac0ae00be35619f1fe02f54b40006622b2374e2c73c56323c4c25bd4b534"
+        },
+        {
+          "path": "024-fuego-dn-principal-repeat.ax.txt.gz",
+          "bytes": 4085,
+          "sha256": "162e30056c9d59b153447329e29da36264e69bc2090c0724d8c88f9ebd15a9f3"
+        },
+        {
+          "path": "024-fuego-dn-principal-repeat.png",
+          "bytes": 129673,
+          "sha256": "e8cde6048ed69bb7c673787f83624d3a5ee5eb897adc7a3059aca66392707b1b"
+        }
+      ]
+    },
+    {
+      "name": "025-pobelter-chenchen-principal",
+      "startedAt": "2026-09-21T22:09:30.109Z",
+      "observedAt": "2026-09-21T22:09:30.687Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+      "title": "Pobelter VS chenchen5 - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3909,
+      "nodes": 3882,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "025-pobelter-chenchen-principal.dom.json.gz",
+          "bytes": 89521,
+          "sha256": "8dca355704bf171bc1ef104d11b178e54d94f95d3b821bad7ec8cdd67773773c"
+        },
+        {
+          "path": "025-pobelter-chenchen-principal.ax.txt.gz",
+          "bytes": 4395,
+          "sha256": "fdda147e4cead218089b0c2db68d55bbd64395b32eb3853adfbe2a4824df0934"
+        },
+        {
+          "path": "025-pobelter-chenchen-principal.png",
+          "bytes": 10065,
+          "sha256": "1f9c928c53d130db9619aaaf9eac44ace36520279fdc8617e0dca00095731897"
+        }
+      ]
+    },
+    {
+      "name": "025-pobelter-chenchen-principal-repeat",
+      "startedAt": "2026-09-21T22:09:31.278Z",
+      "observedAt": "2026-09-21T22:09:31.754Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+      "title": "Pobelter VS chenchen5 - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3915,
+      "nodes": 3884,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "025-pobelter-chenchen-principal-repeat.dom.json.gz",
+          "bytes": 86506,
+          "sha256": "f38d4b02d9128d5a4719f021040fc3717f703d40830aeb501813ef14c32951b2"
+        },
+        {
+          "path": "025-pobelter-chenchen-principal-repeat.ax.txt.gz",
+          "bytes": 4391,
+          "sha256": "79ac482a06b93cdcf4f76b1ac78379a9681d3c12112b9a154d40a455f2fd262f"
+        },
+        {
+          "path": "025-pobelter-chenchen-principal-repeat.png",
+          "bytes": 80159,
+          "sha256": "2b8aab5d4c808ce9017e5ae66651f0d784dd688e3feccffed466878857ed8f6b"
+        }
+      ]
+    },
+    {
+      "name": "025-pobelter-chenchen-map-1",
+      "startedAt": "2026-09-21T22:09:32.736Z",
+      "observedAt": "2026-09-21T22:09:33.294Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+      "title": "Pobelter VS chenchen5 - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3644,
+      "nodes": 3613,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "025-pobelter-chenchen-map-1.dom.json.gz",
+          "bytes": 80949,
+          "sha256": "6c809e6db7c04c660f52dd63f818e9b326638ebfbb122585caca75ba439d2de5"
+        },
+        {
+          "path": "025-pobelter-chenchen-map-1.ax.txt.gz",
+          "bytes": 4121,
+          "sha256": "bf07ef9b3460509c78f6dd053a72f1c0ae0219b2b302bbcaf7affd9e0ce401f0"
+        },
+        {
+          "path": "025-pobelter-chenchen-map-1.png",
+          "bytes": 130972,
+          "sha256": "50a31d4a70b72e45e80f583d480f488a571db9c15c9b025fda9c2b3a0d5ab98c"
+        }
+      ]
+    },
+    {
+      "name": "025-pobelter-chenchen-map-2",
+      "startedAt": "2026-09-21T22:09:33.888Z",
+      "observedAt": "2026-09-21T22:09:34.347Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+      "title": "Pobelter VS chenchen5 - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3644,
+      "nodes": 3613,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "025-pobelter-chenchen-map-2.dom.json.gz",
+          "bytes": 80944,
+          "sha256": "3b592d224998a12a2f92cc7af535eb23b2535dc4960c60a82e461ff20f53eb67"
+        },
+        {
+          "path": "025-pobelter-chenchen-map-2.ax.txt.gz",
+          "bytes": 4120,
+          "sha256": "e05e065aefba8e31b5b59fe973cab9c91d6a47755176739de0c1815abb5391cc"
+        },
+        {
+          "path": "025-pobelter-chenchen-map-2.png",
+          "bytes": 131001,
+          "sha256": "0f25b39ec4a753cf194e4824f0e87f01de74c606eaf64cdd09e0892f7b62757a"
+        }
+      ]
+    },
+    {
+      "name": "025-pobelter-chenchen-map-3",
+      "startedAt": "2026-09-21T22:09:34.873Z",
+      "observedAt": "2026-09-21T22:09:35.357Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+      "title": "Pobelter VS chenchen5 - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3644,
+      "nodes": 3613,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "025-pobelter-chenchen-map-3.dom.json.gz",
+          "bytes": 80940,
+          "sha256": "3cc072f07a643d1f07f04f6bbdc3fb2adbf2168f47bd5d9089db34c32fea6eba"
+        },
+        {
+          "path": "025-pobelter-chenchen-map-3.ax.txt.gz",
+          "bytes": 4120,
+          "sha256": "530ac5cac7ec9ffe6d25a834501264db41e018e2ba6b789cc1988f8f83620607"
+        },
+        {
+          "path": "025-pobelter-chenchen-map-3.png",
+          "bytes": 130862,
+          "sha256": "7f3de6d84d626355c3442909bf14fa1e65a0066c2d47771b8700f0db9d5e6f7d"
+        }
+      ]
+    },
+    {
+      "name": "026-pobelter-score-expanded",
+      "startedAt": "2026-09-21T22:10:14.553Z",
+      "observedAt": "2026-09-21T22:10:15.022Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+      "title": "Pobelter VS chenchen5 - Stake.com",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 3922,
+      "nodes": 3891,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "026-pobelter-score-expanded.dom.json.gz",
+          "bytes": 86236,
+          "sha256": "3f7984805a233d63aa243be6db67f44226124db7dc4ef58a85de81f3e6fbff8c"
+        },
+        {
+          "path": "026-pobelter-score-expanded.ax.txt.gz",
+          "bytes": 4674,
+          "sha256": "22ca4e938830aee5bff56df76f33b2786b00c26c84207d4899be32e781415e27"
+        },
+        {
+          "path": "026-pobelter-score-expanded.png",
+          "bytes": 86676,
+          "sha256": "703b15ffd7b6cfe682ec32e5b5b8ea08aa1345a0ec8aac5f1f97591a5046feda"
+        }
+      ]
+    },
+    {
+      "name": "027-rate-limit-1015",
+      "startedAt": "2026-09-21T22:11:10.842Z",
+      "observedAt": "2026-09-21T22:11:10.872Z",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/843526-quante-humzh",
+      "title": "Access denied | stake.bet used Cloudflare to restrict access | stake.bet | Cloudflare",
+      "viewport": {
+        "dpr": 1,
+        "height": 1000,
+        "width": 1440
+      },
+      "totalElements": 63,
+      "nodes": 58,
+      "completeNodeTransfer": true,
+      "files": [
+        {
+          "path": "027-rate-limit-1015.dom.json.gz",
+          "bytes": 2870,
+          "sha256": "66d01e1265c52c0001e3f80d9dab62cc0b16ff09d7a38f24049c606f875b52fb"
+        },
+        {
+          "path": "027-rate-limit-1015.ax.txt.gz",
+          "bytes": 470,
+          "sha256": "436c44deb01e65a4cff012cb25330eb2be97b067c55d4e343e0029647fcfaf22"
+        },
+        {
+          "path": "027-rate-limit-1015.png",
+          "bytes": 32464,
+          "sha256": "6990527c47a40553f916f670fef5c0935ed9107bc626c3c4bf981ef25400450f"
+        }
+      ]
+    }
+  ]
+}

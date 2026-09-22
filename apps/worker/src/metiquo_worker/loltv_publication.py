@@ -330,6 +330,7 @@ def _rendered_maps(event: LoltvEvent, home_team: Team, away_team: Team) -> list[
                 "sourceObservedAt": source_map.get("sourceObservedAt"),
                 "status": source_map.get("status"),
                 "durationSeconds": source_map.get("durationSeconds"),
+                "durationSource": source_map.get("durationSource"),
                 "winnerId": winner_id,
                 "bans": bans,
                 "sides": sides,

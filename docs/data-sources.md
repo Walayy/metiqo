@@ -1,5 +1,7 @@
 # Sources et provenance
 
+La durée LoLTV d’une carte live est calculée sur les événements horodatés du flux public, en retranchant les pauses publiées. Elle reste attachée à la date source de la trame, sans extrapolation locale ni nouvelle date pour un cache. La méthode et la comparaison réelle **34:15** de Pyramid–LODIS sont consignées dans [l’analyse LoLTV](loltv.md). Le rafraîchissement frontend ne crée aucune nouvelle mesure : il consulte la projection API et conserve les dernières données valides pendant une panne transitoire.
+
 ## Identité Metiquo fournie le 16 septembre 2026
 
 Le pack de marque a été fourni directement par le propriétaire du projet, séparément des identités esport. La source native 1254 × 1254 et le manifeste SHA-256 des exports utilisés sont conservés sous `assets/brand/`. Les variantes claire/sombre gardent le symbole, son dégradé turquoise et son halo d’origine. L’interface utilise WebP sans perte avec repli PNG ; favicon ICO et icône Apple PNG viennent aussi du pack. Aucun redessin, agrandissement de la source ni service externe n’intervient. Voir [le guide de l’identité](../assets/brand/README.md).
@@ -35,7 +37,15 @@ L’application permet des identifiants de ligues et d’équipes arbitraires. L
 
 Les 34 matchs/marchés de démonstration, dates, formats, cotes, probabilités et courbes sont **créés pour le prototype**. Aucun calendrier ni pricing réel n’est affirmé. Les noms de bookmakers sont illustratifs, sans lien de transaction ni affiliation.
 
-Depuis la décision produit du 15 septembre 2026, le scénario utilise exclusivement Stake et des relevés UTC sur plusieurs jours, comprenant des hausses et des baisses. Il ne s’agit pas d’un flux Stake : aucune cote réelle n’a été récupérée. Les badges de démonstration ont été retirés du produit pour conserver la même interface en modes mock et API ; cette limitation reste documentée ici et dans le README.
+Depuis la décision produit du 15 septembre 2026, le scénario utilise exclusivement Stake et des relevés UTC sur plusieurs jours, comprenant des hausses et des baisses. Il ne s’agit pas d’un flux Stake : aucune cote réelle n’alimente ces fixtures. L’audit documentaire du 22 septembre décrit séparément des cotes publiques observées, sans import applicatif. Les badges de démonstration ont été retirés du produit pour conserver la même interface en modes mock et API ; cette limitation reste documentée ici et dans le README.
+
+## Stake — audit public ponctuel du 22 septembre 2026
+
+Sources primaires observées : [hub esport](https://stake.bet/fr/sports/esports), [filtre League of Legends](https://stake.bet/fr/sports/esports/league-of-legends), puis les liens de rencontre publiés dans cette liste. Le [rapport détaillé](stake-audit.md) inventorie 17 rencontres listées, sept fiches réellement ouvertes, 16 familles de marchés et 204 sélections distinctes dans ces fiches : 174 cotes numériques et 30 sélections désactivées. Les autres rencontres ne sont documentées qu’au niveau de leur aperçu ; l’exhaustivité du site n’est pas affirmée.
+
+Les preuves comportent URL, horodatage UTC de lecture, DOM, arbre accessible, captures PNG et empreintes SHA-256. La période archivée va de 22:02 à 22:11 UTC le 21 septembre, soit le 22 septembre en heure de Paris. La date de lecture n’est pas un horodatage de mise à jour fourni par Stake. Les labels de seuil, de cote et de suspension sont conservés séparément ; l’unité non publiée des durées reste inconnue. Les textes éditoriaux hors périmètre sont omis avec signalement.
+
+Le navigateur Patchright/Chromium de l’image worker existante a reçu un refus HTTP 403 au premier document esport. La navigation publique dans le navigateur Codex, accessible séparément, a ensuite été interrompue par une page Cloudflare 1015 ; aucune nouvelle navigation Stake n’a suivi. Aucun contournement, compte, mise ou paiement n’a été utilisé. La faisabilité du collecteur permanent n’est pas validée ; `StakeSource` demeure désactivé et les relevés restent exclusivement documentaires.
 
 ## Logos des jeux
 
@@ -103,6 +113,8 @@ La nouvelle demande du 16 septembre sépare `/matches` des opportunités. Le moc
 Performance utilise 120 décisions et règlements fictifs répartis sur environ 60 jours, avec gains, pertes et annulations. Chaque décision fige sa cote et sa probabilité avant le match. Cet historique est indépendant des opportunités courantes et permet uniquement de tester une simulation : il ne constitue ni un historique utilisateur réel ni une validation du modèle. Le mode API reste vide tant qu’une source ne fournit pas les règlements et décisions nécessaires.
 
 ## LoLTV — 21 septembre 2026
+
+La refonte UI/UX de Matchs utilise les mêmes données, sans nouvelle collecte. Les compteurs et l’ordre des rencontres dérivent des statuts publiés. Les vainqueurs et durées affichés dans les onglets viennent des cartes ; l’âge d’une carte utilise uniquement son `updatedAt`, et reste inconnu si ce champ manque. L’écart d’or exige cinq joueurs avec or renseigné de chaque côté ; il n’est pas extrapolé à partir d’un roster partiel. Les filtres par poste conservent les identités et statistiques d’origine. Les entrées du catalogue sont regroupées par journée et région existantes, sans inventer de relation entre ligue, groupe et phase ni de lien de diffusion.
 
 Sources primaires : [calendrier](https://loltv.gg/matches), [résultats](https://loltv.gg/matches/results), [finale LEC G2–Movistar KOI](https://loltv.gg/match/2026-09-20-g2-esports-vs-tbd), [Skillcamp–Arctic Pandas](https://loltv.gg/match/2026-09-21-skillcamp-vs-arctic-pandas). L’analyse du HTML embarqué, du DOM chargé, de la pagination et des limites figure dans [LoLTV](loltv.md). Les échantillons réduits de tests proviennent des pages effectivement reçues le 21 septembre 2026 ; ils ne décrivent pas l’état actuel.
 

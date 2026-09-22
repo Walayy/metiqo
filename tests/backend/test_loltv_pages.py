@@ -209,6 +209,22 @@ def test_window_uses_paris_midnight():
     assert not collector.in_window(datetime(2026, 9, 28, 22, tzinfo=UTC))
 
 
+@pytest.mark.parametrize(
+    ("duration", "state"), [(0, "STARTED"), (42, "STARTED"), (42, "COMPLETED")]
+)
+def test_feed_zero_duration_is_observed_and_overrides_html_clock(duration, state):
+    raw = json.loads((FIXTURES / "feed.json").read_text())
+    raw["events"] = [{"type": "GOLD", "clock": 100000}]
+    event = sample("detail")
+    event.payload["sourceGames"][2]["duration"] = duration
+    event.payload["sourceGames"][2]["state"] = state
+    if state == "COMPLETED":
+        event.payload["sourceGames"][2]["teams"][0]["win"] = True
+    game = merge_feed(event, raw["id"], raw).payload["rendered"]["maps"][2]
+    assert game["durationSeconds"] == 0
+    assert game["durationSource"] == "loltv-event-clock"
+
+
 def test_anonymous_feed_corrects_placeholder_camps_with_all_five_team_tags():
     raw = json.loads((FIXTURES / "feed.json").read_text())
     event = merge_feed(sample("detail"), raw["id"], raw)
@@ -236,7 +252,7 @@ def test_anonymous_feed_corrects_placeholder_camps_with_all_five_team_tags():
         merge_feed(sample("detail"), raw["id"], raw).payload["rendered"]["maps"][2][
             "durationSeconds"
         ]
-        is None
+        == 50
     )
     different_code = sample("detail")
     different_code.payload["sourceGames"][2]["teams"][0]["team"]["code"] = "OLD"

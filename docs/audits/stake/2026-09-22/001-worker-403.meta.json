@@ -1,0 +1,26 @@
+{
+  "name": "001-esports-desktop",
+  "startedAt": "2026-09-21T22:02:46.200316+00:00",
+  "trafficStart": 0,
+  "observedAt": "2026-09-21T22:02:49.875955+00:00",
+  "url": "https://stake.bet/fr/sports/esports",
+  "title": "Un instant…",
+  "nodes": 41,
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "dpr": 1
+  },
+  "refusals": [
+    {
+      "at": "2026-09-21T22:02:46.325279+00:00",
+      "url": "https://stake.bet/fr/sports/esports",
+      "status": 403,
+      "type": "document",
+      "retryAfter": null
+    }
+  ],
+  "requestsSoFar": 11,
+  "finishedAt": "2026-09-21T22:02:49.946832+00:00",
+  "trafficEnd": 10
+}

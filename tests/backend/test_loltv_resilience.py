@@ -137,6 +137,24 @@ def test_oracle_lookup_merges_overlapping_windows_and_preserves_year_boundaries(
     ]
 
 
+def test_html_placeholder_cannot_restore_pause_time_over_a_feed_clock():
+    previous = {
+        "number": 2,
+        "sourceGameId": "same-game",
+        "status": "finished",
+        "winnerId": "home",
+        "durationSeconds": 2055,
+        "durationSource": "loltv-event-clock",
+        "sides": [{"teamId": "home", "players": []}, {"teamId": "away", "players": []}],
+    }
+    html = {**previous, "durationSeconds": 2149, "durationSource": None}
+    assert merge_completed_map(previous, html)["durationSeconds"] == 2055
+    corrected_feed = {**html, "durationSource": "loltv-event-clock", "durationSeconds": 2056}
+    assert merge_completed_map(previous, corrected_feed)["durationSeconds"] == 2056
+    html["sourceGameId"] = "remake"
+    assert merge_completed_map(previous, html)["durationSeconds"] == 2149
+
+
 def test_oracle_preserves_extra_loltv_fields_without_overriding_explicit_zero():
     from metiquo_core.models import EsportMatch
 

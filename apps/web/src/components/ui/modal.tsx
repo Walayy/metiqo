@@ -6,7 +6,7 @@ import { Button } from './button';
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  title: ReactNode;
   description: string;
   children: ReactNode;
   className?: string;

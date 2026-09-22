@@ -39,6 +39,8 @@ interface Props extends RefreshProps {
   onSelect: (id: string) => void;
   loading: boolean;
   error: Error | null;
+  context?: 'values' | 'matches';
+  matchCounts?: Record<string, number>;
 }
 
 export function LeagueFilters({
@@ -49,19 +51,31 @@ export function LeagueFilters({
   error,
   onRefresh,
   refreshing,
+  context = 'values',
+  matchCounts,
 }: Props) {
   const selectionId = useId();
   const [open, setOpen] = useState(false);
   const rail = useRef<HTMLDivElement>(null);
   const quickLeagues = useMemo(() => {
-    const pinned = shortcuts
-      .map((slug) => leagues.find((league) => league.slug === slug))
-      .filter((league) => !!league);
+    const pinned =
+      context === 'matches'
+        ? leagues
+            .filter((l) => (matchCounts?.[l.id] ?? 0) > 0)
+            .sort(
+              (a, b) =>
+                (matchCounts?.[b.id] ?? 0) - (matchCounts?.[a.id] ?? 0) ||
+                a.name.localeCompare(b.name, 'fr'),
+            )
+            .slice(0, 5)
+        : shortcuts
+            .map((slug) => leagues.find((league) => league.slug === slug))
+            .filter((league) => !!league);
     const selected = leagues.find((league) => league.id === selectedLeague);
     return selected && !pinned.some((league) => league.id === selected.id)
       ? [...pinned, selected]
       : pinned;
-  }, [leagues, selectedLeague]);
+  }, [leagues, selectedLeague, context, matchCounts]);
 
   useLayoutEffect(() => {
     const container = rail.current;
@@ -137,6 +151,8 @@ export function LeagueFilters({
           error={error}
           onRefresh={onRefresh}
           refreshing={refreshing}
+          context={context}
+          matchCounts={matchCounts}
         />
       )}
     </>
@@ -152,6 +168,8 @@ function LeaguePicker({
   onRefresh,
   refreshing,
   onClose,
+  context = 'values',
+  matchCounts,
 }: Props & { onClose: () => void }) {
   const [search, setSearch] = useState('');
   const searchField = useRef<HTMLInputElement>(null);
@@ -159,6 +177,21 @@ function LeaguePicker({
   const matches = leagues.filter((league) =>
     normalize(`${league.name} ${league.region} ${regionLabel(league.region)}`).includes(term),
   );
+  const ordered = matches.toSorted((a, b) => a.name.localeCompare(b.name, 'fr'));
+  const available = ordered.filter((l) => (matchCounts?.[l.id] ?? 0) > 0);
+  const remaining = ordered.filter((l) => !(matchCounts?.[l.id] ?? 0));
+  const sections =
+    context === 'matches'
+      ? [
+          { label: 'Dans cette journée', leagues: available },
+          ...[...new Set(remaining.map((l) => l.region))]
+            .sort((a, b) => regionLabel(a).localeCompare(regionLabel(b), 'fr'))
+            .map((region) => ({
+              label: regionLabel(region),
+              leagues: remaining.filter((l) => l.region === region),
+            })),
+        ].filter((section) => section.leagues.length)
+      : [{ label: '', leagues: matches }];
   return (
     <Modal
       open
@@ -166,7 +199,11 @@ function LeaguePicker({
         if (!isOpen) onClose();
       }}
       title="Choisir une ligue"
-      description="Retrouvez les values de votre compétition."
+      description={
+        context === 'matches'
+          ? 'Les compétitions du jour, puis le répertoire par région.'
+          : 'Retrouvez les values de votre compétition.'
+      }
       className="league-picker"
     >
       {loading ? (
@@ -218,7 +255,11 @@ function LeaguePicker({
               </span>
               <span>
                 <strong>Toutes les ligues</strong>
-                <small>Voir toutes les values</small>
+                <small>
+                  {context === 'matches'
+                    ? 'Voir tous les matchs de la journée'
+                    : 'Voir toutes les values'}
+                </small>
               </span>
               {selectedLeague === 'all' && <Check size={18} aria-hidden="true" />}
             </button>
@@ -226,21 +267,30 @@ function LeaguePicker({
               {matches.length} {matches.length > 1 ? 'ligues' : 'ligue'}
               {term ? (matches.length > 1 ? ' trouvées' : ' trouvée') : ' disponibles'}
             </p>
-            {matches.map((league) => (
-              <button
-                type="button"
-                className="league-picker-option"
-                key={league.id}
-                aria-pressed={selectedLeague === league.id}
-                onClick={() => onSelect(league.id)}
-              >
-                <Logo src={league.image} name={league.name} league />
-                <span>
-                  <strong>{league.name}</strong>
-                  <small>{regionLabel(league.region)}</small>
-                </span>
-                {selectedLeague === league.id && <Check size={18} aria-hidden="true" />}
-              </button>
+            {sections.map((section) => (
+              <section key={section.label} aria-label={section.label || 'Toutes les compétitions'}>
+                {section.label && <h3 className="league-picker-section">{section.label}</h3>}
+                {section.leagues.map((league) => (
+                  <button
+                    type="button"
+                    className="league-picker-option"
+                    key={league.id}
+                    aria-pressed={selectedLeague === league.id}
+                    onClick={() => onSelect(league.id)}
+                  >
+                    <Logo src={league.image} name={league.name} league />
+                    <span>
+                      <strong>{league.name}</strong>
+                      <small>
+                        {regionLabel(league.region)}
+                        {context === 'matches' &&
+                          ` · ${matchCounts?.[league.id] ?? 0} match${(matchCounts?.[league.id] ?? 0) > 1 ? 's' : ''} ce jour`}
+                      </small>
+                    </span>
+                    {selectedLeague === league.id && <Check size={18} aria-hidden="true" />}
+                  </button>
+                ))}
+              </section>
             ))}
             {matches.length === 0 && (
               <p className="league-picker-empty">

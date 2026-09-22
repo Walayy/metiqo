@@ -23,6 +23,7 @@ from metiquo_core.config import Settings
 from pydantic import JsonValue
 
 from metiquo_worker.artifacts import store_bytes
+from metiquo_worker.loltv_clock import frame_duration
 from metiquo_worker.loltv_policy import LoltvPolicy
 from metiquo_worker.sources.lol import array, obj, text
 from metiquo_worker.sources.loltv import ROOT_URL, LoltvEvent, _position, source_maps, timestamp
@@ -147,23 +148,16 @@ def merge_feed(event: LoltvEvent, game_id: str, data: object) -> LoltvEvent:
             }
         )
     game["teams"] = matched
-    events = data.get("events")
-    if isinstance(events, list) and not game.get("duration"):
-        clocks = [
-            e["clock"]
-            for e in events
-            if isinstance(e, dict) and isinstance(e.get("clock"), int) and e.get("type") != "PAUSE"
-        ]
-        pauses = [e for e in events if isinstance(e, dict) and e.get("type") == "PAUSE"]
-        # The site's timer uses the public event clock. In the presence of an
-        # unhandled pause, retain an unknown duration instead of overstating it.
-        if len(clocks) >= 2 and not pauses:
-            game["duration"] = max(0, (max(clocks) - min(clocks)) // 1000)
+    duration = frame_duration(data.get("events"))
     # A completed feed has no winner field. Wait for the independently sourced
     # HTML result rather than deriving a winner from kills, towers or camps.
     if data.get("state") in {"STARTED", "PAUSED"} and game.get("state") != "COMPLETED":
         game["state"] = "STARTED"
     maps = source_maps(cast(list[JsonValue], [game]), event)
+    if len(maps) == 1 and duration is not None:
+        # Zero in SSR is a placeholder; a zero from an observed feed is valid.
+        maps[0]["durationSeconds"] = duration
+        maps[0]["durationSource"] = "loltv-event-clock"
     sides = maps[0].get("sides") if len(maps) == 1 else None
     if not isinstance(sides, list) or any(len(s["players"]) != 5 for s in sides):
         raise ValueError("LoLTV feed statistics are incomplete")

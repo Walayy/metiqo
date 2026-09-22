@@ -1,0 +1,6045 @@
+[
+  {
+    "capture": "007-flyquest-map1",
+    "observedAt": "2026-09-21T22:07:04.051Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 365
+        },
+        "text": "Map 1 Gagnant - Two options\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 1 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 5 Kills",
+            "name": "5",
+            "odds": "1,62",
+            "order": 0,
+            "text": "5\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 5 Kills",
+            "name": "5",
+            "odds": "2,15",
+            "order": 1,
+            "text": "5\n2,15"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10 Kills",
+            "name": "10",
+            "odds": "1,52",
+            "order": 2,
+            "text": "10\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10 Kills",
+            "name": "10",
+            "odds": "2,35",
+            "order": 3,
+            "text": "10\n2,35"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 15 Kills",
+            "name": "15",
+            "odds": "1,50",
+            "order": 4,
+            "text": "15\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 15 Kills",
+            "name": "15",
+            "odds": "2,40",
+            "order": 5,
+            "text": "15\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 498
+        },
+        "text": "Map 1 - Premier Ã  atteindre morts\nFlyQuest\nShopify Rebellion\n5\n1,62\n5\n2,15\n10\n1,52\n10\n2,35\n15\n1,50\n15\n2,40",
+        "title": "Map 1 - Premier Ã  atteindre morts"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,78",
+            "order": 0,
+            "text": "FlyQuest\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "1,92",
+            "order": 1,
+            "text": "Shopify Rebellion\n1,92"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 743
+        },
+        "text": "Map 1 - Premier sang\nFlyQuest\n1,78\nShopify Rebellion\n1,92",
+        "title": "Map 1 - Premier sang"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,52",
+            "order": 0,
+            "text": "FlyQuest\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,35",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,35"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 876
+        },
+        "text": "Map 1 - Premier Baron\nFlyQuest\n1,52\nShopify Rebellion\n2,35",
+        "title": "Map 1 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1009
+        },
+        "text": "Map 1 - Premier inhibiteur\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 1 - Premier inhibiteur"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10th Kill",
+            "name": "10",
+            "odds": "1,72",
+            "order": 0,
+            "text": "10\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10th Kill",
+            "name": "10",
+            "odds": "2,00",
+            "order": 1,
+            "text": "10\n2,00"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 20th Kill",
+            "name": "20",
+            "odds": "1,68",
+            "order": 2,
+            "text": "20\n1,68"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 20th Kill",
+            "name": "20",
+            "odds": "2,05",
+            "order": 3,
+            "text": "20\n2,05"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 30th Kill",
+            "name": "30",
+            "odds": "1,65",
+            "order": 4,
+            "text": "30\n1,65"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 30th Kill",
+            "name": "30",
+            "odds": "2,10",
+            "order": 5,
+            "text": "30\n2,10"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 1142
+        },
+        "text": "Map 1 - Âº meurtre\nFlyQuest\nShopify Rebellion\n10\n1,72\n10\n2,00\n20\n1,68\n20\n2,05\n30\n1,65\n30\n2,10",
+        "title": "Map 1 - Âº meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "6,30",
+            "order": 0,
+            "text": "Yes\n6,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1387
+        },
+        "text": "Map 1 - Quadruple meurtre\nYes\n6,30",
+        "title": "Map 1 - Quadruple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "11,00",
+            "order": 0,
+            "text": "Yes\n11,00"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1520
+        },
+        "text": "Map 1 - Quintuple meurtre\nYes\n11,00",
+        "title": "Map 1 - Quintuple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 8,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Odd",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Odd",
+            "name": "Odd",
+            "odds": "1,85",
+            "order": 0,
+            "text": "Odd\n1,85"
+          },
+          {
+            "attrs": {
+              "aria-label": "Even",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Even",
+            "name": "Even",
+            "odds": "1,85",
+            "order": 1,
+            "text": "Even\n1,85"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1653
+        },
+        "text": "Map 1 - Victoires paires/impaires\nOdd\n1,85\nEven\n1,85",
+        "title": "Map 1 - Victoires paires/impaires"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 9,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 10,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 11,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 12,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 13,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 14,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "008-flyquest-map2",
+    "observedAt": "2026-09-21T22:07:04.885Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 392
+        },
+        "text": "Map 2 Gagnant - Two options\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 2 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 5 Kills",
+            "name": "5",
+            "odds": "1,62",
+            "order": 0,
+            "text": "5\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 5 Kills",
+            "name": "5",
+            "odds": "2,15",
+            "order": 1,
+            "text": "5\n2,15"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10 Kills",
+            "name": "10",
+            "odds": "1,52",
+            "order": 2,
+            "text": "10\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10 Kills",
+            "name": "10",
+            "odds": "2,35",
+            "order": 3,
+            "text": "10\n2,35"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 15 Kills",
+            "name": "15",
+            "odds": "1,50",
+            "order": 4,
+            "text": "15\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 15 Kills",
+            "name": "15",
+            "odds": "2,40",
+            "order": 5,
+            "text": "15\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 525
+        },
+        "text": "Map 2 - Premier Ã  atteindre morts\nFlyQuest\nShopify Rebellion\n5\n1,62\n5\n2,15\n10\n1,52\n10\n2,35\n15\n1,50\n15\n2,40",
+        "title": "Map 2 - Premier Ã  atteindre morts"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,78",
+            "order": 0,
+            "text": "FlyQuest\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "1,92",
+            "order": 1,
+            "text": "Shopify Rebellion\n1,92"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 770
+        },
+        "text": "Map 2 - Premier sang\nFlyQuest\n1,78\nShopify Rebellion\n1,92",
+        "title": "Map 2 - Premier sang"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,52",
+            "order": 0,
+            "text": "FlyQuest\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,35",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,35"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 903
+        },
+        "text": "Map 2 - Premier Baron\nFlyQuest\n1,52\nShopify Rebellion\n2,35",
+        "title": "Map 2 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1036
+        },
+        "text": "Map 2 - Premier inhibiteur\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 2 - Premier inhibiteur"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10th Kill",
+            "name": "10",
+            "odds": "1,72",
+            "order": 0,
+            "text": "10\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10th Kill",
+            "name": "10",
+            "odds": "2,00",
+            "order": 1,
+            "text": "10\n2,00"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 20th Kill",
+            "name": "20",
+            "odds": "1,68",
+            "order": 2,
+            "text": "20\n1,68"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 20th Kill",
+            "name": "20",
+            "odds": "2,05",
+            "order": 3,
+            "text": "20\n2,05"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 30th Kill",
+            "name": "30",
+            "odds": "1,65",
+            "order": 4,
+            "text": "30\n1,65"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 30th Kill",
+            "name": "30",
+            "odds": "2,10",
+            "order": 5,
+            "text": "30\n2,10"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 1169
+        },
+        "text": "Map 2 - Âº meurtre\nFlyQuest\nShopify Rebellion\n10\n1,72\n10\n2,00\n20\n1,68\n20\n2,05\n30\n1,65\n30\n2,10",
+        "title": "Map 2 - Âº meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "6,30",
+            "order": 0,
+            "text": "Yes\n6,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1414
+        },
+        "text": "Map 2 - Quadruple meurtre\nYes\n6,30",
+        "title": "Map 2 - Quadruple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "11,00",
+            "order": 0,
+            "text": "Yes\n11,00"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1547
+        },
+        "text": "Map 2 - Quintuple meurtre\nYes\n11,00",
+        "title": "Map 2 - Quintuple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 8,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Odd",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Odd",
+            "name": "Odd",
+            "odds": "1,85",
+            "order": 0,
+            "text": "Odd\n1,85"
+          },
+          {
+            "attrs": {
+              "aria-label": "Even",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Even",
+            "name": "Even",
+            "odds": "1,85",
+            "order": 1,
+            "text": "Even\n1,85"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1680
+        },
+        "text": "Map 2 - Victoires paires/impaires\nOdd\n1,85\nEven\n1,85",
+        "title": "Map 2 - Victoires paires/impaires"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 9,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 10,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 11,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 12,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 13,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 14,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "009-flyquest-map3",
+    "observedAt": "2026-09-21T22:07:05.755Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 392
+        },
+        "text": "Map 3 Gagnant - Two options\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 3 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 5 Kills",
+            "name": "5",
+            "odds": "1,62",
+            "order": 0,
+            "text": "5\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 5 Kills",
+            "name": "5",
+            "odds": "2,15",
+            "order": 1,
+            "text": "5\n2,15"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10 Kills",
+            "name": "10",
+            "odds": "1,52",
+            "order": 2,
+            "text": "10\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10 Kills",
+            "name": "10",
+            "odds": "2,35",
+            "order": 3,
+            "text": "10\n2,35"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 15 Kills",
+            "name": "15",
+            "odds": "1,50",
+            "order": 4,
+            "text": "15\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 15 Kills",
+            "name": "15",
+            "odds": "2,40",
+            "order": 5,
+            "text": "15\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 525
+        },
+        "text": "Map 3 - Premier Ã  atteindre morts\nFlyQuest\nShopify Rebellion\n5\n1,62\n5\n2,15\n10\n1,52\n10\n2,35\n15\n1,50\n15\n2,40",
+        "title": "Map 3 - Premier Ã  atteindre morts"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,78",
+            "order": 0,
+            "text": "FlyQuest\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "1,92",
+            "order": 1,
+            "text": "Shopify Rebellion\n1,92"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 770
+        },
+        "text": "Map 3 - Premier sang\nFlyQuest\n1,78\nShopify Rebellion\n1,92",
+        "title": "Map 3 - Premier sang"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,52",
+            "order": 0,
+            "text": "FlyQuest\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,35",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,35"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 903
+        },
+        "text": "Map 3 - Premier Baron\nFlyQuest\n1,52\nShopify Rebellion\n2,35",
+        "title": "Map 3 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1036
+        },
+        "text": "Map 3 - Premier inhibiteur\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 3 - Premier inhibiteur"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10th Kill",
+            "name": "10",
+            "odds": "1,72",
+            "order": 0,
+            "text": "10\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10th Kill",
+            "name": "10",
+            "odds": "2,00",
+            "order": 1,
+            "text": "10\n2,00"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 20th Kill",
+            "name": "20",
+            "odds": "1,68",
+            "order": 2,
+            "text": "20\n1,68"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 20th Kill",
+            "name": "20",
+            "odds": "2,05",
+            "order": 3,
+            "text": "20\n2,05"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 30th Kill",
+            "name": "30",
+            "odds": "1,65",
+            "order": 4,
+            "text": "30\n1,65"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 30th Kill",
+            "name": "30",
+            "odds": "2,10",
+            "order": 5,
+            "text": "30\n2,10"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 1169
+        },
+        "text": "Map 3 - Âº meurtre\nFlyQuest\nShopify Rebellion\n10\n1,72\n10\n2,00\n20\n1,68\n20\n2,05\n30\n1,65\n30\n2,10",
+        "title": "Map 3 - Âº meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "6,30",
+            "order": 0,
+            "text": "Yes\n6,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1414
+        },
+        "text": "Map 3 - Quadruple meurtre\nYes\n6,30",
+        "title": "Map 3 - Quadruple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "11,00",
+            "order": 0,
+            "text": "Yes\n11,00"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1547
+        },
+        "text": "Map 3 - Quintuple meurtre\nYes\n11,00",
+        "title": "Map 3 - Quintuple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 8,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Odd",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Odd",
+            "name": "Odd",
+            "odds": "1,85",
+            "order": 0,
+            "text": "Odd\n1,85"
+          },
+          {
+            "attrs": {
+              "aria-label": "Even",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Even",
+            "name": "Even",
+            "odds": "1,85",
+            "order": 1,
+            "text": "Even\n1,85"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1680
+        },
+        "text": "Map 3 - Victoires paires/impaires\nOdd\n1,85\nEven\n1,85",
+        "title": "Map 3 - Victoires paires/impaires"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 9,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 10,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 11,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 12,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 13,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 14,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "010-flyquest-map4",
+    "observedAt": "2026-09-21T22:07:06.631Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,50",
+            "order": 0,
+            "text": "FlyQuest\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,40",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 392
+        },
+        "text": "Map 4 Gagnant - Two options\nFlyQuest\n1,50\nShopify Rebellion\n2,40",
+        "title": "Map 4 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 5 Kills",
+            "name": "5",
+            "odds": "1,62",
+            "order": 0,
+            "text": "5\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 5 Kills",
+            "name": "5",
+            "odds": "2,15",
+            "order": 1,
+            "text": "5\n2,15"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10 Kills",
+            "name": "10",
+            "odds": "1,52",
+            "order": 2,
+            "text": "10\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10 Kills",
+            "name": "10",
+            "odds": "2,35",
+            "order": 3,
+            "text": "10\n2,35"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 15 Kills",
+            "name": "15",
+            "odds": "1,50",
+            "order": 4,
+            "text": "15\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 15 Kills",
+            "name": "15",
+            "odds": "2,40",
+            "order": 5,
+            "text": "15\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 525
+        },
+        "text": "Map 4 - Premier Ã  atteindre morts\nFlyQuest\nShopify Rebellion\n5\n1,62\n5\n2,15\n10\n1,52\n10\n2,35\n15\n1,50\n15\n2,40",
+        "title": "Map 4 - Premier Ã  atteindre morts"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,78",
+            "order": 0,
+            "text": "FlyQuest\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "1,92",
+            "order": 1,
+            "text": "Shopify Rebellion\n1,92"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 770
+        },
+        "text": "Map 4 - Premier sang\nFlyQuest\n1,78\nShopify Rebellion\n1,92",
+        "title": "Map 4 - Premier sang"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,55",
+            "order": 0,
+            "text": "FlyQuest\n1,55"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,30",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 903
+        },
+        "text": "Map 4 - Premier Baron\nFlyQuest\n1,55\nShopify Rebellion\n2,30",
+        "title": "Map 4 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,50",
+            "order": 0,
+            "text": "FlyQuest\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,40",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1036
+        },
+        "text": "Map 4 - Premier inhibiteur\nFlyQuest\n1,50\nShopify Rebellion\n2,40",
+        "title": "Map 4 - Premier inhibiteur"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10th Kill",
+            "name": "10",
+            "odds": "1,72",
+            "order": 0,
+            "text": "10\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10th Kill",
+            "name": "10",
+            "odds": "2,00",
+            "order": 1,
+            "text": "10\n2,00"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 20th Kill",
+            "name": "20",
+            "odds": "1,68",
+            "order": 2,
+            "text": "20\n1,68"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 20th Kill",
+            "name": "20",
+            "odds": "2,05",
+            "order": 3,
+            "text": "20\n2,05"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 30th Kill",
+            "name": "30",
+            "odds": "1,65",
+            "order": 4,
+            "text": "30\n1,65"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 30th Kill",
+            "name": "30",
+            "odds": "2,10",
+            "order": 5,
+            "text": "30\n2,10"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 1169
+        },
+        "text": "Map 4 - Âº meurtre\nFlyQuest\nShopify Rebellion\n10\n1,72\n10\n2,00\n20\n1,68\n20\n2,05\n30\n1,65\n30\n2,10",
+        "title": "Map 4 - Âº meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "6,30",
+            "order": 0,
+            "text": "Yes\n6,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1414
+        },
+        "text": "Map 4 - Quadruple meurtre\nYes\n6,30",
+        "title": "Map 4 - Quadruple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "11,00",
+            "order": 0,
+            "text": "Yes\n11,00"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1547
+        },
+        "text": "Map 4 - Quintuple meurtre\nYes\n11,00",
+        "title": "Map 4 - Quintuple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 8,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Odd",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Odd",
+            "name": "Odd",
+            "odds": "1,85",
+            "order": 0,
+            "text": "Odd\n1,85"
+          },
+          {
+            "attrs": {
+              "aria-label": "Even",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Even",
+            "name": "Even",
+            "odds": "1,85",
+            "order": 1,
+            "text": "Even\n1,85"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1680
+        },
+        "text": "Map 4 - Victoires paires/impaires\nOdd\n1,85\nEven\n1,85",
+        "title": "Map 4 - Victoires paires/impaires"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 9,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 10,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 11,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 12,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 13,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 14,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "011-flyquest-map5",
+    "observedAt": "2026-09-21T22:07:07.468Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,55",
+            "order": 0,
+            "text": "FlyQuest\n1,55"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,30",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 392
+        },
+        "text": "Map 5 Gagnant - Two options\nFlyQuest\n1,55\nShopify Rebellion\n2,30",
+        "title": "Map 5 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 5 Kills",
+            "name": "5",
+            "odds": "1,65",
+            "order": 0,
+            "text": "5\n1,65"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 5 Kills",
+            "name": "5",
+            "odds": "2,10",
+            "order": 1,
+            "text": "5\n2,10"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10 Kills",
+            "name": "10",
+            "odds": "1,62",
+            "order": 2,
+            "text": "10\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10 Kills",
+            "name": "10",
+            "odds": "2,15",
+            "order": 3,
+            "text": "10\n2,15"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 15 Kills",
+            "name": "15",
+            "odds": "1,58",
+            "order": 4,
+            "text": "15\n1,58"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 15 Kills",
+            "name": "15",
+            "odds": "2,20",
+            "order": 5,
+            "text": "15\n2,20"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 525
+        },
+        "text": "Map 5 - Premier Ã  atteindre morts\nFlyQuest\nShopify Rebellion\n5\n1,65\n5\n2,10\n10\n1,62\n10\n2,15\n15\n1,58\n15\n2,20",
+        "title": "Map 5 - Premier Ã  atteindre morts"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,78",
+            "order": 0,
+            "text": "FlyQuest\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "1,92",
+            "order": 1,
+            "text": "Shopify Rebellion\n1,92"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 770
+        },
+        "text": "Map 5 - Premier sang\nFlyQuest\n1,78\nShopify Rebellion\n1,92",
+        "title": "Map 5 - Premier sang"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,62",
+            "order": 0,
+            "text": "FlyQuest\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,15",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,15"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 903
+        },
+        "text": "Map 5 - Premier Baron\nFlyQuest\n1,62\nShopify Rebellion\n2,15",
+        "title": "Map 5 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,55",
+            "order": 0,
+            "text": "FlyQuest\n1,55"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,30",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1036
+        },
+        "text": "Map 5 - Premier inhibiteur\nFlyQuest\n1,55\nShopify Rebellion\n2,30",
+        "title": "Map 5 - Premier inhibiteur"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10th Kill",
+            "name": "10",
+            "odds": "1,78",
+            "order": 0,
+            "text": "10\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10th Kill",
+            "name": "10",
+            "odds": "1,92",
+            "order": 1,
+            "text": "10\n1,92"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 20th Kill",
+            "name": "20",
+            "odds": "1,72",
+            "order": 2,
+            "text": "20\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 20th Kill",
+            "name": "20",
+            "odds": "2,00",
+            "order": 3,
+            "text": "20\n2,00"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 30th Kill",
+            "name": "30",
+            "odds": "1,72",
+            "order": 4,
+            "text": "30\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 30th Kill",
+            "name": "30",
+            "odds": "2,00",
+            "order": 5,
+            "text": "30\n2,00"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 824,
+          "x": 150,
+          "y": 1169
+        },
+        "text": "Map 5 - Âº meurtre\nFlyQuest\nShopify Rebellion\n10\n1,78\n10\n1,92\n20\n1,72\n20\n2,00\n30\n1,72\n30\n2,00",
+        "title": "Map 5 - Âº meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "6,30",
+            "order": 0,
+            "text": "Yes\n6,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1414
+        },
+        "text": "Map 5 - Quadruple meurtre\nYes\n6,30",
+        "title": "Map 5 - Quadruple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "11,00",
+            "order": 0,
+            "text": "Yes\n11,00"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1547
+        },
+        "text": "Map 5 - Quintuple meurtre\nYes\n11,00",
+        "title": "Map 5 - Quintuple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 8,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Odd",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Odd",
+            "name": "Odd",
+            "odds": "1,85",
+            "order": 0,
+            "text": "Odd\n1,85"
+          },
+          {
+            "attrs": {
+              "aria-label": "Even",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Even",
+            "name": "Even",
+            "odds": "1,85",
+            "order": 1,
+            "text": "Even\n1,85"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 1680
+        },
+        "text": "Map 5 - Victoires paires/impaires\nOdd\n1,85\nEven\n1,85",
+        "title": "Map 5 - Victoires paires/impaires"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 9,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 10,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 11,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 12,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 13,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 14,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "012-search-baron",
+    "observedAt": "2026-09-21T22:07:29.226Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,52",
+            "order": 0,
+            "text": "FlyQuest\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,35",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,35"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 824,
+          "x": 150,
+          "y": 392
+        },
+        "text": "Map 1 - Premier Baron\nFlyQuest\n1,52\nShopify Rebellion\n2,35",
+        "title": "Map 1 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 1,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 2,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 3,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 4,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 5,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 6,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "013-search-empty",
+    "observedAt": "2026-09-21T22:07:29.713Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 0,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 1,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 2,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 3,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 4,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 5,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "014-flyquest-mobile-map1",
+    "observedAt": "2026-09-21T22:07:30.349Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 0,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1731.46875
+        },
+        "text": "Casino",
+        "title": "Casino"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 1,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1791.46875
+        },
+        "text": "Sports",
+        "title": "Sports"
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 2,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1851.46875
+        },
+        "text": "Support",
+        "title": "Support"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 3,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1911.46875
+        },
+        "text": "Ã€ propos de nous",
+        "title": "Ã€ propos de nous"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 4,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1971.46875
+        },
+        "text": "Informations sur les paiements",
+        "title": "Informations sur les paiements"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 5,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 2031.46875
+        },
+        "text": "FAQ",
+        "title": "FAQ"
+      }
+    ]
+  },
+  {
+    "capture": "015-flyquest-mobile-markets",
+    "observedAt": "2026-09-21T22:07:47.277Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 153,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 459
+        },
+        "text": "Map 1 Gagnant - Two options\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 1 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 5 Kills",
+            "name": "5",
+            "odds": "1,62",
+            "order": 0,
+            "text": "5\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 5 Kills",
+            "name": "5",
+            "odds": "2,15",
+            "order": 1,
+            "text": "5\n2,15"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10 Kills",
+            "name": "10",
+            "odds": "1,52",
+            "order": 2,
+            "text": "10\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10 Kills",
+            "name": "10",
+            "odds": "2,35",
+            "order": 3,
+            "text": "10\n2,35"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 15 Kills",
+            "name": "15",
+            "odds": "1,50",
+            "order": 4,
+            "text": "15\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 15 Kills",
+            "name": "15",
+            "odds": "2,40",
+            "order": 5,
+            "text": "15\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 636
+        },
+        "text": "Map 1 - Premier Ã  atteindre morts\nFlyQuest\nShopify Rebellion\n5\n1,62\n5\n2,15\n10\n1,52\n10\n2,35\n15\n1,50\n15\n2,40",
+        "title": "Map 1 - Premier Ã  atteindre morts"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,78",
+            "order": 0,
+            "text": "FlyQuest\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "1,92",
+            "order": 1,
+            "text": "Shopify Rebellion\n1,92"
+          }
+        ],
+        "rect": {
+          "height": 153,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 881
+        },
+        "text": "Map 1 - Premier sang\nFlyQuest\n1,78\nShopify Rebellion\n1,92",
+        "title": "Map 1 - Premier sang"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,52",
+            "order": 0,
+            "text": "FlyQuest\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,35",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,35"
+          }
+        ],
+        "rect": {
+          "height": 153,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1058
+        },
+        "text": "Map 1 - Premier Baron\nFlyQuest\n1,52\nShopify Rebellion\n2,35",
+        "title": "Map 1 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 153,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1235
+        },
+        "text": "Map 1 - Premier inhibiteur\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 1 - Premier inhibiteur"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10th Kill",
+            "name": "10",
+            "odds": "1,72",
+            "order": 0,
+            "text": "10\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10th Kill",
+            "name": "10",
+            "odds": "2,00",
+            "order": 1,
+            "text": "10\n2,00"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 20th Kill",
+            "name": "20",
+            "odds": "1,68",
+            "order": 2,
+            "text": "20\n1,68"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 20th Kill",
+            "name": "20",
+            "odds": "2,05",
+            "order": 3,
+            "text": "20\n2,05"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 30th Kill",
+            "name": "30",
+            "odds": "1,65",
+            "order": 4,
+            "text": "30\n1,65"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 30th Kill",
+            "name": "30",
+            "odds": "2,10",
+            "order": 5,
+            "text": "30\n2,10"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1412
+        },
+        "text": "Map 1 - Âº meurtre\nFlyQuest\nShopify Rebellion\n10\n1,72\n10\n2,00\n20\n1,68\n20\n2,05\n30\n1,65\n30\n2,10",
+        "title": "Map 1 - Âº meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "6,30",
+            "order": 0,
+            "text": "Yes\n6,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1657
+        },
+        "text": "Map 1 - Quadruple meurtre\nYes\n6,30",
+        "title": "Map 1 - Quadruple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "11,00",
+            "order": 0,
+            "text": "Yes\n11,00"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1790
+        },
+        "text": "Map 1 - Quintuple meurtre\nYes\n11,00",
+        "title": "Map 1 - Quintuple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 8,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Odd",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Odd",
+            "name": "Odd",
+            "odds": "1,85",
+            "order": 0,
+            "text": "Odd\n1,85"
+          },
+          {
+            "attrs": {
+              "aria-label": "Even",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Even",
+            "name": "Even",
+            "odds": "1,85",
+            "order": 1,
+            "text": "Even\n1,85"
+          }
+        ],
+        "rect": {
+          "height": 153,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 1923
+        },
+        "text": "Map 1 - Victoires paires/impaires\nOdd\n1,85\nEven\n1,85",
+        "title": "Map 1 - Victoires paires/impaires"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 9,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 3142.46875
+        },
+        "text": "Casino",
+        "title": "Casino"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 10,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 3202.46875
+        },
+        "text": "Sports",
+        "title": "Sports"
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 11,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 3262.46875
+        },
+        "text": "Support",
+        "title": "Support"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 12,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 3322.46875
+        },
+        "text": "Ã€ propos de nous",
+        "title": "Ã€ propos de nous"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 13,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 3382.46875
+        },
+        "text": "Informations sur les paiements",
+        "title": "Informations sur les paiements"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 14,
+        "outcomes": [],
+        "rect": {
+          "height": 48,
+          "width": 351.625,
+          "x": 11.6875,
+          "y": 3442.46875
+        },
+        "text": "FAQ",
+        "title": "FAQ"
+      }
+    ]
+  },
+  {
+    "capture": "016-flyquest-tablet",
+    "observedAt": "2026-09-21T22:07:47.948Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 534
+        },
+        "text": "Map 1 Gagnant - Two options\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 1 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 5 Kills",
+            "name": "5",
+            "odds": "1,62",
+            "order": 0,
+            "text": "5\n1,62"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 5 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 5 Kills",
+            "name": "5",
+            "odds": "2,15",
+            "order": 1,
+            "text": "5\n2,15"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10 Kills",
+            "name": "10",
+            "odds": "1,52",
+            "order": 2,
+            "text": "10\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10 Kills",
+            "name": "10",
+            "odds": "2,35",
+            "order": 3,
+            "text": "10\n2,35"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 15 Kills",
+            "name": "15",
+            "odds": "1,50",
+            "order": 4,
+            "text": "15\n1,50"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 15 Kills",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 15 Kills",
+            "name": "15",
+            "odds": "2,40",
+            "order": 5,
+            "text": "15\n2,40"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 667
+        },
+        "text": "Map 1 - Premier Ã  atteindre morts\nFlyQuest\nShopify Rebellion\n5\n1,62\n5\n2,15\n10\n1,52\n10\n2,35\n15\n1,50\n15\n2,40",
+        "title": "Map 1 - Premier Ã  atteindre morts"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,78",
+            "order": 0,
+            "text": "FlyQuest\n1,78"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "1,92",
+            "order": 1,
+            "text": "Shopify Rebellion\n1,92"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 912
+        },
+        "text": "Map 1 - Premier sang\nFlyQuest\n1,78\nShopify Rebellion\n1,92",
+        "title": "Map 1 - Premier sang"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,52",
+            "order": 0,
+            "text": "FlyQuest\n1,52"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,35",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,35"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 1045
+        },
+        "text": "Map 1 - Premier Baron\nFlyQuest\n1,52\nShopify Rebellion\n2,35",
+        "title": "Map 1 - Premier Baron"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest",
+            "name": "FlyQuest",
+            "odds": "1,48",
+            "order": 0,
+            "text": "FlyQuest\n1,48"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion",
+            "name": "Shopify Rebellion",
+            "odds": "2,50",
+            "order": 1,
+            "text": "Shopify Rebellion\n2,50"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 1178
+        },
+        "text": "Map 1 - Premier inhibiteur\nFlyQuest\n1,48\nShopify Rebellion\n2,50",
+        "title": "Map 1 - Premier inhibiteur"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 10th Kill",
+            "name": "10",
+            "odds": "1,72",
+            "order": 0,
+            "text": "10\n1,72"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 10th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 10th Kill",
+            "name": "10",
+            "odds": "2,00",
+            "order": 1,
+            "text": "10\n2,00"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 20th Kill",
+            "name": "20",
+            "odds": "1,68",
+            "order": 2,
+            "text": "20\n1,68"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 20th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 20th Kill",
+            "name": "20",
+            "odds": "2,05",
+            "order": 3,
+            "text": "20\n2,05"
+          },
+          {
+            "attrs": {
+              "aria-label": "FlyQuest 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "FlyQuest 30th Kill",
+            "name": "30",
+            "odds": "1,65",
+            "order": 4,
+            "text": "30\n1,65"
+          },
+          {
+            "attrs": {
+              "aria-label": "Shopify Rebellion 30th Kill",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Shopify Rebellion 30th Kill",
+            "name": "30",
+            "odds": "2,10",
+            "order": 5,
+            "text": "30\n2,10"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 1311
+        },
+        "text": "Map 1 - Âº meurtre\nFlyQuest\nShopify Rebellion\n10\n1,72\n10\n2,00\n20\n1,68\n20\n2,05\n30\n1,65\n30\n2,10",
+        "title": "Map 1 - Âº meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "6,30",
+            "order": 0,
+            "text": "Yes\n6,30"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 1556
+        },
+        "text": "Map 1 - Quadruple meurtre\nYes\n6,30",
+        "title": "Map 1 - Quadruple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Yes",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Yes",
+            "name": "Yes",
+            "odds": "11,00",
+            "order": 0,
+            "text": "Yes\n11,00"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 1689
+        },
+        "text": "Map 1 - Quintuple meurtre\nYes\n11,00",
+        "title": "Map 1 - Quintuple meurtre"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 8,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "Odd",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Odd",
+            "name": "Odd",
+            "odds": "1,85",
+            "order": 0,
+            "text": "Odd\n1,85"
+          },
+          {
+            "attrs": {
+              "aria-label": "Even",
+              "data-testid": "fixture-outcome"
+            },
+            "disabled": false,
+            "label": "Even",
+            "name": "Even",
+            "odds": "1,85",
+            "order": 1,
+            "text": "Even\n1,85"
+          }
+        ],
+        "rect": {
+          "height": 109,
+          "width": 661.9375,
+          "x": 83.03125,
+          "y": 1822
+        },
+        "text": "Map 1 - Victoires paires/impaires\nOdd\n1,85\nEven\n1,85",
+        "title": "Map 1 - Victoires paires/impaires"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 9,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 10,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 11,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 12,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 13,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 14,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "017-pyramid-live-principal",
+    "observedAt": "2026-09-21T22:08:02.029Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "2.5",
+            "odds": null,
+            "order": 0,
+            "text": "2.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "2.5",
+            "odds": null,
+            "order": 1,
+            "text": "2.5\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 141,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 834.65625
+        },
+        "text": "Nombre de maps\nPlus de\nMoins de\n2.5\nSuspendu\n2.5\nSuspendu",
+        "title": "Nombre de maps"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Oui",
+            "odds": null,
+            "order": 0,
+            "text": "Oui\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Non",
+            "odds": null,
+            "order": 1,
+            "text": "Non\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Oui",
+            "odds": null,
+            "order": 2,
+            "text": "Oui\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Non",
+            "odds": null,
+            "order": 3,
+            "text": "Non\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 170,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 999.65625
+        },
+        "text": "Gagne au moins un map\nLODIS\nOui\nSuspendu\nNon\nSuspendu\nPyramid IV Esports\nOui\nSuspendu\nNon\nSuspendu",
+        "title": "Gagne au moins un map"
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Slider"
+          },
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Tout"
+          }
+        ],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "attrs": {
+              "aria-label": "suspended",
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": "suspended",
+            "odds": null,
+            "order": 0,
+            "text": "Suspendu"
+          }
+        ],
+        "rect": {
+          "height": 155,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 1193.65625
+        },
+        "text": "RÃ©sultat final\nSlider\nTout\nPyramid IV Esports\nLODIS\nSuspendu",
+        "title": "RÃ©sultat final\nSlider\nTout"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 3,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 4,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 5,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 6,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 7,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 8,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "018-pyramid-live-all-scores",
+    "observedAt": "2026-09-21T22:08:10.792Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "2.5",
+            "odds": null,
+            "order": 0,
+            "text": "2.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "2.5",
+            "odds": null,
+            "order": 1,
+            "text": "2.5\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 141,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 146.65625
+        },
+        "text": "Nombre de maps\nPlus de\nMoins de\n2.5\nSuspendu\n2.5\nSuspendu",
+        "title": "Nombre de maps"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Oui",
+            "odds": null,
+            "order": 0,
+            "text": "Oui\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Non",
+            "odds": null,
+            "order": 1,
+            "text": "Non\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Oui",
+            "odds": null,
+            "order": 2,
+            "text": "Oui\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "Non",
+            "odds": null,
+            "order": 3,
+            "text": "Non\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 170,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 311.65625
+        },
+        "text": "Gagne au moins un map\nLODIS\nOui\nSuspendu\nNon\nSuspendu\nPyramid IV Esports\nOui\nSuspendu\nNon\nSuspendu",
+        "title": "Gagne au moins un map"
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Slider"
+          },
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Tout"
+          }
+        ],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [],
+        "rect": {
+          "height": 73,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 505.65625
+        },
+        "text": "RÃ©sultat final\nSlider\nTout",
+        "title": "RÃ©sultat final\nSlider\nTout"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 3,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 4,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 5,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 6,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 7,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 8,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "019-pyramid-live-map2",
+    "observedAt": "2026-09-21T22:08:11.832Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "25.5",
+            "odds": null,
+            "order": 0,
+            "text": "25.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "25.5",
+            "odds": null,
+            "order": 1,
+            "text": "25.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26.5",
+            "odds": null,
+            "order": 2,
+            "text": "26.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26.5",
+            "odds": null,
+            "order": 3,
+            "text": "26.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27.5",
+            "odds": null,
+            "order": 4,
+            "text": "27.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27.5",
+            "odds": null,
+            "order": 5,
+            "text": "27.5\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 552.65625
+        },
+        "text": "Map 2 - Nombre total de tuÃ©s\nPlus de\nMoins de\n25.5\nSuspendu\n25.5\nSuspendu\n26.5\nSuspendu\n26.5\nSuspendu\n27.5\nSuspendu\n27.5\nSuspendu",
+        "title": "Map 2 - Nombre total de tuÃ©s"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26",
+            "odds": null,
+            "order": 0,
+            "text": "26\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26",
+            "odds": null,
+            "order": 1,
+            "text": "26\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27",
+            "odds": null,
+            "order": 2,
+            "text": "27\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27",
+            "odds": null,
+            "order": 3,
+            "text": "27\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "28",
+            "odds": null,
+            "order": 4,
+            "text": "28\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "28",
+            "odds": null,
+            "order": 5,
+            "text": "28\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 829.65625
+        },
+        "text": "Map 2 - DurÃ©e de\nPlus de\nMoins de\n26\nSuspendu\n26\nSuspendu\n27\nSuspendu\n27\nSuspendu\n28\nSuspendu\n28\nSuspendu",
+        "title": "Map 2 - DurÃ©e de"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 2,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 3,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 4,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 5,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 6,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 7,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "020-pyramid-live-map3",
+    "observedAt": "2026-09-21T22:08:12.985Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "25.5",
+            "odds": null,
+            "order": 0,
+            "text": "25.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "25.5",
+            "odds": null,
+            "order": 1,
+            "text": "25.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26.5",
+            "odds": null,
+            "order": 2,
+            "text": "26.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26.5",
+            "odds": null,
+            "order": 3,
+            "text": "26.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27.5",
+            "odds": null,
+            "order": 4,
+            "text": "27.5\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27.5",
+            "odds": null,
+            "order": 5,
+            "text": "27.5\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 546.65625
+        },
+        "text": "Map 3 - Nombre total de tuÃ©s\nPlus de\nMoins de\n25.5\nSuspendu\n25.5\nSuspendu\n26.5\nSuspendu\n26.5\nSuspendu\n27.5\nSuspendu\n27.5\nSuspendu",
+        "title": "Map 3 - Nombre total de tuÃ©s"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26",
+            "odds": null,
+            "order": 0,
+            "text": "26\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "26",
+            "odds": null,
+            "order": 1,
+            "text": "26\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27",
+            "odds": null,
+            "order": 2,
+            "text": "27\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "27",
+            "odds": null,
+            "order": 3,
+            "text": "27\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "28",
+            "odds": null,
+            "order": 4,
+            "text": "28\nSuspendu"
+          },
+          {
+            "attrs": {
+              "data-testid": "fixture-outcome",
+              "disabled": ""
+            },
+            "disabled": true,
+            "label": null,
+            "name": "28",
+            "odds": null,
+            "order": 5,
+            "text": "28\nSuspendu"
+          }
+        ],
+        "rect": {
+          "height": 221,
+          "width": 717.625,
+          "x": 303.1875,
+          "y": 823.65625
+        },
+        "text": "Map 3 - DurÃ©e de\nPlus de\nMoins de\n26\nSuspendu\n26\nSuspendu\n27\nSuspendu\n27\nSuspendu\n28\nSuspendu\n28\nSuspendu",
+        "title": "Map 3 - DurÃ©e de"
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 2,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Casino  Jeux de CasinoMachines Ã  SousCasino en directRouletteBlackjackPokerÃ‰diteursPromos & CompÃ©titionsMoteur Stake Stake Vendors ",
+        "title": "Casino "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 3,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Sports  SportsSports en DirectFootballBasketballTennisEsportsBonus de pariRÃ¨gles SportivesRÃ¨gles de course",
+        "title": "Sports "
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Service client en direct "
+          }
+        ],
+        "expanded": false,
+        "order": 4,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Support  Centre d'Aide Ã‰quitÃ©Jeu ResponsableLigne d'assistance pour les problÃ¨mes de jeu Service client en direct Auto-ExclusionRequÃªte des autoritÃ©s judiciaires",
+        "title": "Support "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 5,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Ã€ propos de nous  Club VIPAffiliÃ©Politique de ConfidentialitÃ©Politique LBCConditions d'Utilisation",
+        "title": "Ã€ propos de nous "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 6,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "Informations sur les paiements  DÃ©pÃ´ts & RetraitsGuide sur les devisesGuide sur la cryptoCrypto supportÃ©eComment utiliser le coffreCombien parier",
+        "title": "Informations sur les paiements "
+      },
+      {
+        "controls": [],
+        "expanded": false,
+        "order": 7,
+        "outcomes": [],
+        "rect": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "text": "FAQ  Guides pratiquesGuide du casino en ligneGuide des paris sportifsComment diffuser des sports en directGuide VIP de StakeGuide sur l'avantage de la maison",
+        "title": "FAQ "
+      }
+    ]
+  },
+  {
+    "capture": "021-cfo-kt-principal",
+    "observedAt": "2026-09-21T22:09:18.414Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845065-cfo-academy-kt-rolster-challengers",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "CFO Academy",
+            "name": "CFO Academy",
+            "odds": "7,00",
+            "order": 0,
+            "text": "CFO Academy\n7,00"
+          },
+          {
+            "disabled": false,
+            "label": "KT Rolster Challengers",
+            "name": "KT Rolster Challengers",
+            "odds": "1,06",
+            "order": 1,
+            "text": "KT Rolster Challengers\n1,06"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nCFO Academy\n7,00\nKT Rolster Challengers\n1,06",
+        "title": "Vainqueur du match - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "022-fuego-t1-principal",
+    "observedAt": "2026-09-21T22:09:20.318Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845066-fuego-t1-esports-academy",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Fuego",
+            "name": "Fuego",
+            "odds": "7,50",
+            "order": 0,
+            "text": "Fuego\n7,50"
+          },
+          {
+            "disabled": false,
+            "label": "T1 Esports Academy",
+            "name": "T1 Esports Academy",
+            "odds": "1,05",
+            "order": 1,
+            "text": "T1 Esports Academy\n1,05"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nFuego\n7,50\nT1 Esports Academy\n1,05",
+        "title": "Vainqueur du match - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "022-fuego-t1-principal-repeat",
+    "observedAt": "2026-09-21T22:09:21.421Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845066-fuego-t1-esports-academy",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Fuego",
+            "name": "Fuego",
+            "odds": "7,50",
+            "order": 0,
+            "text": "Fuego\n7,50"
+          },
+          {
+            "disabled": false,
+            "label": "T1 Esports Academy",
+            "name": "T1 Esports Academy",
+            "odds": "1,05",
+            "order": 1,
+            "text": "T1 Esports Academy\n1,05"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nFuego\n7,50\nT1 Esports Academy\n1,05",
+        "title": "Vainqueur du match - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "023-koi-cfo-principal",
+    "observedAt": "2026-09-21T22:09:23.554Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845067-movistar-koi-academy-cfo-academy",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Movistar KOI Academy",
+            "name": "Movistar KOI.A",
+            "odds": "1,38",
+            "order": 0,
+            "text": "Movistar KOI.A\n1,38"
+          },
+          {
+            "disabled": false,
+            "label": "CFO Academy",
+            "name": "CFO Academy",
+            "odds": "2,80",
+            "order": 1,
+            "text": "CFO Academy\n2,80"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nMovistar KOI.A\n1,38\nCFO Academy\n2,80",
+        "title": "Vainqueur du match - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "023-koi-cfo-principal-repeat",
+    "observedAt": "2026-09-21T22:09:24.679Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845067-movistar-koi-academy-cfo-academy",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Movistar KOI Academy",
+            "name": "Movistar KOI.A",
+            "odds": "1,38",
+            "order": 0,
+            "text": "Movistar KOI.A\n1,38"
+          },
+          {
+            "disabled": false,
+            "label": "CFO Academy",
+            "name": "CFO Academy",
+            "odds": "2,80",
+            "order": 1,
+            "text": "CFO Academy\n2,80"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nMovistar KOI.A\n1,38\nCFO Academy\n2,80",
+        "title": "Vainqueur du match - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "024-fuego-dn-principal",
+    "observedAt": "2026-09-21T22:09:26.832Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845068-fuego-dn-soopers-challengers",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Fuego",
+            "name": "Fuego",
+            "odds": "7,00",
+            "order": 0,
+            "text": "Fuego\n7,00"
+          },
+          {
+            "disabled": false,
+            "label": "DN SOOPers Challengers",
+            "name": "DN SOOPers Challengers",
+            "odds": "1,06",
+            "order": 1,
+            "text": "DN SOOPers Challengers\n1,06"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nFuego\n7,00\nDN SOOPers Challengers\n1,06",
+        "title": "Vainqueur du match - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "024-fuego-dn-principal-repeat",
+    "observedAt": "2026-09-21T22:09:27.940Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845068-fuego-dn-soopers-challengers",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Fuego",
+            "name": "Fuego",
+            "odds": "7,00",
+            "order": 0,
+            "text": "Fuego\n7,00"
+          },
+          {
+            "disabled": false,
+            "label": "DN SOOPers Challengers",
+            "name": "DN SOOPers Challengers",
+            "odds": "1,06",
+            "order": 1,
+            "text": "DN SOOPers Challengers\n1,06"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nFuego\n7,00\nDN SOOPers Challengers\n1,06",
+        "title": "Vainqueur du match - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "025-pobelter-chenchen-principal",
+    "observedAt": "2026-09-21T22:09:30.687Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,35",
+            "order": 0,
+            "text": "Pobelter\n1,35"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,90",
+            "order": 1,
+            "text": "chenchen53\n2,90"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nPobelter\n1,35\nchenchen53\n2,90",
+        "title": "Vainqueur du match - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter (-1.5)",
+            "name": "-1.5",
+            "odds": "2,10",
+            "order": 0,
+            "text": "-1.5\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53 (1.5)",
+            "name": "1.5",
+            "odds": "1,65",
+            "order": 1,
+            "text": "1.5\n1,65"
+          },
+          {
+            "disabled": false,
+            "label": "Pobelter (1.5)",
+            "name": "1.5",
+            "odds": "1,10",
+            "order": 2,
+            "text": "1.5\n1,10"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53 (-1.5)",
+            "name": "-1.5",
+            "odds": "5,80",
+            "order": 3,
+            "text": "-1.5\n5,80"
+          }
+        ],
+        "text": "Handicap de la carte\nPobelter\nchenchen5\n-1.5\n2,10\n1.5\n1,65\n1.5\n1,10\n-1.5\n5,80",
+        "title": "Handicap de la carte"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Over 2.5",
+            "name": "2.5",
+            "odds": "2,10",
+            "order": 0,
+            "text": "2.5\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "Under 2.5",
+            "name": "2.5",
+            "odds": "1,65",
+            "order": 1,
+            "text": "2.5\n1,65"
+          }
+        ],
+        "text": "Nombre de maps\nPlus de\nMoins de\n2.5\n2,10\n2.5\n1,65",
+        "title": "Nombre de maps"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Yes chenchen53",
+            "name": "Oui",
+            "odds": "1,65",
+            "order": 0,
+            "text": "Oui\n1,65"
+          },
+          {
+            "disabled": false,
+            "label": "No chenchen53",
+            "name": "Non",
+            "odds": "2,10",
+            "order": 1,
+            "text": "Non\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "Yes Pobelter",
+            "name": "Oui",
+            "odds": "1,10",
+            "order": 2,
+            "text": "Oui\n1,10"
+          },
+          {
+            "disabled": false,
+            "label": "No Pobelter",
+            "name": "Non",
+            "odds": "5,80",
+            "order": 3,
+            "text": "Non\n5,80"
+          }
+        ],
+        "text": "Gagne au moins un map\nchenchen5\nOui\n1,65\nNon\n2,10\nPobelter\nOui\n1,10\nNon\n5,80",
+        "title": "Gagne au moins un map"
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Slider"
+          },
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Tout"
+          }
+        ],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "disabled": true,
+            "label": "suspended",
+            "name": null,
+            "odds": null,
+            "order": 0,
+            "text": "Suspendu"
+          }
+        ],
+        "text": "RÃ©sultat final\nSlider\nTout\nPobelter\n0\n1\n2\nchenchen5\n0\n1\n2\nSuspendu",
+        "title": "RÃ©sultat final"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 1 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 1 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 2 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 2 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,52",
+            "order": 0,
+            "text": "Pobelter\n1,52"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,35",
+            "order": 1,
+            "text": "chenchen53\n2,35"
+          }
+        ],
+        "text": "Map 3 Gagnant - Two options\nPobelter\n1,52\nchenchen53\n2,35",
+        "title": "Map 3 Gagnant - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "025-pobelter-chenchen-principal-repeat",
+    "observedAt": "2026-09-21T22:09:31.754Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,35",
+            "order": 0,
+            "text": "Pobelter\n1,35"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,90",
+            "order": 1,
+            "text": "chenchen53\n2,90"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nPobelter\n1,35\nchenchen53\n2,90",
+        "title": "Vainqueur du match - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter (-1.5)",
+            "name": "-1.5",
+            "odds": "2,10",
+            "order": 0,
+            "text": "-1.5\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53 (1.5)",
+            "name": "1.5",
+            "odds": "1,65",
+            "order": 1,
+            "text": "1.5\n1,65"
+          },
+          {
+            "disabled": false,
+            "label": "Pobelter (1.5)",
+            "name": "1.5",
+            "odds": "1,10",
+            "order": 2,
+            "text": "1.5\n1,10"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53 (-1.5)",
+            "name": "-1.5",
+            "odds": "5,80",
+            "order": 3,
+            "text": "-1.5\n5,80"
+          }
+        ],
+        "text": "Handicap de la carte\nPobelter\nchenchen5\n-1.5\n2,10\n1.5\n1,65\n1.5\n1,10\n-1.5\n5,80",
+        "title": "Handicap de la carte"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Over 2.5",
+            "name": "2.5",
+            "odds": "2,10",
+            "order": 0,
+            "text": "2.5\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "Under 2.5",
+            "name": "2.5",
+            "odds": "1,65",
+            "order": 1,
+            "text": "2.5\n1,65"
+          }
+        ],
+        "text": "Nombre de maps\nPlus de\nMoins de\n2.5\n2,10\n2.5\n1,65",
+        "title": "Nombre de maps"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Yes chenchen53",
+            "name": "Oui",
+            "odds": "1,65",
+            "order": 0,
+            "text": "Oui\n1,65"
+          },
+          {
+            "disabled": false,
+            "label": "No chenchen53",
+            "name": "Non",
+            "odds": "2,10",
+            "order": 1,
+            "text": "Non\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "Yes Pobelter",
+            "name": "Oui",
+            "odds": "1,10",
+            "order": 2,
+            "text": "Oui\n1,10"
+          },
+          {
+            "disabled": false,
+            "label": "No Pobelter",
+            "name": "Non",
+            "odds": "5,80",
+            "order": 3,
+            "text": "Non\n5,80"
+          }
+        ],
+        "text": "Gagne au moins un map\nchenchen5\nOui\n1,65\nNon\n2,10\nPobelter\nOui\n1,10\nNon\n5,80",
+        "title": "Gagne au moins un map"
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Slider"
+          },
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Tout"
+          }
+        ],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "disabled": true,
+            "label": "suspended",
+            "name": null,
+            "odds": null,
+            "order": 0,
+            "text": "Suspendu"
+          }
+        ],
+        "text": "RÃ©sultat final\nSlider\nTout\nPobelter\n0\n1\n2\nchenchen5\n0\n1\n2\nSuspendu",
+        "title": "RÃ©sultat final"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 1 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 1 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 2 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 2 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,52",
+            "order": 0,
+            "text": "Pobelter\n1,52"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,35",
+            "order": 1,
+            "text": "chenchen53\n2,35"
+          }
+        ],
+        "text": "Map 3 Gagnant - Two options\nPobelter\n1,52\nchenchen53\n2,35",
+        "title": "Map 3 Gagnant - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "025-pobelter-chenchen-map-1",
+    "observedAt": "2026-09-21T22:09:33.294Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 1 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 1 Gagnant - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "025-pobelter-chenchen-map-2",
+    "observedAt": "2026-09-21T22:09:34.347Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 2 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 2 Gagnant - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "025-pobelter-chenchen-map-3",
+    "observedAt": "2026-09-21T22:09:35.357Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,52",
+            "order": 0,
+            "text": "Pobelter\n1,52"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,35",
+            "order": 1,
+            "text": "chenchen53\n2,35"
+          }
+        ],
+        "text": "Map 3 Gagnant - Two options\nPobelter\n1,52\nchenchen53\n2,35",
+        "title": "Map 3 Gagnant - Two options"
+      }
+    ]
+  },
+  {
+    "capture": "026-pobelter-score-expanded",
+    "observedAt": "2026-09-21T22:10:15.022Z",
+    "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+    "markets": [
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 0,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,35",
+            "order": 0,
+            "text": "Pobelter\n1,35"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,90",
+            "order": 1,
+            "text": "chenchen53\n2,90"
+          }
+        ],
+        "text": "Vainqueur du match - Two options\nPobelter\n1,35\nchenchen53\n2,90",
+        "title": "Vainqueur du match - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 1,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter (-1.5)",
+            "name": "-1.5",
+            "odds": "2,10",
+            "order": 0,
+            "text": "-1.5\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53 (1.5)",
+            "name": "1.5",
+            "odds": "1,65",
+            "order": 1,
+            "text": "1.5\n1,65"
+          },
+          {
+            "disabled": false,
+            "label": "Pobelter (1.5)",
+            "name": "1.5",
+            "odds": "1,10",
+            "order": 2,
+            "text": "1.5\n1,10"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53 (-1.5)",
+            "name": "-1.5",
+            "odds": "5,80",
+            "order": 3,
+            "text": "-1.5\n5,80"
+          }
+        ],
+        "text": "Handicap de la carte\nPobelter\nchenchen5\n-1.5\n2,10\n1.5\n1,65\n1.5\n1,10\n-1.5\n5,80",
+        "title": "Handicap de la carte"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 2,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Over 2.5",
+            "name": "2.5",
+            "odds": "2,10",
+            "order": 0,
+            "text": "2.5\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "Under 2.5",
+            "name": "2.5",
+            "odds": "1,65",
+            "order": 1,
+            "text": "2.5\n1,65"
+          }
+        ],
+        "text": "Nombre de maps\nPlus de\nMoins de\n2.5\n2,10\n2.5\n1,65",
+        "title": "Nombre de maps"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 3,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Yes chenchen53",
+            "name": "Oui",
+            "odds": "1,65",
+            "order": 0,
+            "text": "Oui\n1,65"
+          },
+          {
+            "disabled": false,
+            "label": "No chenchen53",
+            "name": "Non",
+            "odds": "2,10",
+            "order": 1,
+            "text": "Non\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "Yes Pobelter",
+            "name": "Oui",
+            "odds": "1,10",
+            "order": 2,
+            "text": "Oui\n1,10"
+          },
+          {
+            "disabled": false,
+            "label": "No Pobelter",
+            "name": "Non",
+            "odds": "5,80",
+            "order": 3,
+            "text": "Non\n5,80"
+          }
+        ],
+        "text": "Gagne au moins un map\nchenchen5\nOui\n1,65\nNon\n2,10\nPobelter\nOui\n1,10\nNon\n5,80",
+        "title": "Gagne au moins un map"
+      },
+      {
+        "controls": [
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Slider"
+          },
+          {
+            "disabled": false,
+            "label": null,
+            "text": "Tout"
+          }
+        ],
+        "expanded": true,
+        "order": 4,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "2:0",
+            "name": "2:0",
+            "odds": "2,10",
+            "order": 0,
+            "text": "2:0\n2,10"
+          },
+          {
+            "disabled": false,
+            "label": "1:2",
+            "name": "1:2",
+            "odds": "4,80",
+            "order": 1,
+            "text": "1:2\n4,80"
+          },
+          {
+            "disabled": false,
+            "label": "2:1",
+            "name": "2:1",
+            "odds": "3,20",
+            "order": 2,
+            "text": "2:1\n3,20"
+          },
+          {
+            "disabled": false,
+            "label": "0:2",
+            "name": "0:2",
+            "odds": "5,80",
+            "order": 3,
+            "text": "0:2\n5,80"
+          }
+        ],
+        "text": "RÃ©sultat final\nSlider\nTout\n2:0\n2,10\n1:2\n4,80\n2:1\n3,20\n0:2\n5,80",
+        "title": "RÃ©sultat final"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 5,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 1 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 1 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 6,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,48",
+            "order": 0,
+            "text": "Pobelter\n1,48"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,50",
+            "order": 1,
+            "text": "chenchen53\n2,50"
+          }
+        ],
+        "text": "Map 2 Gagnant - Two options\nPobelter\n1,48\nchenchen53\n2,50",
+        "title": "Map 2 Gagnant - Two options"
+      },
+      {
+        "controls": [],
+        "expanded": true,
+        "order": 7,
+        "outcomes": [
+          {
+            "disabled": false,
+            "label": "Pobelter",
+            "name": "Pobelter",
+            "odds": "1,52",
+            "order": 0,
+            "text": "Pobelter\n1,52"
+          },
+          {
+            "disabled": false,
+            "label": "chenchen53",
+            "name": "chenchen53",
+            "odds": "2,35",
+            "order": 1,
+            "text": "chenchen53\n2,35"
+          }
+        ],
+        "text": "Map 3 Gagnant - Two options\nPobelter\n1,52\nchenchen53\n2,35",
+        "title": "Map 3 Gagnant - Two options"
+      }
+    ]
+  }
+]

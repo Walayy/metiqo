@@ -2,10 +2,12 @@ import { delay, http, HttpResponse } from 'msw';
 import { catalog, opportunities } from './fixtures';
 import { config } from '@/lib/config';
 import { matches, performance } from './esport';
+import { liveUpdateFrame } from './live-updates';
 
 // QA scenarios are opt-in URL parameters, available only in mock mode.
 const scenario = new URLSearchParams(window.location.search).get('mock');
 let failures = 0;
+let liveFrame = 0;
 export const handlers = [
   ...[
     { path: '/matches', data: matches },
@@ -13,6 +15,18 @@ export const handlers = [
   ].map(({ path, data }) =>
     http.get(`${config.apiBaseUrl}${path}`, async () => {
       await delay(scenario === 'slow' ? 3000 : 400);
+      if (scenario === 'live-updates' && path === '/matches') {
+        const frame = liveFrame++;
+        if (frame === 3)
+          return HttpResponse.json(
+            { message: 'Interruption QA temporaire' },
+            {
+              status: 503,
+              headers: { 'Retry-After': '3' },
+            },
+          );
+        return HttpResponse.json(liveUpdateFrame(frame));
+      }
       if (scenario === 'error' && failures++ < 2)
         return HttpResponse.json({ message: 'Erreur simulée' }, { status: 503 });
       return HttpResponse.json({ ...data, items: scenario === 'empty' ? [] : data.items });

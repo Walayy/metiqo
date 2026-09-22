@@ -1,10 +1,19 @@
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
-import { ContentTransition } from '@/components/ui/content-transition';
 import { SelectionIndicator } from '@/components/ui/selection-indicator';
 import { useId, useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Accordion } from 'radix-ui';
-import { ChevronDown, ChevronLeft, ChevronRight, Search, Swords, ArrowUpRight } from 'lucide-react';
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Search,
+  Swords,
+  X,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import type { Catalog } from '@/domain/schemas';
 import type { EsportMatch } from '@/domain/matches';
@@ -18,13 +27,18 @@ import { StatusPanel } from '@/features/status/status-panel';
 import { LeagueFilters, RefreshValues } from '@/features/values/league-filters';
 import { boundedDay, dayKey, dayLabel, shiftDay } from './calendar';
 import { MatchDetail } from './match-detail';
+import { compareMatches, matchesStatus, matchStatuses, statusCounts } from './presentation';
+import type { MatchFilter } from './presentation';
+import { UpdatedValue } from './updated-value';
+import { MatchScore } from './match-score';
+import { matchesPollInterval } from './polling';
 import './matches.css';
 
-export function LiveBadge() {
+export function LiveBadge({ count }: { count?: number }) {
   return (
     <span className="live-badge">
       <span aria-hidden="true" />
-      En direct
+      <UpdatedValue value={count != null ? `${count} en direct` : 'En direct'} />
     </span>
   );
 }
@@ -67,6 +81,7 @@ export function MatchesPage({
   const items = query.data?.items ?? [];
   const [stickyError, setStickyError] = useState<Error | null>(null);
   const selectionId = useId();
+  const statusSelectionId = useId();
   const [refreshing, setRefreshing] = useState(false);
   async function refresh() {
     setRefreshing(true);
@@ -81,14 +96,25 @@ export function MatchesPage({
   const today = dayKey(new Date(now));
   const [league, setLeague] = useState('all');
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<MatchFilter>('all');
+  const [openedDays, setOpenedDays] = useState<Record<string, string[]>>({});
+  const [resultsHeight, setResultsHeight] = useState(0);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<EsportMatch | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const deferredSearch = useDeferredValue(search);
   const selectedDay = boundedDay(day, today);
-  const loading = useMinimumLoading(
-    dataPending || refreshing,
-    JSON.stringify([selectedDay, league, deferredSearch]),
-  );
+  const loading = useMinimumLoading(dataPending || refreshing, selectedDay);
+  const opened = openedDays[selectedDay] ?? [];
+  useLayoutEffect(() => {
+    const element = resultsRef.current;
+    if (!element || loading) return;
+    const observer = new ResizeObserver(() =>
+      setResultsHeight(element.getBoundingClientRect().height),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [loading]);
   const selectedButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -130,7 +156,17 @@ export function MatchesPage({
     });
   }
   const visibleError = query.error ?? invalidError ?? (query.isFetching ? stickyError : null);
-  if (visibleError || invalid)
+  const accessError =
+    visibleError instanceof HttpError && [401, 403, 423].includes(visibleError.status);
+  const refreshError =
+    visibleError && query.data && !invalid && !accessError
+      ? matchesPollInterval(false, visibleError) === false
+        ? 'Actualisation interrompue. Les dernières données restent affichées ; réessayez depuis la liste.'
+        : visibleError instanceof HttpError && visibleError.retryAt > now
+          ? `Actualisation en attente (${Math.ceil((visibleError.retryAt - now) / 1000)} s). Les dernières données restent affichées.`
+          : 'Actualisation momentanément indisponible. Les dernières données restent affichées ; reprise automatique.'
+      : null;
+  if ((visibleError && !refreshError) || invalid)
     return (
       <StatusPanel
         error={visibleError ?? new HttpError(0, { kind: 'invalid-response' })}
@@ -142,47 +178,45 @@ export function MatchesPage({
   const populated = new Set(items.map((item) => dayKey(item.startsAt)));
   const previous = days.filter((date) => date < selectedDay && populated.has(date)).at(-1);
   const next = days.find((date) => date > selectedDay && populated.has(date));
-  const matches = items
-    .filter((item) => {
-      if (dayKey(item.startsAt) !== selectedDay || (league !== 'all' && item.leagueId !== league))
-        return false;
-      const teams = catalog.teams.filter((t) => [item.homeId, item.awayId].includes(t.id));
-      const competition = catalog.leagues.find((l) => l.id === item.leagueId);
-      return normalize(
-        `${teams.map((t) => `${t.name} ${t.code}`).join(' ')} ${competition?.name}`,
-      ).includes(normalize(deferredSearch));
-    })
-    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt) || a.id.localeCompare(b.id));
+  const dayMatches = items.filter((item) => dayKey(item.startsAt) === selectedDay);
+  const leagueCounts = Object.fromEntries(
+    catalog.leagues.map((l) => [l.id, dayMatches.filter((m) => m.leagueId === l.id).length]),
+  );
+  const filtered = dayMatches.filter((item) => {
+    if (league !== 'all' && item.leagueId !== league) return false;
+    const teams = catalog.teams.filter((t) => [item.homeId, item.awayId].includes(t.id));
+    const competition = catalog.leagues.find((l) => l.id === item.leagueId);
+    return normalize(
+      `${teams.map((t) => `${t.name} ${t.code}`).join(' ')} ${competition?.name}`,
+    ).includes(normalize(deferredSearch));
+  });
+  const counts = statusCounts(filtered);
+  const matches = filtered.filter((m) => matchesStatus(m, status)).sort(compareMatches);
   const groups = catalog.leagues
     .map((competition) => ({
       competition,
       matches: matches.filter((m) => m.leagueId === competition.id),
     }))
     .filter((group) => group.matches.length)
-    .sort((a, b) => {
-      const liveOrder =
-        Number(b.matches.some((m) => m.status === 'live')) -
-        Number(a.matches.some((m) => m.status === 'live'));
-      return (
-        liveOrder ||
-        Date.parse(
-          a.matches.find((m) => m.status === 'scheduled')?.startsAt ?? a.matches[0]!.startsAt,
-        ) -
-          Date.parse(
-            b.matches.find((m) => m.status === 'scheduled')?.startsAt ?? b.matches[0]!.startsAt,
-          )
-      );
-    });
+    .sort(
+      (a, b) =>
+        compareMatches(a.matches[0]!, b.matches[0]!) ||
+        a.competition.name.localeCompare(b.competition.name, 'fr'),
+    );
   return (
     <div className="matches-page">
-      <div className="page-heading">
+      {refreshError && (
+        <p className="match-refresh-notice" role="status">
+          {refreshError}
+        </p>
+      )}
+      <div className="page-heading matches-heading">
         <div>
           <div className="eyebrow">
             <span className="eyebrow-line" />
             LEAGUE OF LEGENDS
           </div>
-          <h1>Chaque jour, ses matchs.</h1>
-          <p>Le programme, les scores et toute l’action, carte par carte.</p>
+          <h1>Matchs</h1>
         </div>
         <RefreshValues
           mobile
@@ -192,32 +226,38 @@ export function MatchesPage({
       </div>
       <section className="match-calendar" aria-label="Choisir une journée">
         <div className="calendar-controls">
-          <Button
-            iconOnly
-            aria-label="Jour précédent avec des matchs"
-            disabled={!previous || dataPending}
-            onClick={() => previous && onDay(previous)}
-          >
-            <ChevronLeft size={19} />
-          </Button>
-          <ContentTransition id={selectedDay} className="calendar-selected">
-            {dayLabel(selectedDay, true)}
-          </ContentTransition>
-          <Button
-            iconOnly
-            aria-label="Jour suivant avec des matchs"
-            disabled={!next || dataPending}
-            onClick={() => next && onDay(next)}
-          >
-            <ChevronRight size={19} />
-          </Button>
-          <Button
-            className="calendar-today"
-            disabled={selectedDay === today || !populated.has(today) || dataPending}
-            onClick={() => onDay(today)}
-          >
-            Aujourd’hui
-          </Button>
+          <div className="calendar-heading">
+            <h2>{dayLabel(selectedDay)}</h2>
+            <p>Heure de Paris · J−7 à J+7</p>
+          </div>
+          <div className="calendar-actions">
+            <Button
+              iconOnly
+              aria-label="Jour précédent avec des matchs"
+              disabled={!previous || dataPending}
+              onClick={() => previous && onDay(previous)}
+            >
+              <ChevronLeft size={18} />
+            </Button>
+            <Button
+              className="calendar-today"
+              aria-label="Aujourd’hui"
+              title="Aujourd’hui"
+              disabled={selectedDay === today || !populated.has(today) || dataPending}
+              onClick={() => onDay(today)}
+            >
+              <CalendarDays size={18} aria-hidden="true" />
+              <span>Aujourd’hui</span>
+            </Button>
+            <Button
+              iconOnly
+              aria-label="Jour suivant avec des matchs"
+              disabled={!next || dataPending}
+              onClick={() => next && onDay(next)}
+            >
+              <ChevronRight size={18} />
+            </Button>
+          </div>
         </div>
         <div className="calendar-days" role="group" aria-label="Journées disponibles">
           {days.map((date) => (
@@ -225,20 +265,30 @@ export function MatchesPage({
               key={date}
               ref={date === selectedDay ? selectedButton : undefined}
               type="button"
-              className={clsx('calendar-day', date === selectedDay && 'is-selected')}
+              className={clsx(
+                'calendar-day',
+                date === selectedDay && 'is-selected',
+                date === today && 'is-today',
+              )}
               aria-pressed={date === selectedDay}
-              aria-label={`${dayLabel(date)}${!populated.has(date) && !dataPending ? ', aucun match' : ''}`}
+              aria-current={date === today ? 'date' : undefined}
+              aria-label={`${dayLabel(date)}${date === today ? ', aujourd’hui' : ''}${!populated.has(date) && !dataPending ? ', aucun match' : ''}`}
               disabled={dataPending || date === selectedDay || !populated.has(date)}
               onClick={() => onDay(date)}
             >
               {date === selectedDay && <SelectionIndicator id={selectionId} />}
-              <span>{date === today ? 'Aujourd’hui' : dayLabel(date, true).split(' ')[0]}</span>
+              <span>{dayLabel(date, true).split(' ')[0]}</span>
               <strong>{Number(date.slice(-2))}</strong>
-              <small>{dayLabel(date, true).split(' ').slice(2).join(' ')}</small>
+              <small>
+                {date === today
+                  ? 'Auj.'
+                  : date.endsWith('-01')
+                    ? dayLabel(date, true).split(' ').slice(2).join(' ')
+                    : ''}
+              </small>
             </button>
           ))}
         </div>
-        <p className="calendar-caption">7 jours avant et après aujourd’hui · Heure de Paris</p>
       </section>
       <LeagueFilters
         leagues={catalog.leagues}
@@ -248,220 +298,329 @@ export function MatchesPage({
         error={null}
         onRefresh={() => void refresh()}
         refreshing={refreshing || query.isFetching}
+        context="matches"
+        matchCounts={leagueCounts}
       />
       <div className="matches-tools">
-        <div>
-          <h2>{dayLabel(selectedDay)}</h2>
-          <p role="status">
-            {loading
-              ? 'Chargement des rencontres…'
-              : `${matches.length} match${matches.length > 1 ? 's' : ''} · ${groups.length} ligue${groups.length > 1 ? 's' : ''}`}
-          </p>
+        <div
+          className="match-status-filters"
+          role="group"
+          aria-label="Filtrer les matchs par statut"
+        >
+          {matchStatuses
+            .filter(
+              (option) => option.id !== 'changed' || counts.changed > 0 || status === 'changed',
+            )
+            .map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={status === option.id}
+                className={clsx('match-status-filter', option.id === 'live' && 'is-live')}
+                onClick={() => {
+                  setStatus(option.id);
+                  if (option.id === 'live')
+                    setOpenedDays((current) => ({
+                      ...current,
+                      [selectedDay]: [
+                        ...new Set(
+                          filtered.filter((m) => m.status === 'live').map((m) => m.leagueId),
+                        ),
+                      ],
+                    }));
+                }}
+              >
+                {status === option.id && <SelectionIndicator id={statusSelectionId} />}
+                <span className="match-status-label">{option.label}</span>
+                <span className="match-status-count">{counts[option.id]}</span>
+              </button>
+            ))}
         </div>
-        <label className="search-field">
-          <Search size={16} />
-          <input
-            aria-label="Rechercher un match"
-            placeholder="Une équipe, une ligue…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
+        <div className="match-search">
+          <label className="search-field">
+            <Search size={17} aria-hidden="true" />
+            <input
+              aria-label="Rechercher un match"
+              aria-describedby="match-search-scope"
+              placeholder="Équipe ou ligue du jour"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          {search && (
+            <button
+              type="button"
+              aria-label="Effacer la recherche de match"
+              onClick={() => setSearch('')}
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
       </div>
-      <div aria-busy={loading}>
-        <ContentTransition id={loading ? 'loading' : 'ready'}>
-          {loading ? (
-            <div className="league-skeletons" role="status" aria-label="Chargement des rencontres">
-              {Array.from({ length: groups.length || 3 }, (_, i) => (
-                <div key={i} className="league-accordion" aria-hidden="true">
-                  <div className="league-trigger">
-                    <span className="skeleton league-loading-logo" />
-                    <span className="league-title">
-                      <span className="skeleton league-loading-name" />
-                      <span className="skeleton league-loading-count" />
-                    </span>
-                    <span className="league-timing skeleton league-loading-time" />
-                    <span className="skeleton league-loading-chevron" />
-                  </div>
+      <div className="match-results-caption">
+        <p role="status">
+          {loading
+            ? 'Chargement des rencontres…'
+            : `${matches.length} match${matches.length > 1 ? 's' : ''} · ${groups.length} ligue${groups.length > 1 ? 's' : ''}`}
+        </p>
+        <span id="match-search-scope">Recherche dans cette journée</span>
+      </div>
+      <div
+        className="match-results"
+        ref={resultsRef}
+        aria-busy={loading}
+        style={loading && resultsHeight ? { minHeight: resultsHeight } : undefined}
+      >
+        {loading ? (
+          <div className="league-skeletons" role="status" aria-label="Chargement des rencontres">
+            {(groups.length
+              ? groups.map((g) => ({
+                  id: g.competition.id,
+                  rows: opened.includes(g.competition.id) ? g.matches.length : 0,
+                }))
+              : [
+                  { id: 'loading', rows: 0 },
+                  { id: 'loading-2', rows: 0 },
+                ]
+            ).map((group) => (
+              <div key={group.id} className="league-accordion" aria-hidden="true">
+                <div className="league-trigger">
+                  <span className="skeleton league-loading-logo" />
+                  <span className="league-title">
+                    <span className="skeleton league-loading-name" />
+                    <span className="skeleton league-loading-count" />
+                  </span>
+                  <span className="league-timing skeleton league-loading-time" />
                 </div>
-              ))}
-            </div>
-          ) : !matches.length ? (
-            <div className="empty-state">
-              <span className="empty-icon">
-                <Swords size={28} />
-              </span>
-              <h3>Aucun match dans cette sélection.</h3>
-              <p>Choisissez une autre journée ou élargissez vos filtres.</p>
-              {(search || league !== 'all') && (
-                <Button
-                  onClick={() => {
-                    setSearch('');
-                    setLeague('all');
-                  }}
-                >
-                  Effacer la sélection
-                </Button>
+                {Array.from({ length: group.rows }, (_, i) => (
+                  <div className="fixture-skeleton" key={i}>
+                    <span className="skeleton" />
+                    <span className="skeleton" />
+                    <span className="skeleton" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : !matches.length ? (
+          <div className="empty-state matches-empty">
+            <span className="empty-icon">
+              <Swords size={26} />
+            </span>
+            <h3>Aucun match dans cette sélection.</h3>
+            <p>
+              {search
+                ? `Aucun résultat pour « ${search} » dans cette journée.`
+                : status !== 'all'
+                  ? 'Aucune rencontre avec ce statut pour les filtres choisis.'
+                  : league !== 'all'
+                    ? 'Cette ligue n’a pas de rencontre publiée pour cette journée.'
+                    : 'Aucune rencontre publiée pour cette journée.'}
+            </p>
+            <div className="empty-actions">
+              {search && <Button onClick={() => setSearch('')}>Effacer la recherche</Button>}
+              {status !== 'all' && (
+                <Button onClick={() => setStatus('all')}>Tous les statuts</Button>
+              )}
+              {league !== 'all' && (
+                <Button onClick={() => setLeague('all')}>Toutes les ligues</Button>
+              )}
+              {!search && status === 'all' && league === 'all' && next && (
+                <Button onClick={() => onDay(next)}>Prochaine journée avec des matchs</Button>
               )}
             </div>
-          ) : (
-            <Accordion.Root key={selectedDay} type="multiple" className="league-accordions">
-              {groups.map(({ competition, matches: rows }) => {
-                const live = rows.filter((m) => m.status === 'live');
-                const upcoming = rows.find((m) => m.status === 'scheduled');
-                return (
-                  <Accordion.Item
-                    key={competition.id}
-                    value={competition.id}
-                    className="league-accordion"
-                  >
-                    <Accordion.Header>
-                      <Accordion.Trigger className="league-trigger">
-                        <Logo
-                          src={competition.image}
-                          name={competition.name}
-                          code={competition.name}
-                          league
+          </div>
+        ) : (
+          <Accordion.Root
+            type="multiple"
+            className="league-accordions"
+            value={opened}
+            onValueChange={(value) =>
+              setOpenedDays((current) => ({ ...current, [selectedDay]: value }))
+            }
+          >
+            {groups.map(({ competition, matches: rows }) => {
+              const summary = statusCounts(rows);
+              const upcoming = rows.find((m) => m.status === 'scheduled');
+              return (
+                <Accordion.Item
+                  key={competition.id}
+                  value={competition.id}
+                  className="league-accordion"
+                >
+                  <Accordion.Header>
+                    <Accordion.Trigger className="league-trigger">
+                      <Logo src={competition.image} name={competition.name} league />
+                      <span className="league-title">
+                        <strong>{competition.name}</strong>
+                        <small>
+                          {[
+                            summary.live && `${rows.length} match${rows.length > 1 ? 's' : ''}`,
+                            summary.scheduled && `${summary.scheduled} à venir`,
+                            summary.finished &&
+                              `${summary.finished} terminé${summary.finished > 1 ? 's' : ''}`,
+                            summary.changed &&
+                              `${summary.changed} reporté${summary.changed > 1 ? 's' : ''} / annulé${summary.changed > 1 ? 's' : ''}`,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </small>
+                      </span>
+                      <span className="league-timing">
+                        {summary.live ? (
+                          <LiveBadge count={summary.live} />
+                        ) : upcoming ? (
+                          <span className="match-countdown">
+                            {countdown(upcoming.startsAt, now)}
+                          </span>
+                        ) : null}
+                      </span>
+                      <ChevronDown size={18} className="accordion-chevron" />
+                    </Accordion.Trigger>
+                  </Accordion.Header>
+                  <Accordion.Content className="league-content">
+                    <div className="league-matches">
+                      {rows.map((match, index) => (
+                        <Fixture
+                          key={match.id}
+                          match={match}
+                          catalog={catalog}
+                          now={now}
+                          separator={index > 0 && rows[index - 1]!.status !== match.status}
+                          onSelect={() => {
+                            setSelected(match);
+                            setDetailOpen(true);
+                          }}
                         />
-                        <span className="league-title">
-                          <strong>{competition.name}</strong>
-                          <small>
-                            {rows.length} match{rows.length > 1 ? 's' : ''}
-                          </small>
-                        </span>
-                        <span className="league-timing">
-                          {live.length ? (
-                            <LiveBadge />
-                          ) : upcoming ? (
-                            <span
-                              className={clsx(
-                                'match-countdown',
-                                Date.parse(upcoming.startsAt) - now < 3600000 && 'is-soon',
-                              )}
-                            >
-                              {countdown(upcoming.startsAt, now)}
-                            </span>
-                          ) : (
-                            <span className="match-finished">
-                              {rows.every((m) => m.status === 'finished')
-                                ? 'Terminés'
-                                : 'Programme modifié'}
-                            </span>
-                          )}
-                        </span>
-                        <ChevronDown size={18} className="accordion-chevron" />
-                      </Accordion.Trigger>
-                    </Accordion.Header>
-                    <Accordion.Content className="league-content">
-                      <div className="league-matches">
-                        {rows.map((match) => {
-                          const home = catalog.teams.find((t) => t.id === match.homeId)!;
-                          const away = catalog.teams.find((t) => t.id === match.awayId)!;
-                          const hasMapScore =
-                            Boolean(match.seriesScore) || match.maps.some((map) => map.winnerId);
-                          const winnerId = matchWinnerId(match);
-                          const homeIsWinner = winnerId === home.id;
-                          const awayIsWinner = winnerId === away.id;
-                          return (
-                            <button
-                              key={match.id}
-                              type="button"
-                              className="fixture-row"
-                              onClick={() => {
-                                setSelected(match);
-                                setDetailOpen(true);
-                              }}
-                              aria-label={`${home.name} contre ${away.name}, ${match.status === 'live' ? 'en direct' : time(match.startsAt)}, voir le match`}
-                            >
-                              <span className="fixture-time">
-                                <time dateTime={match.startsAt}>{time(match.startsAt)}</time>
-                                <small>{match.format ?? 'Format inconnu'}</small>
-                              </span>
-                              <span
-                                className={clsx(
-                                  'fixture-team home',
-                                  homeIsWinner && 'is-winner',
-                                  winnerId && !homeIsWinner && 'is-loser',
-                                )}
-                              >
-                                <span className="fixture-team-copy">
-                                  <span>{home.name}</span>
-                                  {winnerId && (
-                                    <small>{homeIsWinner ? 'Gagnant' : 'Perdant'}</small>
-                                  )}
-                                </span>
-                                <Logo src={home.image} name={home.name} code={home.code} />
-                              </span>
-                              <span className="fixture-score">
-                                {match.status === 'scheduled' ? (
-                                  <span className="fixture-vs">vs</span>
-                                ) : hasMapScore ? (
-                                  <>
-                                    {seriesScore(match, home.id)}
-                                    <span>:</span>
-                                    {seriesScore(match, away.id)}
-                                  </>
-                                ) : match.currentScore ? (
-                                  <>
-                                    {match.currentScore.home}
-                                    <span>:</span>
-                                    {match.currentScore.away}
-                                  </>
-                                ) : (
-                                  <span>—</span>
-                                )}
-                              </span>
-                              <span
-                                className={clsx(
-                                  'fixture-team away',
-                                  awayIsWinner && 'is-winner',
-                                  winnerId && !awayIsWinner && 'is-loser',
-                                )}
-                              >
-                                <Logo src={away.image} name={away.name} code={away.code} />
-                                <span className="fixture-team-copy">
-                                  <span>{away.name}</span>
-                                  {winnerId && (
-                                    <small>{awayIsWinner ? 'Gagnant' : 'Perdant'}</small>
-                                  )}
-                                </span>
-                              </span>
-                              <span className="fixture-status">
-                                {match.status === 'live' ? (
-                                  <LiveBadge />
-                                ) : match.status === 'finished' ? (
-                                  <span>Terminé</span>
-                                ) : match.status === 'cancelled' || match.status === 'postponed' ? (
-                                  <span>
-                                    {match.status === 'cancelled'
-                                      ? 'Annulé'
-                                      : 'Reporté / interrompu'}
-                                  </span>
-                                ) : (
-                                  <span>{countdown(match.startsAt, now)}</span>
-                                )}
-                              </span>
-                              <ArrowUpRight size={17} className="fixture-arrow" />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </Accordion.Content>
-                  </Accordion.Item>
-                );
-              })}
-            </Accordion.Root>
-          )}
-        </ContentTransition>
+                      ))}
+                    </div>
+                  </Accordion.Content>
+                </Accordion.Item>
+              );
+            })}
+          </Accordion.Root>
+        )}
       </div>
       {selected && (
         <MatchDetail
           match={items.find((m) => m.id === selected.id) ?? selected}
           catalog={catalog}
+          now={now}
           open={detailOpen}
+          refreshError={refreshError}
           onClose={() => setDetailOpen(false)}
         />
       )}
     </div>
+  );
+}
+
+function Fixture({
+  match,
+  catalog,
+  now,
+  separator,
+  onSelect,
+}: {
+  match: EsportMatch;
+  catalog: Catalog;
+  now: number;
+  separator: boolean;
+  onSelect: () => void;
+}) {
+  const home = catalog.teams.find((t) => t.id === match.homeId)!;
+  const away = catalog.teams.find((t) => t.id === match.awayId)!;
+  const winnerId = matchWinnerId(match);
+  const hasScore =
+    Boolean(match.seriesScore || match.currentScore) || match.maps.some((m) => m.winnerId);
+  const liveMap = match.maps.find((m) => m.status === 'live');
+  const score =
+    match.status === 'scheduled'
+      ? 'vs'
+      : hasScore
+        ? `${seriesScore(match, home.id)} : ${seriesScore(match, away.id)}`
+        : '—';
+  return (
+    <button
+      type="button"
+      className={clsx(
+        'fixture-row',
+        separator && 'fixture-section-start',
+        match.status === 'live' && 'fixture-live',
+      )}
+      onClick={onSelect}
+      aria-label={`${home.name} contre ${away.name}, ${match.status === 'live' ? 'en direct' : time(match.startsAt)}, ${score}${winnerId ? `, victoire ${winnerId === home.id ? home.name : away.name}` : ''}, voir le match`}
+    >
+      <span className="fixture-time">
+        <time dateTime={match.startsAt}>
+          <UpdatedValue value={time(match.startsAt)} />
+        </time>
+        <small>
+          <UpdatedValue value={match.format ?? 'Format inconnu'} />
+        </small>
+      </span>
+      <span className={clsx('fixture-team home', winnerId === home.id && 'is-winner')}>
+        <span className="fixture-team-copy">
+          <UpdatedValue value={home.name} />
+        </span>
+        <FixtureTeamMark team={home} winnerId={winnerId} />
+      </span>
+      <span className={clsx('fixture-score', match.status === 'scheduled' && 'fixture-vs')}>
+        <MatchScore match={match} fallback={match.status === 'scheduled' ? 'vs' : '—'} />
+      </span>
+      <span className={clsx('fixture-team away', winnerId === away.id && 'is-winner')}>
+        <FixtureTeamMark team={away} winnerId={winnerId} />
+        <span className="fixture-team-copy">
+          <UpdatedValue value={away.name} />
+        </span>
+      </span>
+      <span className="fixture-status">
+        <UpdatedValue value={`${match.status}:${liveMap?.number ?? ''}`}>
+          {match.status === 'live' ? (
+            <>
+              <LiveBadge />
+              {liveMap && <span>Carte {liveMap.number}</span>}
+            </>
+          ) : match.status === 'finished' ? (
+            <span>Terminé</span>
+          ) : match.status === 'cancelled' ? (
+            <span>Annulé</span>
+          ) : match.status === 'postponed' ? (
+            <span>Reporté / interrompu</span>
+          ) : (
+            <span>{countdown(match.startsAt, now)}</span>
+          )}
+        </UpdatedValue>
+      </span>
+      <ChevronRight size={17} className="fixture-arrow" aria-hidden="true" />
+    </button>
+  );
+}
+
+function FixtureTeamMark({
+  team,
+  winnerId,
+}: {
+  team: Catalog['teams'][number];
+  winnerId: string | null;
+}) {
+  const won = winnerId === team.id;
+  return (
+    <span className="fixture-team-mark">
+      <Logo src={team.image} name={team.name} />
+      {winnerId && (
+        <span
+          className={clsx('fixture-outcome', won && 'is-winner')}
+          role="img"
+          aria-label={won ? 'Victoire' : 'Défaite'}
+          title={won ? 'Victoire' : 'Défaite'}
+        >
+          <UpdatedValue value={won ? 'win' : 'loss'}>
+            {won ? <Check size={10} strokeWidth={2.5} /> : <Minus size={10} />}
+          </UpdatedValue>
+        </span>
+      )}
+    </span>
   );
 }

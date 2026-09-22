@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Popover, Tabs } from 'radix-ui';
+import { useId, useState } from 'react';
+import { motion } from 'motion/react';
+import { Tabs, Tooltip } from 'radix-ui';
 import {
   Bug,
   Check,
@@ -14,11 +15,16 @@ import {
 } from 'lucide-react';
 import type { Catalog } from '@/domain/schemas';
 import type { EsportMatch, MapSide, MatchMap } from '@/domain/matches';
-import { matchWinnerId, seriesScore, sideKills, sideGold } from '@/domain/matches';
+import { countdown, matchWinnerId, seriesScore, sideKills, sideGold } from '@/domain/matches';
 import { championAsset, championName } from '@/domain/champions';
-import { dateTime, decimal, time } from '@/lib/format';
+import { dateTime, decimal, scheduledDate } from '@/lib/format';
 import { Modal } from '@/components/ui/modal';
 import { Logo } from '@/components/ui/logo';
+import { SelectionIndicator } from '@/components/ui/selection-indicator';
+import { formatDuration, goldDifference, observationAge } from './presentation';
+import { UpdatedValue } from './updated-value';
+import { ObservationScope } from './observation-scope';
+import { MatchScore } from './match-score';
 
 const roleMeta = {
   TOP: { label: 'Top', icon: '/roles/top.svg' },
@@ -67,40 +73,77 @@ function ObjectiveComparison({
 }) {
   const homeValues = objectiveValues(active.sides.find((side) => side.teamId === home.id));
   const awayValues = objectiveValues(active.sides.find((side) => side.teamId === away.id));
+  const published = objectiveMeta.filter(
+    ({ key }) => homeValues[key] !== '—' || awayValues[key] !== '—',
+  );
+  const missing = objectiveMeta.filter(
+    ({ key }) => homeValues[key] === '—' && awayValues[key] === '—',
+  );
+  const partial = published.some(({ key }) => homeValues[key] === '—' || awayValues[key] === '—');
+  const difference = goldDifference(
+    active.sides.find((s) => s.teamId === home.id),
+    active.sides.find((s) => s.teamId === away.id),
+  );
   return (
-    <table className="map-comparison" aria-label={`Statistiques de la carte ${active.number}`}>
-      <thead>
-        <tr>
-          <th scope="col" aria-label={home.name}>
-            {home.code.trim() || home.name}
-          </th>
-          <td>
-            <span className="map-unavailable-key">— Non publié</span>
-          </td>
-          <th scope="col" aria-label={away.name}>
-            {away.code.trim() || away.name}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {objectiveMeta.map(({ key, label, icon: Icon, className }) => (
-          <tr className={`comparison-row comparison-row--${className}`} key={key}>
-            <td>{homeValues[key]}</td>
-            <th scope="row">
-              <span>
-                <Icon size={14} strokeWidth={1.6} aria-hidden="true" />
-                {label}
-              </span>
+    <div className="map-objectives">
+      {difference !== null && (
+        <p className="gold-difference">
+          <Coins size={16} aria-hidden="true" />
+          {difference === 0 ? (
+            'Égalité en or'
+          ) : (
+            <>
+              <strong>
+                <UpdatedValue value={difference > 0 ? home.code : away.code} />
+              </strong>
+              <UpdatedValue value={`+${decimal(Math.abs(difference) / 1000, 1)} k`} /> d’or
+            </>
+          )}
+        </p>
+      )}
+      <table className="map-comparison" aria-label={`Statistiques de la carte ${active.number}`}>
+        <thead>
+          <tr>
+            <th scope="col" aria-label={home.name}>
+              {home.code.trim() || home.name}
             </th>
-            <td>{awayValues[key]}</td>
+            <td>Statistiques</td>
+            <th scope="col" aria-label={away.name}>
+              {away.code.trim() || away.name}
+            </th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {published.map(({ key, label, icon: Icon, className }) => (
+            <tr className={`comparison-row comparison-row--${className}`} key={key}>
+              <td>
+                <UpdatedValue value={homeValues[key]} />
+              </td>
+              <th scope="row">
+                <span>
+                  <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
+                  {label}
+                </span>
+              </th>
+              <td>
+                <UpdatedValue value={awayValues[key]} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {(missing.length > 0 || partial) && (
+        <p className="map-unavailable-key">
+          {missing.length > 0 &&
+            `Non publiés : ${missing.map((item) => item.label.toLocaleLowerCase('fr')).join(', ')}.`}
+          {partial && ' — : donnée non publiée.'}
+        </p>
+      )}
+    </div>
   );
 }
 
-function TeamStats({ side, catalog }: { side: MapSide; catalog: Catalog }) {
+function TeamStats({ side, catalog, role }: { side: MapSide; catalog: Catalog; role: string }) {
   const team = catalog.teams.find((t) => t.id === side.teamId);
   if (!team) return null;
   return (
@@ -124,6 +167,7 @@ function TeamStats({ side, catalog }: { side: MapSide; catalog: Catalog }) {
           <span role="columnheader">Or</span>
         </div>
         {side.players
+          .filter((player) => role === 'all' || player.role === role)
           .toSorted((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role))
           .map((player) => {
             const championLabel =
@@ -140,19 +184,24 @@ function TeamStats({ side, catalog }: { side: MapSide; catalog: Catalog }) {
                   >
                     <img src={roleMeta[player.role].icon} alt="" width="20" height="20" />
                   </span>
-                  <Logo
-                    src={championAsset(player.champion, player.championImage)}
-                    name={championLabel}
-                    code={player.champion?.slice(0, 2) ?? '—'}
-                    className="champion-portrait"
-                  />
+                  <UpdatedValue value={player.champion ?? player.championImage}>
+                    <Logo
+                      src={championAsset(player.champion, player.championImage)}
+                      name={championLabel}
+                      code={player.champion?.slice(0, 2) ?? '—'}
+                      className="champion-portrait"
+                    />
+                  </UpdatedValue>
                   <div>
-                    <strong>{player.name}</strong>
+                    <strong>
+                      <UpdatedValue value={player.name} />
+                    </strong>
                     <span className="roster-player-meta">
-                      <span>{championLabel}</span>
-                      {player.level != null && (
-                        <span className="roster-level">niv. {player.level}</span>
-                      )}
+                      <span className="roster-role-label">{roleMeta[player.role].label}</span>
+                      <UpdatedValue value={championLabel} />
+                      <UpdatedValue className="roster-level" value={player.level}>
+                        {player.level != null ? `niv. ${player.level}` : ''}
+                      </UpdatedValue>
                     </span>
                   </div>
                 </div>
@@ -160,30 +209,93 @@ function TeamStats({ side, catalog }: { side: MapSide; catalog: Catalog }) {
                   <span className="mobile-stat-label" aria-hidden="true">
                     K/D/A
                   </span>
-                  {player.kills} / {player.deaths} / {player.assists}
+                  <span>
+                    <UpdatedValue value={player.kills} /> / <UpdatedValue value={player.deaths} /> /{' '}
+                    <UpdatedValue value={player.assists} />
+                  </span>
                 </span>
                 <span role="cell">
                   <span className="mobile-stat-label" aria-hidden="true">
                     CS
                   </span>
-                  {player.cs}
+                  <UpdatedValue value={player.cs} />
                 </span>
                 <span role="cell">
                   <span className="mobile-stat-label" aria-hidden="true">
                     Or
                   </span>
-                  {player.gold == null ? '—' : `${decimal(player.gold / 1000, 1)} k`}
+                  <UpdatedValue
+                    value={player.gold == null ? '—' : `${decimal(player.gold / 1000, 1)} k`}
+                  />
                 </span>
               </div>
             );
           })}
-        {!side.players.length && (
+        {!side.players.some((player) => role === 'all' || player.role === role) && (
           <div className="match-pending roster-empty">
-            Statistiques joueurs non publiées par la source pour ce relevé.
+            Joueur ou statistiques non publiés pour ce relevé.
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+function TeamEmblem({ team, winner }: { team: Catalog['teams'][number]; winner: boolean }) {
+  return (
+    <span className="team-emblem">
+      <Logo src={team.image} name={team.name} />
+      {winner && (
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <span
+              className="team-victory-mark"
+              role="img"
+              tabIndex={0}
+              aria-label={`Victoire de ${team.name}`}
+            >
+              <Check size={10} strokeWidth={2.5} aria-hidden="true" />
+            </span>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              className="match-tooltip"
+              side="top"
+              sideOffset={8}
+              collisionPadding={16}
+            >
+              Victoire de {team.name}
+              <Tooltip.Arrow className="match-tooltip-arrow" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      )}
+    </span>
+  );
+}
+
+function SideRail({ side, team }: { side: 'blue' | 'red' | null | undefined; team: string }) {
+  const label = side ? `Côté ${side === 'blue' ? 'bleu' : 'rouge'}` : 'Camp non renseigné';
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <span
+          className="map-side-rail"
+          data-side={side ?? 'unknown'}
+          role="img"
+          tabIndex={0}
+          aria-label={`${team} · ${label}`}
+        >
+          <span className="map-side-rail-line" aria-hidden="true" />
+        </span>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content className="match-tooltip" side="top" sideOffset={8} collisionPadding={16}>
+          {label}
+          <Tooltip.Arrow className="match-tooltip-arrow" />
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
   );
 }
 
@@ -200,60 +312,46 @@ function MapTeamSummary({
   const bans = active.bans.filter((ban) => ban.teamId === team.id);
   return (
     <section className={`map-team-summary map-team-summary--${position}`} aria-label={team.name}>
+      <SideRail side={side?.side} team={team.name} />
       <div className="map-team-identity">
-        <Logo src={team.image} name={team.name} />
-        <div>
-          <h4>{team.name}</h4>
-          <span className="map-team-meta">
-            {active.winnerId === team.id && (
-              <span className="map-winner">
-                <Trophy size={12} aria-hidden="true" />
-                Victoire
-              </span>
-            )}
-            {side?.side && (
-              <span className={`map-camp map-camp--${side.side}`}>
-                Côté {side.side === 'blue' ? 'bleu' : 'rouge'}
-              </span>
-            )}
-          </span>
-        </div>
+        <TeamEmblem team={team} winner={active.winnerId === team.id} />
+        <h4>{team.name}</h4>
       </div>
       {bans.length ? (
         <ul className="ban-portraits" aria-label={`Champions bannis par ${team.name}`}>
           {bans.map((ban, index) => {
             const label = championName(ban.champion) ?? 'Champion non identifié';
             return (
-              <li key={`${ban.champion}-${index}`}>
-                <Popover.Root>
-                  <Popover.Trigger asChild>
-                    <button
-                      type="button"
-                      className="ban-portrait-button"
+              <li key={index}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <span
+                      tabIndex={0}
+                      role="img"
+                      className="ban-portrait-target"
                       aria-label={`${label}, banni par ${team.name}`}
-                      title={`${label} · Banni par ${team.name}`}
                     >
-                      <Logo
-                        src={championAsset(ban.champion, ban.championImage)}
-                        name={label}
-                        className="ban-portrait"
-                      />
-                    </button>
-                  </Popover.Trigger>
-                  <Popover.Portal>
-                    <Popover.Content
-                      className="ban-popover"
+                      <UpdatedValue value={ban.champion ?? ban.championImage}>
+                        <Logo
+                          src={championAsset(ban.champion, ban.championImage)}
+                          name={label}
+                          className="ban-portrait"
+                        />
+                      </UpdatedValue>
+                    </span>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="match-tooltip"
                       side="top"
                       sideOffset={8}
                       collisionPadding={16}
-                      aria-label="Champion banni"
                     >
-                      <strong>{label}</strong>
-                      <span>Banni par {team.name}</span>
-                      <Popover.Arrow className="ban-popover-arrow" />
-                    </Popover.Content>
-                  </Popover.Portal>
-                </Popover.Root>
+                      {label}
+                      <Tooltip.Arrow className="match-tooltip-arrow" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
               </li>
             );
           })}
@@ -270,178 +368,285 @@ export function MatchDetail({
   catalog,
   open,
   onClose,
+  now,
+  refreshError,
 }: {
   match: EsportMatch;
   catalog: Catalog;
   open: boolean;
   onClose: () => void;
+  now: number;
+  refreshError?: string | null;
 }) {
+  const home = catalog.teams.find((t) => t.id === match.homeId)!;
+  const away = catalog.teams.find((t) => t.id === match.awayId)!;
   return (
     <Modal
       open={open}
       onOpenChange={(value) => {
         if (!value) onClose();
       }}
-      title="Centre du match"
+      title={
+        <>
+          <UpdatedValue value={home.code || home.name} />{' '}
+          <MatchScore match={match} fallback="contre" />{' '}
+          <UpdatedValue value={away.code || away.name} />
+        </>
+      }
       description={`${catalog.leagues.find((l) => l.id === match.leagueId)?.name} · ${dateTime(match.startsAt)} · Heure de Paris`}
       className="match-dialog"
     >
-      <MatchContent key={match.id} match={match} catalog={catalog} />
+      {refreshError && (
+        <p className="match-refresh-notice" role="status">
+          {refreshError}
+        </p>
+      )}
+      <Tooltip.Provider delayDuration={160} skipDelayDuration={100}>
+        <MatchContent key={match.id} match={match} catalog={catalog} now={now} />
+      </Tooltip.Provider>
     </Modal>
   );
 }
-function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog }) {
+function MatchContent({
+  match,
+  catalog,
+  now,
+}: {
+  match: EsportMatch;
+  catalog: Catalog;
+  now: number;
+}) {
+  const mapSelectionId = useId();
+  const roleSelectionId = useId();
+  const mapHeadingId = useId();
   const initial =
     match.maps.find((m) => m.status === 'live') ?? match.maps.find((m) => m.status === 'finished');
-  const [choice, setChoice] = useState('');
+  const [choice, setChoice] = useState(() => (initial ? String(initial.number) : ''));
+  const [role, setRole] = useState('all');
   const active =
     match.maps.find(
       (m) => String(m.number) === choice && ['live', 'finished'].includes(m.status),
     ) ?? initial;
+  // Pin the first published card even if this dialog opened before any card
+  // existed. Finishing it or publishing the next card must not move the reader.
+  if (active && choice !== String(active.number)) setChoice(String(active.number));
   const home = catalog.teams.find((t) => t.id === match.homeId)!;
   const away = catalog.teams.find((t) => t.id === match.awayId)!;
   const winnerId = matchWinnerId(match);
   const hasSeriesScore = Boolean(match.seriesScore) || match.maps.some((map) => map.winnerId);
-  const hasCurrentScore = Boolean(match.currentScore);
+  const mapNumbers = match.format
+    ? Array.from({ length: Number(match.format.slice(2)) }, (_, i) => i + 1)
+    : match.maps.map((map) => map.number).sort((a, b) => a - b);
+  const showMapTabs = mapNumbers.length > 1;
   return (
-    <div className="match-detail-scroll">
+    <motion.div className="match-detail-scroll" layoutScroll>
       <div className="match-scoreboard">
         <div
           className={`scoreboard-team ${winnerId === home.id ? 'is-winner' : winnerId ? 'is-loser' : ''}`}
         >
-          <Logo src={home.image} name={home.name} code={home.code} />
-          <strong>{home.name}</strong>
-          {winnerId && (
-            <span className="scoreboard-outcome">
-              {winnerId === home.id && <Check size={12} aria-hidden="true" />}
-              {winnerId === home.id ? 'Gagnant' : 'Perdant'}
-            </span>
-          )}
+          <TeamEmblem team={home} winner={winnerId === home.id} />
+          <strong>
+            <UpdatedValue value={home.name} />
+          </strong>
         </div>
         <div className="series-summary">
-          <span className="series-format">{match.format ?? 'Format inconnu'}</span>
+          <span className="series-format">
+            <UpdatedValue value={match.format ?? 'Format inconnu'} />
+          </span>
           <strong>
-            {match.status === 'scheduled'
-              ? 'vs'
-              : hasSeriesScore
-                ? `${seriesScore(match, home.id)} : ${seriesScore(match, away.id)}`
-                : hasCurrentScore
-                  ? `${match.currentScore?.home ?? 0} : ${match.currentScore?.away ?? 0}`
-                  : '—'}
+            <MatchScore match={match} fallback={match.status === 'scheduled' ? 'vs' : '—'} />
           </strong>
-          {match.status === 'live' ? (
-            <span className="live-badge">
-              <span aria-hidden="true" />
-              En direct
-            </span>
-          ) : (
-            <span>
-              {match.status === 'finished'
-                ? 'Terminé'
-                : match.status === 'cancelled'
-                  ? 'Annulé'
-                  : match.status === 'postponed'
-                    ? 'Reporté / interrompu'
-                    : match.currentScore && !hasSeriesScore
-                      ? 'Score courant'
-                      : 'À venir'}
-            </span>
-          )}
+          <UpdatedValue value={match.status}>
+            {match.status === 'live' ? (
+              <span className="live-badge">
+                <span aria-hidden="true" />
+                En direct
+              </span>
+            ) : (
+              <span>
+                {match.status === 'finished'
+                  ? 'Terminé'
+                  : match.status === 'cancelled'
+                    ? 'Annulé'
+                    : match.status === 'postponed'
+                      ? 'Reporté / interrompu'
+                      : match.currentScore && !hasSeriesScore
+                        ? 'Score courant'
+                        : countdown(match.startsAt, now)}
+              </span>
+            )}
+          </UpdatedValue>
         </div>
         <div
           className={`scoreboard-team ${winnerId === away.id ? 'is-winner' : winnerId ? 'is-loser' : ''}`}
         >
-          <Logo src={away.image} name={away.name} code={away.code} />
-          <strong>{away.name}</strong>
-          {winnerId && (
-            <span className="scoreboard-outcome">
-              {winnerId === away.id && <Check size={12} aria-hidden="true" />}
-              {winnerId === away.id ? 'Gagnant' : 'Perdant'}
-            </span>
-          )}
+          <TeamEmblem team={away} winner={winnerId === away.id} />
+          <strong>
+            <UpdatedValue value={away.name} />
+          </strong>
         </div>
       </div>
       <div className="match-information">
-        <span>{match.stage ?? 'Phase non renseignée'}</span>
-        {match.patch && <span>Patch {match.patch}</span>}
-        <span>Relevé à {time(active?.updatedAt ?? match.updatedAt)}</span>
+        <UpdatedValue value={match.stage}>{match.stage ?? ''}</UpdatedValue>
+        <UpdatedValue value={match.patch}>{match.patch ? `Patch ${match.patch}` : ''}</UpdatedValue>
+        {!active && (
+          <time
+            dateTime={match.updatedAt}
+            title={`${scheduledDate(match.updatedAt)} · Heure de Paris`}
+          >
+            Rencontre relevée {observationAge(match.updatedAt, now)}
+          </time>
+        )}
       </div>
       <Tabs.Root value={active ? String(active.number) : ''} onValueChange={setChoice}>
-        <Tabs.List className="map-tabs" aria-label="Cartes du match">
-          {(match.format
-            ? Array.from({ length: Number(match.format.slice(2)) }, (_, i) => i + 1)
-            : match.maps.map((map) => map.number).sort((a, b) => a - b)
-          ).map((number) => {
-            const i = number - 1;
-            const map = match.maps.find((m) => m.number === number);
-            const started = map?.status === 'live' || map?.status === 'finished';
-            return (
-              <Tabs.Trigger key={i} value={String(i + 1)} disabled={!started}>
-                <strong>Carte {i + 1}</strong>
-                <span>
-                  {map?.status === 'live'
-                    ? 'En direct'
-                    : map?.status === 'finished'
-                      ? 'Terminée'
-                      : map?.status === 'skipped' ||
-                          (match.status === 'finished' &&
-                            i + 1 > seriesScore(match, home.id) + seriesScore(match, away.id))
-                        ? 'Non jouée'
-                        : match.status === 'finished'
-                          ? 'Non publiée'
-                          : 'À venir'}
-                </span>
-              </Tabs.Trigger>
-            );
-          })}
-        </Tabs.List>
+        {showMapTabs && (
+          <Tabs.List className="map-tabs" aria-label="Cartes du match">
+            {mapNumbers.map((number) => {
+              const i = number - 1;
+              const map = match.maps.find((m) => m.number === number);
+              const started = map?.status === 'live' || map?.status === 'finished';
+              return (
+                <Tabs.Trigger
+                  key={i}
+                  value={String(i + 1)}
+                  disabled={!started}
+                  data-live={map?.status === 'live' || undefined}
+                  title={
+                    map?.winnerId
+                      ? `Victoire ${catalog.teams.find((t) => t.id === map.winnerId)?.name ?? ''}`
+                      : undefined
+                  }
+                >
+                  {active?.number === number && <SelectionIndicator id={mapSelectionId} />}
+                  <strong>Carte {i + 1}</strong>
+                  <UpdatedValue
+                    value={`${map?.status}:${map?.winnerId}:${map?.status === 'finished' ? map.durationSeconds : ''}`}
+                  >
+                    {map?.status === 'live'
+                      ? 'En direct'
+                      : map?.status === 'finished'
+                        ? `${catalog.teams.find((t) => t.id === map.winnerId)?.code || 'Terminée'}${formatDuration(map.durationSeconds) ? ` · ${formatDuration(map.durationSeconds)}` : ''}`
+                        : map?.status === 'skipped' ||
+                            (match.status === 'finished' &&
+                              i + 1 > seriesScore(match, home.id) + seriesScore(match, away.id))
+                          ? 'Non jouée'
+                          : match.status === 'finished'
+                            ? 'Non publiée'
+                            : 'À venir'}
+                  </UpdatedValue>
+                </Tabs.Trigger>
+              );
+            })}
+          </Tabs.List>
+        )}
         {active ? (
-          <Tabs.Content key={active.number} value={String(active.number)} className="map-content">
-            <div className="map-caption">
-              <h3>Carte {active.number}</h3>
-              <span>
-                <Clock3 size={14} />
-                {active.durationSeconds == null
-                  ? 'Durée indisponible'
-                  : `${Math.floor(active.durationSeconds / 60)}:${String(active.durationSeconds % 60).padStart(2, '0')} · ${
-                      active.status === 'live' ? 'Temps au dernier relevé' : 'Durée finale'
-                    }`}
-              </span>
-            </div>
-            <div className="map-team-summaries">
-              <MapTeamSummary active={active} team={home} position="home" />
-              <MapTeamSummary active={active} team={away} position="away" />
-            </div>
-            {active.sides.length ? (
-              <>
-                <ObjectiveComparison active={active} home={home} away={away} />
-                <div className="map-rosters-heading">
-                  <h3>Joueurs</h3>
-                  <span>Composition &amp; statistiques</span>
-                </div>
-                <div className="map-teams">
-                  {[home, away]
-                    .map((team) => active.sides.find((side) => side.teamId === team.id))
-                    .filter((side): side is MapSide => Boolean(side))
-                    .map((side) => (
-                      <TeamStats
-                        key={`${active.number}-${side.teamId}`}
-                        side={side}
-                        catalog={catalog}
-                      />
-                    ))}
-                </div>
-              </>
-            ) : (
-              <div className="match-pending">
-                <Clock3 size={25} />
-                <h3>Statistiques de carte indisponibles</h3>
-                <p>
-                  Le score courant est conservé, mais LoLTV n’a pas encore publié les joueurs, bans
-                  ou objectifs de cette carte.
-                </p>
+          <Tabs.Content
+            value={String(active.number)}
+            forceMount
+            className="map-content"
+            role={showMapTabs ? 'tabpanel' : 'region'}
+            aria-labelledby={mapHeadingId}
+          >
+            <ObservationScope value={active.number}>
+              <div className="map-caption">
+                <h3 id={mapHeadingId} className={showMapTabs ? undefined : 'sr-only'}>
+                  {showMapTabs ? `Carte ${active.number}` : 'Détail de la carte'}
+                </h3>
+                <span className="map-duration">
+                  <Clock3 size={14} />
+                  <UpdatedValue
+                    value={formatDuration(active.durationSeconds) ?? 'Durée indisponible'}
+                  />
+                  {active.durationSeconds != null && (
+                    <UpdatedValue value={active.status}>
+                      · {active.status === 'live' ? 'Temps au dernier relevé' : 'Durée finale'}
+                    </UpdatedValue>
+                  )}
+                </span>
+                <span className="map-freshness">
+                  {active.updatedAt ? (
+                    <time
+                      dateTime={active.updatedAt}
+                      title={`${scheduledDate(active.updatedAt)} · Heure de Paris`}
+                    >
+                      Carte relevée {observationAge(active.updatedAt, now)}
+                    </time>
+                  ) : (
+                    'Heure du relevé de carte non publiée'
+                  )}
+                </span>
               </div>
-            )}
+              <div className="map-team-summaries">
+                <MapTeamSummary active={active} team={home} position="home" />
+                <MapTeamSummary active={active} team={away} position="away" />
+              </div>
+              {active.sides.length ? (
+                <>
+                  <ObjectiveComparison active={active} home={home} away={away} />
+                  <div className="map-rosters-heading">
+                    <h3>Joueurs</h3>
+                    <div
+                      className="roster-role-filters"
+                      role="group"
+                      aria-label="Comparer les joueurs par poste"
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={role === 'all'}
+                        aria-label="Tous les postes"
+                        onClick={() => setRole('all')}
+                      >
+                        {role === 'all' && <SelectionIndicator id={roleSelectionId} />}
+                        Tous
+                      </button>
+                      {Object.entries(roleMeta).map(([key, meta]) => (
+                        <Tooltip.Root key={key}>
+                          <Tooltip.Trigger asChild>
+                            <button
+                              type="button"
+                              aria-pressed={role === key}
+                              aria-label={meta.label}
+                              onClick={() => setRole(key)}
+                            >
+                              {role === key && <SelectionIndicator id={roleSelectionId} />}
+                              <img src={meta.icon} alt="" width="22" height="22" />
+                            </button>
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content
+                              className="match-tooltip"
+                              side="top"
+                              sideOffset={8}
+                              collisionPadding={16}
+                            >
+                              {meta.label}
+                              <Tooltip.Arrow className="match-tooltip-arrow" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="map-teams">
+                    {[home, away]
+                      .map((team) => active.sides.find((side) => side.teamId === team.id))
+                      .filter((side): side is MapSide => Boolean(side))
+                      .map((side) => (
+                        <TeamStats key={side.teamId} side={side} catalog={catalog} role={role} />
+                      ))}
+                  </div>
+                </>
+              ) : (
+                <div className="match-pending">
+                  <Clock3 size={25} />
+                  <h3>Statistiques de carte indisponibles</h3>
+                  <p>
+                    Les statistiques apparaîtront si elles sont publiées. Le dernier score
+                    disponible reste affiché.
+                  </p>
+                </div>
+              )}
+            </ObservationScope>
           </Tabs.Content>
         ) : (
           <div className="match-pending">
@@ -459,16 +664,16 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
             </h3>
             <p>
               {match.status === 'live'
-                ? 'Le dernier score est affiché dès qu’il est rendu par LoLTV. Les compositions, bans et statistiques restent vides tant que la source ne les publie pas.'
+                ? 'Le dernier score disponible est affiché. Les détails apparaîtront si la source les publie.'
                 : match.status === 'finished'
                   ? 'Les détails des cartes ne sont pas encore disponibles pour cette rencontre.'
                   : match.status === 'cancelled' || match.status === 'postponed'
                     ? 'Le statut sera actualisé dès que la source publiera une nouvelle information.'
-                    : 'Compositions, choix des côtés et statistiques apparaîtront dès le premier relevé de la partie.'}
+                    : 'Compositions, côtés et statistiques apparaîtront pendant la rencontre, selon leur disponibilité.'}
             </p>
           </div>
         )}
       </Tabs.Root>
-    </div>
+    </motion.div>
   );
 }

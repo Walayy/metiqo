@@ -28,8 +28,20 @@ def merge_completed_map(
         )
     ):
         return result
+    current_sides = current.get("sides")
     if result.get("durationSeconds") is None:
         result["durationSeconds"] = previous.get("durationSeconds")
+        result["durationSource"] = previous.get("durationSource")
+    elif (
+        previous.get("durationSource") == "loltv-event-clock"
+        and current.get("durationSource") != "loltv-event-clock"
+        and isinstance(current_sides, list)
+        and all(isinstance(side, dict) and not side.get("players") for side in current_sides)
+    ):
+        # The incomplete LoLTV HTML duration can include pauses. Its metadata
+        # refresh must not overwrite the actual game clock from a settled feed.
+        result["durationSeconds"] = previous.get("durationSeconds")
+        result["durationSource"] = previous.get("durationSource")
     current_bans, old_bans = unique_bans(current.get("bans")), unique_bans(previous.get("bans"))
     if all(any(_same_ban(current, old) for old in old_bans) for current in current_bans):
         # Keep an older complete draft, but never replace a newly identified

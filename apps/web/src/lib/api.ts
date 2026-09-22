@@ -6,6 +6,7 @@ import { transportReady } from './transport';
 import { fetchResponse, readResponse } from './http';
 import { matchesSchema } from '@/domain/matches';
 import { performanceSchema } from '@/features/performance/simulation';
+import { matchesPollInterval } from '@/features/matches/polling';
 
 async function get<T>(path: string, schema: z.ZodType<T>, signal: AbortSignal): Promise<T> {
   await transportReady;
@@ -25,12 +26,13 @@ export const matchesQuery = queryOptions({
   queryKey: ['matches'],
   queryFn: ({ signal }) => get('/matches', matchesSchema, signal),
   staleTime: 15_000,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
   refetchInterval: (query) =>
-    query.state.error
-      ? false
-      : query.state.data?.items.some((match) => match.status === 'live')
-        ? 15_000
-        : 30_000,
+    matchesPollInterval(
+      Boolean(query.state.data?.items.some((match) => match.status === 'live')),
+      query.state.error,
+    ),
 });
 export const performanceQuery = queryOptions({
   queryKey: ['performance'],

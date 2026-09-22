@@ -1,0 +1,189 @@
+{
+  "browserCaptures": 33,
+  "eventsListed": 17,
+  "detailsCaptured": 7,
+  "selectedMarketSnapshots": 17,
+  "uniqueOutcomeRows": 204,
+  "pricedOutcomeRows": 174,
+  "disabledOutcomeRows": 30,
+  "marketFamilies": [
+    "Gagne au moins un map",
+    "Handicap de la carte",
+    "Map N Durée de",
+    "Map N Gagnant - Two options",
+    "Map N Nombre total de tués",
+    "Map N Premier Baron",
+    "Map N Premier inhibiteur",
+    "Map N Premier sang",
+    "Map N Premier à atteindre morts",
+    "Map N Quadruple meurtre",
+    "Map N Quintuple meurtre",
+    "Map N Victoires paires/impaires",
+    "Map N º meurtre",
+    "Nombre de maps",
+    "Résultat final",
+    "Vainqueur du match - Two options"
+  ],
+  "events": [
+    {
+      "id": "845075",
+      "title": "Pyramid IV Esports - LODIS",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/845075-pyramid-iv-esports-lodis",
+      "listingText": null,
+      "detailCaptured": true,
+      "captures": [
+        "018-pyramid-live-all-scores",
+        "019-pyramid-live-map2",
+        "020-pyramid-live-map3"
+      ]
+    },
+    {
+      "id": "845065",
+      "title": "CFO Academy - KT Rolster Challengers",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845065-cfo-academy-kt-rolster-challengers",
+      "listingText": null,
+      "detailCaptured": true,
+      "captures": [
+        "021-cfo-kt-principal"
+      ]
+    },
+    {
+      "id": "845066",
+      "title": "Fuego - T1 Esports Academy",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845066-fuego-t1-esports-academy",
+      "listingText": null,
+      "detailCaptured": true,
+      "captures": [
+        "022-fuego-t1-principal-repeat"
+      ]
+    },
+    {
+      "id": "845067",
+      "title": "Movistar KOI Academy - CFO Academy",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845067-movistar-koi-academy-cfo-academy",
+      "listingText": null,
+      "detailCaptured": true,
+      "captures": [
+        "023-koi-cfo-principal-repeat"
+      ]
+    },
+    {
+      "id": "845068",
+      "title": "Fuego - DN SOOPers Challengers",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/845068-fuego-dn-soopers-challengers",
+      "listingText": null,
+      "detailCaptured": true,
+      "captures": [
+        "024-fuego-dn-principal-repeat"
+      ]
+    },
+    {
+      "id": "844333",
+      "title": "Pobelter - chenchen53",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/844333-pobelter-chenchen53",
+      "listingText": null,
+      "detailCaptured": true,
+      "captures": [
+        "025-pobelter-chenchen-map-1",
+        "025-pobelter-chenchen-map-2",
+        "025-pobelter-chenchen-map-3",
+        "026-pobelter-score-expanded"
+      ]
+    },
+    {
+      "id": "843526",
+      "title": "quante - humzh",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/843526-quante-humzh",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "843527",
+      "title": "Geranimo - TFBlade",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/843527-geranimo-tfblade",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "843528",
+      "title": "JbearLOL - Lourlo",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/843528-jbearlol-lourlo",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "845833",
+      "title": "FlyQuest - Shopify Rebellion",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "listingText": null,
+      "detailCaptured": true,
+      "captures": [
+        "006-flyquest-principal-expanded",
+        "007-flyquest-map1",
+        "008-flyquest-map2",
+        "009-flyquest-map3",
+        "010-flyquest-map4",
+        "011-flyquest-map5"
+      ]
+    },
+    {
+      "id": "845961",
+      "title": "FURIA Esports - RED Canids",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/845961-furia-esports-red-canids",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "836114",
+      "title": "LOUD - LOS",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/836114-loud-los",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "845836",
+      "title": "Cloud9 - Team Liquid",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845836-cloud9-team-liquid",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "842405",
+      "title": "KaBuM! Ilha das Lendas - Golden Lions",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842405-kabum-ilha-das-lendas-golden-lions",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "842149",
+      "title": "Estral Esports - 9z Team",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842149-estral-esports-9z-team",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "842137",
+      "title": "Maryville University - Zeu5 Esports",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842137-maryville-university-zeu5-esports",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    },
+    {
+      "id": "842135",
+      "title": "Cupid Esports - Fuego",
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842135-cupid-esports-fuego",
+      "listingText": null,
+      "detailCaptured": false,
+      "captures": []
+    }
+  ]
+}
