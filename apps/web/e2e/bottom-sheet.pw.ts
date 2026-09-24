@@ -47,13 +47,21 @@ test('mobile dialogs snap, reopen, dismiss, and restore focus', async ({ page })
 test('the email dialog avoids an automatic mobile keyboard and respects reduced motion', async ({
   page,
 }) => {
-  await page.route('**/api/v1/auth/session', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ user: null, expiresAt: null }),
-    }),
-  );
+  // Stub the anonymous session before MSW starts; service workers bypass page.route in CI.
+  await page.addInitScript(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (new URL(url, location.href).pathname === '/api/v1/auth/session')
+        return Promise.resolve(
+          new Response(JSON.stringify({ user: null, expiresAt: null }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        );
+      return originalFetch(input, init);
+    };
+  });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const trigger = page.getByRole('button', { name: 'Se connecter ou s’inscrire' });
