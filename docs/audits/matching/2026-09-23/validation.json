@@ -1,0 +1,45 @@
+{
+  "workers": [
+    {
+      "id": 2,
+      "seenAt": "2026-09-23T18:06:34.959518+00:00",
+      "scripts": [
+        "stake-markets"
+      ]
+    },
+    {
+      "id": 1,
+      "seenAt": "2026-09-23T18:06:47.055799+00:00",
+      "scripts": [
+        "lol-catalog",
+        "oracle-latest",
+        "oracle-full",
+        "loltv-matches"
+      ]
+    }
+  ],
+  "checkedAt": "2026-09-23T18:06:50.474402+00:00",
+  "migration": "0015",
+  "aliasCount": 4,
+  "activeLinks": 12,
+  "resolutions": {
+    "linked": 12,
+    "pending": 8
+  },
+  "lastReconciliation": "2026-09-23T18:06:45.368203+00:00",
+  "legacyLinksArchived": 5,
+  "upcomingLastObservedOffers": {
+    "events": 10,
+    "linked": 7,
+    "quotes": 466
+  },
+  "checks": {
+    "npm run check": "passed",
+    "webTests": 77,
+    "backendUnitTests": 179,
+    "backendPostgresqlTests": 83,
+    "frontendFilesEditedInThisTask": false,
+    "newSourceScrapePerformedForAudit": false
+  },
+  "measuredReconciliationSeconds": 0.119
+}

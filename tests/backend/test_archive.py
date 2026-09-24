@@ -7,6 +7,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from metiquo_core.config import Settings
 from metiquo_worker.archive import (
     SourceFile,
     csv_records,
@@ -16,7 +17,7 @@ from metiquo_worker.archive import (
     validate_archive,
 )
 from metiquo_worker.sources.oracle import parse_inventory, select_files
-from metiquo_worker.sources.stake import StakeSource
+from metiquo_worker.stake_sync import sync_stake
 
 HEADER = ["gameid", "participantid", "teamid", "playerid", "date", "year", "league"]
 
@@ -131,9 +132,9 @@ def test_dynamic_inventory_and_companion_selection():
         parse_inventory(html + html)
 
 
-def test_stake_is_explicitly_unimplemented():
-    with pytest.raises(NotImplementedError):
-        StakeSource().collect()
+def test_stake_requires_an_explicitly_enabled_worker():
+    with pytest.raises(ValueError, match="not enabled"):
+        sync_stake(None, Settings(database_url="postgresql://unused", stake_enabled=False))
 
 
 @pytest.mark.parametrize(

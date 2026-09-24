@@ -1,5 +1,7 @@
 # Collecteurs Metiquo
 
+La collecte Stake pré-match et en direct utilise un worker Chrome local distinct ; ses commandes et ses limites figurent dans le [guide Stake](stake-collector.md).
+
 ## Démarrage et noms des commandes
 
 Depuis la racine du dépôt, avec Docker Desktop démarré :
@@ -63,7 +65,7 @@ Les valeurs source restent en JSONB, sans confusion entre année du fichier, cha
 
 ## LoLTV : J−7/J+7 et directs
 
-`npm run data:loltv:sync` ou `uv run metiquo-worker sync-loltv-matches` exécute un passage. Le cron `loltv-matches` est modifiable dans **Gestion → Scripts & planifications**. La migration `0012` remplace l’ancienne planification, interrompt son ancienne file et conserve les données historiques. Appliquer `alembic upgrade head` avant de démarrer le nouveau worker.
+`npm run data:loltv:sync` ou `uv run metiquo-worker sync-loltv-matches` exécute un passage. Le cron `loltv-matches` est modifiable dans **Gestion → Scripts**. La migration `0012` remplace l’ancienne planification, interrompt son ancienne file et conserve les données historiques. Appliquer `alembic upgrade head` avant de démarrer le nouveau worker.
 
 Les listes HTML découvrent les liens et leur pagination. Les dates de Paris bornent J−7/J+7 ; les places TBD sont conservées dans les preuves, sans créer de fausses équipes. Une file PostgreSQL conserve les pages et fiches dues, leur échéance et les cartes terminées acquises. Le prochain passage reprend cette file ; une limite de temps ou de budget ne supprime pas sa couverture restante. Le calendrier est relu avant de conclure qu’un match programmé a commencé. Le détail HTML est publié avant l’enrichissement. Les flux de cartes utilisent la session anonyme normale du site : action découverte dans les scripts liés et mise en cache tant que le même script reste présent, cookies uniquement en mémoire, une lecture par carte nécessaire, aucune relance automatique du POST après erreur. Chaque carte est publiée immédiatement. Les cinq tags de joueurs doivent tous identifier la même équipe source ; les camps de remplissage HTML ne servent jamais au rapprochement.
 

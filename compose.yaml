@@ -128,6 +128,7 @@ services:
       METIQUO_DATABASE_URL: postgresql+psycopg://metiquo_worker:${METIQUO_WORKER_PASSWORD}@db:5432/metiquo
       METIQUO_ARTIFACT_DIR: /data/artifacts
       METIQUO_ORACLE_ENABLED: ${METIQUO_ORACLE_ENABLED:-true}
+      METIQUO_SETTLEMENTS_ENABLED: 'false'
       METIQUO_ORACLE_DATE_TIMEZONE: ${METIQUO_ORACLE_DATE_TIMEZONE:-}
       METIQUO_CATALOG_ENABLED: ${METIQUO_CATALOG_ENABLED:-true}
       METIQUO_LOLTV_ENABLED: ${METIQUO_LOLTV_ENABLED:-true}
@@ -169,6 +170,35 @@ services:
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     networks: [database, ingestion]
+
+  settlement-worker:
+    image: metiquo-worker:local
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile, target: worker }
+    command: [metiquo-worker, serve, --only, settlements]
+    environment:
+      METIQUO_DATABASE_URL: postgresql+psycopg://metiquo_worker:${METIQUO_WORKER_PASSWORD}@db:5432/metiquo
+      METIQUO_SETTLEMENTS_ENABLED: 'true'
+      METIQUO_WORKER_STATUS_ID: '3'
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          CMD,
+          python,
+          -c,
+          "import os,time; assert time.time()-os.stat('/tmp/metiquo-worker.heartbeat').st_mtime < 3600",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [database]
 
   web:
     build:

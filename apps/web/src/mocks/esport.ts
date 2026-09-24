@@ -106,8 +106,117 @@ const items = opportunities.items
       patch: '16.18',
       stage: 'Saison 2026 · Phase finale',
       maps: maps(item.homeId, item.awayId, item.format, status, index),
+      oddsMarkets: mockOddsMarkets({ ...item, startsAt }, status, index),
     };
   });
+
+function mockOddsMarkets(
+  item: (typeof opportunities.items)[number],
+  status: EsportMatch['status'],
+  index: number,
+): NonNullable<EsportMatch['oddsMarkets']> {
+  // Explicitly fictional presentation fixtures; several matches intentionally have no quote.
+  if (index % 5 === 2 && status !== 'finished') return [];
+  const observedAt = new Date(now).toISOString();
+  const selection = (
+    teamId: string,
+    odds: number | null,
+    probability: number | null,
+    result: 'pending' | 'won' | 'lost' | 'void' = 'pending',
+  ) => ({
+    teamId,
+    odds,
+    suspended: odds === null,
+    observedAt,
+    probability: odds === null ? null : probability,
+    result,
+  });
+  const matchOdds = index === 1 ? 1.95 : (item.history.at(-1)?.odds ?? 1.82);
+  if (status === 'finished') {
+    const before = new Date(Date.parse(item.startsAt) - 30 * 60_000).toISOString();
+    const settled = (teamId: string, odds: number, result: 'won' | 'lost' | 'void') => ({
+      ...selection(teamId, odds, null, result),
+      observedAt: before,
+    });
+    return [
+      {
+        kind: 'match_winner',
+        phase: 'prematch',
+        historical: true,
+        mapNumber: null,
+        observedAt: before,
+        selections: [settled(item.homeId, matchOdds, 'won'), settled(item.awayId, 2.2, 'lost')],
+      },
+      {
+        kind: 'map_winner',
+        phase: 'prematch',
+        historical: true,
+        mapNumber: 1,
+        observedAt: before,
+        selections: [settled(item.homeId, 1.72, 'won'), settled(item.awayId, 2.05, 'lost')],
+      },
+      ...(item.format === 'BO3'
+        ? [
+            {
+              kind: 'map_winner' as const,
+              phase: 'prematch' as const,
+              historical: true,
+              mapNumber: 3,
+              observedAt: before,
+              selections: [settled(item.homeId, 1.91, 'void'), settled(item.awayId, 1.91, 'void')],
+            },
+          ]
+        : []),
+    ];
+  }
+  const rows: NonNullable<EsportMatch['oddsMarkets']> = [
+    {
+      kind: 'match_winner',
+      phase: status === 'live' ? 'live' : 'prematch',
+      historical: false,
+      mapNumber: null,
+      observedAt,
+      selections: [
+        selection(item.homeId, matchOdds, index === 1 ? 0.58 : null),
+        selection(item.awayId, index === 1 || index === 3 ? null : 2.16 + (index % 4) * 0.13, null),
+      ],
+    },
+  ];
+  const mapNumber = status === 'live' ? 2 : 1;
+  if (index % 3 !== 2) {
+    rows.push({
+      kind: 'map_winner',
+      phase: status === 'live' ? 'live' : 'prematch',
+      historical: false,
+      mapNumber,
+      observedAt,
+      selections: [
+        selection(item.homeId, 1.78 + (index % 5) * 0.06, null),
+        selection(item.awayId, 2.02 + (index % 4) * 0.09, null),
+      ],
+    });
+  }
+  if (status === 'live') {
+    const before = new Date(Date.parse(item.startsAt) - 30 * 60_000).toISOString();
+    return rows.flatMap((market) => [
+      {
+        ...market,
+        phase: 'prematch' as const,
+        historical: true,
+        observedAt: before,
+        selections: market.selections.map((pick, n) => ({
+          ...pick,
+          odds: n === 0 ? 1.86 : 1.98,
+          suspended: false,
+          probability: null,
+          observedAt: before,
+        })),
+      },
+      market,
+    ]);
+  }
+  return rows;
+}
 
 type WscResult = 'home' | 'away' | null;
 type WscFixture = readonly [string, string, string, WscResult, string];

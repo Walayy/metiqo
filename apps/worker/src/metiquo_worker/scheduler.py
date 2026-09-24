@@ -24,6 +24,9 @@ from metiquo_worker.jobs import CollectionBusy, source_lock
 from metiquo_worker.loltv_browser import close_browser
 from metiquo_worker.loltv_policy import LoltvBlocked
 from metiquo_worker.loltv_sync import next_live_due, sync_loltv
+from metiquo_worker.selection_results import settle_selections
+from metiquo_worker.stake_policy import StakeDeferred
+from metiquo_worker.stake_sync import sync_stake
 
 logger = logging.getLogger(__name__)
 SCHEDULER_LOCK = 62883200
@@ -31,6 +34,8 @@ SOURCE_SCHEDULER_LOCKS = {
     "lol-catalog": SCHEDULER_LOCK + 1,
     "oracles-elixir": SCHEDULER_LOCK + 2,
     "loltv": SCHEDULER_LOCK + 3,
+    "stake": SCHEDULER_LOCK + 4,
+    "settlements": SCHEDULER_LOCK + 5,
 }
 
 
@@ -39,6 +44,8 @@ def enabled_scripts(settings: Settings, only: list[str] | None) -> list[str]:
         "lol-catalog": settings.catalog_enabled,
         "oracles-elixir": settings.oracle_enabled,
         "loltv": settings.loltv_enabled,
+        "stake": settings.stake_enabled,
+        "settlements": settings.settlements_enabled,
     }
     return [
         key
@@ -47,12 +54,12 @@ def enabled_scripts(settings: Settings, only: list[str] | None) -> list[str]:
     ]
 
 
-def heartbeat(engine: Engine, scripts: list[str], path: Path) -> None:
+def heartbeat(engine: Engine, scripts: list[str], path: Path, worker_id: int = 1) -> None:
     now = datetime.now(UTC)
     with Session(engine) as db, db.begin():
         db.execute(
             insert(WorkerStatus)
-            .values(id=1, seen_at=now, scripts=scripts)
+            .values(id=worker_id, seen_at=now, scripts=scripts)
             .on_conflict_do_update(
                 index_elements=[WorkerStatus.id], set_={"seen_at": now, "scripts": scripts}
             )
@@ -151,17 +158,34 @@ def _tick_source(
                     ingestion_id = collect(engine, settings, latest=script_id == "oracle-latest")
                 elif script_id == "loltv-matches":
                     ingestion_id = sync_loltv(engine, settings)
+                elif script_id == "stake-markets":
+                    ingestion_id = sync_stake(engine, settings, script_run_id=run_id)
+                elif script_id == "settle-selections":
+                    settle_selections(engine)
+                    ingestion_id = None
                 else:
                     raise ValueError("Unregistered script")
                 with Session(engine) as db, db.begin():
                     run = db.get(ScriptRun, run_id)
-                    ingestion = db.get(IngestionRun, ingestion_id)
-                    assert run is not None and ingestion is not None
+                    ingestion = db.get(IngestionRun, ingestion_id) if ingestion_id else None
+                    assert run is not None
                     run.ingestion_run_id = ingestion_id
-                    run.status = ingestion.status
+                    run.status = ingestion.status if ingestion else "succeeded"
                     run.finished_at = datetime.now(UTC)
-                    if ingestion.status != "succeeded":
+                    if ingestion is not None and ingestion.status != "succeeded":
                         run.error = "La collecte a échoué. Consultez les journaux du worker."
+            except StakeDeferred as error:
+                with Session(engine) as db, db.begin():
+                    db.execute(
+                        update(ScriptRun)
+                        .where(ScriptRun.id == run_id)
+                        .values(
+                            status="queued",
+                            started_at=None,
+                            available_at=datetime.fromtimestamp(error.retry_at, UTC),
+                            error="Stake différé : délai source ou budget en attente.",
+                        )
+                    )
             except LoltvBlocked as error:
                 retry_at = (
                     datetime.fromtimestamp(error.retry_at, UTC)
@@ -214,12 +238,12 @@ def serve_schedules(
     path: Path,
 ) -> None:
     scripts = enabled_scripts(settings, only)
-    heartbeat(engine, scripts, path)
+    heartbeat(engine, scripts, path, settings.worker_status_id)
 
     def pulse() -> None:
         while not stopping.wait(20):
             try:
-                heartbeat(engine, scripts, path)
+                heartbeat(engine, scripts, path, settings.worker_status_id)
             except Exception as error:
                 logger.error("Worker heartbeat failed (%s)", type(error).__name__)
 
@@ -256,9 +280,12 @@ def serve_schedules(
         worker.start()
     try:
         while not stopping.wait(1):
-            pass
+            if settings.worker_stop_file and settings.worker_stop_file.exists():
+                stopping.set()
     finally:
         stopping.set()
         for worker in workers:
-            worker.join(timeout=5)
+            worker.join(
+                timeout=settings.stake_timeout_seconds + 10 if settings.stake_enabled else 5
+            )
         thread.join(timeout=5)

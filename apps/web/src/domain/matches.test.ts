@@ -3,6 +3,7 @@ import { matches, performance } from '@/mocks/esport';
 import { catalog } from '@/mocks/fixtures';
 import { countdown, matchSchema, matchWinnerId, seriesScore, sideKills, sideGold } from './matches';
 import { performanceSchema } from '@/features/performance/simulation';
+import { expectedValue } from './value';
 describe('Rencontres et données de simulation', () => {
   const live = matches.items.find((m) => m.status === 'live')!;
   it('conserve un format inconnu sans déduire de vainqueur ou de cartes manquantes', () => {
@@ -40,6 +41,83 @@ describe('Rencontres et données de simulation', () => {
         }
     }
     expect(performanceSchema.safeParse(performance).success).toBe(true);
+  });
+  it('valide les deux issues Stake, les suspensions et une value du même résultat', () => {
+    const match = matches.items.find((item) => item.oddsMarkets?.length)!;
+    const market = match.oddsMarkets![0]!;
+    expect(matchSchema.safeParse(match).success).toBe(true);
+    expect(market.selections).toHaveLength(2);
+
+    const value = matches.items
+      .flatMap((item) => item.oddsMarkets ?? [])
+      .flatMap((item) => item.selections)
+      .find((selection) => selection.probability !== null);
+    expect(value).toBeDefined();
+    expect(expectedValue(value!.probability!, value!.odds!)).toBeGreaterThan(0);
+
+    const suspended = matches.items
+      .flatMap((item) => item.oddsMarkets ?? [])
+      .flatMap((item) => item.selections)
+      .find((selection) => selection.suspended);
+    expect(suspended).toMatchObject({ odds: null, probability: null, suspended: true });
+    expect(
+      matchSchema.safeParse({
+        ...match,
+        oddsMarkets: [
+          {
+            ...market,
+            selections: [
+              { ...market.selections[0], suspended: true, odds: null },
+              market.selections[1],
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+  it('distingue les phases sans attribuer de value actuelle à une cote historique', () => {
+    const live = matches.items.find((item) => item.status === 'live' && item.oddsMarkets?.length)!;
+    const before = live.oddsMarkets!.find((market) => market.phase === 'prematch')!;
+    const during = live.oddsMarkets!.find((market) => market.phase === 'live')!;
+    expect(before.historical).toBe(true);
+    expect(during.historical).toBe(false);
+    expect(Date.parse(before.observedAt)).toBeLessThan(Date.parse(during.observedAt));
+    expect(
+      matchSchema.safeParse({
+        ...live,
+        oddsMarkets: [
+          {
+            ...before,
+            selections: before.selections.map((pick) => ({ ...pick, probability: 0.6 })),
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      matchSchema.safeParse({ ...live, oddsMarkets: [{ ...during, phase: 'unknown' }] }).success,
+    ).toBe(false);
+    expect(matchSchema.safeParse({ ...live, oddsMarkets: [before, before] }).success).toBe(false);
+  });
+  it('expose les issues réglées des sélections historiques sans les confondre avec les prix', () => {
+    const finished = matches.items.find(
+      (item) =>
+        item.status === 'finished' &&
+        item.oddsMarkets?.some((market) =>
+          market.selections.some((pick) => pick.result === 'void'),
+        ),
+    )!;
+    expect(finished).toBeDefined();
+    expect(finished.oddsMarkets!.every((market) => market.historical)).toBe(true);
+    expect(
+      finished
+        .oddsMarkets!.flatMap((market) => market.selections)
+        .some((pick) => pick.result === 'lost'),
+    ).toBe(true);
+    expect(
+      finished
+        .oddsMarkets!.flatMap((market) => market.selections)
+        .some((pick) => pick.result === 'void'),
+    ).toBe(true);
   });
   it('expose le vainqueur de série et les bans uniquement pour les cartes commencées', () => {
     const finished = matches.items.find((m) => m.status === 'finished')!;

@@ -158,33 +158,23 @@ def resolve_match(
     leagues: list[League],
     existing: list[EsportMatch],
 ) -> MatchResolution | None:
+    from metiquo_worker.fixture_identity import TIME_TOLERANCE, competitions_agree
+
     home = resolve_team(identity.home_name, teams)
     away = resolve_team(identity.away_name, teams)
     if home is None or away is None or home.team_id == away.team_id:
         return None
 
-    league_scores = sorted(
-        (
-            name_score(
-                identity.competition,
-                str(league.data.get("name", "")),
-                slug=str(league.data.get("slug", "")),
-            ),
-            league.id,
-        )
+    compatible_leagues = [
+        league
         for league in leagues
-    )
-    if not league_scores or league_scores[-1][0] < 0.82:
-        # Never force an international tournament into a regional league just
-        # because it is the closest string. The caller may provision the
-        # source competition first, after which this score becomes exact.
+        if competitions_agree(identity.competition, str(league.data.get("name", "")))
+    ]
+    if len(compatible_leagues) != 1:
         return None
-    if len(league_scores) > 1 and league_scores[-1][0] - league_scores[-2][0] < 0.08:
-        return None
-    league_id = league_scores[-1][1]
-    competition_score = league_scores[-1][0]
+    league_id = compatible_leagues[0].id
 
-    candidates: list[tuple[float, EsportMatch]] = []
+    candidates: list[EsportMatch] = []
     for match in existing:
         if match.league_id != league_id:
             continue
@@ -192,22 +182,17 @@ def resolve_match(
         reversed_direction = match.home_id == away.team_id and match.away_id == home.team_id
         if not same_direction and not reversed_direction:
             continue
-        delta_hours = abs((match.starts_at - identity.starts_at).total_seconds()) / 3600
-        if delta_hours > 6:
+        if abs(match.starts_at - identity.starts_at) > TIME_TOLERANCE:
             continue
-        direction_score = 1.0 if same_direction else 0.94
-        time_score = max(0.0, 1.0 - delta_hours / 6)
-        league_bonus = 0.08 if match.league_id == league_id else 0.0
-        candidates.append((direction_score * 0.62 + time_score * 0.3 + league_bonus, match))
-    candidates.sort(key=lambda item: item[0], reverse=True)
-    if candidates and (len(candidates) == 1 or candidates[0][0] - candidates[1][0] >= 0.06):
-        score, match = candidates[0]
+        candidates.append(match)
+    if len(candidates) == 1:
+        match = candidates[0]
         return MatchResolution(
             home_id=home.team_id,
             away_id=away.team_id,
             league_id=match.league_id,
             existing_match=match,
-            confidence=min(1.0, score * 0.65 + home.score * 0.2 + away.score * 0.15),
+            confidence=min(home.score, away.score),
             reason="team-pair-and-time",
         )
     if candidates:
@@ -217,7 +202,7 @@ def resolve_match(
         away_id=away.team_id,
         league_id=league_id,
         existing_match=None,
-        confidence=min(1.0, home.score * 0.38 + away.score * 0.38 + competition_score * 0.24),
+        confidence=min(home.score, away.score),
         reason="new-source-link",
     )
 

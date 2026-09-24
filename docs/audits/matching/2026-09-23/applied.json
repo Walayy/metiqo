@@ -1,0 +1,1300 @@
+{
+  "events": 20,
+  "counts": {
+    "linked": 12,
+    "pending": 8
+  },
+  "decisions": [
+    {
+      "eventId": "848607",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "0f54f2c9-896d-5055-8b98-84803ed8d793",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/848607-su-esports-verdant",
+        "identitySha256": "7729dabc30627cadcad13a430edab9980a927ea6941eaf9f20848cdbf93c6483",
+        "timeEvidence": {
+          "snapshotId": "f16e3ece-8570-5533-8669-cf7a58bd8138",
+          "payloadSha256": "e5b66957efe9ae1b4c41f9ee50bafc2ddcc5254c783376bf3231b208241ac6f8",
+          "observedAt": "2026-09-23T16:13:47.986493+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "848607",
+      "competition": "EMEA Masters 2026 Summer LCQ",
+      "startsAt": "2026-09-23T17:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "21b82921-ba89-42c8-8372-2b133cd05d9d",
+          "competition": "EMEA Masters Summer 2026",
+          "startsAt": "2026-09-23T17:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "Avella SU Esports",
+              "SU Esports"
+            ],
+            [
+              "Verdant"
+            ]
+          ]
+        },
+        {
+          "matchId": "302ea053-3c49-477c-aed6-06f43c6efee8",
+          "competition": "EMEA Masters Summer 2026",
+          "startsAt": "2026-09-23T17:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 0,
+          "teams": [
+            [
+              "Gamespace Mediterranean College Esports"
+            ],
+            [
+              "ONLY THE FAMILY",
+              "Only The Family"
+            ]
+          ]
+        },
+        {
+          "matchId": "365a27cc-08e9-411b-bd4e-98458b2dda0c",
+          "competition": "EMEA Masters Summer 2026",
+          "startsAt": "2026-09-23T17:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 0,
+          "teams": [
+            [
+              "CITA Kaizen"
+            ],
+            [
+              "Otter Side",
+              "The Otter Side"
+            ]
+          ]
+        },
+        {
+          "matchId": "9df45dba-4eb5-4973-a21f-ef684a9e57c3",
+          "competition": "EMEA Masters Summer 2026",
+          "startsAt": "2026-09-23T17:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 0,
+          "teams": [
+            [
+              "Skillcamp",
+              "Skillcamp Esport"
+            ],
+            [
+              "Pyramid IV Esports"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "SU Esports",
+          "teamId": "115854602297673935",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "SU Esports"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "Verdant",
+          "teamId": "107565477822627354",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "Verdant"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "b3b4d5fd86e1c3c88ecd1f77",
+          "url": "https://loltv.gg/match/2026-09-23-day-3-3-emea-masters-summer-2026",
+          "names": {
+            "away": "Verdant",
+            "home": "SU Esports",
+            "provider": "loltv",
+            "providerId": "b3b4d5fd86e1c3c88ecd1f77",
+            "resolution": "source-id",
+            "competition": "EMEA Masters Summer 2026",
+            "awaySourceId": "clpz8g6bm01egakxlfdbc3n85",
+            "homeSourceId": "cmd7y3ys2000507k0gcvvd6je",
+            "competitionSourceId": "emea-masters-summer-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-23T17:00:00+00:00",
+      "candidateCompetition": "EMEA Masters Summer 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "21b82921-ba89-42c8-8372-2b133cd05d9d"
+    },
+    {
+      "eventId": "848973",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "237f36de-789a-5251-9a5e-0acb8238650d",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/les-2027-promotion-t10/848973-kawaii-kiwis-veni-vidi-vici",
+        "identitySha256": "bc372442490e8444278468a16a022447c7dbd7113f4ca4d5ea4858917c5e84b3",
+        "timeEvidence": {
+          "snapshotId": "ee362fe6-3991-515b-a61e-c79a89d3df95",
+          "payloadSha256": "77c756dc2345e61fcca1c403642d52e48cadb6858c988b75af26c8c1cba6a84f",
+          "observedAt": "2026-09-23T14:51:08.741732+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "848973",
+      "competition": "LES 2027 Promotion",
+      "startsAt": "2026-09-23T15:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    },
+    {
+      "eventId": "845836",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "27ba367f-a15d-5587-9238-a5391111e5e3",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845836-cloud9-team-liquid",
+        "identitySha256": "4a259db001607804d3286f289f9e822a9f8b050aabb70f95533e10ab35f37fdc",
+        "timeEvidence": {
+          "snapshotId": "8413bae2-d8dd-5ad4-9b0c-266690d8af54",
+          "payloadSha256": "54e813ac6d3cb06d6b1da421335e2a45a08d4f4533a06f47581d999797f92de0",
+          "observedAt": "2026-09-22T23:41:19.042040+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "845836",
+      "competition": "LCS 2026 Summer Playoffs",
+      "startsAt": "2026-09-27T20:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    },
+    {
+      "eventId": "847754",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "2897c7e1-37ba-5ce9-b052-adad739bbe82",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847754-fennel-dplus-kia-challengers",
+        "identitySha256": "84bb47ae2137905c19243aff75d1a29cca071c84776a3bb7b8b6daaa1acf5c52",
+        "timeEvidence": {
+          "snapshotId": "8c5c0e92-849e-5e93-806e-f6a07889464b",
+          "payloadSha256": "333e331c8d40edfd1a6a03e402385cad1417d33c04b2f7875628f8f9444d7948",
+          "observedAt": "2026-09-22T23:42:01.007572+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "847754",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-23T08:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "12a1e2cb-5bd7-4dfb-8561-734203620e03",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-23T08:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "FENNEL"
+            ],
+            [
+              "Dplus KIA Challengers",
+              "Dplus Kia Challengers"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "FENNEL",
+          "teamId": "109668849651338559",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "FENNEL"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "Dplus KIA Challengers",
+          "teamId": "loltv:team:clpz8g66f015rakxlxz3eu9uw",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "Dplus KIA Challengers",
+              "Dplus Kia Challengers"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "6138fb06a3c08bafd70f0210",
+          "url": "https://loltv.gg/match/2026-09-23-fennel-vs-dplus-kia-challengers",
+          "names": {
+            "away": "Dplus Kia Challengers",
+            "home": "FENNEL",
+            "provider": "loltv",
+            "providerId": "6138fb06a3c08bafd70f0210",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "clpz8g66f015rakxlxz3eu9uw",
+            "homeSourceId": "clpz8g6d701klakxl0bmht5r9",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-23T08:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "12a1e2cb-5bd7-4dfb-8561-734203620e03"
+    },
+    {
+      "eventId": "849091",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "39bb94f1-85d8-5f6a-abb0-77cf2c378dd0",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849091-cfo-academy-kt-rolster-challengers",
+        "identitySha256": "0056cd73968c47e7f108dd77f4fe1ecf1c65e7517a2ac872cd2def6367e1a109",
+        "timeEvidence": {
+          "snapshotId": "00ff8a5b-31b4-52fd-a051-8eff28aacf00",
+          "payloadSha256": "fafef858bd71dd0ba63825760f539ed47335132218e33f3599ade7722ba009d0",
+          "observedAt": "2026-09-23T18:00:27.594797+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "849091",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-24T13:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "236df36e-8c8a-464e-9cc4-da1db6d11a78",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-24T13:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "CTBC Flying Oyster Academy"
+            ],
+            [
+              "KT Rolster Challengers",
+              "kt Challengers"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "CFO Academy",
+          "teamId": "113951569973088490",
+          "proof": {
+            "basis": "reviewed-alias",
+            "aliasIds": [
+              "dae135c1a376b69e0aa2d83170e05d827e4acff9b051a4b56b732e67d0ad4c18"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "KT Rolster Challengers",
+          "teamId": "105550049871017396",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "KT Rolster Challengers"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "b483efeaaa73bcff2394cf52",
+          "url": "https://loltv.gg/match/2026-09-24-ctbc-flying-oyster-academy-vs-kt-rolster-challengers",
+          "names": {
+            "away": "KT Rolster Challengers",
+            "home": "CTBC Flying Oyster Academy",
+            "provider": "loltv",
+            "providerId": "b483efeaaa73bcff2394cf52",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "clpz8g66f015qakxlrql21gue",
+            "homeSourceId": "clqovtlb100adt1c36q4zvfyr",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-24T13:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "236df36e-8c8a-464e-9cc4-da1db6d11a78"
+    },
+    {
+      "eventId": "849092",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "590397ab-aca4-54f9-8d7c-8b55c73a5570",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849092-fuego-t1-esports-academy",
+        "identitySha256": "9c10238a99b94372348043956b6422a9393159fa9351caa43e2caf653658116e",
+        "timeEvidence": {
+          "snapshotId": "d7813abb-a611-5711-9d52-686bd55f48ca",
+          "payloadSha256": "2bf4698b2928e0f2a419656a92bc005d2dc211f3bb6de629596913c3a807c8c7",
+          "observedAt": "2026-09-23T18:00:32.184222+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "849092",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-24T10:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "57bd93bb-24e1-44c7-86a2-4af15c9eacc1",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-24T10:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "FUEGO",
+              "Fuego"
+            ],
+            [
+              "T1 Academy",
+              "T1 Esports Academy"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "Fuego",
+          "teamId": "107581765633427097",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "FUEGO",
+              "Fuego"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "T1 Esports Academy",
+          "teamId": "105550059790656435",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "T1 Academy",
+              "T1 Esports Academy"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "5f1b483efeaaa73bcff2394c",
+          "url": "https://loltv.gg/match/2026-09-24-fuego-vs-t1-esports-academy",
+          "names": {
+            "away": "T1 Esports Academy",
+            "home": "Fuego",
+            "provider": "loltv",
+            "providerId": "5f1b483efeaaa73bcff2394c",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "clpz8g6dg01leakxljd4ik7nx",
+            "homeSourceId": "clpz8g6bt01f6akxldobg6qx0",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-24T10:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "57bd93bb-24e1-44c7-86a2-4af15c9eacc1"
+    },
+    {
+      "eventId": "848212",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "61c14780-f871-5fa1-a992-b89da8c43561",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/848212-humzh-lourlo",
+        "identitySha256": "aa827190655575e98456e0c1a923a5d2b2b5c075bde7ca39e5afe4afff0c9e7e"
+      },
+      "provider": "stake",
+      "sourceId": "848212",
+      "competition": "Tyler1 All Stars Season 2026 Week 14",
+      "startsAt": "2026-09-22T21:18:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    },
+    {
+      "eventId": "836114",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "8be80570-2b23-5097-a054-4d85a19ff041",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/836114-loud-los",
+        "identitySha256": "806d2c19a3a0e5fa7c0f5443db119e8beaa0232ff9e812a0400017d5cfa69fad",
+        "timeEvidence": {
+          "snapshotId": "9599ea75-7e5b-549d-898f-f8a8b0a3aab3",
+          "payloadSha256": "c98c3bd3129095f17db56f3a6134492e00df197f8c0b92e97bd11a02edbdcf24",
+          "observedAt": "2026-09-23T18:01:40.488992+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "836114",
+      "competition": "CBLOL 2026 Split 2 Playoffs",
+      "startsAt": "2026-09-27T16:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "633f2c5c-8e2d-4e5c-840f-bcecf4b1d644",
+          "competition": "CBLOL Split 2 2026",
+          "startsAt": "2026-09-27T16:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "LOUD"
+            ],
+            [
+              "LØS"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "LOUD",
+          "teamId": "105397404796640412",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "LOUD"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "LOS",
+          "teamId": "loltv:team:clpz8g6da01kxakxl4k32fiwd",
+          "proof": {
+            "basis": "reviewed-alias",
+            "aliasIds": [
+              "4a606681c1b9f2087c2a22d8ab544c8d217060e4facebc6d55a926492e5e0550"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "07202e0e8a4a6fd3a0f68901",
+          "url": "https://loltv.gg/match/2026-09-27-round-4-1-cblol-split-2-2026",
+          "names": {
+            "away": "LØS",
+            "home": "LOUD",
+            "provider": "loltv",
+            "providerId": "07202e0e8a4a6fd3a0f68901",
+            "resolution": "source-id",
+            "competition": "CBLOL Split 2 2026",
+            "awaySourceId": "clpz8g6da01kxakxl4k32fiwd",
+            "homeSourceId": "clpz8g6ca01gsakxlsw72xyl7",
+            "competitionSourceId": "cblol-split-2-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-27T16:00:00+00:00",
+      "candidateCompetition": "CBLOL Split 2 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "633f2c5c-8e2d-4e5c-840f-bcecf4b1d644"
+    },
+    {
+      "eventId": "847757",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "a333c471-6d2b-5b93-a3c7-0aa476b975fd",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847757-fennel-cupid-esports",
+        "identitySha256": "3f08bac280b05a8e16a282eacc24e30bcc70576133fc06f76df760f3b847bdd7",
+        "timeEvidence": {
+          "snapshotId": "c0decad8-2956-5684-b735-c042e9ea969a",
+          "payloadSha256": "0b442e3e1d5c692150c4c7192f097c1a154a8e83e1288613bcf1258e3ff8b609",
+          "observedAt": "2026-09-22T23:42:15.998587+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "847757",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-23T13:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "154dea49-7c5f-4bb4-a575-8afde340dad8",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-23T13:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "FENNEL"
+            ],
+            [
+              "Cupid Esports"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "FENNEL",
+          "teamId": "109668849651338559",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "FENNEL"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "Cupid Esports",
+          "teamId": "116877540282721669",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "Cupid Esports"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "1b1075f1b483efeaaa73bcff",
+          "url": "https://loltv.gg/match/2026-09-23-fennel-vs-cupid-esports",
+          "names": {
+            "away": "Cupid Esports",
+            "home": "FENNEL",
+            "provider": "loltv",
+            "providerId": "1b1075f1b483efeaaa73bcff",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "ff6ff4cba68b85af85bfebc2",
+            "homeSourceId": "clpz8g6d701klakxl0bmht5r9",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-23T13:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "154dea49-7c5f-4bb4-a575-8afde340dad8"
+    },
+    {
+      "eventId": "849090",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "a4b07c16-80db-532f-ab4b-2743fdbbd9bd",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849090-movistar-koi-academy-kt-rolster-challengers",
+        "identitySha256": "4c1a97ff4217ec8960e37fd886c6dc15274dbf9434c0e6dd33ed0ca7d1b8ec0d",
+        "timeEvidence": {
+          "snapshotId": "6c137779-4a4f-5d4c-aa8e-be4ab2373de8",
+          "payloadSha256": "9ba446fc18c11fd42f3481487b9d85b33961ba5355a2146df0188043a6e9c3e3",
+          "observedAt": "2026-09-23T18:00:22.104473+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "849090",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-24T09:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "ad223608-8700-40b5-8aa2-bfee49100df7",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-24T09:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "Movistar KOI Fénix",
+              "⁠Movistar KOI Fénix"
+            ],
+            [
+              "KT Rolster Challengers",
+              "kt Challengers"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "KOI Academy",
+          "teamId": "111692802629324367",
+          "proof": {
+            "basis": "reviewed-alias",
+            "aliasIds": [
+              "fc05d7cad837cb9ef8d33e1ce34b1ef2607f5d66d2879ff6361943ace2495131"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "KT Rolster Challengers",
+          "teamId": "105550049871017396",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "KT Rolster Challengers"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "75f1b483efeaaa73bcff2394",
+          "url": "https://loltv.gg/match/2026-09-24-movistar-koi-fenix-vs-kt-rolster-challengers",
+          "names": {
+            "away": "KT Rolster Challengers",
+            "home": "Movistar KOI Fénix",
+            "provider": "loltv",
+            "providerId": "75f1b483efeaaa73bcff2394",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "clpz8g66f015qakxlrql21gue",
+            "homeSourceId": "clpz8g66e015nakxllrwnl7kp",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-24T09:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "ad223608-8700-40b5-8aa2-bfee49100df7"
+    },
+    {
+      "eventId": "842137",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "aa6d3dd1-7b26-50fb-a9be-964425513f94",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842137-maryville-university-zeu5-esports",
+        "identitySha256": "5553904a306fc873ffe9b7b3d305694f1e897fc13a1b8ad13b98e3b028c7396e",
+        "timeEvidence": {
+          "snapshotId": "4b288673-319c-5666-8c39-b09836f25dd9",
+          "payloadSha256": "d1baf69332530fc8cf948fa15fe73b605bf9bd50c145f2d54a08e29718973f43",
+          "observedAt": "2026-09-22T23:43:49.209362+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "842137",
+      "competition": "LCS 2027 Promotion",
+      "startsAt": "2026-10-05T20:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    },
+    {
+      "eventId": "847756",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "c13b9001-a346-5a27-967f-63f37a20f3bc",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847756-keyd-stars-academy-dplus-kia-challengers",
+        "identitySha256": "c2a3b2b72508403d3f01873377588ef2b7cd168089bc80644af9fa41639a49e0",
+        "timeEvidence": {
+          "snapshotId": "a8c8a901-4f41-5746-84df-e8136cd39a94",
+          "payloadSha256": "6f07bfbba7554067aad7b4d4bfb8cb0d835bade34ba7473eaa51061ade5147e7",
+          "observedAt": "2026-09-22T23:42:11.040749+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "847756",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-23T12:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "17abcc49-d40c-4a2a-be38-307598d35127",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-23T12:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "Vivo Keyd Stars Academy"
+            ],
+            [
+              "Dplus KIA Challengers",
+              "Dplus Kia Challengers"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "Keyd Academy",
+          "teamId": "109485335453835911",
+          "proof": {
+            "basis": "reviewed-alias",
+            "aliasIds": [
+              "d6d3e348f6eec7d96e602066eb2530e470a355fdc29e5cd9a31dc627e1e90400"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "Dplus KIA Challengers",
+          "teamId": "loltv:team:clpz8g66f015rakxlxz3eu9uw",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "Dplus KIA Challengers",
+              "Dplus Kia Challengers"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "91b1075f1b483efeaaa73bcf",
+          "url": "https://loltv.gg/match/2026-09-23-vivo-keyd-stars-academy-vs-dplus-kia-challengers",
+          "names": {
+            "away": "Dplus Kia Challengers",
+            "home": "Vivo Keyd Stars Academy",
+            "provider": "loltv",
+            "providerId": "91b1075f1b483efeaaa73bcf",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "clpz8g66f015rakxlxz3eu9uw",
+            "homeSourceId": "clpz8g6bv01fbakxlifhqtdwk",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        },
+        {
+          "provider": "oracles-elixir",
+          "sourceId": "oracle:17abcc49-d40c-4a2a-be38-307598d35127:1211886af5127272",
+          "url": "https://oracleselixir.com/tools/downloads",
+          "names": {
+            "games": [
+              "LOLTMNT02_468263"
+            ],
+            "matchId": "17abcc49-d40c-4a2a-be38-307598d35127"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-23T12:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "17abcc49-d40c-4a2a-be38-307598d35127"
+    },
+    {
+      "eventId": "842149",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "c3596301-364e-5242-8b85-b12a81cdead0",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842149-estral-esports-9z-team",
+        "identitySha256": "5f24c7aca44f72eca42e4471607e51f0666d4a3b753542eee75b8988e5108ad8",
+        "timeEvidence": {
+          "snapshotId": "0b2ce3c7-de31-5ce2-9453-a46f6bfe4a95",
+          "payloadSha256": "4acbb068852c2a8f1d9fa664254927cc5ae7d8f006969339da930df6dec8d186",
+          "observedAt": "2026-09-23T18:03:50.633774+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "842149",
+      "competition": "CBLOL 2027 Promotion",
+      "startsAt": "2026-09-29T21:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    },
+    {
+      "eventId": "845961",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "c45010fd-57a6-5806-80be-f0c3e682596c",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/845961-furia-esports-red-canids",
+        "identitySha256": "abb0235a4c79f204fed6c128ee14565796bb0f1cfe134f780122e841a6c6ee07",
+        "timeEvidence": {
+          "snapshotId": "62977273-a891-5ce9-a35c-c7f41b04ec3f",
+          "payloadSha256": "619bdf47b6ebf4c6f856f9fc8311c8de7ef6ded7255f4eb1ca7e2a5273e614b7",
+          "observedAt": "2026-09-23T18:01:05.332895+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "845961",
+      "competition": "CBLOL 2026 Split 2 Playoffs",
+      "startsAt": "2026-09-26T16:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "d2409570-e171-473c-b31e-f777f52ddefb",
+          "competition": "CBLOL Split 2 2026",
+          "startsAt": "2026-09-26T16:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "FURIA",
+              "FURIA Esports"
+            ],
+            [
+              "RED Canids",
+              "RED Kalunga"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "FURIA Esports",
+          "teamId": "100205576309502431",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "FURIA",
+              "FURIA Esports"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "RED Canids",
+          "teamId": "99566408221961358",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "RED Canids"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "7202e0e8a4a6fd3a0f689018",
+          "url": "https://loltv.gg/match/2026-09-26-round-3-1-cblol-split-2-2026",
+          "names": {
+            "away": "RED Canids",
+            "home": "FURIA",
+            "provider": "loltv",
+            "providerId": "7202e0e8a4a6fd3a0f689018",
+            "resolution": "source-id",
+            "competition": "CBLOL Split 2 2026",
+            "awaySourceId": "clpz8g6d401kdakxl4my9hktl",
+            "homeSourceId": "clpz8g6dr01mhakxl8u3ascdu",
+            "competitionSourceId": "cblol-split-2-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-26T16:00:00+00:00",
+      "candidateCompetition": "CBLOL Split 2 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "d2409570-e171-473c-b31e-f777f52ddefb"
+    },
+    {
+      "eventId": "842405",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "da8408a2-3de5-5e0b-8f83-fbb63df49a34",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842405-kabum-ilha-das-lendas-golden-lions",
+        "identitySha256": "9bdf354a4d10a92ae74cfb659573b09d18c21a6b9d1ffbc2f469e01df9a61c24",
+        "timeEvidence": {
+          "snapshotId": "e2f7b7a0-b7f4-5b42-a4f3-70ada2faca0f",
+          "payloadSha256": "050c533113d4fd790ef639c9994a601ea45f90075139f37a6890f5133b7baa1c",
+          "observedAt": "2026-09-23T18:02:40.489260+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "842405",
+      "competition": "CBLOL 2027 Promotion",
+      "startsAt": "2026-09-28T21:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    },
+    {
+      "eventId": "849089",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "e586c643-5ea2-50ea-90f4-6fe9370a7905",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849089-dn-soopers-challengers-t1-esports-academy",
+        "identitySha256": "fdf757af2af363067a335768658f5588a4ba92b723e6592e437fb99644f218d2",
+        "timeEvidence": {
+          "snapshotId": "c2e2bd8d-beaf-52aa-9745-c2dc592ca2d8",
+          "payloadSha256": "99e815c8b5b19e17a0a8d02cc1efbaa1c1a912a9ba9ba8b933eec2336dd23e71",
+          "observedAt": "2026-09-23T18:03:22.991113+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "849089",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-24T06:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "1757e7af-5dae-4d20-8aef-d58a12f8dfb4",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-24T06:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "DN SOOPers Challengers"
+            ],
+            [
+              "T1 Academy",
+              "T1 Esports Academy"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "DN SOOPers Challengers",
+          "teamId": "loltv:team:clpz8g6cx01j4akxlqny07xu0",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "DN SOOPers Challengers"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "T1 Esports Academy",
+          "teamId": "105550059790656435",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "T1 Academy",
+              "T1 Esports Academy"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "b1075f1b483efeaaa73bcff2",
+          "url": "https://loltv.gg/match/2026-09-24-dn-soopers-challengers-vs-t1-esports-academy",
+          "names": {
+            "away": "T1 Esports Academy",
+            "home": "DN SOOPers Challengers",
+            "provider": "loltv",
+            "providerId": "b1075f1b483efeaaa73bcff2",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "clpz8g6dg01leakxljd4ik7nx",
+            "homeSourceId": "clpz8g6cx01j4akxlqny07xu0",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-24T06:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "1757e7af-5dae-4d20-8aef-d58a12f8dfb4"
+    },
+    {
+      "eventId": "845833",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "ee7627cb-b949-578b-bbd6-db3982686b5d",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+        "identitySha256": "9d9441f941060193d758f02e6614f475cd918cc016c540e5ff89a07d8f7d52f5",
+        "timeEvidence": {
+          "snapshotId": "6375772e-6804-5b85-826b-f73d15c59682",
+          "payloadSha256": "4fdb6d3df7d576a8a104b06db8e248fff17ec6a57437bc20e7b55bc0ac30feae",
+          "observedAt": "2026-09-23T18:03:15.616502+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "845833",
+      "competition": "LCS 2026 Summer Playoffs",
+      "startsAt": "2026-09-25T20:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "89b7e54a-d45c-44d4-abc3-c7f19f6c7ae7",
+          "competition": "LCS Summer 2026",
+          "startsAt": "2026-09-25T20:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "FlyQuest"
+            ],
+            [
+              "Shopify Rebellion"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "FlyQuest",
+          "teamId": "98926509892121852",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "FlyQuest"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "Shopify Rebellion",
+          "teamId": "111504538396430510",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "Shopify Rebellion"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "13bf4b7b04c9ebf76e000aad",
+          "url": "https://loltv.gg/match/2026-09-25-round-2-3-lcs-summer-2026",
+          "names": {
+            "away": "Shopify Rebellion",
+            "home": "FlyQuest",
+            "provider": "loltv",
+            "providerId": "13bf4b7b04c9ebf76e000aad",
+            "resolution": "source-id",
+            "competition": "LCS Summer 2026",
+            "awaySourceId": "clqovtlgi019rt1c3sdib5ddq",
+            "homeSourceId": "clpz8g6du01mnakxlpkitjej2",
+            "competitionSourceId": "lcs-summer-2026"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-25T20:00:00+00:00",
+      "candidateCompetition": "LCS Summer 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "89b7e54a-d45c-44d4-abc3-c7f19f6c7ae7"
+    },
+    {
+      "eventId": "842135",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "eeaf0d2e-05a5-55e2-bfaa-70c7df7e1f18",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842135-cupid-esports-fuego",
+        "identitySha256": "a10bceff6b2d0c95cea5c9f5b878c3ff724fa97b30f2081ad3c59d26873b03a8",
+        "timeEvidence": {
+          "snapshotId": "27193db4-e5ac-52be-ba14-8531276ad4a2",
+          "payloadSha256": "cd88799322d26b5c1502c036528878e9ea239aa3194d6ea8256c9bbc59cd54d5",
+          "observedAt": "2026-09-23T18:02:10.442377+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "842135",
+      "competition": "LCS 2027 Promotion",
+      "startsAt": "2026-10-06T20:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    },
+    {
+      "eventId": "847755",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "fa06191b-eba4-5ade-8113-634ebadc873b",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847755-cupid-esports-keyd-stars-academy",
+        "identitySha256": "376130a3b15ebff760d720a54263e6b98d3d7910ceaa12489ed960902e2ef49b",
+        "timeEvidence": {
+          "snapshotId": "aba11145-c013-5e5c-a92d-497a48f7047c",
+          "payloadSha256": "0d8dbaf1f788a69fc049250437b1058ca571c26b20302c71a516b312e972dcbd",
+          "observedAt": "2026-09-22T23:42:06.109192+00:00",
+          "basis": "retained-source-time"
+        }
+      },
+      "provider": "stake",
+      "sourceId": "847755",
+      "competition": "2026 World Star Challengers Invitational",
+      "startsAt": "2026-09-23T09:00:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [
+        {
+          "matchId": "6563edc0-1e2e-448e-8787-ff5fac314cb8",
+          "competition": "World Star Challengers Invitational 2026",
+          "startsAt": "2026-09-23T09:00:00+00:00",
+          "deltaSeconds": 0.0,
+          "competitionAgrees": true,
+          "teamOrientations": 1,
+          "teams": [
+            [
+              "Cupid Esports"
+            ],
+            [
+              "Vivo Keyd Stars Academy"
+            ]
+          ]
+        }
+      ],
+      "participants": [
+        {
+          "position": 0,
+          "name": "Cupid Esports",
+          "teamId": "116877540282721669",
+          "proof": {
+            "basis": "exact-name",
+            "names": [
+              "Cupid Esports"
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "name": "Keyd Academy",
+          "teamId": "109485335453835911",
+          "proof": {
+            "basis": "reviewed-alias",
+            "aliasIds": [
+              "d6d3e348f6eec7d96e602066eb2530e470a355fdc29e5cd9a31dc627e1e90400"
+            ]
+          }
+        }
+      ],
+      "sources": [
+        {
+          "provider": "loltv",
+          "sourceId": "83efeaaa73bcff2394cf521d",
+          "url": "https://loltv.gg/match/2026-09-23-cupid-esports-vs-vivo-keyd-stars-academy",
+          "names": {
+            "away": "Vivo Keyd Stars Academy",
+            "home": "Cupid Esports",
+            "provider": "loltv",
+            "providerId": "83efeaaa73bcff2394cf521d",
+            "resolution": "source-id",
+            "competition": "World Star Challengers Invitational 2026",
+            "awaySourceId": "clpz8g6bv01fbakxlifhqtdwk",
+            "homeSourceId": "ff6ff4cba68b85af85bfebc2",
+            "competitionSourceId": "world-star-challengers-invitational-2026"
+          }
+        },
+        {
+          "provider": "oracles-elixir",
+          "sourceId": "oracle:6563edc0-1e2e-448e-8787-ff5fac314cb8:628d73afead1d2fc",
+          "url": "https://oracleselixir.com/tools/downloads",
+          "names": {
+            "games": [
+              "LOLTMNT02_469243"
+            ],
+            "matchId": "6563edc0-1e2e-448e-8787-ff5fac314cb8"
+          }
+        }
+      ],
+      "candidateStartsAt": "2026-09-23T09:00:00+00:00",
+      "candidateCompetition": "World Star Challengers Invitational 2026",
+      "status": "linked",
+      "reason": "teams-competition-verified-time",
+      "matchId": "6563edc0-1e2e-448e-8787-ff5fac314cb8"
+    },
+    {
+      "eventId": "848271",
+      "version": "fixture-identity-v1",
+      "fixture": {
+        "eventId": "fec4346f-8556-5f3d-849e-64383f220c88",
+        "url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/848271-humzh-lourlo",
+        "identitySha256": "15eac399e51dd2ed93f5eed8c3abdef7aa0c20ce6962d40c5f66ca16cc0e31ad"
+      },
+      "provider": "stake",
+      "sourceId": "848271",
+      "competition": "Tyler1 All Stars Season 2026 Week 14",
+      "startsAt": "2026-09-22T22:02:00+00:00",
+      "toleranceSeconds": 1800,
+      "candidates": [],
+      "status": "pending",
+      "reason": "no-demonstrated-candidate",
+      "matchId": null
+    }
+  ],
+  "dryRun": false
+}

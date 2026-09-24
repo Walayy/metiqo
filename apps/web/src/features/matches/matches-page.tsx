@@ -1,4 +1,6 @@
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
+import { useClockText } from '@/hooks/use-clock-text';
+import { Countdown } from './time-label';
 import { SelectionIndicator } from '@/components/ui/selection-indicator';
 import { useId, useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +11,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CirclePercent,
   Minus,
   Search,
   Swords,
@@ -17,11 +20,12 @@ import {
 import { clsx } from 'clsx';
 import type { Catalog } from '@/domain/schemas';
 import type { EsportMatch } from '@/domain/matches';
-import { countdown, matchWinnerId, seriesScore } from '@/domain/matches';
+import { matchWinnerId, seriesScore } from '@/domain/matches';
 import { normalize, time } from '@/lib/format';
 import { catalogQuery, matchesQuery } from '@/lib/api';
 import { HttpError } from '@/lib/http-error';
 import { Button } from '@/components/ui/button';
+import { StatusDot } from '@/components/ui/status-dot';
 import { Logo } from '@/components/ui/logo';
 import { StatusPanel } from '@/features/status/status-panel';
 import { LeagueFilters, RefreshValues } from '@/features/values/league-filters';
@@ -33,11 +37,10 @@ import { UpdatedValue } from './updated-value';
 import { MatchScore } from './match-score';
 import { matchesPollInterval } from './polling';
 import './matches.css';
-
 export function LiveBadge({ count }: { count?: number }) {
   return (
     <span className="live-badge">
-      <span aria-hidden="true" />
+      <StatusDot tone="live" />
       <UpdatedValue value={count != null ? `${count} en direct` : 'En direct'} />
     </span>
   );
@@ -92,8 +95,12 @@ export function MatchesPage({
     }
   }
   const dataPending = query.isPending || catalogLoading || reconcilingCatalog;
-  const [now, setNow] = useState(() => Date.now());
-  const today = dayKey(new Date(now));
+  const today = useClockText((now) => dayKey(new Date(now)));
+  const retrySeconds = useClockText((now) =>
+    query.error instanceof HttpError && query.error.retryAt > now
+      ? String(Math.ceil((query.error.retryAt - now) / 1000))
+      : '',
+  );
   const [league, setLeague] = useState('all');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<MatchFilter>('all');
@@ -116,10 +123,6 @@ export function MatchesPage({
     return () => observer.disconnect();
   }, [loading]);
   const selectedButton = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
   useEffect(() => {
     if (day && day !== selectedDay) onDay(selectedDay);
   }, [day, selectedDay, onDay]);
@@ -162,8 +165,8 @@ export function MatchesPage({
     visibleError && query.data && !invalid && !accessError
       ? matchesPollInterval(false, visibleError) === false
         ? 'Actualisation interrompue. Les dernières données restent affichées ; réessayez depuis la liste.'
-        : visibleError instanceof HttpError && visibleError.retryAt > now
-          ? `Actualisation en attente (${Math.ceil((visibleError.retryAt - now) / 1000)} s). Les dernières données restent affichées.`
+        : retrySeconds
+          ? `Actualisation en attente (${retrySeconds} s). Les dernières données restent affichées.`
           : 'Actualisation momentanément indisponible. Les dernières données restent affichées ; reprise automatique.'
       : null;
   if ((visibleError && !refreshError) || invalid)
@@ -228,7 +231,7 @@ export function MatchesPage({
         <div className="calendar-controls">
           <div className="calendar-heading">
             <h2>{dayLabel(selectedDay)}</h2>
-            <p>Heure de Paris · J−7 à J+7</p>
+            <p>Heure de Paris</p>
           </div>
           <div className="calendar-actions">
             <Button
@@ -377,11 +380,11 @@ export function MatchesPage({
             {(groups.length
               ? groups.map((g) => ({
                   id: g.competition.id,
-                  rows: opened.includes(g.competition.id) ? g.matches.length : 0,
+                  rows: opened.includes(g.competition.id) ? g.matches : [],
                 }))
               : [
-                  { id: 'loading', rows: 0 },
-                  { id: 'loading-2', rows: 0 },
+                  { id: 'loading', rows: [] },
+                  { id: 'loading-2', rows: [] },
                 ]
             ).map((group) => (
               <div key={group.id} className="league-accordion" aria-hidden="true">
@@ -393,13 +396,19 @@ export function MatchesPage({
                   </span>
                   <span className="league-timing skeleton league-loading-time" />
                 </div>
-                {Array.from({ length: group.rows }, (_, i) => (
-                  <div className="fixture-skeleton" key={i}>
-                    <span className="skeleton" />
-                    <span className="skeleton" />
-                    <span className="skeleton" />
+                {group.rows.length > 0 && (
+                  <div className="league-matches">
+                    {group.rows.map((match) => (
+                      <div className="fixture-item" key={match.id}>
+                        <div className="fixture-skeleton">
+                          <span className="skeleton" />
+                          <span className="skeleton" />
+                          <span className="skeleton" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             ))}
           </div>
@@ -472,7 +481,7 @@ export function MatchesPage({
                           <LiveBadge count={summary.live} />
                         ) : upcoming ? (
                           <span className="match-countdown">
-                            {countdown(upcoming.startsAt, now)}
+                            <Countdown startsAt={upcoming.startsAt} />
                           </span>
                         ) : null}
                       </span>
@@ -481,13 +490,11 @@ export function MatchesPage({
                   </Accordion.Header>
                   <Accordion.Content className="league-content">
                     <div className="league-matches">
-                      {rows.map((match, index) => (
+                      {rows.map((match) => (
                         <Fixture
                           key={match.id}
                           match={match}
                           catalog={catalog}
-                          now={now}
-                          separator={index > 0 && rows[index - 1]!.status !== match.status}
                           onSelect={() => {
                             setSelected(match);
                             setDetailOpen(true);
@@ -506,7 +513,6 @@ export function MatchesPage({
         <MatchDetail
           match={items.find((m) => m.id === selected.id) ?? selected}
           catalog={catalog}
-          now={now}
           open={detailOpen}
           refreshError={refreshError}
           onClose={() => setDetailOpen(false)}
@@ -515,18 +521,13 @@ export function MatchesPage({
     </div>
   );
 }
-
 function Fixture({
   match,
   catalog,
-  now,
-  separator,
   onSelect,
 }: {
   match: EsportMatch;
   catalog: Catalog;
-  now: number;
-  separator: boolean;
   onSelect: () => void;
 }) {
   const home = catalog.teams.find((t) => t.id === match.homeId)!;
@@ -542,62 +543,75 @@ function Fixture({
         ? `${seriesScore(match, home.id)} : ${seriesScore(match, away.id)}`
         : '—';
   return (
-    <button
-      type="button"
-      className={clsx(
-        'fixture-row',
-        separator && 'fixture-section-start',
-        match.status === 'live' && 'fixture-live',
-      )}
-      onClick={onSelect}
-      aria-label={`${home.name} contre ${away.name}, ${match.status === 'live' ? 'en direct' : time(match.startsAt)}, ${score}${winnerId ? `, victoire ${winnerId === home.id ? home.name : away.name}` : ''}, voir le match`}
-    >
-      <span className="fixture-time">
-        <time dateTime={match.startsAt}>
-          <UpdatedValue value={time(match.startsAt)} />
-        </time>
-        <small>
-          <UpdatedValue value={match.format ?? 'Format inconnu'} />
-        </small>
-      </span>
-      <span className={clsx('fixture-team home', winnerId === home.id && 'is-winner')}>
-        <span className="fixture-team-copy">
-          <UpdatedValue value={home.name} />
+    <div className="fixture-item">
+      <button
+        type="button"
+        className={clsx('fixture-row', match.status === 'live' && 'fixture-live')}
+        onClick={onSelect}
+        aria-label={`${home.name} contre ${away.name}, ${match.status === 'live' ? 'en direct' : time(match.startsAt)}, ${score}${winnerId ? `, victoire ${winnerId === home.id ? home.name : away.name}` : ''}${match.oddsMarkets?.length ? ', cotes consultables dans le détail' : ''}, voir le match`}
+      >
+        <span className="fixture-time">
+          <time dateTime={match.startsAt}>
+            <UpdatedValue value={time(match.startsAt)} />
+          </time>
+          <small>
+            <UpdatedValue value={match.format ?? 'Format inconnu'} />
+          </small>
         </span>
-        <FixtureTeamMark team={home} winnerId={winnerId} />
-      </span>
-      <span className={clsx('fixture-score', match.status === 'scheduled' && 'fixture-vs')}>
-        <MatchScore match={match} fallback={match.status === 'scheduled' ? 'vs' : '—'} />
-      </span>
-      <span className={clsx('fixture-team away', winnerId === away.id && 'is-winner')}>
-        <FixtureTeamMark team={away} winnerId={winnerId} />
-        <span className="fixture-team-copy">
-          <UpdatedValue value={away.name} />
+        <span className={clsx('fixture-team home', winnerId === home.id && 'is-winner')}>
+          <span className="fixture-team-copy">
+            <UpdatedValue value={home.name} />
+          </span>
+          <FixtureTeamMark team={home} winnerId={winnerId} />
         </span>
-      </span>
-      <span className="fixture-status">
-        <UpdatedValue value={`${match.status}:${liveMap?.number ?? ''}`}>
-          {match.status === 'live' ? (
-            <>
-              <LiveBadge />
-              {liveMap && <span>Carte {liveMap.number}</span>}
-            </>
-          ) : match.status === 'finished' ? (
-            <span>Terminé</span>
-          ) : match.status === 'cancelled' ? (
-            <span>Annulé</span>
-          ) : match.status === 'postponed' ? (
-            <span>Reporté / interrompu</span>
-          ) : (
-            <span>{countdown(match.startsAt, now)}</span>
+        <span className={clsx('fixture-score', match.status === 'scheduled' && 'fixture-vs')}>
+          <MatchScore match={match} fallback={match.status === 'scheduled' ? 'vs' : '—'} />
+        </span>
+        <span className={clsx('fixture-team away', winnerId === away.id && 'is-winner')}>
+          <FixtureTeamMark team={away} winnerId={winnerId} />
+          <span className="fixture-team-copy">
+            <UpdatedValue value={away.name} />
+          </span>
+        </span>
+        <span className="fixture-status">
+          <UpdatedValue value={`${match.status}:${liveMap?.number ?? ''}`}>
+            {match.status === 'live' ? (
+              <span
+                className="fixture-live-stack"
+                role="img"
+                aria-label={`En direct${liveMap ? `, carte ${liveMap.number}` : ''}`}
+              >
+                <StatusDot tone="live" />
+                {liveMap && <span>Carte {liveMap.number}</span>}
+              </span>
+            ) : match.status === 'finished' ? (
+              <span>Terminé</span>
+            ) : match.status === 'cancelled' ? (
+              <span>Annulé</span>
+            ) : match.status === 'postponed' ? (
+              <span>Reporté / interrompu</span>
+            ) : (
+              <span>
+                <Countdown startsAt={match.startsAt} />
+              </span>
+            )}
+          </UpdatedValue>
+          {!!match.oddsMarkets?.length && (
+            <span
+              className="fixture-odds-indicator"
+              role="img"
+              aria-label="Cotes Stake consultables dans le détail"
+              title="Cotes Stake consultables dans le détail"
+            >
+              <CirclePercent size={15} aria-hidden="true" />
+            </span>
           )}
-        </UpdatedValue>
-      </span>
-      <ChevronRight size={17} className="fixture-arrow" aria-hidden="true" />
-    </button>
+        </span>
+        <ChevronRight size={17} className="fixture-arrow" aria-hidden="true" />
+      </button>
+    </div>
   );
 }
-
 function FixtureTeamMark({
   team,
   winnerId,

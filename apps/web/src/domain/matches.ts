@@ -43,6 +43,45 @@ const banSchema = z
     (ban) => ban.champion !== null || ban.championImage.length > 0,
     'Un ban doit être sourcé.',
   );
+const oddsSelectionSchema = z
+  .object({
+    teamId: z.string().min(1),
+    odds: z.number().gt(1).nullable(),
+    suspended: z.boolean(),
+    observedAt: z.iso.datetime({ offset: true }),
+    probability: z.number().gt(0).lt(1).nullable(),
+    result: z.enum(['pending', 'won', 'lost', 'void']),
+  })
+  .refine((selection) => selection.suspended === (selection.odds === null), {
+    message: 'Une cote suspendue doit rester nulle.',
+  })
+  .refine((selection) => !selection.suspended || selection.probability === null, {
+    message: 'Une sélection suspendue ne peut pas afficher de value.',
+  });
+const oddsMarketSchema = z
+  .object({
+    kind: z.enum(['match_winner', 'map_winner']),
+    phase: z.enum(['prematch', 'live']),
+    historical: z.boolean(),
+    mapNumber: z.number().int().min(1).max(5).nullable(),
+    observedAt: z.iso.datetime({ offset: true }),
+    selections: z.array(oddsSelectionSchema).length(2),
+  })
+  .refine(
+    (market) =>
+      (market.kind === 'match_winner' && market.mapNumber === null) ||
+      (market.kind === 'map_winner' && market.mapNumber !== null),
+    { message: 'Le numéro de carte doit correspondre au marché.' },
+  )
+  .refine((market) => new Set(market.selections.map((selection) => selection.teamId)).size === 2, {
+    message: 'Un marché doit correspondre aux deux équipes distinctes.',
+  })
+  .refine(
+    (market) => !market.historical || market.selections.every((pick) => pick.probability === null),
+    {
+      message: 'Une cote historique ne porte pas de value actuelle.',
+    },
+  );
 const mapSchema = z
   .object({
     number: z.number().int().min(1).max(5),
@@ -92,6 +131,7 @@ export const matchSchema = z
     currentScore: z.object({ home: count, away: count }).nullable().optional(),
     seriesScore: z.object({ home: count, away: count }).nullable().optional(),
     maps: z.array(mapSchema),
+    oddsMarkets: z.array(oddsMarketSchema).optional(),
   })
   .superRefine((match, ctx) => {
     if (
@@ -148,6 +188,23 @@ export const matchSchema = z
       )
     )
       ctx.addIssue({ code: 'custom', message: 'Équipe de ban inconnue.' });
+    if (
+      match.oddsMarkets?.some((market) =>
+        market.selections.some(
+          (selection) => ![match.homeId, match.awayId].includes(selection.teamId),
+        ),
+      )
+    )
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Une cote référence une équipe étrangère au match.',
+      });
+    const oddsKeys =
+      match.oddsMarkets?.map(
+        (market) => `${market.kind}:${market.mapNumber ?? ''}:${market.phase}`,
+      ) ?? [];
+    if (new Set(oddsKeys).size !== oddsKeys.length)
+      ctx.addIssue({ code: 'custom', message: 'Un marché ne peut avoir deux relevés par phase.' });
   });
 export const matchesSchema = z
   .object({ generatedAt: z.iso.datetime({ offset: true }), items: z.array(matchSchema) })

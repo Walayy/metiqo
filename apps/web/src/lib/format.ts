@@ -16,6 +16,14 @@ export const scheduledDate = (value: string, timeZone = 'Europe/Paris') =>
     minute: '2-digit',
     timeZone,
   }).format(new Date(value));
+export const scheduledShortDate = (value: string, timeZone = 'Europe/Paris') =>
+  new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone,
+  }).format(new Date(value));
 export const accountDate = (value: string) =>
   new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',

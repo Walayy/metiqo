@@ -1,0 +1,519 @@
+{
+  "exportedAt": "2026-09-22T21:25:52.830464+00:00",
+  "scope": "First application prematch cycle; public offering observed at the listed timestamps, not permanent global coverage",
+  "run": {
+    "id": "ff430017-460f-4fa7-b10d-072f98a84838",
+    "status": "succeeded",
+    "started_at": "2026-09-22 21:17:36.035212+00:00",
+    "finished_at": "2026-09-22 21:22:36.837331+00:00",
+    "details": {
+      "mode": "prematch",
+      "games": [
+        "league-of-legends"
+      ],
+      "quotes": 702,
+      "markets": 227,
+      "complete": true,
+      "refusals": [],
+      "snapshots": 12,
+      "selections": 622,
+      "eventsFailed": 0,
+      "eventsScanned": 13,
+      "eventsStopped": 1,
+      "requestEvents": 11840,
+      "eventsCollected": 12
+    }
+  },
+  "events": [
+    {
+      "source_id": "836114",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/836114-loud-los",
+      "competition_name": "CBLOL 2026 Split 2 Playoffs",
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5",
+      "participants": [
+        {
+          "name": "LOUD",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/loud.png",
+          "source_id": null
+        },
+        {
+          "name": "LOS",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/los.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-27 16:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 152
+    },
+    {
+      "source_id": "842135",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842135-cupid-esports-fuego",
+      "competition_name": "LCS 2027 Promotion",
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10",
+      "participants": [
+        {
+          "name": "Cupid Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cupid.png",
+          "source_id": null
+        },
+        {
+          "name": "Fuego",
+          "position": 1,
+          "image_url": null,
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-10-06 20:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 22
+    },
+    {
+      "source_id": "842137",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842137-maryville-university-zeu5-esports",
+      "competition_name": "LCS 2027 Promotion",
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10",
+      "participants": [
+        {
+          "name": "Maryville University",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Zeu5 Esports",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/zeu5.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-10-05 20:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 22
+    },
+    {
+      "source_id": "842149",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842149-estral-esports-9z-team",
+      "competition_name": "CBLOL 2027 Promotion",
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10",
+      "participants": [
+        {
+          "name": "Estral Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/estral.png",
+          "source_id": null
+        },
+        {
+          "name": "9z Team",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/9z_team.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-29 21:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 22
+    },
+    {
+      "source_id": "842405",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842405-kabum-ilha-das-lendas-golden-lions",
+      "competition_name": "CBLOL 2027 Promotion",
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10",
+      "participants": [
+        {
+          "name": "KaBuM! Ilha das Lendas",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/kab_x_idl.png",
+          "source_id": null
+        },
+        {
+          "name": "Golden Lions",
+          "position": 1,
+          "image_url": null,
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-28 21:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 20
+    },
+    {
+      "source_id": "845833",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "competition_name": "LCS 2026 Summer Playoffs",
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4",
+      "participants": [
+        {
+          "name": "FlyQuest",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/flyquest.png",
+          "source_id": null
+        },
+        {
+          "name": "Shopify Rebellion",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/sr_1685574964456.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-25 20:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 152
+    },
+    {
+      "source_id": "845836",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845836-cloud9-team-liquid",
+      "competition_name": "LCS 2026 Summer Playoffs",
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4",
+      "participants": [
+        {
+          "name": "Cloud9",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cloud9.png",
+          "source_id": null
+        },
+        {
+          "name": "Team Liquid",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/team-liquid.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-27 20:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 152
+    },
+    {
+      "source_id": "845961",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/845961-furia-esports-red-canids",
+      "competition_name": "CBLOL 2026 Split 2 Playoffs",
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5",
+      "participants": [
+        {
+          "name": "FURIA Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/furia-esports.png",
+          "source_id": null
+        },
+        {
+          "name": "RED Canids",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/red-canids.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-26 16:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 152
+    },
+    {
+      "source_id": "847754",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847754-fennel-dplus-kia-challengers",
+      "competition_name": "2026 World Star Challengers Invitational",
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "participants": [
+        {
+          "name": "FENNEL",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Dplus KIA Challengers",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/dplus_kiac.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-23 08:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 2
+    },
+    {
+      "source_id": "847755",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847755-cupid-esports-keyd-stars-academy",
+      "competition_name": "2026 World Star Challengers Invitational",
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "participants": [
+        {
+          "name": "Cupid Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cupid.png",
+          "source_id": null
+        },
+        {
+          "name": "Keyd Academy",
+          "position": 1,
+          "image_url": null,
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-23 09:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 2
+    },
+    {
+      "source_id": "847756",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847756-keyd-stars-academy-dplus-kia-challengers",
+      "competition_name": "2026 World Star Challengers Invitational",
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "participants": [
+        {
+          "name": "Keyd Academy",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Dplus KIA Challengers",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/dplus_kiac.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-23 12:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 2
+    },
+    {
+      "source_id": "847757",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847757-fennel-cupid-esports",
+      "competition_name": "2026 World Star Challengers Invitational",
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "participants": [
+        {
+          "name": "FENNEL",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Cupid Esports",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cupid.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-23 13:00:00+00:00",
+      "status": "scheduled",
+      "stop_reason": null,
+      "snapshots": 1,
+      "quote_observations": 2
+    },
+    {
+      "source_id": "848212",
+      "source_url": "https://stake.bet/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9/848212-humzh-lourlo",
+      "competition_name": "Tyler1 All Stars Season 2026 Week 14",
+      "competition_key": "/fr/sports/league-of-legends/international-1/tyler1-all-stars-season-2026-week-14-t9",
+      "participants": [
+        {
+          "name": "humzh",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/humzh.png",
+          "source_id": null
+        },
+        {
+          "name": "Lourlo",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/lourlo.png",
+          "source_id": null
+        }
+      ],
+      "starts_at": "2026-09-22 21:18:00+00:00",
+      "status": "live",
+      "stop_reason": "live",
+      "snapshots": 0,
+      "quote_observations": 0
+    }
+  ],
+  "databaseValidation": {
+    "invalid_prematch_timestamps": 0,
+    "total_quotes": 702,
+    "numeric_lines": 160,
+    "ordinals": 120,
+    "canonicalLinksCreated": 0
+  },
+  "schedule": {
+    "id": "stake-markets",
+    "cron": "*/20 * * * *",
+    "timezone": "Europe/Paris",
+    "enabled": true,
+    "next_run_at": "2026-09-22 21:40:00+00:00"
+  },
+  "snapshotProofs": [
+    {
+      "source_id": "836114",
+      "payload_sha256": "4aa81d1502d91052a14cfcedae0f1249af75c28be1fc9ed3caef1e6a6c07ea9e",
+      "started_at": "2026-09-22 21:17:59.476000+00:00",
+      "finished_at": "2026-09-22 21:18:24.519338+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:17:59.476000+00:00",
+        "tab-map-1": "2026-09-22T21:18:04.526000+00:00",
+        "tab-map-2": "2026-09-22T21:18:09.454000+00:00",
+        "tab-map-3": "2026-09-22T21:18:14.448000+00:00",
+        "tab-map-4": "2026-09-22T21:18:19.477000+00:00",
+        "tab-map-5": "2026-09-22T21:18:24.486000+00:00"
+      }
+    },
+    {
+      "source_id": "842135",
+      "payload_sha256": "cd88799322d26b5c1502c036528878e9ea239aa3194d6ea8256c9bbc59cd54d5",
+      "started_at": "2026-09-22 21:18:31.628000+00:00",
+      "finished_at": "2026-09-22 21:18:54.478956+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:18:31.628000+00:00",
+        "tab-map-1": "2026-09-22T21:18:34.524000+00:00",
+        "tab-map-2": "2026-09-22T21:18:39.444000+00:00",
+        "tab-map-3": "2026-09-22T21:18:44.461000+00:00",
+        "tab-map-4": "2026-09-22T21:18:49.480000+00:00",
+        "tab-map-5": "2026-09-22T21:18:54.469000+00:00"
+      }
+    },
+    {
+      "source_id": "842137",
+      "payload_sha256": "d1baf69332530fc8cf948fa15fe73b605bf9bd50c145f2d54a08e29718973f43",
+      "started_at": "2026-09-22 21:19:01.691000+00:00",
+      "finished_at": "2026-09-22 21:19:24.516831+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:19:01.691000+00:00",
+        "tab-map-1": "2026-09-22T21:19:04.589000+00:00",
+        "tab-map-2": "2026-09-22T21:19:09.480000+00:00",
+        "tab-map-3": "2026-09-22T21:19:14.471000+00:00",
+        "tab-map-4": "2026-09-22T21:19:19.515000+00:00",
+        "tab-map-5": "2026-09-22T21:19:24.508000+00:00"
+      }
+    },
+    {
+      "source_id": "842149",
+      "payload_sha256": "4acbb068852c2a8f1d9fa664254927cc5ae7d8f006969339da930df6dec8d186",
+      "started_at": "2026-09-22 21:19:31.676000+00:00",
+      "finished_at": "2026-09-22 21:19:54.581187+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:19:31.676000+00:00",
+        "tab-map-1": "2026-09-22T21:19:34.619000+00:00",
+        "tab-map-2": "2026-09-22T21:19:39.525000+00:00",
+        "tab-map-3": "2026-09-22T21:19:44.553000+00:00",
+        "tab-map-4": "2026-09-22T21:19:49.548000+00:00",
+        "tab-map-5": "2026-09-22T21:19:54.573000+00:00"
+      }
+    },
+    {
+      "source_id": "842405",
+      "payload_sha256": "050c533113d4fd790ef639c9994a601ea45f90075139f37a6890f5133b7baa1c",
+      "started_at": "2026-09-22 21:20:01.780000+00:00",
+      "finished_at": "2026-09-22 21:20:24.628687+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:20:01.780000+00:00",
+        "tab-map-1": "2026-09-22T21:20:04.725000+00:00",
+        "tab-map-2": "2026-09-22T21:20:09.615000+00:00",
+        "tab-map-3": "2026-09-22T21:20:14.607000+00:00",
+        "tab-map-4": "2026-09-22T21:20:19.658000+00:00",
+        "tab-map-5": "2026-09-22T21:20:24.621000+00:00"
+      }
+    },
+    {
+      "source_id": "845833",
+      "payload_sha256": "aec88f4244ce6619dac58e1b3eda0b3a0333deaec22f1ce8f989546865220c0a",
+      "started_at": "2026-09-22 21:20:34.754000+00:00",
+      "finished_at": "2026-09-22 21:20:59.760167+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:20:34.754000+00:00",
+        "tab-map-1": "2026-09-22T21:20:39.769000+00:00",
+        "tab-map-2": "2026-09-22T21:20:44.701000+00:00",
+        "tab-map-3": "2026-09-22T21:20:49.711000+00:00",
+        "tab-map-4": "2026-09-22T21:20:54.703000+00:00",
+        "tab-map-5": "2026-09-22T21:20:59.719000+00:00"
+      }
+    },
+    {
+      "source_id": "845836",
+      "payload_sha256": "54e813ac6d3cb06d6b1da421335e2a45a08d4f4533a06f47581d999797f92de0",
+      "started_at": "2026-09-22 21:21:09.936000+00:00",
+      "finished_at": "2026-09-22 21:21:34.848667+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:21:09.936000+00:00",
+        "tab-map-1": "2026-09-22T21:21:14.929000+00:00",
+        "tab-map-2": "2026-09-22T21:21:19.839000+00:00",
+        "tab-map-3": "2026-09-22T21:21:24.806000+00:00",
+        "tab-map-4": "2026-09-22T21:21:29.808000+00:00",
+        "tab-map-5": "2026-09-22T21:21:34.817000+00:00"
+      }
+    },
+    {
+      "source_id": "845961",
+      "payload_sha256": "619bdf47b6ebf4c6f856f9fc8311c8de7ef6ded7255f4eb1ca7e2a5273e614b7",
+      "started_at": "2026-09-22 21:21:44.908000+00:00",
+      "finished_at": "2026-09-22 21:22:09.923153+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:21:44.908000+00:00",
+        "tab-map-1": "2026-09-22T21:21:49.994000+00:00",
+        "tab-map-2": "2026-09-22T21:21:54.886000+00:00",
+        "tab-map-3": "2026-09-22T21:21:59.886000+00:00",
+        "tab-map-4": "2026-09-22T21:22:04.893000+00:00",
+        "tab-map-5": "2026-09-22T21:22:09.889000+00:00"
+      }
+    },
+    {
+      "source_id": "847754",
+      "payload_sha256": "333e331c8d40edfd1a6a03e402385cad1417d33c04b2f7875628f8f9444d7948",
+      "started_at": "2026-09-22 21:22:16.841000+00:00",
+      "finished_at": "2026-09-22 21:22:16.848238+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:22:16.841000+00:00"
+      }
+    },
+    {
+      "source_id": "847755",
+      "payload_sha256": "0a5a9b8781270f101913f5c7fee4e2e82795bd28912a14d44b7e929d1b5b66ab",
+      "started_at": "2026-09-22 21:22:23.952000+00:00",
+      "finished_at": "2026-09-22 21:22:23.960782+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:22:23.952000+00:00"
+      }
+    },
+    {
+      "source_id": "847756",
+      "payload_sha256": "6f07bfbba7554067aad7b4d4bfb8cb0d835bade34ba7473eaa51061ade5147e7",
+      "started_at": "2026-09-22 21:22:28.685000+00:00",
+      "finished_at": "2026-09-22 21:22:28.692226+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:22:28.685000+00:00"
+      }
+    },
+    {
+      "source_id": "847757",
+      "payload_sha256": "0b442e3e1d5c692150c4c7192f097c1a154a8e83e1288613bcf1258e3ff8b609",
+      "started_at": "2026-09-22 21:22:33.556000+00:00",
+      "finished_at": "2026-09-22 21:22:33.562675+00:00",
+      "capture_times": {
+        "tab-main": "2026-09-22T21:22:33.556000+00:00"
+      }
+    }
+  ],
+  "browser": "Patchright 1.63.0; installed headed Chrome; dedicated persistent profile; native viewport"
+}

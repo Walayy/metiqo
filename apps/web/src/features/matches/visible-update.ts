@@ -56,7 +56,7 @@ export function highlightObservation(element: HTMLElement): (() => void) | undef
   const cleanup = () => {
     delete element.dataset.updated;
     animation.cancel();
-    view.removeEventListener('scroll', check, true);
+    view.removeEventListener('scroll', cleanup, true);
     view.removeEventListener('resize', check);
     view.removeEventListener('pointerdown', cleanup, true);
     view.removeEventListener('keydown', cleanup, true);
@@ -66,7 +66,9 @@ export function highlightObservation(element: HTMLElement): (() => void) | undef
     if (!isObservationVisible(element)) cleanup();
   };
   animation.onfinish = cleanup;
-  view.addEventListener('scroll', check, true);
+  // The reader's scroll ends the transient highlight. No per-value geometry
+  // walk or hit-testing on the scroll path, and nothing replays when returning.
+  view.addEventListener('scroll', cleanup, { capture: true, passive: true });
   view.addEventListener('resize', check);
   view.addEventListener('pointerdown', cleanup, true);
   view.addEventListener('keydown', cleanup, true);

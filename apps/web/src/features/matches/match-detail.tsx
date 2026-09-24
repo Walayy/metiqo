@@ -1,3 +1,4 @@
+import { Countdown, ObservationAge } from './time-label';
 import { useId, useState } from 'react';
 import { motion } from 'motion/react';
 import { Tabs, Tooltip } from 'radix-ui';
@@ -15,17 +16,17 @@ import {
 } from 'lucide-react';
 import type { Catalog } from '@/domain/schemas';
 import type { EsportMatch, MapSide, MatchMap } from '@/domain/matches';
-import { countdown, matchWinnerId, seriesScore, sideKills, sideGold } from '@/domain/matches';
+import { matchWinnerId, seriesScore, sideKills, sideGold } from '@/domain/matches';
 import { championAsset, championName } from '@/domain/champions';
 import { dateTime, decimal, scheduledDate } from '@/lib/format';
 import { Modal } from '@/components/ui/modal';
 import { Logo } from '@/components/ui/logo';
 import { SelectionIndicator } from '@/components/ui/selection-indicator';
-import { formatDuration, goldDifference, observationAge } from './presentation';
+import { formatDuration, goldDifference } from './presentation';
 import { UpdatedValue } from './updated-value';
 import { ObservationScope } from './observation-scope';
 import { MatchScore } from './match-score';
-
+import { MatchOdds } from './match-odds';
 const roleMeta = {
   TOP: { label: 'Top', icon: '/roles/top.svg' },
   JGL: { label: 'Jungle', icon: '/roles/jungle.svg' },
@@ -34,7 +35,6 @@ const roleMeta = {
   SUP: { label: 'Support', icon: '/roles/utility.svg' },
 } as const;
 const roleOrder = Object.keys(roleMeta);
-
 const objectiveMeta = [
   { key: 'kills', label: 'Éliminations', icon: Swords, className: 'kills' },
   { key: 'gold', label: 'Or', icon: Coins, className: 'gold' },
@@ -45,9 +45,7 @@ const objectiveMeta = [
   { key: 'grubs', label: 'Larves', icon: Bug, className: 'grubs' },
   { key: 'inhibitors', label: 'Inhibiteurs', icon: Shield, className: 'inhibitors' },
 ] as const;
-
 type ObjectiveKey = (typeof objectiveMeta)[number]['key'];
-
 function objectiveValues(side: MapSide | undefined): Record<ObjectiveKey, number | string> {
   const gold = side ? sideGold(side) : null;
   return {
@@ -61,7 +59,6 @@ function objectiveValues(side: MapSide | undefined): Record<ObjectiveKey, number
     inhibitors: side?.inhibitors ?? '—',
   };
 }
-
 function ObjectiveComparison({
   active,
   home,
@@ -142,7 +139,6 @@ function ObjectiveComparison({
     </div>
   );
 }
-
 function TeamStats({ side, catalog, role }: { side: MapSide; catalog: Catalog; role: string }) {
   const team = catalog.teams.find((t) => t.id === side.teamId);
   if (!team) return null;
@@ -240,7 +236,6 @@ function TeamStats({ side, catalog, role }: { side: MapSide; catalog: Catalog; r
     </section>
   );
 }
-
 function TeamEmblem({ team, winner }: { team: Catalog['teams'][number]; winner: boolean }) {
   return (
     <span className="team-emblem">
@@ -273,7 +268,6 @@ function TeamEmblem({ team, winner }: { team: Catalog['teams'][number]; winner: 
     </span>
   );
 }
-
 function SideRail({ side, team }: { side: 'blue' | 'red' | null | undefined; team: string }) {
   const label = side ? `Côté ${side === 'blue' ? 'bleu' : 'rouge'}` : 'Camp non renseigné';
   return (
@@ -298,7 +292,6 @@ function SideRail({ side, team }: { side: 'blue' | 'red' | null | undefined; tea
     </Tooltip.Root>
   );
 }
-
 function MapTeamSummary({
   active,
   team,
@@ -362,20 +355,17 @@ function MapTeamSummary({
     </section>
   );
 }
-
 export function MatchDetail({
   match,
   catalog,
   open,
   onClose,
-  now,
   refreshError,
 }: {
   match: EsportMatch;
   catalog: Catalog;
   open: boolean;
   onClose: () => void;
-  now: number;
   refreshError?: string | null;
 }) {
   const home = catalog.teams.find((t) => t.id === match.homeId)!;
@@ -402,20 +392,12 @@ export function MatchDetail({
         </p>
       )}
       <Tooltip.Provider delayDuration={160} skipDelayDuration={100}>
-        <MatchContent key={match.id} match={match} catalog={catalog} now={now} />
+        <MatchContent key={match.id} match={match} catalog={catalog} />
       </Tooltip.Provider>
     </Modal>
   );
 }
-function MatchContent({
-  match,
-  catalog,
-  now,
-}: {
-  match: EsportMatch;
-  catalog: Catalog;
-  now: number;
-}) {
+function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog }) {
   const mapSelectionId = useId();
   const roleSelectionId = useId();
   const mapHeadingId = useId();
@@ -464,15 +446,17 @@ function MatchContent({
               </span>
             ) : (
               <span>
-                {match.status === 'finished'
-                  ? 'Terminé'
-                  : match.status === 'cancelled'
-                    ? 'Annulé'
-                    : match.status === 'postponed'
-                      ? 'Reporté / interrompu'
-                      : match.currentScore && !hasSeriesScore
-                        ? 'Score courant'
-                        : countdown(match.startsAt, now)}
+                {match.status === 'finished' ? (
+                  'Terminé'
+                ) : match.status === 'cancelled' ? (
+                  'Annulé'
+                ) : match.status === 'postponed' ? (
+                  'Reporté / interrompu'
+                ) : match.currentScore && !hasSeriesScore ? (
+                  'Score courant'
+                ) : (
+                  <Countdown startsAt={match.startsAt} />
+                )}
               </span>
             )}
           </UpdatedValue>
@@ -494,10 +478,11 @@ function MatchContent({
             dateTime={match.updatedAt}
             title={`${scheduledDate(match.updatedAt)} · Heure de Paris`}
           >
-            Rencontre relevée {observationAge(match.updatedAt, now)}
+            Rencontre relevée <ObservationAge observedAt={match.updatedAt} />
           </time>
         )}
       </div>
+      <MatchOdds match={match} home={home} away={away} />
       <Tabs.Root value={active ? String(active.number) : ''} onValueChange={setChoice}>
         {showMapTabs && (
           <Tabs.List className="map-tabs" aria-label="Cartes du match">
@@ -569,7 +554,7 @@ function MatchContent({
                       dateTime={active.updatedAt}
                       title={`${scheduledDate(active.updatedAt)} · Heure de Paris`}
                     >
-                      Carte relevée {observationAge(active.updatedAt, now)}
+                      Carte relevée <ObservationAge observedAt={active.updatedAt} />
                     </time>
                   ) : (
                     'Heure du relevé de carte non publiée'

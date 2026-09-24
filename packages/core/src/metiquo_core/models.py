@@ -229,6 +229,7 @@ class EsportMatch(Base):
     format: Mapped[str | None]
     __table_args__ = (
         UniqueConstraint("source", "source_id"),
+        Index("ix_matches_starts_at", "starts_at"),
         CheckConstraint("home_id <> away_id"),
         CheckConstraint("format IN ('BO1', 'BO3', 'BO5')"),
     )
@@ -299,3 +300,231 @@ class ProbabilityEstimate(Base):
         CheckConstraint("probability > 0 AND probability < 1"),
         CheckConstraint("valid_until > estimated_at"),
     )
+
+
+class BookmakerEvent(Base):
+    """Provider identity, independent of canonical esports matches and their fixtures."""
+
+    __tablename__ = "bookmaker_events"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    bookmaker: Mapped[str]
+    game: Mapped[str]
+    source_id: Mapped[str]
+    source_url: Mapped[str]
+    competition_key: Mapped[str]
+    competition_name: Mapped[str | None]
+    category_name: Mapped[str | None]
+    participants: Mapped[list[dict[str, object]]] = mapped_column(JSONB)
+    participant_keys: Mapped[list[str]] = mapped_column(JSONB)
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str]
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    stopped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    stop_reason: Mapped[str | None]
+    metadata_raw: Mapped[dict[str, object]] = mapped_column(JSONB)
+    __table_args__ = (
+        UniqueConstraint("bookmaker", "game", "source_id"),
+        CheckConstraint("bookmaker = 'stake'"),
+        CheckConstraint("status IN ('scheduled', 'live', 'closed', 'unknown')"),
+        CheckConstraint("(stopped_at IS NULL) = (stop_reason IS NULL)"),
+        Index("ix_bookmaker_events_matching", "game", "starts_at", "competition_key"),
+        Index("ix_bookmaker_events_participants", "participant_keys", postgresql_using="gin"),
+    )
+
+
+class BookmakerCollectionResumption(Base):
+    """Historical pre-match exclusions lifted when live collection was enabled."""
+
+    __tablename__ = "bookmaker_collection_resumptions"
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"), primary_key=True)
+    previous_stopped_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    previous_reason: Mapped[str]
+    resumed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class BookmakerPayload(Base):
+    """Deduplicated public evidence. No cookies, headers or private browser state."""
+
+    __tablename__ = "bookmaker_payloads"
+    sha256: Mapped[str] = mapped_column(String(64), primary_key=True)
+    parser_version: Mapped[str]
+    document: Mapped[dict[str, object]] = mapped_column(JSONB)
+
+
+class BookmakerSnapshot(Base):
+    """An atomically published traversal with a sourced pre-match or live phase."""
+
+    __tablename__ = "bookmaker_snapshots"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"))
+    run_id: Mapped[UUID] = mapped_column(ForeignKey("ingestion_runs.id"))
+    payload_sha256: Mapped[str] = mapped_column(ForeignKey("bookmaker_payloads.sha256"))
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    scheduled_start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    phase: Mapped[str]
+    capture_times: Mapped[dict[str, str]] = mapped_column(JSONB)
+    __table_args__ = (
+        UniqueConstraint("run_id", "event_id"),
+        CheckConstraint("started_at <= finished_at"),
+        CheckConstraint("phase IN ('prematch', 'live')"),
+        Index("ix_bookmaker_snapshots_event_time", "event_id", "finished_at"),
+    )
+
+
+class BookmakerMarket(Base):
+    __tablename__ = "bookmaker_markets"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"))
+    identity_key: Mapped[str] = mapped_column(String(64))
+    identity_basis: Mapped[str]
+    source_id: Mapped[str | None]
+    label: Mapped[str]
+    family: Mapped[str | None]
+    scope: Mapped[str]
+    period: Mapped[int | None]
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (UniqueConstraint("event_id", "identity_key"),)
+
+
+class BookmakerSelection(Base):
+    __tablename__ = "bookmaker_selections"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    market_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_markets.id"))
+    identity_key: Mapped[str] = mapped_column(String(64))
+    identity_basis: Mapped[str]
+    source_id: Mapped[str | None]
+    label: Mapped[str]
+    accessible_label: Mapped[str | None]
+    column_label: Mapped[str | None]
+    row_label: Mapped[str | None]
+    line: Mapped[Decimal | None] = mapped_column(Numeric(24, 8))
+    line_raw: Mapped[str | None]
+    ordinal: Mapped[int | None]
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        UniqueConstraint("market_id", "identity_key"),
+        CheckConstraint("ordinal IS NULL OR ordinal > 0"),
+    )
+
+
+class BookmakerQuote(Base):
+    """Append-only readings, including unchanged odds and suspension transitions."""
+
+    __tablename__ = "bookmaker_quotes"
+    snapshot_id: Mapped[UUID] = mapped_column(
+        ForeignKey("bookmaker_snapshots.id"), primary_key=True
+    )
+    selection_id: Mapped[UUID] = mapped_column(
+        ForeignKey("bookmaker_selections.id"), primary_key=True
+    )
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    tab: Mapped[str]
+    odds: Mapped[Decimal | None] = mapped_column(Numeric(24, 12))
+    odds_raw: Mapped[str | None]
+    disabled: Mapped[bool]
+    __table_args__ = (
+        CheckConstraint("odds IS NULL OR (odds > 1 AND odds < 1000000000)"),
+        Index("ix_bookmaker_quotes_selection_time", "selection_id", "observed_at"),
+        Index("ix_bookmaker_quotes_time", "observed_at", postgresql_using="brin"),
+    )
+
+
+class BookmakerMatchLink(Base):
+    """Only currently demonstrated links; past decisions remain in the journal."""
+
+    __tablename__ = "bookmaker_match_links"
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"), primary_key=True)
+    match_id: Mapped[UUID] = mapped_column(ForeignKey("matches.id"), index=True)
+    method: Mapped[str]
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB)
+    linked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class BookmakerEventObservation(Base):
+    __tablename__ = "bookmaker_event_observations"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"), index=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    sha256: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB)
+
+
+class MatchIdentityAlias(Base):
+    """Reviewed, scoped provider aliases, never global fuzzy-name substitutions."""
+
+    __tablename__ = "match_identity_aliases"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    provider: Mapped[str]
+    game: Mapped[str]
+    name: Mapped[str]
+    competition_key: Mapped[str]
+    target_provider: Mapped[str]
+    target_id: Mapped[str]
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB)
+    active: Mapped[bool] = mapped_column(default=True)
+    __table_args__ = (CheckConstraint("valid_until > valid_from"),)
+
+
+class BookmakerMatchResolution(Base):
+    __tablename__ = "bookmaker_match_resolutions"
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"), primary_key=True)
+    status: Mapped[str]
+    last_match_id: Mapped[UUID | None] = mapped_column(ForeignKey("matches.id"))
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    sha256: Mapped[str] = mapped_column(String(64))
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB)
+    __table_args__ = (CheckConstraint("status IN ('pending', 'linked', 'ambiguous', 'conflict')"),)
+
+
+class BookmakerMatchDecision(Base):
+    __tablename__ = "bookmaker_match_decisions"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"), index=True)
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    sha256: Mapped[str] = mapped_column(String(64))
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB)
+
+
+class BookmakerSelectionResult(Base):
+    """Current, revisable outcome of a public Stake selection, not a placed bet."""
+
+    __tablename__ = "bookmaker_selection_results"
+    selection_id: Mapped[UUID] = mapped_column(
+        ForeignKey("bookmaker_selections.id"), primary_key=True
+    )
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"), index=True)
+    status: Mapped[str]
+    market_kind: Mapped[str]
+    map_number: Mapped[int | None]
+    picked_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id"))
+    source: Mapped[str | None]
+    source_snapshot_id: Mapped[UUID | None] = mapped_column(ForeignKey("match_snapshots.id"))
+    evidence_sha256: Mapped[str] = mapped_column(String(64))
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB)
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        CheckConstraint("status IN ('pending', 'won', 'lost', 'void')"),
+        CheckConstraint("market_kind IN ('match_winner', 'map_winner')"),
+        CheckConstraint(
+            "(market_kind = 'match_winner' AND map_number IS NULL) OR "
+            "(market_kind = 'map_winner' AND map_number BETWEEN 1 AND 5)"
+        ),
+    )
+
+
+class BookmakerSelectionResultDecision(Base):
+    """Append-only evidence of outcome changes and corrections."""
+
+    __tablename__ = "bookmaker_selection_result_decisions"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    selection_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_selections.id"), index=True)
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str]
+    evidence_sha256: Mapped[str] = mapped_column(String(64))
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB)

@@ -1,0 +1,44 @@
+.status-dot {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  color: var(--accent);
+}
+.status-dot--live {
+  color: var(--live);
+}
+.status-dot--negative {
+  color: var(--field-error);
+}
+.status-dot--muted {
+  color: var(--subtle);
+}
+.status-dot.is-pulsing::after {
+  position: absolute;
+  inset: -3px;
+  content: '';
+  border: 1px solid currentColor;
+  border-radius: inherit;
+  animation: status-halo 2.4s ease-out infinite;
+}
+@keyframes status-halo {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.6);
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-dot.is-pulsing::after {
+    animation: none;
+    opacity: 0.25;
+  }
+}

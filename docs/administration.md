@@ -10,7 +10,7 @@ Toute modification du rôle ou du statut invalide les sessions. Une suspension e
 
 ## Scripts et crons
 
-Les trois identifiants stables sont `lol-catalog`, `oracle-latest`, `oracle-full`. Ils correspondent aux collecteurs existants et à des arguments prédéfinis ; aucune commande shell n’est exécutée depuis du texte fourni par l’utilisateur. Les cron ont cinq champs numériques (listes, plages, pas, astérisques) et utilisent `Europe/Paris` ou `UTC`. Les heures de Paris tiennent compte du changement d’heure ; préférer un horaire éloigné de 02:00–03:00 pour une heure quotidienne sans ambiguïté.
+Les six identifiants stables sont `lol-catalog`, `oracle-latest`, `oracle-full`, `loltv-matches`, `stake-markets` et `settle-selections`. Ils correspondent à des traitements prédéfinis ; aucune commande shell n’est exécutée depuis du texte fourni par l’utilisateur. Les cron ont cinq champs numériques (listes, plages, pas, astérisques) et utilisent `Europe/Paris` ou `UTC`. Les heures de Paris tiennent compte du changement d’heure ; préférer un horaire éloigné de 02:00–03:00 pour une heure quotidienne sans ambiguïté.
 
 `POST /scripts/preview` calcule les trois prochaines dates. `PATCH /scripts/{id}` exige une révision pour éviter qu’un formulaire ancien n’écrase un autre changement. Le changement prend effet immédiatement pour les prochaines échéances. `POST /scripts/{id}/run` répond 202 uniquement après insertion en base et refuse un doublon actif ou un worker indisponible. Ces chemins ont le préfixe `/api/v1/admin`.
 
@@ -18,7 +18,7 @@ Un verrou de planificateur et un index unique partiel empêchent les doubles con
 
 Une pause empêche de nouvelles échéances, mais conserve les jobs déjà demandés ; une reprise calcule la prochaine échéance future. Les périodes manquées pendant une indisponibilité sont regroupées en un seul job par script. Une collecte ne modifie jamais les probabilités/cotes du frontend. L’historique de l’interface couvre les huit dernières demandes Admin ; les exécutions CLI et leurs bilans restent dans les endpoints source.
 
-Le worker unique publie un heartbeat toutes les 20 secondes et vérifie la file toutes les cinq secondes entre les collectes. Après 90 secondes sans heartbeat, l’interface indique son indisponibilité. Les interrupteurs `METIQUO_CATALOG_ENABLED` / `METIQUO_ORACLE_ENABLED` et l’option `--only` sont prioritaires. La mise à l’échelle vers plusieurs workers de périmètres différents nécessitera un heartbeat par instance ; cette version supervise un worker unique.
+Chaque worker publie un heartbeat toutes les 20 secondes et vérifie sa file toutes les cinq secondes. Le worker Docker principal, le worker Stake local et `settlement-worker` ont des identifiants de heartbeat distincts ; après 90 secondes sans heartbeat, l’interface indique l’indisponibilité du script concerné. Les interrupteurs de source et l’option `--only` sont prioritaires. Le résultat des sélections est un traitement local de la base, sans navigateur ni réseau source.
 
 ## Persistance et permissions
 

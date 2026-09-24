@@ -15,15 +15,33 @@ class ScriptDefinition:
     source: str
     command: str
     cron: str
+    family: str
 
 
 SCRIPTS = {
+    "settle-selections": ScriptDefinition(
+        "Résultats des sélections Stake",
+        "Conclut les vainqueurs de match et de carte après 30 minutes de résultat stable.",
+        "settlements",
+        "settle-selections",
+        "* * * * *",
+        "Stake",
+    ),
+    "stake-markets": ScriptDefinition(
+        "Stake · cotes pré-match et direct",
+        "Historise les marchés, cotes, seuils et suspensions avant et pendant les matchs.",
+        "stake",
+        "sync-stake-markets",
+        "*/20 * * * *",
+        "Stake",
+    ),
     "lol-catalog": ScriptDefinition(
         "Catalogue League of Legends",
         "Actualise les ligues, les équipes et leurs logos.",
         "lol-catalog",
         "sync-lol-catalog",
         "0 4 * * *",
+        "LoL",
     ),
     "oracle-latest": ScriptDefinition(
         "Oracle’s Elixir · saison récente",
@@ -31,6 +49,7 @@ SCRIPTS = {
         "oracles-elixir",
         "sync-oracles-elixir --latest",
         "0 */6 * * *",
+        "Oracle’s Elixir",
     ),
     "oracle-full": ScriptDefinition(
         "Oracle’s Elixir · historique complet",
@@ -38,6 +57,7 @@ SCRIPTS = {
         "oracles-elixir",
         "sync-oracles-elixir",
         "0 3 * * 0",
+        "Oracle’s Elixir",
     ),
     "loltv-matches": ScriptDefinition(
         "LoLTV · matchs LoL",
@@ -45,6 +65,7 @@ SCRIPTS = {
         "loltv",
         "sync-loltv-matches",
         "*/1 * * * *",
+        "LoL",
     ),
 }
 

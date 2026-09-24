@@ -46,6 +46,7 @@ from metiquo_api.admin import create_admin_router
 from metiquo_api.auth import create_auth_router
 from metiquo_api.auth_config import AuthSettings
 from metiquo_api.catalog import create_catalog_router
+from metiquo_api.match_odds import match_odds
 
 logger = logging.getLogger(__name__)
 MATCH_FORMATS = {"BO1", "BO3", "BO5"}
@@ -420,6 +421,7 @@ def create_app(
             return snapshot.payload.get(key)
 
         items: list[dict[str, object]] = []
+        statuses: dict[UUID, str] = {}
         for match in rows:
             history = snapshots.get(match.id, [])
             if match.source == "sofascore" and not any(item.source == "loltv" for item in history):
@@ -454,6 +456,7 @@ def create_app(
             status = snapshot.status if snapshot else "scheduled"
             if status not in {"scheduled", "live", "finished", "cancelled", "postponed"}:
                 status = "scheduled"
+            statuses[match.id] = status
             items.append(
                 {
                     "id": str(match.id),
@@ -493,6 +496,15 @@ def create_app(
                     ),
                 }
             )
+        odds_by_match = match_odds(
+            session,
+            rows,
+            statuses=statuses,
+            now=now,
+            max_age_seconds=config.odds_max_age_seconds,
+        )
+        for fixture_item in items:
+            fixture_item["oddsMarkets"] = odds_by_match.get(UUID(str(fixture_item["id"])), [])
         return {"generatedAt": now, "items": items}
 
     @app.get("/api/v1/sources/loltv")

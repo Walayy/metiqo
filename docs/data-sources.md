@@ -37,7 +37,7 @@ L’application permet des identifiants de ligues et d’équipes arbitraires. L
 
 Les 34 matchs/marchés de démonstration, dates, formats, cotes, probabilités et courbes sont **créés pour le prototype**. Aucun calendrier ni pricing réel n’est affirmé. Les noms de bookmakers sont illustratifs, sans lien de transaction ni affiliation.
 
-Depuis la décision produit du 15 septembre 2026, le scénario utilise exclusivement Stake et des relevés UTC sur plusieurs jours, comprenant des hausses et des baisses. Il ne s’agit pas d’un flux Stake : aucune cote réelle n’alimente ces fixtures. L’audit documentaire du 22 septembre décrit séparément des cotes publiques observées, sans import applicatif. Les badges de démonstration ont été retirés du produit pour conserver la même interface en modes mock et API ; cette limitation reste documentée ici et dans le README.
+Depuis la décision produit du 15 septembre 2026, le scénario utilise exclusivement Stake et des relevés UTC sur plusieurs jours, comprenant des hausses et des baisses. Il ne s’agit pas d’un flux Stake : aucune cote réelle n’alimente ces fixtures. Les relevés réels restaurés le 23 septembre restent dans les tables `bookmaker_*`, séparées du scénario. Les badges de démonstration ont été retirés du produit pour conserver la même interface en modes mock et API ; cette limitation reste documentée ici et dans le README.
 
 ## Stake — audit public ponctuel du 22 septembre 2026
 
@@ -45,7 +45,33 @@ Sources primaires observées : [hub esport](https://stake.bet/fr/sports/esports)
 
 Les preuves comportent URL, horodatage UTC de lecture, DOM, arbre accessible, captures PNG et empreintes SHA-256. La période archivée va de 22:02 à 22:11 UTC le 21 septembre, soit le 22 septembre en heure de Paris. La date de lecture n’est pas un horodatage de mise à jour fourni par Stake. Les labels de seuil, de cote et de suspension sont conservés séparément ; l’unité non publiée des durées reste inconnue. Les textes éditoriaux hors périmètre sont omis avec signalement.
 
-Le navigateur Patchright/Chromium de l’image worker existante a reçu un refus HTTP 403 au premier document esport. La navigation publique dans le navigateur Codex, accessible séparément, a ensuite été interrompue par une page Cloudflare 1015 ; aucune nouvelle navigation Stake n’a suivi. Aucun contournement, compte, mise ou paiement n’a été utilisé. La faisabilité du collecteur permanent n’est pas validée ; `StakeSource` demeure désactivé et les relevés restent exclusivement documentaires.
+Le navigateur Patchright/Chromium de l’image worker existante a reçu un refus HTTP 403 au premier document esport. La navigation publique dans le navigateur Codex, accessible séparément, a ensuite été interrompue par une page Cloudflare 1015 ; aucune nouvelle navigation Stake n’a suivi dans cet audit. Aucun contournement, compte, mise ou paiement n’a été utilisé. La collecte applicative ultérieure et ses limites sont décrites dans [le guide Stake](stake-collector.md).
+
+## Stake — données applicatives restaurées le 23 septembre 2026
+
+### Distinction pré-match / live — 24 septembre 2026
+
+La projection Matchs conserve séparément le dernier snapshot **par événement et phase publiée** (`bookmaker_snapshots.phase`). Les deux issues doivent exister dans ce snapshot ; aucune sélection manquante ou suspendue ne récupère le prix d’un relevé précédent. Chaque phase conserve ses horodatages. Les cotes pré-match restent consultables après le début ; les relevés live des rencontres terminées deviennent également historiques. Un événement bookmaker clos ou inconnu ne porte aucune value actuelle. Le rapprochement actif et unique reste obligatoire. Les estimations existantes étant pré-match, elles ne sont jamais associées aux prix live. Aucune nouvelle collecte ni probabilité n’est inventée pour remplir une phase absente.
+
+### Marques des sources
+
+Fichiers SVG locaux récupérés/vérifiés le **24 septembre 2026**, sans redessin des tracés :
+
+- LoL : `/games/lol.svg`, source Riot déjà documentée ci-dessous.
+- LoLTV : symbole `aria-label="LOLTV Logo"` du HTML public de [LoLTV](https://loltv.gg/matches), avec ajout du namespace SVG pour son utilisation en fichier autonome. `/sources/loltv.svg`, SHA-256 `1870aef38b5d91ba6dfcc61789f20447d25e07a10ad6bdf3a2a2d969c364579b`.
+- Stake : tracés du [SVG archivé sur Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Stake_logo.svg), attribué à Stake, source originale stake.com, publication du 28 avril 2022. Namespace, viewBox, transformation et trois chemins conservés ; seules les métadonnées d’éditeur sont retirées. `/sources/stake.svg`, SHA-256 `0fadcfd17192c8c0ec8e5d962c61e8f0cca76f310521097a6deb6887880c26c1`. Le téléchargement direct de l’asset actuel identifié dans l’audit Stake a répondu 403 : arrêt de cette source, aucun contournement. Le fichier historique a été inspecté dans le navigateur sur Commons. Il ne garantit pas la dernière version de la marque.
+
+Les deux marques monochromes utilisent leur silhouette SVG et la couleur du texte adaptée au thème. Oracle’s Elixir utilise une icône de données Lucide, explicitement descriptive, sans prétendre reproduire une marque officielle. Aucun asset distant n’est chargé par ces composants au runtime.
+
+Le collecteur pré-match développé après l’audit du 22 septembre a été rétabli depuis la révision Git `7e10858`. Le dump local pris avant le retour de la base à `0012` a restitué 20 événements, 260 marchés, 760 sélections, 227 snapshots, 14 160 lectures de cotes, 31 payloads et cinq liens documentés vers des rencontres. Les enregistrements conservent leurs horodatages et preuves d’origine ; cette restauration n’est pas une nouvelle lecture du site et ne garantit aucune actualité des offres. Les données mock du frontend et le moteur de values restent séparés. Voir [le guide du collecteur](stake-collector.md) et [les preuves de collecte initiale](audits/stake/2026-09-22-pipeline/validation.json).
+
+La demande suivante du 23 septembre étend la collecte publique aux marchés en direct, sans prise de pari. Les [captures live de Pyramid–LODIS](audits/stake/2026-09-22/README.md) du 21 septembre à 22:08 UTC montrent des sélections visibles et suspendues, sans cote, notamment dans les marchés de la carte 2 et de la carte 3. Elles prouvent la forme observée ce jour-là, pas la disponibilité actuelle de ces marchés. La migration `0016` conserve le motif et la date des cinq anciens arrêts pré-match dans `bookmaker_collection_resumptions` avant de permettre leur nouvelle lecture. Un prix reste une observation datée, pas une offre garantie entre deux passages de vingt minutes.
+
+Un passage réel du nouveau collecteur a eu lieu le **23 septembre 2026, 19:08:18–19:13:49 UTC** : les 13 événements de la liste publique ont été collectés, dont trois en direct. Le run PostgreSQL `2fbc9710-39c4-4c5d-83f3-7febd9edcfa3` et ses snapshots/payloads conservent les horodatages et empreintes ; ses trois snapshots live contiennent 182 lectures cotées et deux suspensions sans cote. Des marchés « Gagnant » de carte sont présents dans chacun des trois directs. Aucun refus source n'a été déclaré pendant ce passage. Cette observation ponctuelle ne garantit ni la couverture du prochain direct ni la possibilité de miser à la date de lecture des données.
+
+La vue Matchs expose ces relevés uniquement lorsque l’événement Stake dispose d’un rapprochement actif et unique vers les deux équipes de la rencontre. Elle ne retient que « Vainqueur du match » et « Vainqueur de la carte N », avec le dernier snapshot source disponible et l’horodatage propre de chaque sélection. Les issues suspendues affichent un tiret et « Suspendue » ; une sélection sans cote au dernier snapshot n’est pas remplacée par un prix historique. Les marchés de carte gardent leur numéro explicite. Une flamme de value exige en plus une estimation active pour la même rencontre, le même marché et la même équipe ; aucun taux n’est déduit des cotes. L’interface n’ouvre pas de pari.
+
+En mode mock, quelques cotes de Matchs et une value positive sont des fixtures volontairement fictives destinées au rendu de l’interface ; d’autres rencontres n’ont aucun marché et certaines sélections sont suspendues. Elles ne reproduisent pas un flux Stake et ne sont pas des recommandations.
 
 ## Logos des jeux
 
@@ -123,3 +149,11 @@ Les identifiants LoLTV, URLs, dates de récupération, empreintes et documents c
 L’optimisation du 21 septembre conserve le même budget source et vise une lecture live toutes les trente secondes, avec sessions anonymes réutilisées brièvement en mémoire. Une cadence de récupération plus courte ne rend pas un flux ancien plus récent : état du flux, horodatage source et date de récupération restent séparés. Les délais mesurés et l’écart observé entre résultat du flux et métadonnées HTML sont documentés dans [l’analyse LoLTV](loltv.md).
 
 Les refus observés dans Chromium empêchent actuellement de certifier le direct complet depuis le worker. Le fait qu’une page s’ouvre dans le navigateur utilisateur ne prouve pas l’accès depuis Docker. La fenêtre J−7/J+7 borne le périmètre demandé, pas une affirmation d’exhaustivité de la source.
+
+## Rapprochement des identités — 23 septembre 2026
+
+L’[audit PostgreSQL préalable](audits/matching/2026-09-23/audit.md) conserve un export daté des 20 événements Stake, 440 rencontres LoLTV et 462 liens sportifs, ainsi que leurs dernières preuves pré-match. Ce travail n’est pas une nouvelle collecte réseau Stake. Le [résolveur backend](match-reconciliation.md) retrouve les 12 rencontres présentes du corpus ; huit événements restent en attente.
+
+Les [alias audités](audits/matching/2026-09-23/reviewed-aliases.json) citent les deux pages fournisseur, le corpus local et la corroboration Riot WSCI ou le logo officiel Riot identique pour LOS/LØS. Leur validité est limitée au tournoi et aux dates documentées. Ils ne modifient pas les noms du catalogue. Les heures récupérées dans des snapshots anciens restent datées à ces observations ; jamais assimilées à un nouveau relevé. Une carte Oracle brute ne prouve ni une série, ni son format, ni un calendrier futur.
+
+Le worker de [résultats des sélections](selection-results.md) ne collecte aucune nouvelle source : il lit les snapshots LoLTV et Oracle déjà publiés, avec leurs identifiants et empreintes, puis les relie aux marchés Stake uniquement via le rapprochement actif. L'heure de fin sportive n'est pas commune et vérifiée ; le délai de 30 minutes commence donc à la première observation en base d'un résultat final cohérent. La catégorie « annulé » signifie ici qu'une carte prévue dans un marché n'a pas été jouée d'après le score final ; elle ne prétend pas connaître une décision de remboursement réelle de Stake.

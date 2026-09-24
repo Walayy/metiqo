@@ -31,7 +31,7 @@ Les 204 lignes dédupliquent les vainqueurs de carte présents à la fois dans �
 
 ## 2. Périmètre, méthode et valeur des preuves
 
-La demande du 22 septembre autorise cet audit ponctuel et fait explicitement évoluer la restriction antérieure d’accès à Stake dans `AGENTS.md`. Le module `StakeSource` reste un emplacement désactivé qui lève `NotImplementedError`. Le worker permanent, les planifications, PostgreSQL, les contrats API et les fixtures ne sont pas modifiés.
+La demande du 22 septembre autorise cet audit ponctuel et fait explicitement évoluer la restriction antérieure d’accès à Stake dans `AGENTS.md`. Au moment de l’audit, le module `StakeSource` était encore un emplacement désactivé et aucune donnée n’était importée. La demande du 23 septembre a rétabli séparément le collecteur pré-match, sa planification et ses tables ; voir [le guide actuel](stake-collector.md). Les fixtures frontend ne sont pas alimentées par cet audit.
 
 La navigation est anonyme : entrée sur `https://stake.bet`, redirection observée vers `/fr`, ouverture de Sports, puis du lien esport et du filtre LoL. Les fiches sont découvertes dans les liens rendus du calendrier. Aucun compte, code de connexion, mise, paiement ou sélection dans le bulletin de pari n’est utilisé. La bannière de cookies a été acceptée pour dégager la lecture ; son état initial est conservé dans les premières captures.
 
