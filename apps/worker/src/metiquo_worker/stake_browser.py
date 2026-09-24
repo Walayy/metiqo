@@ -176,7 +176,8 @@ class StakeBrowser:
             stable = stable + 1 if previous == shape else 0
             previous = shape
             if data.ready and stable >= 2:
-                self._resolve_main_refusals()
+                if mode != "hub":
+                    self._resolve_main_refusals()
                 return data
             if time.monotonic() >= end:
                 if self.pending_main_refusals:
@@ -189,7 +190,10 @@ class StakeBrowser:
         hub = self._listing(game, "hub")
         urls = {u for u in hub.links if u.endswith(f"/sports/esports/{game}")}
         if len(urls) != 1:
+            if self.pending_main_refusals:
+                self._block_main_refusal()
             raise ValueError("Configured esport is not exposed by the public hub")
+        self._resolve_main_refusals()
         self.navigate(urls.pop())
         listing = self._listing(game)
         fixtures: dict[str, EventMetadata] = {}
