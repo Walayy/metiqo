@@ -46,6 +46,20 @@ contrôler les services. Les migrations Alembic précèdent l'API. Les volumes s
 persistants ; ne pas utiliser `down -v` pour une mise à jour. Le premier accès
 public HTTPS attend que les enregistrements A du domaine pointent vers le VPS.
 
+`metiquo-backup.timer` crée chaque nuit à 03:10 (heure du serveur, Paris) un
+dump PostgreSQL et une archive du volume d'artefacts dans `/var/backups/metiquo`
+(fichiers privés, conservation locale de 14 jours). Le même script crée une
+sauvegarde avant chaque déploiement automatisé. Il arrête brièvement les workers
+pendant la copie et les redémarre ensuite. Pour activer le minuteur :
+
+```sh
+sudo install -m 644 infra/systemd/metiquo-backup.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now metiquo-backup.timer
+```
+
+Conserver aussi une copie hors du VPS et vérifier périodiquement une restauration.
+
 ## GitHub Actions
 
 Un `push` sur `master` ou une pull request vers `master` lance les quatre

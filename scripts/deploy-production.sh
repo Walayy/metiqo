@@ -26,6 +26,7 @@ if [[ "$(git rev-parse origin/master)" != "$sha" ]]; then
 fi
 git merge --ff-only "$sha"
 
+scripts/backup-production.sh
 docker compose --env-file .env.docker -f compose.yaml -f compose.prod.yaml up -d --build --wait --wait-timeout 240
 curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/health >/dev/null
 curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/api/docs >/dev/null

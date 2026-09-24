@@ -1,0 +1,9 @@
+[Unit]
+Description=Back up Metiquo PostgreSQL and source artifacts
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -w 300 /var/lock/metiquo-deploy.lock /opt/projects/metiqo/scripts/backup-production.sh
+TimeoutStartSec=2h
