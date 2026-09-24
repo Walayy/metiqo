@@ -2,11 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ['**']
-  pull_request:
     branches: [master]
-  merge_group:
-    types: [checks_requested]
 
 permissions:
   contents: read
@@ -42,8 +38,10 @@ jobs:
         run: docker build --file infra/docker/backend.Dockerfile --target api --tag metiquo-api:ci .
       - name: Build worker image
         run: docker build --file infra/docker/backend.Dockerfile --target worker --tag metiquo-worker:ci .
+      - name: Build Stake worker image
+        run: docker build --file infra/docker/backend.Dockerfile --target stake --tag metiquo-stake:ci .
       - name: Build web image
-        run: docker build --file infra/docker/web.Dockerfile --build-arg VITE_DATA_MODE=mock --tag metiquo-web:ci .
+        run: docker build --file infra/docker/web.Dockerfile --build-arg VITE_DATA_MODE=api --tag metiquo-web:ci .
 
   migrations:
     name: Migrations PostgreSQL
@@ -110,3 +108,27 @@ jobs:
       - run: npm run build:mock
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e --workspace @metiquo/web
+
+  deploy:
+    name: Déploiement production
+    needs: [quality, docker, migrations, playwright]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: metiquo-production
+      cancel-in-progress: false
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deployment SSH identity
+        env:
+          DEPLOY_KEY: ${{ secrets.METIQUO_DEPLOY_SSH_KEY }}
+        run: |
+          test -n "$DEPLOY_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/metiquo_deploy
+          chmod 600 ~/.ssh/metiquo_deploy
+          cp .github/metiquo_known_hosts ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Deploy the successful master commit
+        run: ssh -i ~/.ssh/metiquo_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes root@195.35.0.154 "deploy ${{ github.sha }}"

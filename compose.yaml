@@ -46,6 +46,8 @@ services:
       METIQUO_SMTP_PORT: ${METIQUO_SMTP_PORT:-1025}
       METIQUO_SMTP_SECURITY: ${METIQUO_SMTP_SECURITY:-none}
       METIQUO_SMTP_FROM: ${METIQUO_SMTP_FROM:-connexion@metiquo.fr}
+      METIQUO_SMTP_USERNAME: ${METIQUO_SMTP_USERNAME:-}
+      METIQUO_SMTP_PASSWORD: ${METIQUO_SMTP_PASSWORD:-}
     volumes: [artifacts:/data/artifacts:ro]
     depends_on:
       migrate: { condition: service_completed_successfully }

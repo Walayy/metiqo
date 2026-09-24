@@ -43,6 +43,8 @@ Ouvrir [l’application](http://127.0.0.1:8080) et [la documentation API](http:/
 
 Le [guide backend et exploitation](docs/backend.md) détaille la collecte manuelle, l’import du catalogue, le développement, les sauvegardes et les limites avant un déploiement public.
 
+Le [guide de déploiement de production](docs/deployment.md) décrit le VPS, Traefik, Resend, pgAdmin et le workflow GitHub déclenché par les pushes sur `master`.
+
 ### Collecte Stake pré-match et en direct
 
 La migration `0013` conserve séparément événements, marchés, sélections, snapshots complets, cotes horodatées et preuves source ; `0016` distingue les phases pré-match et direct et archive les anciens arrêts de collecte dus au début des rencontres. Seuls les marchés de vainqueur de match et de carte ont maintenant un résultat calculé ; aucun autre marché n'est interprété. Les données historiques restaurées le 23 septembre 2026 proviennent du dump local pris avant le retour à `0012` : 20 événements, 260 marchés, 760 sélections, 227 snapshots et 14 160 relevés. Elles ne prouvent pas l’état actuel des offres.
