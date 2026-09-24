@@ -83,7 +83,7 @@ export function StatusPanel({
   const canRetry = content.action === 'retry' && onRetry;
   const canLogin = content.action === 'login' && account;
   const Heading = compact || headingLevel === 2 ? 'h2' : 'h1';
-  const homeLabel = compact ? 'Revenir aux values' : 'Retour aux values';
+  const homeLabel = compact ? 'Revenir aux matchs' : 'Retour aux matchs';
   return (
     <section
       className={`status-panel${compact ? ' status-panel--compact' : ''}`}
@@ -166,7 +166,7 @@ export function StatusPage({ error, onRetry }: { error: Error; onRetry?: () => v
         Aller au contenu principal
       </a>
       <header className="status-header">
-        <a href="/" className="brand" aria-label="Metiquo, retour aux values">
+        <a href="/" className="brand" aria-label="Metiquo, retour aux matchs">
           <BrandMark size={40} />
           <span>
             metiquo<span className="brand-period">.</span>

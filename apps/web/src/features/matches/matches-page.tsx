@@ -219,7 +219,9 @@ export function MatchesPage({
             <span className="eyebrow-line" />
             LEAGUE OF LEGENDS
           </div>
-          <h1>Matchs</h1>
+          <h1 id="matches-title" tabIndex={-1}>
+            Matchs
+          </h1>
         </div>
         <RefreshValues
           mobile

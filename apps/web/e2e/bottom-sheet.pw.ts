@@ -2,43 +2,42 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-test('mobile dialogs snap, reopen, dismiss, and restore focus', async ({ page }) => {
+test('mobile sheets return after a short pull and dismiss in one downward swipe', async ({
+  page,
+}) => {
   await page.goto('/');
-  const trigger = page.getByRole('button', { name: 'Filtres' });
+  await expect(page.getByRole('heading', { name: 'Matchs', exact: true })).toBeVisible();
+  const trigger = page.getByRole('button', { name: 'Ouvrir la navigation' });
   await trigger.click();
-  const dialog = page.getByRole('dialog', { name: 'Affiner les opportunités' });
+  const dialog = page.getByRole('dialog', { name: 'Navigation' });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Réduire la fenêtre' })).toBeFocused();
+  const grip = dialog.getByRole('button', { name: 'Fermer la fenêtre, glisser vers le bas' });
+  await expect(grip).toBeFocused();
   await expect(dialog).toHaveAttribute('data-sheet-interacted', 'true');
   const expandedTop = await dialog.evaluate((element) => element.getBoundingClientRect().top);
-  const grip = dialog.locator('.modal-sheet-grip');
   const box = await grip.boundingBox();
   expect(box).not.toBeNull();
   const x = box!.x + box!.width / 2;
   const y = box!.y + box!.height / 2;
   await page.mouse.move(x, y);
   await page.mouse.down();
-  await page.mouse.move(x, y + 200, { steps: 8 });
-  await page.mouse.up();
-  await expect(dialog.getByRole('button', { name: 'Agrandir la fenêtre' })).toBeVisible();
+  await expect(dialog).toHaveAttribute('data-sheet-dragging', 'true');
   await expect
-    .poll(() => dialog.evaluate((element) => element.getBoundingClientRect().top))
-    .toBeGreaterThan(expandedTop + 50);
-
-  await dialog.getByRole('button', { name: 'Agrandir la fenêtre' }).press('ArrowUp');
-  await expect(dialog.getByRole('button', { name: 'Réduire la fenêtre' })).toBeVisible();
+    .poll(() => grip.evaluate((element) => getComputedStyle(element, '::before').width))
+    .toBe('54px');
+  expect(
+    await grip.evaluate((element) => getComputedStyle(element, '::before').animationName),
+  ).toBe('sheet-grip-shimmer');
+  await page.mouse.move(x, y + 20, { steps: 4 });
+  await page.mouse.up();
+  await expect(dialog).toBeVisible();
   await expect
     .poll(() => dialog.evaluate((element) => element.getBoundingClientRect().top))
     .toBeLessThan(expandedTop + 10);
 
-  await dialog.getByRole('button', { name: 'Réduire la fenêtre' }).click();
-  await expect(dialog.getByRole('button', { name: 'Agrandir la fenêtre' })).toBeVisible();
-  const compactBox = await dialog.locator('.modal-sheet-grip').boundingBox();
-  expect(compactBox).not.toBeNull();
-  const compactY = compactBox!.y + compactBox!.height / 2;
-  await page.mouse.move(x, compactY);
+  await page.mouse.move(x, y);
   await page.mouse.down();
-  await page.mouse.move(x, compactY + 180, { steps: 8 });
+  await page.mouse.move(x, y + 200, { steps: 8 });
   await page.mouse.up();
   await expect(dialog).toBeHidden();
   await expect(trigger).toBeFocused();
@@ -68,12 +67,15 @@ test('the email dialog avoids an automatic mobile keyboard and respects reduced 
   await trigger.click();
   const dialog = page.getByRole('dialog', { name: 'Bienvenue sur Metiquo' });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Réduire la fenêtre' })).toBeFocused();
+  await expect(
+    dialog.getByRole('button', { name: 'Fermer la fenêtre, glisser vers le bas' }),
+  ).toBeFocused();
   await expect(dialog).toHaveCSS('animation-name', 'none');
   await dialog.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(trigger).toBeFocused();
 
+  await page.goto('/?view=values');
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.getByRole('button', { name: 'Filtres' }).click();
   const desktop = page.getByRole('dialog', { name: 'Affiner les opportunités' });

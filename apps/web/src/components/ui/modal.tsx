@@ -28,8 +28,6 @@ export function Modal({
   const {
     contentRef,
     gripRef,
-    detent,
-    expand,
     onAnimationEnd,
     onGripClick,
     onGripKeyDown,
@@ -49,12 +47,6 @@ export function Modal({
           data-mobile-sheet="true"
           onAnimationEnd={(event) => {
             if (event.target === event.currentTarget) onAnimationEnd();
-          }}
-          onFocusCapture={(event) => {
-            if (detent === 'compact' && !gripRef.current?.contains(event.target as Node)) expand();
-          }}
-          onScrollCapture={() => {
-            if (detent === 'compact') expand();
           }}
           onOpenAutoFocus={(event) => {
             opener.current =
@@ -82,7 +74,8 @@ export function Modal({
               );
               const fallback = navigation?.getClientRects().length
                 ? navigation
-                : (document.getElementById('values-title') ??
+                : (document.getElementById('matches-title') ??
+                  document.getElementById('values-title') ??
                   document.getElementById('main-content'));
               fallback?.focus({ preventScroll: true });
             }
@@ -92,8 +85,7 @@ export function Modal({
             ref={gripRef}
             type="button"
             className="modal-sheet-grip"
-            aria-label={detent === 'expanded' ? 'Réduire la fenêtre' : 'Agrandir la fenêtre'}
-            aria-expanded={detent === 'expanded'}
+            aria-label="Fermer la fenêtre, glisser vers le bas"
             onClick={onGripClick}
             onKeyDown={onGripKeyDown}
             onPointerDown={onPointerDown}

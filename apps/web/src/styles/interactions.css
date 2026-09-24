@@ -878,6 +878,15 @@ input[type='range'] {
   }
 }
 
+@keyframes sheet-grip-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
 @media (max-width: 680px) {
   body .modal-content[data-mobile-sheet='true'] {
     display: flex;
@@ -892,7 +901,7 @@ input[type='range'] {
     border-bottom: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     transform: translate3d(0, var(--sheet-offset, 0px), 0);
-    transition: transform 330ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
     overflow: clip;
   }
   body .modal-content.match-dialog[data-mobile-sheet='true'] {
@@ -911,7 +920,7 @@ input[type='range'] {
     animation: none;
   }
   body .modal-content[data-mobile-sheet='true'][data-state='closed'] {
-    animation: sheet-exit 230ms var(--ease-exit) both;
+    animation: sheet-exit 300ms cubic-bezier(0.32, 0, 0.67, 0) both;
     transition: none;
   }
   body .modal-content[data-mobile-sheet='true'][data-sheet-dragging='true'] {
@@ -939,6 +948,7 @@ input[type='range'] {
   .modal-sheet-grip {
     display: grid;
     place-items: center;
+    position: relative;
     width: 100%;
     height: 44px;
     min-height: 44px;
@@ -952,10 +962,32 @@ input[type='range'] {
   .modal-sheet-grip::before {
     content: '';
     display: block;
-    width: 38px;
+    width: 40px;
     height: 5px;
     border-radius: 999px;
-    background: var(--border-strong);
+    background: linear-gradient(
+      105deg,
+      var(--muted) 0%,
+      var(--border-strong) 46%,
+      var(--muted) 100%
+    );
+    background-size: 240% 100%;
+    background-position: 100% 0;
+    opacity: 0.7;
+    transition:
+      width 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      height 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 180ms ease,
+      box-shadow 180ms ease;
+  }
+  body .modal-content[data-sheet-dragging='true'] .modal-sheet-grip::before {
+    width: 54px;
+    height: 6px;
+    opacity: 1;
+    box-shadow:
+      0 0 0 6px var(--accent-soft),
+      0 0 14px var(--accent-border);
+    animation: sheet-grip-shimmer 1000ms ease-in-out infinite alternate;
   }
   body .modal-content.mobile-nav-sheet[data-mobile-sheet='true'] {
     height: min(680px, calc(var(--sheet-viewport-height, 100dvh) - 10px));
@@ -978,6 +1010,10 @@ input[type='range'] {
     animation: none !important;
     transition: none;
     will-change: auto;
+  }
+  .modal-sheet-grip::before {
+    animation: none !important;
+    transition: none;
   }
 }
 
