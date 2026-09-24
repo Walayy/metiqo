@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [master]
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Qualité
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: npm ci
+      - run: npm run check
+
+  docker:
+    name: Build Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build --file infra/docker/backend.Dockerfile --target api --tag metiquo-api:ci .
+      - name: Build worker image
+        run: docker build --file infra/docker/backend.Dockerfile --target worker --tag metiquo-worker:ci .
+      - name: Build web image
+        run: docker build --file infra/docker/web.Dockerfile --build-arg VITE_DATA_MODE=mock --tag metiquo-web:ci .
+
+  migrations:
+    name: Migrations PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+        env:
+          POSTGRES_DB: metiquo
+          POSTGRES_USER: metiquo
+          POSTGRES_PASSWORD: ci-db-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U metiquo -d metiquo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      METIQUO_DATABASE_URL: postgresql+psycopg://metiquo:ci-db-password@localhost:5432/metiquo
+      TEST_DATABASE_URL: postgresql+psycopg://metiquo:ci-db-password@localhost:5432/metiquo_integration_test
+      TEST_API_PASSWORD: ci-api-password
+      PGPASSWORD: ci-db-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Create restricted database roles
+        run: |
+          psql -h localhost -U metiquo -d metiquo -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE metiquo_api LOGIN PASSWORD 'ci-api-password';
+          CREATE ROLE metiquo_worker LOGIN PASSWORD 'ci-worker-password';
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          GRANT USAGE ON SCHEMA public TO metiquo_api, metiquo_worker;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO metiquo_api;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO metiquo_worker;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO metiquo_worker;
+          SQL
+          createdb -h localhost -U metiquo metiquo_integration_test
+      - name: Apply and verify migrations
+        run: |
+          uv run --frozen alembic upgrade head
+          uv run --frozen alembic check
+      - name: Run PostgreSQL integration tests
+        run: uv run --frozen pytest -m integration
+
+  playwright:
+    name: Interface Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:mock
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e --workspace @metiquo/web

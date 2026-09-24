@@ -140,6 +140,8 @@ npm run check        # Frontend + backend ; installer uv puis exécuter uv sync 
 npm run build:mock   # build avec MSW pour les données esport
 npm run build:api    # build avec les endpoints de données FastAPI
 npm run preview      # Production locale sur http://127.0.0.1:4173
+npx playwright install chromium # navigateur requis la première fois
+npm run test:e2e --workspace @metiquo/web # smoke Chromium sur le build mock
 npm run format
 npm run format:check
 ```
@@ -160,26 +162,26 @@ Les scripts utilisent respectivement `compose.mock.yaml` et `compose.api.yaml`. 
 
 ## Stack retenue
 
-| Outil                                | Rôle et choix                                                                                                                                                             |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| React 19.3 + TypeScript 6.0          | Composants typés, écosystème mature. TypeScript 6 est retenu pour rester dans la plage officiellement supportée par typescript-eslint, sans forcer les peer dependencies. |
-| Vite 8.3                             | SPA rapide à développer et à compiler, sans serveur de rendu superflu.                                                                                                    |
-| Tailwind CSS 4 + tokens CSS          | Utilitaires et design system sur mesure. Toutes les surfaces et couleurs possèdent une variante claire et sombre.                                                         |
-| TanStack Query 5                     | Cache HTTP, annulation, chargements, erreurs et nouvelles tentatives.                                                                                                     |
-| MSW 2 + Zod 4                        | Interception HTTP en mode mock et validation des contrats. L’API utilise les mêmes contrats ; la bascule de données ne demande pas de réécrire les composants.            |
-| Radix UI                             | Dialogues et sélecteurs accessibles : focus, clavier, Escape.                                                                                                             |
-| Motion 13                            | Transitions discrètes et respect du réglage de réduction des animations.                                                                                                  |
-| Lucide                               | Icônes SVG cohérentes, sans emoji dépendant de l’OS.                                                                                                                      |
-| Inter Variable + Manrope Variable    | Typographie locale ; aucune requête Google Fonts.                                                                                                                         |
-| Vitest + ESLint + Prettier           | Vérification des calculs, intégrité du scénario, règles de code et formatage.                                                                                             |
-| Pillow                               | Validation et conversion des logos officiels en WebP dans le worker Python.                                                                                               |
-| Python 3.13 + uv                     | Workspace backend typé, dépendances verrouillées séparément du frontend.                                                                                                  |
-| croniter + tzdata                    | Validation des crons, calcul des échéances et fuseaux horaires, partagés entre API et worker.                                                                             |
-| FastAPI + Pydantic                   | API de données, authentification par email et validation des contrats.                                                                                                    |
-| Mailpit + SMTP Python                | Emails locaux ; transport SMTP remplaçable sans modifier le frontend.                                                                                                     |
-| PostgreSQL 18 + SQLAlchemy + Alembic | Persistance, transactions, import en flux et migrations versionnées.                                                                                                      |
-| Patchright + HTTPX                   | Export Drive groupé dans le worker, puis téléchargement HTTP en flux.                                                                                                     |
-| Docker Compose + Nginx               | Services séparés, volumes persistants, proxy sur la même origine et sondes de santé.                                                                                      |
+| Outil                                   | Rôle et choix                                                                                                                                                             |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| React 19.3 + TypeScript 6.0             | Composants typés, écosystème mature. TypeScript 6 est retenu pour rester dans la plage officiellement supportée par typescript-eslint, sans forcer les peer dependencies. |
+| Vite 8.3                                | SPA rapide à développer et à compiler, sans serveur de rendu superflu.                                                                                                    |
+| Tailwind CSS 4 + tokens CSS             | Utilitaires et design system sur mesure. Toutes les surfaces et couleurs possèdent une variante claire et sombre.                                                         |
+| TanStack Query 5                        | Cache HTTP, annulation, chargements, erreurs et nouvelles tentatives.                                                                                                     |
+| MSW 2 + Zod 4                           | Interception HTTP en mode mock et validation des contrats. L’API utilise les mêmes contrats ; la bascule de données ne demande pas de réécrire les composants.            |
+| Radix UI                                | Dialogues et sélecteurs accessibles : focus, clavier, Escape.                                                                                                             |
+| Motion 13                               | Transitions discrètes et respect du réglage de réduction des animations.                                                                                                  |
+| Lucide                                  | Icônes SVG cohérentes, sans emoji dépendant de l’OS.                                                                                                                      |
+| Inter Variable + Manrope Variable       | Typographie locale ; aucune requête Google Fonts.                                                                                                                         |
+| Vitest + Playwright + ESLint + Prettier | Tests unitaires et smoke navigateur Chromium, règles de code et formatage.                                                                                                |
+| Pillow                                  | Validation et conversion des logos officiels en WebP dans le worker Python.                                                                                               |
+| Python 3.13 + uv                        | Workspace backend typé, dépendances verrouillées séparément du frontend.                                                                                                  |
+| croniter + tzdata                       | Validation des crons, calcul des échéances et fuseaux horaires, partagés entre API et worker.                                                                             |
+| FastAPI + Pydantic                      | API de données, authentification par email et validation des contrats.                                                                                                    |
+| Mailpit + SMTP Python                   | Emails locaux ; transport SMTP remplaçable sans modifier le frontend.                                                                                                     |
+| PostgreSQL 18 + SQLAlchemy + Alembic    | Persistance, transactions, import en flux et migrations versionnées.                                                                                                      |
+| Patchright + HTTPX                      | Export Drive groupé dans le worker, puis téléchargement HTTP en flux.                                                                                                     |
+| Docker Compose + Nginx                  | Services séparés, volumes persistants, proxy sur la même origine et sondes de santé.                                                                                      |
 
 Les versions exactes installées sont dans `package-lock.json`. Le bundle des mocks est chargé séparément. Les panneaux font partie du chargement initial : leur ouverture ne dépend pas du téléchargement d’un module. Aucun routeur ou store global n’est nécessaire pour cet écran unique.
 
