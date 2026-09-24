@@ -4,6 +4,15 @@ import { filterValues } from './filter';
 import { catalog, opportunities } from '@/mocks/fixtures';
 
 describe('Contexte partagé dans l’URL', () => {
+  it('ouvre Matchs par défaut et conserve une URL explicite pour les values', () => {
+    const home = readExplorerLocation(new URLSearchParams());
+    expect(home.view).toBe('matches');
+    expect(writeExplorerLocation(new URLSearchParams(), home).get('view')).toBeNull();
+    const values = readExplorerLocation(new URLSearchParams('view=values'));
+    expect(values.view).toBe('values');
+    expect(writeExplorerLocation(new URLSearchParams(), values).get('view')).toBe('values');
+    expect(readExplorerLocation(new URLSearchParams('view=unknown')).view).toBe('matches');
+  });
   it('restaure la vue, les filtres, le tri, la page et un détail sans perdre un paramètre externe', () => {
     const original = new URLSearchParams(
       'mock=slow&view=values&league=ligue-ouverte&team=equipe-ouverte&market=map1&min=4&q=Gen.G&sort=probability&page=3&detail=match-42',

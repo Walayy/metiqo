@@ -47,11 +47,11 @@ const initialData = Promise.all(
   isKnownLocation(location.pathname, location.search)
     ? [
         queryClient.prefetchQuery(catalogQuery),
-        new URLSearchParams(location.search).get('view') === 'matches'
-          ? queryClient.prefetchQuery(matchesQuery)
+        new URLSearchParams(location.search).get('view') === 'values'
+          ? queryClient.prefetchQuery(opportunitiesQuery)
           : new URLSearchParams(location.search).get('view') === 'performance'
             ? queryClient.prefetchQuery(performanceQuery)
-            : queryClient.prefetchQuery(opportunitiesQuery),
+            : queryClient.prefetchQuery(matchesQuery),
       ]
     : [],
 );

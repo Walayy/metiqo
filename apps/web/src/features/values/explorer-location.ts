@@ -31,9 +31,9 @@ export function readExplorerLocation(params: URLSearchParams): ExplorerLocation 
   const page = Number(params.get('page'));
   const minimum = Number(params.get('min'));
   const detail = params.get('detail') || null;
-  const view = params.get('view') ?? 'values';
+  const view = params.get('view') ?? 'matches';
   return {
-    view: isAppView(view) ? view : 'values',
+    view: isAppView(view) ? view : 'matches',
     day: validDay(params.get('date') ?? '') ? params.get('date')! : '',
     filters: {
       ...defaultFilters,
@@ -57,7 +57,7 @@ export function readExplorerLocation(params: URLSearchParams): ExplorerLocation 
 export function writeExplorerLocation(base: URLSearchParams, state: ExplorerLocation) {
   const params = new URLSearchParams(base);
   for (const key of keys) params.delete(key);
-  if (state.view !== 'values') params.set('view', state.view);
+  if (state.view !== 'matches') params.set('view', state.view);
   if (state.day) params.set('date', state.day);
   if (state.filters.league !== 'all') params.set('league', state.filters.league);
   if (state.filters.team !== 'all') params.set('team', state.filters.team);

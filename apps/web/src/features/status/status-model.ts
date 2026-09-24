@@ -47,14 +47,14 @@ export function statusContent(error: Error) {
     403: {
       title: 'Cet espace est réservé.',
       description:
-        'Votre compte ne dispose pas des droits nécessaires. Vous pouvez continuer à consulter les values.',
+        'Votre compte ne dispose pas des droits nécessaires. Vous pouvez continuer à consulter les matchs.',
       icon: 'shield',
       action: 'home',
     },
     404: {
       title: 'Cette page est introuvable.',
       description:
-        'Ce lien est incorrect ou ce contenu n’est plus disponible. Retrouvez votre chemin depuis les values.',
+        'Ce lien est incorrect ou ce contenu n’est plus disponible. Retrouvez votre chemin depuis les matchs.',
       icon: 'document',
       action: 'home',
     },

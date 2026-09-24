@@ -275,7 +275,7 @@ function ExplorerApp() {
                   error={session.error ?? new HttpError(session.data?.user ? 403 : 401)}
                   onRetry={() => void session.refetch()}
                   busy={session.isFetching}
-                  onHome={() => updateLocation({ view: 'values' })}
+                  onHome={() => updateLocation({ view: 'matches' })}
                 />
               )
             ) : dataError ? (
