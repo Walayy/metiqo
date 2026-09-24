@@ -37,6 +37,16 @@ test('mobile sheets return after a short pull and dismiss in one downward swipe'
 
   await page.mouse.move(x, y);
   await page.mouse.down();
+  await page.mouse.move(x, y + 205, { steps: 8 });
+  await page.mouse.move(x, y + 199, { steps: 2 });
+  await page.mouse.up();
+  await expect(dialog).toBeVisible();
+  await expect
+    .poll(() => dialog.evaluate((element) => element.getBoundingClientRect().top))
+    .toBeLessThan(expandedTop + 10);
+
+  await page.mouse.move(x, y);
+  await page.mouse.down();
   await page.mouse.move(x, y + 200, { steps: 8 });
   await page.mouse.up();
   await expect(dialog).toBeHidden();

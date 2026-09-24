@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 
 import httpx
 from metiquo_core.catalog import CATALOG_LOCK_ID, import_catalog, other_game_identities
+from metiquo_core.catalog_logos import fill_team_logos
 from metiquo_core.config import Settings
 from metiquo_core.contracts import Catalog, LeagueData, TeamData
 from metiquo_core.models import (
@@ -196,6 +197,7 @@ def attach_images(
     for asset in assets:
         if asset.source_image and asset.source_image in images:
             asset.image = f"/api/v1/catalog/logos/{images[asset.source_image]['sha256']}.webp"
+    document["logoReuses"] = fill_team_logos(catalog.teams)
     document["catalog"] = catalog.model_dump(mode="json", by_alias=True)
     document["images"] = [
         {
@@ -209,6 +211,9 @@ def attach_images(
         "leagues": len(catalog.leagues),
         "localLeagueLogos": sum(bool(league.image) for league in catalog.leagues),
         "missingLeagueIds": [league.id for league in catalog.leagues if not league.image],
+        "teams": len(catalog.teams),
+        "teamLogos": sum(bool(team.image) for team in catalog.teams),
+        "missingTeamIds": [team.id for team in catalog.teams if not team.image],
     }
     return cast(dict[str, object], images)
 

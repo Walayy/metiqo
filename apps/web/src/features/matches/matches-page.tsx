@@ -490,7 +490,7 @@ export function MatchesPage({
                       <ChevronDown size={18} className="accordion-chevron" />
                     </Accordion.Trigger>
                   </Accordion.Header>
-                  <Accordion.Content className="league-content">
+                  <Accordion.Content className="ui-accordion-content league-content">
                     <div className="league-matches">
                       {rows.map((match) => (
                         <Fixture

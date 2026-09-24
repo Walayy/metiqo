@@ -11,6 +11,7 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from metiquo_core.catalog import other_game_identities
+from metiquo_core.catalog_logos import fill_team_logos
 from metiquo_core.config import Settings
 from metiquo_core.contracts import Catalog, LeagueData, Opportunities, Opportunity, TeamData
 from metiquo_core.db import create_db
@@ -289,13 +290,15 @@ def create_app(
                 for key, item in known_teams.items()
                 if key not in excluded_teams and item.get("leagueId") not in excluded_leagues
             ]
-            return Catalog.model_validate(document)
+            result = Catalog.model_validate(document)
+            fill_team_logos(result.teams)
+            return result
         metadata = session.get(CatalogMetadata, 1)
         if metadata is None:
             raise HTTPException(
                 503, "No sourced catalog imported; run metiquo-admin catalog-import"
             )
-        return Catalog.model_validate(
+        result = Catalog.model_validate(
             {
                 "retrievedAt": metadata.retrieved_at,
                 "source": metadata.source,
@@ -311,6 +314,8 @@ def create_app(
                 ],
             }
         )
+        fill_team_logos(result.teams)
+        return result
 
     @app.get("/api/v1/opportunities", response_model=Opportunities)
     def opportunities(session: Annotated[Session, Depends(get_session)]) -> Opportunities:
