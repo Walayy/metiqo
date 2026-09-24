@@ -56,11 +56,18 @@ class StakePolicy:
             )
 
     def block(self, reason: str, retry_after: float = 0) -> None:
-        until = time.time() + max(self.settings.stake_block_cooldown_seconds, retry_after)
+        pause = max(self.settings.stake_block_cooldown_seconds, retry_after)
+        until = time.time() + pause
         self.flush()
         with Session(self.engine) as db, db.begin():
             row = db.get(CollectorState, "stake", with_for_update=True)
             assert row is not None
-            row.data = {**row.data, "blockedUntil": until, "blockedReason": reason}
+            data = dict(row.data)
+            if pause > 0:
+                data.update(blockedUntil=until, blockedReason=reason)
+            else:
+                data.pop("blockedUntil", None)
+                data.pop("blockedReason", None)
+            row.data = data
         self.blocked_until = until
         raise StakeDeferred(reason, until)

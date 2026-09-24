@@ -103,10 +103,12 @@ Les variables ci-dessous portent le préfixe `METIQUO_`. Le lanceur lit les `MET
 | `STAKE_MAX_ACTIONS`            | 300                                 | Plafond des navigations et clics d’un cycle                                                         |
 | `STAKE_REQUEST_BUDGET`         | 30000                               | Plafond persistant d’événements de requêtes naturelles du navigateur                                |
 | `STAKE_BUDGET_WINDOW_SECONDS`  | 1200                                | Fenêtre du budget partagé                                                                           |
-| `STAKE_BLOCK_COOLDOWN_SECONDS` | 3600                                | Pause après refus principal ; prolongée par `Retry-After`                                           |
+| `STAKE_BLOCK_COOLDOWN_SECONDS` | 3600 (0 sur le VPS)                  | Pause locale après refus principal ; `Retry-After` reste prioritaire                                 |
 | `STAKE_START_GUARD_SECONDS`    | 60                                  | Marge avant l'heure prévue pour les seuls relevés pré-match ; sans effet sur le direct               |
 
 Ces limites locales ne sont pas des quotas publiés par Stake. Un budget compte aussi les ressources naturellement chargées ; il ne garantit pas l’absence de 403/429. Les requêtes déjà parties ne sont pas annulées rétroactivement.
+
+Sur le VPS, la pause locale fixe vaut zéro. Un challenge arrête et marque en échec le passage courant ; seul le prochain passage cron ou un lancement manuel réessaie. Un en-tête `Retry-After` explicite reste prioritaire et place le passage en attente jusqu'à son échéance. Cette configuration ne fait pas disparaître un refus Cloudflare.
 
 Un **403/429 auxiliaire** est journalisé, avec URL expurgée, et le parcours continue tant que les données requises sont disponibles. Aucune requête directe ne rejoue ces ressources. Un 403/429 du document principal reste provisoire jusqu'à la vérification du contenu rendu : si la liste ou les marchés attendus sont lisibles, le refus est classé `nonblocking` et le cycle continue. Si la page affiche une protection explicite ou si les données attendues restent indisponibles après le délai de lecture, la source est mise en pause en respectant `Retry-After`. Le planificateur replace la demande en attente avec sa date de reprise. Les données précédentes restent disponibles ; LoLTV et Oracle continuent indépendamment.
 
