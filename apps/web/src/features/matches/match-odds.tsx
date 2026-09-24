@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { Collapsible } from 'radix-ui';
 import { ChevronDown, CirclePercent, Hourglass, LockKeyhole } from 'lucide-react';
 import type { Catalog } from '@/domain/schemas';
 import type { EsportMatch } from '@/domain/matches';
@@ -131,14 +132,14 @@ export function MatchOdds({ match, home, away }: { match: EsportMatch; home: Tea
     markets[0]!.observedAt,
   );
   return (
-    <section className="match-odds-section" aria-label="Cotes et résultats des sélections Stake">
-      <button
-        type="button"
-        className="match-odds-toggle"
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        onClick={() => setExpanded((current) => !current)}
-      >
+    <Collapsible.Root
+      className="match-odds-section"
+      open={expanded}
+      onOpenChange={setExpanded}
+      role="region"
+      aria-label="Cotes et résultats des sélections Stake"
+    >
+      <Collapsible.Trigger type="button" className="match-odds-toggle" aria-controls={panelId}>
         <span className="match-odds-toggle-icon">
           <CirclePercent size={18} aria-hidden="true" />
         </span>
@@ -156,89 +157,91 @@ export function MatchOdds({ match, home, away }: { match: EsportMatch; home: Tea
         <span className="match-odds-toggle-source" aria-hidden="true">
           <SourceMark source="Stake" />
         </span>
-      </button>
-      <div id={panelId} className="match-odds-panel" hidden={!expanded}>
-        <div className="match-odds-intro">
-          <time
-            dateTime={lastObserved}
-            aria-label={`Dernier relevé le ${scheduledDate(lastObserved)} · Paris`}
-          >
-            Dernier relevé {time(lastObserved)}
-          </time>
+      </Collapsible.Trigger>
+      <Collapsible.Content id={panelId} className="ui-disclosure-content">
+        <div className="match-odds-panel">
+          <div className="match-odds-intro">
+            <time
+              dateTime={lastObserved}
+              aria-label={`Dernier relevé le ${scheduledDate(lastObserved)} · Paris`}
+            >
+              Dernier relevé {time(lastObserved)}
+            </time>
+          </div>
+          <div className="match-odds-groups">
+            {groups.map((group) => {
+              const label =
+                group.kind === 'match_winner'
+                  ? 'Vainqueur du match'
+                  : `Vainqueur de la carte ${group.mapNumber}`;
+              return (
+                <section
+                  className="match-odds-group"
+                  aria-label={label}
+                  key={`${group.kind}:${group.mapNumber ?? ''}`}
+                >
+                  <div className="match-odds-group-heading">
+                    <h3>{label}</h3>
+                    {match.status === 'finished' && (
+                      <span className="match-odds-result-note">
+                        {groupOutcome(group, home.id) === 'pending' &&
+                        groupOutcome(group, away.id) === 'pending'
+                          ? 'Résultat en attente'
+                          : 'Résultat validé'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="match-odds-phases">
+                    {group.phases.map((market) => (
+                      <div
+                        className={`match-odds-phase${market.historical ? ' is-historical' : ''}`}
+                        key={market.phase}
+                      >
+                        <div className="match-odds-identity is-home">
+                          <Logo src={home.image} name={home.name} />
+                        </div>
+                        <Quote
+                          selection={market.selections.find(
+                            (selection) => selection.teamId === home.id,
+                          )}
+                          team={home}
+                          phase={market.phase}
+                          historical={market.historical}
+                          result={groupOutcome(group, home.id)}
+                          position="home"
+                        />
+                        <div className="match-odds-phase-label">
+                          <span aria-hidden="true">vs</span>
+                          <strong>{market.phase === 'prematch' ? 'Pré-match' : 'En direct'}</strong>
+                          <time
+                            dateTime={market.observedAt}
+                            aria-label={`${market.phase === 'prematch' ? 'Pré-match' : 'En direct'}, relevé le ${scheduledDate(market.observedAt)} · Paris`}
+                          >
+                            {time(market.observedAt)}
+                          </time>
+                        </div>
+                        <Quote
+                          selection={market.selections.find(
+                            (selection) => selection.teamId === away.id,
+                          )}
+                          team={away}
+                          phase={market.phase}
+                          historical={market.historical}
+                          result={groupOutcome(group, away.id)}
+                          position="away"
+                        />
+                        <div className="match-odds-identity is-away">
+                          <Logo src={away.image} name={away.name} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
         </div>
-        <div className="match-odds-groups">
-          {groups.map((group) => {
-            const label =
-              group.kind === 'match_winner'
-                ? 'Vainqueur du match'
-                : `Vainqueur de la carte ${group.mapNumber}`;
-            return (
-              <section
-                className="match-odds-group"
-                aria-label={label}
-                key={`${group.kind}:${group.mapNumber ?? ''}`}
-              >
-                <div className="match-odds-group-heading">
-                  <h3>{label}</h3>
-                  {match.status === 'finished' && (
-                    <span className="match-odds-result-note">
-                      {groupOutcome(group, home.id) === 'pending' &&
-                      groupOutcome(group, away.id) === 'pending'
-                        ? 'Résultat en attente'
-                        : 'Résultat validé'}
-                    </span>
-                  )}
-                </div>
-                <div className="match-odds-phases">
-                  {group.phases.map((market) => (
-                    <div
-                      className={`match-odds-phase${market.historical ? ' is-historical' : ''}`}
-                      key={market.phase}
-                    >
-                      <div className="match-odds-identity is-home">
-                        <Logo src={home.image} name={home.name} />
-                      </div>
-                      <Quote
-                        selection={market.selections.find(
-                          (selection) => selection.teamId === home.id,
-                        )}
-                        team={home}
-                        phase={market.phase}
-                        historical={market.historical}
-                        result={groupOutcome(group, home.id)}
-                        position="home"
-                      />
-                      <div className="match-odds-phase-label">
-                        <span aria-hidden="true">vs</span>
-                        <strong>{market.phase === 'prematch' ? 'Pré-match' : 'En direct'}</strong>
-                        <time
-                          dateTime={market.observedAt}
-                          aria-label={`${market.phase === 'prematch' ? 'Pré-match' : 'En direct'}, relevé le ${scheduledDate(market.observedAt)} · Paris`}
-                        >
-                          {time(market.observedAt)}
-                        </time>
-                      </div>
-                      <Quote
-                        selection={market.selections.find(
-                          (selection) => selection.teamId === away.id,
-                        )}
-                        team={away}
-                        phase={market.phase}
-                        historical={market.historical}
-                        result={groupOutcome(group, away.id)}
-                        position="away"
-                      />
-                      <div className="match-odds-identity is-away">
-                        <Logo src={away.image} name={away.name} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      </div>
-    </section>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }

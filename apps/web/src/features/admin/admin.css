@@ -520,22 +520,18 @@
 .run-list li + li {
   border-top: 1px solid var(--border);
 }
-.run-entry > summary {
+.run-trigger {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 88px 15px;
   align-items: center;
   gap: var(--space-md);
   min-height: 76px;
+  width: 100%;
   padding: var(--space-md) var(--space-xs);
   border-radius: var(--radius-sm);
-  list-style: none;
-  cursor: pointer;
-  user-select: none;
+  text-align: left;
 }
-.run-entry > summary::-webkit-details-marker {
-  display: none;
-}
-.run-entry > summary:hover {
+.run-trigger:hover {
   background: var(--surface-hover);
 }
 .run-identity {
@@ -558,7 +554,7 @@
   color: var(--muted);
   transition: transform var(--motion-control) var(--ease-enter);
 }
-.run-entry[open] .run-chevron {
+.run-trigger[data-state='open'] .run-chevron {
   transform: rotate(180deg);
 }
 .run-detail {
