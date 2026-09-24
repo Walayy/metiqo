@@ -1,4 +1,5 @@
 import threading
+import time
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -7,6 +8,7 @@ from metiquo_core.config import Settings
 from metiquo_core.models import IngestionRun, ScriptRun, ScriptSchedule
 from metiquo_core.scheduling import upcoming
 from metiquo_worker import scheduler
+from metiquo_worker.stake_policy import StakeDeferred
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
@@ -118,3 +120,35 @@ def test_queued_manual_run_survives_pause_busy_source_and_restart(database, monk
     scheduler.tick(engine, settings, ["lol-catalog"], threading.Event())
     with Session(engine) as db:
         assert db.get(ScriptRun, run_id).status == "interrupted"
+
+
+@pytest.mark.integration
+def test_stake_refusal_without_cooldown_finishes_run_until_next_cron(database, monkeypatch):
+    engine, settings = database
+    settings = settings.model_copy(update={"stake_enabled": True})
+    now = datetime.now(UTC)
+    with Session(engine) as db, db.begin():
+        db.execute(update(ScriptSchedule).values(enabled=False))
+        run = ScriptRun(
+            script_id="stake-markets", trigger="manual", requested_at=now, available_at=now
+        )
+        db.add(run)
+        db.flush()
+        run_id = run.id
+
+    calls = 0
+
+    def refused(*_, **__):
+        nonlocal calls
+        calls += 1
+        raise StakeDeferred("challenge", time.time())
+
+    monkeypatch.setattr(scheduler, "sync_stake", refused)
+    for _ in range(2):
+        scheduler.tick(engine, settings, ["stake-markets"], threading.Event())
+    with Session(engine) as db:
+        run = db.get(ScriptRun, run_id)
+        assert run.status == "failed"
+        assert run.finished_at is not None
+        assert db.scalars(select(ScriptRun)).all() == [run]
+    assert calls == 1

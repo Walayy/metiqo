@@ -1,3 +1,4 @@
+import time
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
@@ -10,6 +11,7 @@ from metiquo_core.models import (
     BookmakerQuote,
     BookmakerSelection,
     BookmakerSnapshot,
+    CollectorState,
     IngestionRun,
 )
 from metiquo_worker import stake_sync
@@ -338,3 +340,25 @@ def test_stake_budget_and_retry_after_survive_a_new_worker(database):
     with pytest.raises(StakeDeferred) as retry:
         StakePolicy(engine, settings).check()
     assert retry.value.retry_at == refusal.value.retry_at
+
+
+@pytest.mark.integration
+def test_stake_zero_local_cooldown_still_respects_retry_after(database):
+    engine, _ = database
+    settings = Settings(database_url="postgresql://unused", stake_block_cooldown_seconds=0)
+    policy = StakePolicy(engine, settings)
+    with pytest.raises(StakeDeferred) as refusal:
+        policy.block("challenge")
+    assert refusal.value.retry_at <= time.time()
+    with Session(engine) as db:
+        state = db.get(CollectorState, "stake")
+        assert state is not None
+        assert "blockedUntil" not in state.data
+    StakePolicy(engine, settings).check()
+
+    with pytest.raises(StakeDeferred) as refusal_with_delay:
+        policy.block("rate_limited", 120)
+    assert refusal_with_delay.value.retry_at > time.time() + 100
+    with pytest.raises(StakeDeferred) as retry:
+        StakePolicy(engine, settings).check()
+    assert retry.value.retry_at == refusal_with_delay.value.retry_at

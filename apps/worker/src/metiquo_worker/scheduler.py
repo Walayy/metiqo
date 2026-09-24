@@ -175,17 +175,30 @@ def _tick_source(
                     if ingestion is not None and ingestion.status != "succeeded":
                         run.error = "La collecte a échoué. Consultez les journaux du worker."
             except StakeDeferred as error:
+                now = datetime.now(UTC)
                 with Session(engine) as db, db.begin():
-                    db.execute(
-                        update(ScriptRun)
-                        .where(ScriptRun.id == run_id)
-                        .values(
-                            status="queued",
-                            started_at=None,
-                            available_at=datetime.fromtimestamp(error.retry_at, UTC),
-                            error="Stake différé : délai source ou budget en attente.",
+                    if error.retry_at <= now.timestamp():
+                        # No cooldown: finish this run and let the next cron tick retry.
+                        db.execute(
+                            update(ScriptRun)
+                            .where(ScriptRun.id == run_id)
+                            .values(
+                                status="failed",
+                                finished_at=now,
+                                error="Stake : accès refusé par la source.",
+                            )
                         )
-                    )
+                    else:
+                        db.execute(
+                            update(ScriptRun)
+                            .where(ScriptRun.id == run_id)
+                            .values(
+                                status="queued",
+                                started_at=None,
+                                available_at=datetime.fromtimestamp(error.retry_at, UTC),
+                                error="Stake différé : délai source ou budget en attente.",
+                            )
+                        )
             except LoltvBlocked as error:
                 retry_at = (
                     datetime.fromtimestamp(error.retry_at, UTC)
