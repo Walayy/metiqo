@@ -45,3 +45,12 @@ RUN uv sync --frozen --no-dev --package metiquo-worker --no-editable
 ENV PATH="/app/.venv/bin:$PATH"
 USER 10001:10001
 CMD ["metiquo-worker", "serve"]
+
+FROM worker AS stake
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends xvfb xauth \
+    && rm -rf /var/lib/apt/lists/* \
+    && patchright install chrome
+USER 10001:10001
+CMD ["xvfb-run", "-a", "metiquo-worker", "serve", "--only", "stake"]

@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly Metiquo production backup
+
+[Timer]
+OnCalendar=*-*-* 03:10:00
+Persistent=true
+Unit=metiquo-backup.service
+
+[Install]
+WantedBy=timers.target

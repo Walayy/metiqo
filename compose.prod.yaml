@@ -1,0 +1,72 @@
+# Production overrides: real API data, verified SMTP, and the host's Traefik.
+services:
+  api:
+    environment:
+      METIQUO_AUTH_ORIGINS: ${METIQUO_AUTH_ORIGINS:?Set the HTTPS origin}
+      METIQUO_AUTH_COOKIE_SECURE: 'true'
+      METIQUO_SMTP_HOST: ${METIQUO_SMTP_HOST:?Set the SMTP host}
+      METIQUO_SMTP_PORT: ${METIQUO_SMTP_PORT:?Set the SMTP port}
+      METIQUO_SMTP_SECURITY: ${METIQUO_SMTP_SECURITY:?Set SMTP security}
+      METIQUO_SMTP_FROM: ${METIQUO_SMTP_FROM:?Set a verified sender}
+      METIQUO_SMTP_USERNAME: ${METIQUO_SMTP_USERNAME:?Set the SMTP username}
+      METIQUO_SMTP_PASSWORD: ${METIQUO_SMTP_PASSWORD:?Set the SMTP password}
+  web:
+    build:
+      args:
+        VITE_DATA_MODE: api
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=public-proxy
+      - traefik.http.routers.metiquo.rule=Host(`metiquo.com`) || Host(`www.metiquo.com`)
+      - traefik.http.routers.metiquo.entrypoints=websecure
+      - traefik.http.routers.metiquo.tls=true
+      - traefik.http.routers.metiquo.tls.certresolver=letsencrypt
+      - traefik.http.routers.metiquo.middlewares=public-chain@file
+      - traefik.http.services.metiquo.loadbalancer.server.port=8080
+    networks: [frontend, public-proxy]
+  stake-worker:
+    image: metiquo-stake:local
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile, target: stake }
+    init: true
+    environment:
+      METIQUO_DATABASE_URL: postgresql+psycopg://metiquo_worker:${METIQUO_WORKER_PASSWORD}@db:5432/metiquo
+      METIQUO_STAKE_ENABLED: 'true'
+      METIQUO_WORKER_STATUS_ID: '2'
+      METIQUO_STAKE_PROFILE_DIR: /data/browser/stake
+      METIQUO_STAKE_GAMES: ${METIQUO_STAKE_GAMES:-["league-of-legends"]}
+      METIQUO_STAKE_MIN_DELAY_SECONDS: ${METIQUO_STAKE_MIN_DELAY_SECONDS:-5}
+      METIQUO_STAKE_TIMEOUT_SECONDS: ${METIQUO_STAKE_TIMEOUT_SECONDS:-45}
+      METIQUO_STAKE_CYCLE_SECONDS: ${METIQUO_STAKE_CYCLE_SECONDS:-600}
+      METIQUO_STAKE_MAX_ACTIONS: ${METIQUO_STAKE_MAX_ACTIONS:-300}
+      METIQUO_STAKE_REQUEST_BUDGET: ${METIQUO_STAKE_REQUEST_BUDGET:-30000}
+      METIQUO_STAKE_BUDGET_WINDOW_SECONDS: ${METIQUO_STAKE_BUDGET_WINDOW_SECONDS:-1200}
+      METIQUO_STAKE_BLOCK_COOLDOWN_SECONDS: ${METIQUO_STAKE_BLOCK_COOLDOWN_SECONDS:-3600}
+      METIQUO_STAKE_START_GUARD_SECONDS: ${METIQUO_STAKE_START_GUARD_SECONDS:-60}
+    volumes: [stake_browser:/data/browser]
+    shm_size: 1gb
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          CMD,
+          python,
+          -c,
+          "import os,time; assert time.time()-os.stat('/tmp/metiquo-worker.heartbeat').st_mtime < 3600",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    stop_grace_period: 30s
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [database, ingestion]
+
+networks:
+  public-proxy:
+    external: true
+
+volumes:
+  stake_browser:
