@@ -24,8 +24,16 @@ interface Props {
   onSupport: (kind: 'donation' | 'referral') => void;
   isAdmin: boolean;
   onClose?: () => void;
+  showBrand?: boolean;
 }
-export function Sidebar({ view, onNavigate, onSupport, isAdmin, onClose }: Props) {
+export function Sidebar({
+  view,
+  onNavigate,
+  onSupport,
+  isAdmin,
+  onClose,
+  showBrand = true,
+}: Props) {
   const selectionId = useId();
   function entry(id: AppView, Icon: LucideIcon) {
     return (
@@ -47,17 +55,19 @@ export function Sidebar({ view, onNavigate, onSupport, isAdmin, onClose }: Props
   }
   return (
     <div className="sidebar-inner">
-      <div className="brand">
-        <BrandMark size={40} />
-        <span>
-          metiquo<span className="brand-period">.</span>
-        </span>
-        {onClose && (
-          <Button iconOnly variant="ghost" onClick={onClose} aria-label="Fermer la navigation">
-            <X size={18} />
-          </Button>
-        )}
-      </div>
+      {showBrand && (
+        <div className="brand">
+          <BrandMark size={40} />
+          <span>
+            metiquo<span className="brand-period">.</span>
+          </span>
+          {onClose && (
+            <Button iconOnly variant="ghost" onClick={onClose} aria-label="Fermer la navigation">
+              <X size={18} />
+            </Button>
+          )}
+        </div>
+      )}
       <GameSelector />
       <nav aria-label="Navigation principale" className="sidebar-groups">
         {isAdmin && (

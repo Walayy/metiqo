@@ -2,7 +2,6 @@ import { BrandMark } from '@/components/ui/brand-mark';
 import { useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { Dialog } from 'radix-ui';
 import {
   ArrowDownUp,
   ArrowRight,
@@ -200,25 +199,16 @@ function ExplorerApp() {
       <aside className="desktop-sidebar">
         <Sidebar {...sideProps} />
       </aside>
-      <Dialog.Root open={mobileNav} onOpenChange={setMobileNav}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="modal-overlay" />
-          <Dialog.Content
-            className="mobile-sidebar"
-            onCloseAutoFocus={(event) => {
-              event.preventDefault();
-              if (!panel)
-                document
-                  .querySelector<HTMLButtonElement>('[aria-label="Ouvrir la navigation"]')
-                  ?.focus({ preventScroll: true });
-            }}
-          >
-            <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <Dialog.Description className="sr-only">Choisir une section.</Dialog.Description>
-            <Sidebar {...sideProps} onClose={() => setMobileNav(false)} />
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <Modal
+        open={mobileNav}
+        onOpenChange={setMobileNav}
+        title="Navigation"
+        description="Choisir une section."
+        className="mobile-nav-sheet"
+        returnFocus={panel === null}
+      >
+        <Sidebar {...sideProps} showBrand={false} onClose={() => setMobileNav(false)} />
+      </Modal>
       <div className="app-main">
         <header className="topbar">
           <div className="breadcrumb">

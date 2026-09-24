@@ -1874,27 +1874,6 @@ button.catalog-item:hover {
   font-size: 11px;
   color: var(--muted);
 }
-.mobile-sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 61;
-  width: min(290px, 90vw);
-  background: var(--sidebar);
-  border-right: 1px solid var(--border);
-}
-.mobile-sidebar .sidebar-inner {
-  padding: 25px 22px 16px;
-}
-.mobile-sidebar .nav-item {
-  min-height: 44px;
-  font-size: 13px;
-}
-.mobile-sidebar .brand > span {
-  font-size: 30px;
-}
-.mobile-sidebar .game-selector strong {
-  font-size: 12px;
-}
 .toast-region {
   position: fixed;
   bottom: 26px;

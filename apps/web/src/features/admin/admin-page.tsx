@@ -22,6 +22,7 @@ import { SourceMark } from '@/components/ui/source-mark';
 import { StatusDot } from '@/components/ui/status-dot';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { useDialogPresence } from '@/components/ui/use-dialog-presence';
 import { Select } from '@/components/ui/select';
 import { FieldFeedback } from '@/components/ui/field-feedback';
 import { accountDate, scheduledDate, scheduledShortDate } from '@/lib/format';
@@ -148,6 +149,8 @@ function Scripts() {
   const client = useQueryClient();
   const [editing, setEditing] = useState<Script | null>(null);
   const [history, setHistory] = useState<Script | null>(null);
+  const shownEditing = useDialogPresence(editing);
+  const shownHistory = useDialogPresence(history);
   const action = useAdminAction(runSchema);
   useEffect(() => {
     if (query.error instanceof AdminError && [401, 403].includes(query.error.status)) {
@@ -174,7 +177,7 @@ function Scripts() {
     );
   if (!query.data) return <Loading />;
   const { items, worker } = query.data;
-  const historyScript = items.find((item) => item.id === history?.id) ?? history;
+  const historyScript = items.find((item) => item.id === shownHistory?.id) ?? shownHistory;
   const families = Array.from(
     items.reduce((groups, script) => {
       const scripts = groups.get(script.family) ?? [];
@@ -379,10 +382,16 @@ function Scripts() {
           ))}
         </Accordion.Root>
       )}
-      {editing && <ScheduleEditor script={editing} close={() => setEditing(null)} />}
+      {shownEditing && (
+        <ScheduleEditor
+          script={shownEditing}
+          open={editing !== null}
+          close={() => setEditing(null)}
+        />
+      )}
       {historyScript && (
         <Modal
-          open
+          open={history !== null}
           onOpenChange={(open) => {
             if (!open) setHistory(null);
           }}
@@ -466,7 +475,15 @@ function Scripts() {
     </ContentTransition>
   );
 }
-function ScheduleEditor({ script, close }: { script: Script; close: () => void }) {
+function ScheduleEditor({
+  script,
+  open,
+  close,
+}: {
+  script: Script;
+  open: boolean;
+  close: () => void;
+}) {
   const [form, setForm] = useState(() => fromCron(script.cron));
   const [timezone, setTimezone] = useState(script.timezone);
   const [enabled, setEnabled] = useState(script.enabled);
@@ -492,7 +509,7 @@ function ScheduleEditor({ script, close }: { script: Script; close: () => void }
       : null;
   return (
     <Modal
-      open
+      open={open}
       onOpenChange={(open) => {
         if (!open && !action.isPending) close();
       }}
@@ -690,6 +707,7 @@ function UserList({ userId }: { userId: string }) {
   const deferred = useDeferredValue(search);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<AdminUser | null>(null);
+  const shownEditing = useDialogPresence(editing);
   const query = useQuery(usersQuery(deferred, page));
   const loading = useMinimumLoading(query.isFetching, JSON.stringify([deferred, page]));
   return (
@@ -797,19 +815,34 @@ function UserList({ userId }: { userId: string }) {
           </>
         ) : null}
       </ContentTransition>
-      {editing && (
-        <UserEditor user={editing} self={editing.id === userId} close={() => setEditing(null)} />
+      {shownEditing && (
+        <UserEditor
+          user={shownEditing}
+          self={shownEditing.id === userId}
+          open={editing !== null}
+          close={() => setEditing(null)}
+        />
       )}
     </>
   );
 }
-function UserEditor({ user, self, close }: { user: AdminUser; self: boolean; close: () => void }) {
+function UserEditor({
+  user,
+  self,
+  open,
+  close,
+}: {
+  user: AdminUser;
+  self: boolean;
+  open: boolean;
+  close: () => void;
+}) {
   const [role, setRole] = useState(user.role);
   const [disabled, setDisabled] = useState(user.disabled);
   const action = useAdminAction(successSchema, close);
   return (
     <Modal
-      open
+      open={open}
       onOpenChange={(open) => {
         if (!open && !action.isPending) close();
       }}
