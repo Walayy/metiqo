@@ -50,8 +50,10 @@ public HTTPS attend que les enregistrements A du domaine pointent vers le VPS.
 
 Seul un `push` sur `master` déclenche le workflow. Les tâches qualité, Docker,
 migrations et interface doivent réussir avant le déploiement. Le job `deploy`
-appelle, via SSH, `scripts/deploy-production.sh` avec le SHA contrôlé. La clé
-publique dédiée est restreinte à cette commande dans `authorized_keys` ; la clé
+appelle, via SSH, le script versionné `scripts/deploy-production.sh` avec le SHA
+contrôlé. La clé
+publique dédiée est restreinte à sa copie stable
+`/usr/local/sbin/metiquo-deploy` dans `authorized_keys` ; la clé
 du serveur est épinglée dans `.github/metiquo_known_hosts`. Le script refuse un
 arbre de travail modifié et un SHA dépassé par un nouveau `master`.
 

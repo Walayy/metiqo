@@ -29,4 +29,6 @@ git merge --ff-only "$sha"
 docker compose --env-file .env.docker -f compose.yaml -f compose.prod.yaml up -d --build --wait --wait-timeout 240
 curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/health >/dev/null
 curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8080/api/docs >/dev/null
+install -m 755 scripts/deploy-production.sh /usr/local/sbin/metiquo-deploy.next
+mv -f /usr/local/sbin/metiquo-deploy.next /usr/local/sbin/metiquo-deploy
 echo "Deployed master ${sha}"
