@@ -50,6 +50,35 @@ Oracle ne remplace un historique qu’avec une série complète et un format ind
 
 ## Disponibilité réellement vérifiée
 
+Le 24 septembre 2026, les pages paginées `/matches/results/all/2` et
+`/matches/all/2` ont répondu HTTP 200 avec un en-tête `Age` d'environ 34 et
+35 jours, tandis que les premières pages avaient moins de quinze minutes.
+Leurs dates d'août ne prouvaient donc pas que la fenêtre de septembre était
+couverte. Le collecteur conserve la preuve HTTP mais refuse une liste dont
+`Age` dépasse 24 heures, garde les rencontres déjà acquises et retente après
+son délai normal.
+
+Les captures de listes publiques sont déclarées dans
+`archive/manifest.json`, avec leur période, date de récupération et empreintes.
+Le worker charge toute capture dont la période croise la fenêtre courante ; les
+dates J−7/J+7 sont calculées chaque jour à Paris, sans année codée en dur. La
+capture actuellement conservée a été récupérée le 21 septembre 2026 à
+17:57:21 UTC ; son document (`results-2026-09-21.html.gz`) a pour SHA-256
+`48f3a2fedfd2b837bf49a5883efbaef867d3cf7ca7e31e50395f95c62a53c7b5` et contient
+30 rencontres des 17–20 septembre, absentes de la base de production au
+24 septembre. Les archives servent uniquement à mettre en file des fiches
+absentes. Le worker relit chaque fiche, vérifie son identité et exige son score
+final actuel avant publication. Une fiche dont le cache précède sa capture est
+rejetée ; une réponse refusée arrête la source selon la politique habituelle.
+Les archives ne publient ni rencontre ni nouveau relevé à elles seules.
+
+En fonctionnement continu, les journées de novembre suivent le même calcul
+glissant et la même collecte que les autres dates. Le paquet contient pour le
+moment une seule capture de septembre : un démarrage neuf en novembre ne peut
+pas s'appuyer dessus. Si LoLTV sert alors une pagination périmée, il faudra une
+capture vérifiée couvrant ces dates ou des données déjà acquises ; le worker
+conserve les rencontres valides et n'annonce pas une couverture absente.
+
 Les requêtes HTML ont répondu 200 sur les listes et les fiches. Un cycle HTML a découvert 87 rencontres dans J−7/J+7. Le premier essai Chromium a répondu **403** : arrêt immédiat et délai conservé, puis respecté avant les essais suivants. L’analyse du chargement normal a identifié la consultation anonyme ci-dessus, validée depuis Docker. Le mode par défaut utilise HTTPX ; le mode DOM reste optionnel et désactivé.
 
 Les tests hors réseau valident les parseurs, la découverte de session, la confidentialité des cookies, les gardes de publication et les contrats. La validation réelle est datée et ne garantit pas la disponibilité future de LoLTV. Aucune rotation d’IP, de navigateur ou d’identité, aucun effacement de protection et aucun contournement de challenge ne sont utilisés.

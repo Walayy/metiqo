@@ -148,6 +148,8 @@ Les identifiants LoLTV, URLs, dates de récupération, empreintes et documents c
 
 L’optimisation du 21 septembre conserve le même budget source et vise une lecture live toutes les trente secondes, avec sessions anonymes réutilisées brièvement en mémoire. Une cadence de récupération plus courte ne rend pas un flux ancien plus récent : état du flux, horodatage source et date de récupération restent séparés. Les délais mesurés et l’écart observé entre résultat du flux et métadonnées HTML sont documentés dans [l’analyse LoLTV](loltv.md).
 
+Le 24 septembre, des pages de pagination LoLTV ont servi un HTML d'août avec un `Age` HTTP de plus de 33 jours, malgré un HTTP 200 ; les premières pages de septembre étaient fraîches. Ces pages périmées ne peuvent plus établir la couverture J−7/J+7. Les captures historiques sont chargées depuis un manifeste vérifié et ne servent qu'à découvrir des fiches à relire ; seul un détail LoLTV récent et validé est publié. La capture conservée couvre les 17–20 septembre et permet le rattrapage de ces journées sur une installation neuve. La fenêtre et son année restent dynamiques pour le fonctionnement courant, y compris en novembre. Un démarrage neuf confronté à une pagination périmée nécessite toutefois une capture couvrant ses dates ; les dernières rencontres valides demeurent en base. [Constat, empreinte et traitement](loltv.md).
+
 Les refus observés dans Chromium empêchent actuellement de certifier le direct complet depuis le worker. Le fait qu’une page s’ouvre dans le navigateur utilisateur ne prouve pas l’accès depuis Docker. La fenêtre J−7/J+7 borne le périmètre demandé, pas une affirmation d’exhaustivité de la source.
 
 ## Rapprochement des identités — 23 septembre 2026

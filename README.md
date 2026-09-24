@@ -163,6 +163,7 @@ npm run docker:down
 ```
 
 Les scripts utilisent respectivement `compose.mock.yaml` et `compose.api.yaml`. Changer de mode reconstruit l’image web ; les volumes PostgreSQL, artefacts et pgAdmin sont conservés.
+Pour consulter les rencontres réellement collectées sur LoLTV, lancer `npm run docker:api` : une API active derrière un frontend construit en `mock` ne change pas les matchs affichés. Le calendrier montre toujours J−7 à J+7, mais laisse désactivées les journées sans rencontre publiée. La pagination LoLTV peut servir un cache ancien ; le worker refuse ces listes périmées et conserve les données déjà acquises. Les captures vérifiées sont déclarées dans un manifeste et servent uniquement à découvrir des fiches à relire. La fenêtre courante se décale par date et fonctionne aussi en novembre ; pour un démarrage neuf en cas de pagination périmée, une capture couvrant les dates manquantes reste nécessaire. Voir [les limites de couverture](docs/loltv.md).
 
 ## Stack retenue
 

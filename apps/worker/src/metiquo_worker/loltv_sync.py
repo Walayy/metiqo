@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from metiquo_worker.artifacts import store_bytes
 from metiquo_worker.jobs import source_lock, start_run
+from metiquo_worker.loltv_archive import discover_archived_events
 from metiquo_worker.loltv_policy import LoltvBlocked, LoltvBudgetExhausted, LoltvPolicy
 from metiquo_worker.loltv_publication import _publish_events
 from metiquo_worker.oracle_match_sync import sync_oracle_match_details
@@ -28,6 +29,7 @@ from metiquo_worker.sources.loltv import ROOT_URL, SOURCE, LoltvEvent, detail, l
 logger = logging.getLogger(__name__)
 LOCK_ID = 7_346_810_210
 PARIS = ZoneInfo("Europe/Paris")
+MAX_LISTING_CACHE_AGE_SECONDS = 24 * 60 * 60
 
 
 def next_live_due(data: dict[str, object], settings: Settings) -> float | None:
@@ -181,6 +183,29 @@ class Collector:
     def checkpoint(self) -> None:
         self.policy.checkpoint(self.state)
 
+    def seed_archived_events(self, events: list[LoltvEvent], known_ids: set[str]) -> None:
+        discoveries: dict[str, dict[str, object]] = {}
+        for event in events:
+            evidence = event.payload.get("archivedDiscovery")
+            if isinstance(evidence, dict) and isinstance(evidence.get("artifactSha256"), str):
+                artifact_sha = cast(str, evidence["artifactSha256"])
+                summary = discoveries.setdefault(
+                    artifact_sha,
+                    {**evidence, "candidateCount": 0, "queuedForFreshDetail": 0},
+                )
+                summary["candidateCount"] = int(cast(int, summary["candidateCount"])) + 1
+            if event.source_id in known_ids or event.source_id in self.events:
+                continue
+            self.events[event.source_id] = {"event": encode_event(event), "due": 0}
+            if isinstance(evidence, dict) and isinstance(evidence.get("artifactSha256"), str):
+                summary = discoveries[cast(str, evidence["artifactSha256"])]
+                summary["queuedForFreshDetail"] = (
+                    int(cast(int, summary["queuedForFreshDetail"])) + 1
+                )
+        if discoveries:
+            self.details["archivedDiscovery"] = list(discoveries.values())
+            self.checkpoint()
+
     def publish(self, events: list[LoltvEvent]) -> None:
         if not events:
             return
@@ -247,6 +272,13 @@ class Collector:
 
     def read_listing(self, client: httpx.Client, url: str) -> None:
         html = self.fetch(client, url)
+        pages = self.details["pages"]
+        evidence = pages[-1] if isinstance(pages, list) and pages else None
+        age = evidence.get("cacheAge") if isinstance(evidence, dict) else None
+        if isinstance(age, str) and age.isdecimal() and int(age) > MAX_LISTING_CACHE_AGE_SECONDS:
+            root = str(self.pages[url]["root"])
+            self.state.pop("resultsBoundary" if "/results" in root else "upcomingBoundary", None)
+            raise ValueError(f"LoLTV listing cache is stale (Age: {age} seconds)")
         found, links, dates = listing(html, url)
         found = [event for event in found if self.in_window(event.starts_at)]
         self.publish(found)
@@ -354,7 +386,30 @@ class Collector:
             )
         else:
             html = self.fetch(client, event.url)
-            event = detail(html, event)
+            archived = event.payload.get("archivedDiscovery")
+            if isinstance(archived, dict):
+                pages = self.details["pages"]
+                evidence = pages[-1] if isinstance(pages, list) and pages else None
+                age = evidence.get("cacheAge") if isinstance(evidence, dict) else None
+                retrieved = evidence.get("retrievedAt") if isinstance(evidence, dict) else None
+                discovered = archived.get("retrievedAt")
+                if (
+                    isinstance(age, str)
+                    and age.isdecimal()
+                    and isinstance(retrieved, str)
+                    and isinstance(discovered, str)
+                    and datetime.fromisoformat(retrieved) - timedelta(seconds=int(age))
+                    < datetime.fromisoformat(discovered)
+                ):
+                    raise ValueError("LoLTV detail cache predates the archived discovery")
+            updated = detail(html, event, require_score=isinstance(archived, dict))
+            if isinstance(archived, dict) and (
+                updated.status != "finished"
+                or updated.home_score is None
+                or updated.away_score is None
+            ):
+                raise ValueError("LoLTV archived discovery lacks a validated finished detail")
+            event = updated
             self.publish([event])
             item["metadataEvent"] = encode_event(event)
             item["metadataAt"] = time.time()
@@ -545,6 +600,20 @@ def sync_loltv(engine: Engine, settings: Settings) -> UUID:
         collector = Collector(engine, settings, policy, run_id)
         error: Exception | None = None
         try:
+            archived, _ = discover_archived_events(collector.first, collector.last)
+            if archived:
+                with Session(engine) as session:
+                    known_ids = set(
+                        session.scalars(
+                            select(MatchSourceLink.source_id).where(
+                                MatchSourceLink.provider == SOURCE,
+                                MatchSourceLink.source_id.in_(
+                                    [event.source_id for event in archived]
+                                ),
+                            )
+                        )
+                    )
+                collector.seed_archived_events(archived, known_ids)
             collector.run()
             if not collector.details["errors"]:
                 policy.healthy()

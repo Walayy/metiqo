@@ -5,13 +5,14 @@ import gzip
 import json
 import time
 from dataclasses import replace
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
 import httpx
 import pytest
 from metiquo_core.config import Settings
+from metiquo_worker.loltv_archive import discover_archived_events
 from metiquo_worker.loltv_browser import merge_dom
 from metiquo_worker.loltv_feed import AnonymousSessions, FeedReader, merge_feed
 from metiquo_worker.loltv_policy import LoltvBlocked
@@ -185,6 +186,68 @@ def test_queue_keeps_completed_cache_without_republishing_it(monkeypatch):
     assert decode_event(collector.events[event.source_id]["event"]).source_id == event.source_id
 
 
+def test_archived_listing_only_queues_missing_matches_until_detail_is_validated(monkeypatch):
+    archived, evidence = discover_archived_events(date(2026, 9, 17), date(2026, 9, 20))
+    assert len(archived) == 30
+    assert evidence[0]["retrievedAt"] == "2026-09-21T17:57:21.066361+00:00"
+    assert discover_archived_events(date(2026, 10, 2), date(2026, 10, 16))[0] == []
+    collector = Collector(None, Settings(loltv_feed_enabled=False), MemoryPolicy(), uuid4())
+    known = {archived[0].source_id}
+    collector.seed_archived_events(archived, known)
+    assert len(collector.events) == 29
+    assert collector.details["published"] == 0
+    assert collector.details["archivedDiscovery"][0]["candidateCount"] == 30
+    assert collector.details["archivedDiscovery"][0]["queuedForFreshDetail"] == 29
+
+    final = next(event for event in archived if "g2-esports" in event.url)
+    observed = []
+    monkeypatch.setattr(collector, "publish", observed.extend)
+    monkeypatch.setattr(collector, "fetch", lambda *_: captured("final"))
+    collector.read_detail(None, final.source_id)
+    assert len(observed) == 1
+    assert observed[0].source_id == final.source_id
+    assert observed[0].status == "finished"
+
+
+def test_archived_discovery_rejects_a_detail_cached_before_its_capture(monkeypatch):
+    archived, _ = discover_archived_events(date(2026, 9, 20), date(2026, 9, 20))
+    final = next(event for event in archived if "g2-esports" in event.url)
+    collector = Collector(None, Settings(loltv_feed_enabled=False), MemoryPolicy(), uuid4())
+    collector.seed_archived_events([final], set())
+    observed = []
+    monkeypatch.setattr(collector, "publish", observed.extend)
+
+    def old_detail(*_args):
+        collector.details["pages"].append(
+            {"retrievedAt": "2026-09-24T16:00:00+00:00", "cacheAge": "345600"}
+        )
+        return captured("final")
+
+    monkeypatch.setattr(collector, "fetch", old_detail)
+    with pytest.raises(ValueError, match="detail cache predates"):
+        collector.read_detail(None, final.source_id)
+    assert observed == []
+
+
+def test_archived_discovery_requires_score_on_the_current_detail(monkeypatch):
+    archived, _ = discover_archived_events(date(2026, 9, 20), date(2026, 9, 20))
+    final = next(event for event in archived if "g2-esports" in event.url)
+    collector = Collector(None, Settings(loltv_feed_enabled=False), MemoryPolicy(), uuid4())
+    collector.seed_archived_events([final], set())
+    observed = []
+    monkeypatch.setattr(collector, "publish", observed.extend)
+    score = (
+        '<span class="font-medium text-2xl whitespace-nowrap">3<!-- --> '
+        '<span class="text-[#666666]">:</span> <!-- -->0</span>'
+    )
+    html = captured("final")
+    assert score in html
+    monkeypatch.setattr(collector, "fetch", lambda *_: html.replace(score, ""))
+    with pytest.raises(ValueError, match="no verified series score"):
+        collector.read_detail(None, final.source_id)
+    assert observed == []
+
+
 def test_first_http_refusal_stops_queue_without_retry(tmp_path):
     policy = MemoryPolicy()
     collector = Collector(None, Settings(artifact_dir=tmp_path), policy, uuid4())
@@ -201,12 +264,49 @@ def test_first_http_refusal_stops_queue_without_retry(tmp_path):
     assert policy.data["refused"] == 429
 
 
+def test_stale_paginated_listing_cannot_close_the_calendar_window(tmp_path, monkeypatch):
+    collector = Collector(None, Settings(artifact_dir=tmp_path), MemoryPolicy(), uuid4())
+    url = ROOT_URL + "/matches/results/all/2"
+    collector.pages[url] = {"due": 0, "root": ROOT_URL + "/matches/results"}
+    collector.state["resultsBoundary"] = {"windowEndReached": True}
+    published = []
+    monkeypatch.setattr(collector, "publish", published.extend)
+
+    def response(_request):
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "text/html", "Age": "2915940"},
+            text=captured("results"),
+        )
+
+    with httpx.Client(transport=httpx.MockTransport(response)) as client:
+        with pytest.raises(ValueError, match="listing cache is stale"):
+            collector.read_listing(client, url)
+    assert published == []
+    assert "resultsBoundary" not in collector.state
+    assert collector.pages[url]["due"] == 0
+    pages = collector.details["pages"]
+    assert isinstance(pages, list) and pages[0]["cacheAge"] == "2915940"
+
+
 def test_window_uses_paris_midnight():
     collector = Collector(None, Settings(), MemoryPolicy(), uuid4())
     collector.first = datetime(2026, 9, 14).date()
     collector.last = datetime(2026, 9, 28).date()
     assert collector.in_window(datetime(2026, 9, 13, 22, tzinfo=UTC))
     assert not collector.in_window(datetime(2026, 9, 28, 22, tzinfo=UTC))
+
+
+def test_calendar_window_rolls_forward_to_november(monkeypatch):
+    class NovemberDate(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 11, 15, 12, tzinfo=UTC).astimezone(tz)
+
+    monkeypatch.setattr("metiquo_worker.loltv_sync.datetime", NovemberDate)
+    collector = Collector(None, Settings(), MemoryPolicy(), uuid4())
+    assert collector.first == date(2026, 11, 8)
+    assert collector.last == date(2026, 11, 22)
 
 
 @pytest.mark.parametrize(
