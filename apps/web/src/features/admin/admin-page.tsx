@@ -2,7 +2,7 @@ import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { ContentTransition } from '@/components/ui/content-transition';
 import { useDeferredValue, useEffect, useId, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Accordion, DropdownMenu } from 'radix-ui';
+import { Accordion, Collapsible, DropdownMenu } from 'radix-ui';
 import {
   CalendarClock,
   ChevronDown,
@@ -422,8 +422,8 @@ function Scripts() {
                     : '';
                   return (
                     <li key={run.id}>
-                      <details className="run-entry">
-                        <summary>
+                      <Collapsible.Root className="run-entry">
+                        <Collapsible.Trigger type="button" className="run-trigger">
                           <span className="run-identity">
                             <strong title={scheduledDate(run.requestedAt, historyScript.timezone)}>
                               {scheduledShortDate(run.requestedAt, historyScript.timezone)}
@@ -440,30 +440,32 @@ function Scripts() {
                             {statuses[run.status]}
                           </span>
                           <ChevronDown size={15} className="run-chevron" aria-hidden="true" />
-                        </summary>
-                        <div className="run-detail">
-                          <dl>
-                            <div>
-                              <dt>Début</dt>
-                              <dd>
-                                {run.startedAt
-                                  ? scheduledDate(run.startedAt, historyScript.timezone)
-                                  : 'En attente'}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt>Fin</dt>
-                              <dd>
-                                {run.finishedAt
-                                  ? scheduledDate(run.finishedAt, historyScript.timezone)
-                                  : '—'}
-                              </dd>
-                            </div>
-                          </dl>
-                          {run.error && <p className="admin-error">{run.error}</p>}
-                          {summary && <p>{summary}</p>}
-                        </div>
-                      </details>
+                        </Collapsible.Trigger>
+                        <Collapsible.Content className="ui-disclosure-content">
+                          <div className="run-detail">
+                            <dl>
+                              <div>
+                                <dt>Début</dt>
+                                <dd>
+                                  {run.startedAt
+                                    ? scheduledDate(run.startedAt, historyScript.timezone)
+                                    : 'En attente'}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Fin</dt>
+                                <dd>
+                                  {run.finishedAt
+                                    ? scheduledDate(run.finishedAt, historyScript.timezone)
+                                    : '—'}
+                                </dd>
+                              </div>
+                            </dl>
+                            {run.error && <p className="admin-error">{run.error}</p>}
+                            {summary && <p>{summary}</p>}
+                          </div>
+                        </Collapsible.Content>
+                      </Collapsible.Root>
                     </li>
                   );
                 })}

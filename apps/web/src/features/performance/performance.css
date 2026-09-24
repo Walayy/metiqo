@@ -248,20 +248,32 @@
   background: var(--surface);
   border-radius: var(--radius-lg);
 }
-.simulation-ledger summary {
+.simulation-ledger-trigger {
   display: flex;
+  width: 100%;
   justify-content: space-between;
   align-items: center;
   min-height: var(--touch-target);
   padding: var(--space-lg) var(--space-xl);
-  cursor: pointer;
+  text-align: left;
   font-size: 13px;
+}
+.simulation-ledger-trigger:hover {
+  background: var(--surface-hover);
+}
+.simulation-ledger-trigger svg {
+  transition: transform var(--motion-control) var(--ease-enter);
+}
+.simulation-ledger-trigger[data-state='open'] svg {
+  transform: rotate(180deg);
 }
 .ledger-list {
   padding: 0 var(--space-xl);
-  max-height: 520px;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+}
+@media (prefers-reduced-motion: reduce) {
+  .simulation-ledger-trigger svg {
+    transition: none;
+  }
 }
 .ledger-list article {
   display: flex;

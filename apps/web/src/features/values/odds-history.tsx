@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { Collapsible } from 'radix-ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Opportunity } from '@/domain/schemas';
 import { dateTime, decimal, signedDecimal } from '@/lib/format';
@@ -89,41 +90,43 @@ export function OddsHistory({ history }: { history: Opportunity['history'] }) {
           </Button>
         </div>
       )}
-      <details className="history-records">
-        <summary>
+      <Collapsible.Root className="history-records">
+        <Collapsible.Trigger type="button" className="history-records-trigger">
           Historique des relevés <span>{points.length}</span>
-        </summary>
-        <div className="history-table-scroll">
-          <table>
-            <caption className="sr-only">
-              Relevés Stake de la période sélectionnée, du plus récent au plus ancien
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Date et heure</th>
-                <th scope="col">Cote</th>
-                <th scope="col">Variation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...points].reverse().map((point, index) => {
-                // Each period is a suffix; keep the preceding quote even outside the window.
-                const previous = history[history.length - index - 2];
-                return (
-                  <tr key={point.recordedAt}>
-                    <td>
-                      <time dateTime={point.recordedAt}>{dateTime(point.recordedAt)}</time>
-                      {!previous && <small>Enregistrement</small>}
-                    </td>
-                    <td>{decimal(point.odds)}</td>
-                    <td>{previous ? signedDecimal(point.odds - previous.odds) : '—'}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </details>
+        </Collapsible.Trigger>
+        <Collapsible.Content className="ui-disclosure-content">
+          <div className="history-table-scroll">
+            <table>
+              <caption className="sr-only">
+                Relevés Stake de la période sélectionnée, du plus récent au plus ancien
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Date et heure</th>
+                  <th scope="col">Cote</th>
+                  <th scope="col">Variation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...points].reverse().map((point, index) => {
+                  // Each period is a suffix; keep the preceding quote even outside the window.
+                  const previous = history[history.length - index - 2];
+                  return (
+                    <tr key={point.recordedAt}>
+                      <td>
+                        <time dateTime={point.recordedAt}>{dateTime(point.recordedAt)}</time>
+                        {!previous && <small>Enregistrement</small>}
+                      </td>
+                      <td>{decimal(point.odds)}</td>
+                      <td>{previous ? signedDecimal(point.odds - previous.odds) : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Collapsible.Content>
+      </Collapsible.Root>
     </div>
   );
 }

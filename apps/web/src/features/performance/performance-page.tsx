@@ -4,7 +4,7 @@ import { SelectionIndicator } from '@/components/ui/selection-indicator';
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Popover } from 'radix-ui';
+import { Collapsible, Popover } from 'radix-ui';
 import {
   ChartNoAxesCombined,
   ChevronDown,
@@ -363,51 +363,55 @@ export function PerformancePage({
         performances passées ne garantissent pas les suivantes.
       </p>
       {!loading && simulation.rows.length > 0 && (
-        <details className="simulation-ledger">
-          <summary>
+        <Collapsible.Root className="simulation-ledger">
+          <Collapsible.Trigger type="button" className="simulation-ledger-trigger">
             Détail des {simulation.rows.length} values <ChevronDown size={16} />
-          </summary>
-          <div className="ledger-list">
-            {simulation.rows
-              .slice()
-              .reverse()
-              .map(({ record, profit }) => (
-                <article key={record.id}>
-                  <div>
-                    <strong>{catalog.teams.find((t) => t.id === record.pickId)?.name}</strong>
-                    <span>
-                      {catalog.teams.find((t) => t.id === record.homeId)?.code} –{' '}
-                      {catalog.teams.find((t) => t.id === record.awayId)?.code} ·{' '}
-                      {marketLabel(record.market)}
-                    </span>
-                    <small>{dateTime(record.settledAt)}</small>
-                  </div>
-                  <dl>
+          </Collapsible.Trigger>
+          <Collapsible.Content className="ui-disclosure-content">
+            <div className="ledger-list">
+              {simulation.rows
+                .slice()
+                .reverse()
+                .map(({ record, profit }) => (
+                  <article key={record.id}>
                     <div>
-                      <dt>Cote retenue</dt>
-                      <dd>{decimal(record.odds)}</dd>
+                      <strong>{catalog.teams.find((t) => t.id === record.pickId)?.name}</strong>
+                      <span>
+                        {catalog.teams.find((t) => t.id === record.homeId)?.code} –{' '}
+                        {catalog.teams.find((t) => t.id === record.awayId)?.code} ·{' '}
+                        {marketLabel(record.market)}
+                      </span>
+                      <small>{dateTime(record.settledAt)}</small>
                     </div>
-                    <div>
-                      <dt>Value initiale</dt>
-                      <dd>{signedDecimal(expectedValue(record.probability, record.odds), 1)} %</dd>
-                    </div>
-                    <div>
-                      <dt>
-                        {record.result === 'void'
-                          ? 'Remboursée'
-                          : record.result === 'won'
-                            ? 'Gagnée'
-                            : 'Perdue'}
-                      </dt>
-                      <dd className={profit < 0 ? 'is-loss' : 'is-profit'}>
-                        {signedDecimal(profit)} €
-                      </dd>
-                    </div>
-                  </dl>
-                </article>
-              ))}
-          </div>
-        </details>
+                    <dl>
+                      <div>
+                        <dt>Cote retenue</dt>
+                        <dd>{decimal(record.odds)}</dd>
+                      </div>
+                      <div>
+                        <dt>Value initiale</dt>
+                        <dd>
+                          {signedDecimal(expectedValue(record.probability, record.odds), 1)} %
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>
+                          {record.result === 'void'
+                            ? 'Remboursée'
+                            : record.result === 'won'
+                              ? 'Gagnée'
+                              : 'Perdue'}
+                        </dt>
+                        <dd className={profit < 0 ? 'is-loss' : 'is-profit'}>
+                          {signedDecimal(profit)} €
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+            </div>
+          </Collapsible.Content>
+        </Collapsible.Root>
       )}
     </div>
   );

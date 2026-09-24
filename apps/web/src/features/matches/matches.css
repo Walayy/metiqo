@@ -504,6 +504,9 @@
   width: min(1040px, calc(100vw - var(--space-2xl)));
   max-height: calc(100dvh - var(--space-2xl));
 }
+.modal-content.match-dialog:has(.match-odds-section) {
+  height: min(760px, calc(100dvh - var(--space-2xl)));
+}
 .modal-content.match-dialog:has(.map-content) {
   height: calc(100dvh - var(--space-2xl));
 }
@@ -525,6 +528,8 @@
   overflow-anchor: none;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
   padding: 0 var(--space-xl) var(--space-xl);
 }
 .match-scoreboard {

@@ -17,13 +17,22 @@ html[data-fonts='fallback'] {
   --touch-target: 44px;
 }
 
-.ui-accordion-content {
+.ui-accordion-content,
+.ui-disclosure-content {
   overflow: hidden;
 }
-.ui-accordion-content[data-state='open'] {
-  animation: accordion-expand 280ms var(--ease-enter) both;
+.ui-accordion-content {
+  --disclosure-content-height: var(--radix-accordion-content-height);
 }
-.ui-accordion-content[data-state='closed'] {
+.ui-disclosure-content {
+  --disclosure-content-height: var(--radix-collapsible-content-height);
+}
+.ui-accordion-content[data-state='open'],
+.ui-disclosure-content[data-state='open'] {
+  animation: accordion-expand 280ms var(--ease-enter) backwards;
+}
+.ui-accordion-content[data-state='closed'],
+.ui-disclosure-content[data-state='closed'] {
   animation: accordion-collapse 220ms var(--ease-exit) both;
 }
 @keyframes accordion-expand {
@@ -32,13 +41,13 @@ html[data-fonts='fallback'] {
     opacity: 0;
   }
   to {
-    height: var(--radix-accordion-content-height);
+    height: var(--disclosure-content-height);
     opacity: 1;
   }
 }
 @keyframes accordion-collapse {
   from {
-    height: var(--radix-accordion-content-height);
+    height: var(--disclosure-content-height);
     opacity: 1;
   }
   to {
@@ -47,7 +56,8 @@ html[data-fonts='fallback'] {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ui-accordion-content[data-state] {
+  .ui-accordion-content[data-state],
+  .ui-disclosure-content[data-state] {
     animation: none;
   }
 }
@@ -335,14 +345,18 @@ html[data-fonts='fallback'] {
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
-.history-records summary {
+.history-records-trigger {
+  display: block;
+  width: 100%;
   padding: var(--space-md) var(--space-lg);
-  cursor: pointer;
+  text-align: left;
   font-size: 12px;
   min-height: var(--touch-target);
-  user-select: none;
 }
-.history-records summary > span {
+.history-records-trigger:hover {
+  background: var(--surface-hover);
+}
+.history-records-trigger > span {
   margin-left: var(--space-sm);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
