@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Check, LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { useDialogPresence } from '@/components/ui/use-dialog-presence';
 import { Spinner } from '@/components/ui/spinner';
 import { FieldFeedback } from '@/components/ui/field-feedback';
 import { accountDate } from '@/lib/format';
@@ -23,6 +24,7 @@ export function Account() {
   const account = useContext(AccountContext);
   if (!account) throw new Error('Account requires its dialog context');
   const { open, setOpen } = account;
+  const dialogPresent = useDialogPresence(open ? true : null);
   const channel = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
     if (!('BroadcastChannel' in window)) return;
@@ -54,8 +56,9 @@ export function Account() {
         {session.isPending ? <Spinner /> : <UserRound size={16} />}
         <span>{user ? 'Mon profil' : 'Se connecter'}</span>
       </Button>
-      {open && (
+      {dialogPresent && (
         <AccountDialog
+          open={open}
           session={session.data}
           loading={session.isPending}
           retrying={session.isFetching}
@@ -72,6 +75,7 @@ export function Account() {
 }
 
 interface Props {
+  open: boolean;
   session: AuthSession | undefined;
   loading: boolean;
   retrying: boolean;
@@ -81,7 +85,16 @@ interface Props {
   onSession: (session: AuthSession) => Promise<void>;
 }
 
-function AccountDialog({ session, loading, retrying, failure, retry, onClose, onSession }: Props) {
+function AccountDialog({
+  open,
+  session,
+  loading,
+  retrying,
+  failure,
+  retry,
+  onClose,
+  onSession,
+}: Props) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [challenge, setChallenge] = useState<Challenge | null>(null);
@@ -247,7 +260,7 @@ function AccountDialog({ session, loading, retrying, failure, retry, onClose, on
   }
   return (
     <Modal
-      open
+      open={open}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}

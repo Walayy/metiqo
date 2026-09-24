@@ -35,14 +35,7 @@ html[data-fonts='fallback'] {
 .detail-drawer[data-state='closed'] {
   animation-name: panel-exit;
 }
-.mobile-sidebar[data-state='open'] {
-  animation: navigation-enter var(--motion-enter) var(--ease-enter) both;
-}
-.mobile-sidebar[data-state='closed'] {
-  animation: navigation-exit var(--motion-exit) var(--ease-exit) both;
-}
-.modal-content,
-.mobile-sidebar {
+.modal-content {
   will-change: transform, opacity;
 }
 .modal-content {
@@ -530,26 +523,6 @@ input[type='range'] {
     transform: translateX(24px);
   }
 }
-@keyframes navigation-enter {
-  from {
-    opacity: 0;
-    transform: translateX(-32px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-@keyframes navigation-exit {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(-24px);
-  }
-}
 @keyframes menu-enter {
   from {
     opacity: 0;
@@ -878,8 +851,140 @@ input[type='range'] {
   .spinner {
     animation: none;
   }
-  .modal-content,
-  .mobile-sidebar {
+  .modal-content {
     will-change: auto;
+  }
+}
+
+.modal-sheet-grip {
+  display: none;
+}
+
+@keyframes sheet-enter {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    transform: translate3d(0, var(--sheet-offset, 0px), 0);
+  }
+}
+
+@keyframes sheet-exit {
+  from {
+    transform: translate3d(0, var(--sheet-offset, 0px), 0);
+  }
+  to {
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+@media (max-width: 680px) {
+  body .modal-content[data-mobile-sheet='true'] {
+    display: flex;
+    top: auto;
+    right: auto;
+    bottom: var(--sheet-viewport-inset, 0px);
+    left: 0;
+    width: 100vw;
+    max-width: none;
+    max-height: calc(var(--sheet-viewport-height, 100dvh) - 10px);
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transform: translate3d(0, var(--sheet-offset, 0px), 0);
+    transition: transform 330ms cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: clip;
+  }
+  body .modal-content.match-dialog[data-mobile-sheet='true'] {
+    height: calc(var(--sheet-viewport-height, 100dvh) - 10px);
+  }
+  body .modal-content.league-picker[data-mobile-sheet='true'] {
+    height: min(620px, calc(var(--sheet-viewport-height, 100dvh) - 10px));
+  }
+  body
+    .modal-content[data-mobile-sheet='true'][data-state='open']:not(
+      [data-sheet-interacted='true']
+    ) {
+    animation: sheet-enter 360ms var(--ease-enter) both;
+  }
+  body .modal-content[data-mobile-sheet='true'][data-state='open'][data-sheet-interacted='true'] {
+    animation: none;
+  }
+  body .modal-content[data-mobile-sheet='true'][data-state='closed'] {
+    animation: sheet-exit 230ms var(--ease-exit) both;
+    transition: none;
+  }
+  body .modal-content[data-mobile-sheet='true'][data-sheet-dragging='true'] {
+    animation: none;
+    transition: none;
+  }
+  body .modal-content[data-mobile-sheet='true'] .modal-header {
+    padding: 2px 20px 16px;
+  }
+  body
+    .modal-content[data-mobile-sheet='true']
+    > :not(
+      .modal-sheet-grip,
+      .modal-header,
+      .detail-footer,
+      .filter-footer,
+      .catalog-controls,
+      .catalog-footnote
+    ) {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .modal-sheet-grip {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    touch-action: none;
+    cursor: grab;
+  }
+  .modal-sheet-grip:active {
+    cursor: grabbing;
+  }
+  .modal-sheet-grip::before {
+    content: '';
+    display: block;
+    width: 38px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--border-strong);
+  }
+  body .modal-content.mobile-nav-sheet[data-mobile-sheet='true'] {
+    height: min(680px, calc(var(--sheet-viewport-height, 100dvh) - 10px));
+  }
+  .mobile-nav-sheet .sidebar-inner {
+    height: auto;
+    padding: 8px 20px 20px;
+  }
+  .mobile-nav-sheet .nav-item {
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .mobile-nav-sheet .game-selector {
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 680px) and (prefers-reduced-motion: reduce) {
+  body .modal-content[data-mobile-sheet='true'] {
+    animation: none !important;
+    transition: none;
+    will-change: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-content {
+    animation: none !important;
+    transition: none !important;
   }
 }
