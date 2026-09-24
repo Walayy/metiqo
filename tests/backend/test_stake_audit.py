@@ -1,11 +1,13 @@
 import json
 import time
+from types import SimpleNamespace
 
 import pytest
-from metiquo_worker import stake_audit
+from metiquo_worker import stake_audit, stake_browser
 from metiquo_worker.stake_audit import (
     BLOCKED,
     KASADA_PATH_PREFIX,
+    cloudflare_ray,
     failure_impact,
     protection_signals,
     public_url,
@@ -53,6 +55,12 @@ def test_sdk_header_values_never_enter_diagnostic_signals():
     assert response_kind(200, headers) is None
 
 
+def test_cloudflare_ray_is_bounded_and_does_not_archive_arbitrary_headers():
+    assert cloudflare_ray({"CF-Ray": "230b030023ae2822-SJC"}) == "230b030023ae2822-SJC"
+    assert cloudflare_ray({"cf-ray": "token=secret"}) is None
+    assert cloudflare_ray({"cf-ray": "a" * 100 + "-SJC"}) is None
+
+
 def test_generic_fingerprint_path_is_not_attributed_to_a_vendor():
     assert response_kind(429, {}, "https://stake.bet/another/path/fp") == "http_429"
 
@@ -97,3 +105,40 @@ def test_persisted_pause_prevents_browser_launch(monkeypatch, tmp_path):
     monkeypatch.setattr(stake_audit, "sync_playwright", forbidden_launch)
     with pytest.raises(SystemExit, match="aucune requête"):
         stake_audit.main()
+
+
+@pytest.mark.parametrize("clears", [True, False])
+def test_main_challenge_gets_one_passive_wait_before_blocking(monkeypatch, clears):
+    clock = [0.0]
+    monkeypatch.setattr(stake_browser.time, "monotonic", lambda: clock[0])
+
+    class Page:
+        def goto(self, *_args, **_kwargs):
+            return None
+
+        def title(self):
+            return "Sports" if clears and clock[0] >= 3 else "Just a moment..."
+
+        def get_by_text(self, *_args, **_kwargs):
+            return SimpleNamespace(count=lambda: 0)
+
+        def locator(self, *_args, **_kwargs):
+            return SimpleNamespace(count=lambda: 0)
+
+    browser = object.__new__(stake_browser.StakeBrowser)
+    browser.settings = SimpleNamespace(stake_timeout_seconds=5)
+    browser.page = Page()
+    browser.discovered = {stake_audit.DEFAULT_URL}
+    browser.pending_main_refusals = []
+    browser.pending_retry_after = 0.0
+    browser.before_action = lambda: None
+    browser.wait = lambda seconds: clock.__setitem__(0, clock[0] + seconds)
+    browser._block_visible_protection = lambda reason: (_ for _ in ()).throw(RuntimeError(reason))
+
+    if clears:
+        browser.navigate(stake_audit.DEFAULT_URL)
+        assert clock[0] == 3
+    else:
+        with pytest.raises(RuntimeError, match="challenge"):
+            browser.navigate(stake_audit.DEFAULT_URL)
+        assert clock[0] == 7

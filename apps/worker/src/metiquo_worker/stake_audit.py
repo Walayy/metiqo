@@ -76,6 +76,12 @@ def protection_signals(url: str, headers: Mapping[str, str]) -> list[str]:
     return signals
 
 
+def cloudflare_ray(headers: Mapping[str, str]) -> str | None:
+    """Keep only a bounded Cloudflare request identifier for source support."""
+    value = next((v for k, v in headers.items() if k.lower() == "cf-ray"), "")
+    return value if re.fullmatch(r"[0-9a-fA-F]{8,32}-[A-Za-z]{3}", value) else None
+
+
 def response_kind(status: int, headers: Mapping[str, str], url: str = "") -> str | None:
     normalized = {key.lower(): value for key, value in headers.items()}
     if normalized.get("cf-mitigated", "").lower() == "challenge":
