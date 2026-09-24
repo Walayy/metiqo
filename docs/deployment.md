@@ -8,6 +8,18 @@ il utilise le même rôle SQL restreint que les autres workers. Les protections
 de refus et délais de la source restent applicables.
 Un challenge présenté par Stake sur l'IP du VPS interrompt la collecte et
 déclenche la pause prévue ; il ne faut pas le contourner.
+Le relevé d'un refus du document principal conserve le code HTTP, le type de
+protection, le titre court de la page et, si présent, le `cf-ray`. Il ne conserve
+ni le corps de la page ni les cookies. Après un refus, laisser expirer
+`collector_state.stake.blockedUntil` avant tout essai supplémentaire. Pour
+signaler un blocage à Stake, joindre l'URL, l'heure UTC, le code HTTP, le Ray ID
+et le titre ; seule l'équipe qui contrôle la protection peut confirmer la règle
+déclenchée ou autoriser l'accès du VPS. La documentation publique de l'API
+Stake Sports Data décrit un accès aux cotes avec clé API, mais son accès, sa
+couverture LoL et ses droits d'utilisation doivent être confirmés auprès de
+Stake avant de remplacer le navigateur. Voir la
+[documentation de cette API](https://docs-odds-data.stake.com/) et le
+[constat du VPS du 24 septembre 2026](incidents/2026-09-24-stake-vps.md).
 Nginx fait confiance à `X-Forwarded-For` seulement depuis le sous-réseau
 Traefik `172.18.0.0/16` de ce VPS. Si le réseau `public-proxy` est recréé avec
 un autre sous-réseau, adapter `infra/docker/nginx.conf` avant le redéploiement.

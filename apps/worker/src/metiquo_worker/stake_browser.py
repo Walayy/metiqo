@@ -14,9 +14,11 @@ from pydantic import ValidationError
 from metiquo_worker.loltv_policy import retry_after_seconds
 from metiquo_worker.stake_audit import (
     DEFAULT_URL,
+    cloudflare_ray,
     launch_context,
     public_url,
     response_kind,
+    sports_content_ready,
 )
 from metiquo_worker.stake_policy import StakePolicy
 from metiquo_worker.stake_types import Capture, EventMetadata, Listing, validate_event_url
@@ -98,6 +100,10 @@ class StakeBrowser:
                 "impact": "pending" if main else "auxiliary",
                 "kind": kind,
             }
+            if main:
+                ray = cloudflare_ray(response.headers)
+                if ray:
+                    refusal["cfRay"] = ray
             if len(self.refusals) < 100:
                 self.refusals.append(refusal)
             if main:
@@ -157,7 +163,22 @@ class StakeBrowser:
             url, wait_until="domcontentloaded", timeout=self.settings.stake_timeout_seconds * 1000
         )
         self.wait(2)
-        if self.page.title().casefold() in {"un instant…", "just a moment...", "just a moment…"}:
+        challenge_titles = {"un instant…", "just a moment...", "just a moment…"}
+        if self.page.title().casefold() in challenge_titles:
+            # A non-interactive interstitial can finish in the browser on its own.
+            # Let the original navigation settle; never click a challenge or retry.
+            end = time.monotonic() + self.settings.stake_timeout_seconds
+            while self.page.title().casefold() in challenge_titles and time.monotonic() < end:
+                self.wait(0.5)
+        if self.pending_main_refusals:
+            # A title is enough to distinguish common error pages without retaining
+            # the page body, cookies, or challenge tokens in the ingestion log.
+            title = self.page.title()
+            if title:
+                safe_title = " ".join(title.split())[:160]
+                for refusal in self.pending_main_refusals:
+                    refusal["pageTitle"] = safe_title
+        if self.page.title().casefold() in challenge_titles and not sports_content_ready(self.page):
             self._block_visible_protection("challenge")
         if self.page.get_by_text("You are being rate limited", exact=False).count():
             self._block_visible_protection("rate_limited")
