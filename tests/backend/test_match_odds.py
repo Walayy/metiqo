@@ -23,7 +23,7 @@ from metiquo_core.models import (
 )
 from sqlalchemy.orm import Session
 
-NOW = datetime(2026, 9, 24, 12, tzinfo=UTC)
+NOW = datetime.now(UTC).replace(microsecond=0) + timedelta(days=1)
 
 
 @pytest.mark.integration
