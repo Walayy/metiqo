@@ -343,7 +343,7 @@ def source_maps(games: list[JsonValue], event: LoltvEvent) -> list[dict[str, obj
     return result
 
 
-def detail(html: str, event: LoltvEvent) -> LoltvEvent:
+def detail(html: str, event: LoltvEvent, *, require_score: bool = False) -> LoltvEvent:
     soup = BeautifulSoup(html, "html.parser")
     main = soup.find("main")
     header = main.find("section") if main else None
@@ -367,6 +367,8 @@ def detail(html: str, event: LoltvEvent) -> LoltvEvent:
         if (found := re.fullmatch(r"(\d+)\s*:\s*(\d+)", span.get_text(" ", strip=True)))
     ]
     score = scores[0] if len(scores) == 1 else None
+    if require_score and score is None:
+        raise ValueError("LoLTV detail has no verified series score")
     best = re.search(r"\bBO\s*(\d+)\b", header_text)
     state = STATES.get(text(data.get("state")))
     if state is None:

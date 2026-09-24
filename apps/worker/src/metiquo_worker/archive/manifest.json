@@ -1,0 +1,12 @@
+{
+  "archives": [
+    {
+      "filename": "results-2026-09-21.html.gz",
+      "from": "2026-09-14",
+      "to": "2026-09-21",
+      "retrievedAt": "2026-09-21T17:57:21.066361+00:00",
+      "documentSha256": "48f3a2fedfd2b837bf49a5883efbaef867d3cf7ca7e31e50395f95c62a53c7b5",
+      "artifactSha256": "59f74c43c7ee94dc07f7f54fdc2da994514d2b14cad50590b7c7d9e0180db06e"
+    }
+  ]
+}
