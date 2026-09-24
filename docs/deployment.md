@@ -48,8 +48,9 @@ public HTTPS attend que les enregistrements A du domaine pointent vers le VPS.
 
 ## GitHub Actions
 
-Seul un `push` sur `master` déclenche le workflow. Les tâches qualité, Docker,
-migrations et interface doivent réussir avant le déploiement. Le job `deploy`
+Un `push` sur `master` ou une pull request vers `master` lance les quatre
+contrôles requis. Aucun push sur `develop` ne les lance. Le déploiement ne
+s'exécute qu'après un push sur `master` dont les contrôles ont réussi. Le job `deploy`
 appelle, via SSH, le script versionné `scripts/deploy-production.sh` avec le SHA
 contrôlé. La clé
 publique dédiée est restreinte à sa copie stable
@@ -63,7 +64,8 @@ secret `METIQUO_DEPLOY_SSH_KEY` avec le contenu complet de
 jamais être ajouté au dépôt. Dans **Settings → Environments**, créer
 `production` et le limiter à la branche `master`. Une fois le secret ajouté,
 relancer le workflow `master` si son déploiement a échoué avant configuration.
-La branche `develop` n'active aucun workflow.
+Un push direct sur `develop` n'active aucun workflow ; une pull request
+`develop` → `master` lance seulement les contrôles requis.
 
 ## Domaine et email
 

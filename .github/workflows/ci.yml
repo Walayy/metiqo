@@ -3,6 +3,10 @@ name: CI
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
@@ -111,6 +115,7 @@ jobs:
 
   deploy:
     name: Déploiement production
+    if: github.event_name == 'push'
     needs: [quality, docker, migrations, playwright]
     runs-on: ubuntu-latest
     timeout-minutes: 45
