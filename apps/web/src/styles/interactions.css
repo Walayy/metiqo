@@ -17,6 +17,41 @@ html[data-fonts='fallback'] {
   --touch-target: 44px;
 }
 
+.ui-accordion-content {
+  overflow: hidden;
+}
+.ui-accordion-content[data-state='open'] {
+  animation: accordion-expand 280ms var(--ease-enter) both;
+}
+.ui-accordion-content[data-state='closed'] {
+  animation: accordion-collapse 220ms var(--ease-exit) both;
+}
+@keyframes accordion-expand {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+@keyframes accordion-collapse {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-accordion-content[data-state] {
+    animation: none;
+  }
+}
+
 .modal-overlay[data-state='open'] {
   animation: surface-appear var(--motion-enter) ease-out both;
 }

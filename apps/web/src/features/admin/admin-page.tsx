@@ -305,7 +305,7 @@ function Scripts() {
                           <ChevronDown size={16} className="script-chevron" aria-hidden="true" />
                         </Accordion.Trigger>
                       </Accordion.Header>
-                      <Accordion.Content className="script-entry-content">
+                      <Accordion.Content className="ui-accordion-content script-entry-content">
                         <div className="script-entry-detail">
                           <p>{script.description}</p>
                           <div className="script-last-run">

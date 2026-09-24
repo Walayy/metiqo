@@ -10,6 +10,7 @@ interface Drag {
   lastY: number;
   lastTime: number;
   velocity: number;
+  lastDirection: 'up' | 'down' | null;
   frame: number | null;
 }
 
@@ -68,6 +69,7 @@ export function useMobileSheet(open: boolean, onOpenChange: (open: boolean) => v
       lastY: event.clientY,
       lastTime: event.timeStamp,
       velocity: 0,
+      lastDirection: null,
       frame: null,
     };
     ignoreClickRef.current = false;
@@ -82,7 +84,9 @@ export function useMobileSheet(open: boolean, onOpenChange: (open: boolean) => v
     const raw = drag.startOffset + delta;
     drag.offset = raw < 0 ? Math.max(-18, raw / 4) : Math.min(drag.height, raw);
     const elapsed = event.timeStamp - drag.lastTime;
-    if (elapsed > 0) drag.velocity = (event.clientY - drag.lastY) / elapsed;
+    const step = event.clientY - drag.lastY;
+    if (Math.abs(step) >= 1) drag.lastDirection = step < 0 ? 'up' : 'down';
+    if (elapsed > 0) drag.velocity = step / elapsed;
     drag.lastY = event.clientY;
     drag.lastTime = event.timeStamp;
     if (drag.frame == null) {
@@ -102,6 +106,13 @@ export function useMobileSheet(open: boolean, onOpenChange: (open: boolean) => v
       event.currentTarget.releasePointerCapture(event.pointerId);
     if (contentRef.current) contentRef.current.dataset.sheetDragging = 'false';
     if (cancelled) {
+      setOffset(0);
+      return;
+    }
+    const finalStep = event.clientY - drag.lastY;
+    if (Math.abs(finalStep) >= 1) drag.lastDirection = finalStep < 0 ? 'up' : 'down';
+    // The release direction wins over the total pull: a reversal reopens the sheet.
+    if (drag.lastDirection === 'up') {
       setOffset(0);
       return;
     }

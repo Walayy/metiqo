@@ -282,18 +282,6 @@
 .script-entry-trigger[data-state='open'] .script-chevron {
   transform: rotate(180deg);
 }
-.script-entry-content {
-  overflow: hidden;
-  animation: script-detail-enter 160ms ease-out;
-}
-@keyframes script-detail-enter {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 .script-entry-detail {
   margin: 0 var(--space-lg) var(--space-lg);
   padding: var(--space-md) var(--space-lg);
@@ -746,9 +734,6 @@
   .run-chevron,
   .script-entry-trigger {
     transition: none;
-  }
-  .script-entry-content {
-    animation: none;
   }
 }
 @media (max-width: 900px) {

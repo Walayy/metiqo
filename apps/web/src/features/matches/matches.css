@@ -235,6 +235,7 @@
   gap: var(--space-md);
 }
 .league-accordion {
+  container-type: inline-size;
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -303,13 +304,6 @@
 }
 .league-trigger[data-state='open'] .accordion-chevron {
   transform: rotate(180deg);
-}
-.league-content {
-  overflow: hidden;
-}
-/* Do not animate hundreds of pixels of accordion height. */
-.league-content[data-state='open'] {
-  animation: match-appear 180ms ease-out;
 }
 .league-matches {
   padding: 0 var(--space-md) var(--space-xs);
@@ -505,15 +499,6 @@
   display: inline-flex;
   border-radius: 50%;
 }
-@keyframes match-appear {
-  from {
-    opacity: 0.5;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 /* The modal header keeps the series identity; card navigation remains in reach. */
 .modal-content.match-dialog {
   width: min(1040px, calc(100vw - var(--space-2xl)));
@@ -1422,8 +1407,28 @@
     grid-template-columns: repeat(3, minmax(var(--touch-target), 1fr));
   }
 }
+@container (max-width: 900px) {
+  .fixture-team-copy {
+    display: none;
+  }
+  .fixture-team.home,
+  .fixture-team.away {
+    justify-content: center;
+  }
+  .fixture-team .logo-frame {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+}
+@container (max-width: 360px) {
+  .fixture-team .logo-frame {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .league-content[data-state],
   .match-tooltip[data-state] {
     animation: none;
   }
