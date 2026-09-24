@@ -28,6 +28,7 @@ COPY apps/worker apps/worker
 COPY alembic.ini ./
 COPY migrations migrations
 COPY tests/backend tests/backend
+COPY docs/audits/matching docs/audits/matching
 RUN uv sync --frozen
 ENV PATH="/app/.venv/bin:$PATH"
 CMD ["pytest", "-m", "integration", "-q"]

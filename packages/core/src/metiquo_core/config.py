@@ -22,6 +22,20 @@ class Settings(BaseSettings):
     oracle_max_archive_bytes: int = Field(default=1_500_000_000, ge=1024)
     oracle_max_expanded_bytes: int = Field(default=5_000_000_000, ge=1024)
     browser_headless: bool = True
+    worker_status_id: int = Field(default=1, ge=1)
+    worker_stop_file: Path | None = None
+    stake_enabled: bool = False
+    settlements_enabled: bool = False
+    stake_games: list[str] = ["league-of-legends"]
+    stake_profile_dir: Path = Path(".cache/stake-audit/chrome-profile")
+    stake_min_delay_seconds: float = Field(default=5, ge=2, le=60)
+    stake_timeout_seconds: int = Field(default=45, ge=10, le=120)
+    stake_cycle_seconds: int = Field(default=600, ge=60, le=1800)
+    stake_max_actions: int = Field(default=300, ge=10, le=1000)
+    stake_request_budget: int = Field(default=30000, ge=1000, le=60000)
+    stake_budget_window_seconds: int = Field(default=1200, ge=300, le=3600)
+    stake_block_cooldown_seconds: int = Field(default=3600, ge=60, le=86400)
+    stake_start_guard_seconds: int = Field(default=60, ge=0, le=600)
     # Docker enables it explicitly; local commands stay opt-in to avoid an
     # unexpected browser launch during unrelated worker tests and tooling.
     loltv_enabled: bool = False
@@ -50,6 +64,19 @@ class Settings(BaseSettings):
     catalog_max_image_bytes: int = Field(default=10_000_000, ge=1024)
     catalog_max_image_pixels: int = Field(default=80_000_000, ge=1, le=80_000_000)
     catalog_timeout_seconds: int = Field(default=60, ge=5, le=300)
+
+    @field_validator("stake_games")
+    @classmethod
+    def validate_stake_games(cls, value: list[str]) -> list[str]:
+        import re
+
+        if (
+            not value
+            or len(set(value)) != len(value)
+            or any(not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) for slug in value)
+        ):
+            raise ValueError("Stake games must be distinct public sport slugs")
+        return value
 
     @field_validator("oracle_date_timezone", mode="before")
     @classmethod

@@ -16,6 +16,8 @@ from metiquo_worker.catalog_sync import sync_catalog
 from metiquo_worker.ingestion import SOURCE, CollectionBusy, collect
 from metiquo_worker.loltv_sync import sync_loltv
 from metiquo_worker.scheduler import serve_schedules
+from metiquo_worker.selection_results import settle_selections
+from metiquo_worker.stake_sync import sync_stake
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +84,7 @@ def main() -> None:
     scheduler.add_argument(
         "--only",
         action="append",
-        choices=["lol-catalog", "oracles-elixir", "loltv"],
+        choices=["lol-catalog", "oracles-elixir", "loltv", "stake", "settlements"],
         help="Schedule only the selected source (repeatable)",
     )
     catalog = commands.add_parser(
@@ -107,18 +109,51 @@ def main() -> None:
         "sync-loltv-matches",
         help="Scrape les matchs LoL LoLTV de J-7 à J+7 et les directs",
     )
+    commands.add_parser("sync-stake-markets", help="Historise les marchés Stake pré-match et live")
+    commands.add_parser("settle-selections", help="Règle les sélections gagnant après 30 minutes")
+    matching = commands.add_parser(
+        "reconcile-matches", help="Rapproche les événements en base, sans réseau"
+    )
+    matching.add_argument("--dry-run", action="store_true", help="Rapport sans écriture")
+    aliases = commands.add_parser(
+        "import-match-aliases", help="Importe des alias sourcés et limités au tournoi"
+    )
+    aliases.add_argument("path", type=Path)
+    revoke = commands.add_parser(
+        "revoke-match-alias", help="Révoque un alias et réévalue les liens"
+    )
+    revoke.add_argument("alias_id")
     args = parser.parse_args()
     settings = Settings()
     if args.command == "sync-loltv-matches":
         settings.loltv_enabled = True
+    if args.command == "sync-stake-markets":
+        settings.stake_enabled = True
     logging.basicConfig(
         level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s"
     )
     logging.getLogger("httpx").setLevel(logging.WARNING)
     engine = create_db(settings)
     try:
+        if args.command in {"reconcile-matches", "import-match-aliases", "revoke-match-alias"}:
+            from metiquo_worker.reconciliation import (
+                import_aliases,
+                reconcile_matches,
+                revoke_alias,
+            )
+
+            if args.command == "reconcile-matches":
+                report = reconcile_matches(engine, dry_run=args.dry_run)
+            elif args.command == "import-match-aliases":
+                report = import_aliases(engine, args.path)
+            else:
+                report = revoke_alias(engine, args.alias_id)
+            print(json.dumps(report, ensure_ascii=False))
+            return
         if args.command == "serve":
             serve(engine, settings, args.only)
+        elif args.command == "settle-selections":
+            print(json.dumps(settle_selections(engine), ensure_ascii=False))
         else:
             try:
                 if args.command == "sync-lol-catalog":
@@ -132,6 +167,8 @@ def main() -> None:
                         set(args.years) if args.years else None,
                         latest=args.latest,
                     )
+                elif args.command == "sync-stake-markets":
+                    run_id = sync_stake(engine, settings)
                 else:
                     run_id = sync_loltv(engine, settings)
                 with Session(engine) as session:

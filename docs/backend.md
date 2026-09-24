@@ -1,6 +1,6 @@
 # Backend, collecte et exploitation
 
-Périmètre autorisé le 15 septembre 2026 : backend réel, Docker et authentification par code email dans le frontend, avec Mailpit local. Aucun accès à Stake.bet. L’audit temporaire est conservé dans [oracles-elixir-audit.md](oracles-elixir-audit.md). Voir [authentication.md](authentication.md) pour les sessions, les limites et la configuration SMTP.
+Périmètre initial du 15 septembre 2026 : backend réel, Docker et authentification par code email dans le frontend, avec Mailpit local. La demande du 23 septembre rétablit le collecteur public Stake et ses données historiques, puis étend sa lecture au direct. L’audit Oracle est conservé dans [oracles-elixir-audit.md](oracles-elixir-audit.md). Voir [authentication.md](authentication.md) pour les sessions, les limites et la configuration SMTP.
 
 ## Architecture
 
@@ -17,7 +17,8 @@ flowchart LR
   Worker[Worker Python] --> Drive[Drive public : export groupé ZIP]
   Worker --> DB
   Worker --> Files
-  Worker -. extension future .-> Stake[Adaptateur Stake non implémenté]
+  WorkerStake[Worker Chrome local] --> Stake[Pages publiques Stake pré-match et direct]
+  WorkerStake --> DB
   Migrate[Alembic] --> DB
 ```
 
@@ -131,9 +132,9 @@ Le worker vérifie le dernier fichier toutes les six heures et tous les fichiers
 
 Les anciennes versions sont conservées. Aucune purge automatique des données ou sauvegardes n’est exécutée. Prévoir de l’espace disque pour les CSV, JSONB, index, WAL PostgreSQL et versions successives ; la taille des CSV seuls ne représente pas la taille de la base.
 
-## Emplacement pour Stake et authentification
+## Collecte Stake et authentification
 
-`sources/stake.py` définit `OddsSource` et `SourceQuote`. `StakeSource.collect()` lève explicitement `NotImplementedError` ; aucun job Stake n’est enregistré. Aucune URL Stake, navigation, authentification ou requête Stake n’est exécutée.
+`sources/stake.py` expose l’adaptateur navigateur. La migration `0013` crée les tables `bookmaker_*` et la planification `stake-markets` ; `0016` permet les relevés live et conserve l'historique des anciens arrêts pré-match. Le worker Chrome local dédié collecte les marchés publics pré-match et en direct, y compris les sélections suspendues sans cote, et publie un snapshot complet par événement ; ses refus bloquants et délais source sont persistés. Voir [le guide Stake](stake-collector.md). L’authentification Metiquo reste indépendante et ne sert pas à accéder à Stake.
 
 Lors de son implémentation future :
 

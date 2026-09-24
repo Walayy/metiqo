@@ -44,6 +44,9 @@
   --side-blue: #2968a4;
   --side-red: #b63752;
   --chart-negative: #b63730;
+  --value-glow: #f4a54c;
+  --value-ink: #96550e;
+  --value-soft: #fff5e8;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
@@ -82,6 +85,9 @@
   --side-blue: #8dc0f0;
   --side-red: #f4a1b0;
   --chart-negative: #ff9d91;
+  --value-glow: #ffc078;
+  --value-ink: #ffc078;
+  --value-soft: #3a2b1d;
 }
 * {
   box-sizing: border-box;

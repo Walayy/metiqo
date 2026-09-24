@@ -1,0 +1,1298 @@
+[
+  {
+    "event_id": "0f54f2c9-896d-5055-8b98-84803ed8d793",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/848607-su-esports-verdant",
+          "name": "SU Esports - Verdant",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-verdant",
+            "name": "Verdant",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-su-esports",
+            "name": "SU Esports",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-su-esports",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-su-esports"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-emea-masters-2026-summer-lcq-t10",
+            "name": "EMEA Masters 2026 Summer LCQ",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-23T17:00:00.000Z",
+          "description": "SU Esports VS Verdant on Wed, 23 Sep 2026 17:00:00 GMT. Explore all EMEA Masters 2026 Summer LCQ.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "19:00 23/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10/848607-su-esports-verdant",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "848607",
+      "starts_at": "2026-09-23T17:00:00Z",
+      "participants": [
+        {
+          "name": "SU Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/su.png",
+          "source_id": null
+        },
+        {
+          "name": "Verdant",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/ver.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/emea-masters-2026-summer-lcq-t10",
+      "competition_name": "EMEA Masters 2026 Summer LCQ"
+    },
+    "finished_at": "2026-09-23T16:13:47.986493+00:00",
+    "snapshot_id": "f16e3ece-8570-5533-8669-cf7a58bd8138",
+    "payload_sha256": "e5b66957efe9ae1b4c41f9ee50bafc2ddcc5254c783376bf3231b208241ac6f8"
+  },
+  {
+    "event_id": "237f36de-789a-5251-9a5e-0acb8238650d",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/les-2027-promotion-t10/848973-kawaii-kiwis-veni-vidi-vici",
+          "name": "Kawaii Kiwis - Veni Vidi Vici",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-veni-vidi-vici",
+            "name": "Veni Vidi Vici",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-kawaii-kiwis",
+            "name": "Kawaii Kiwis",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-kawaii-kiwis",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-kawaii-kiwis"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-les-2027-promotion-t10",
+            "name": "LES 2027 Promotion",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-23T15:00:00.000Z",
+          "description": "Kawaii Kiwis VS Veni Vidi Vici on Wed, 23 Sep 2026 15:00:00 GMT. Explore all LES 2027 Promotion.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "17:00 23/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/les-2027-promotion-t10/848973-kawaii-kiwis-veni-vidi-vici",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "848973",
+      "starts_at": "2026-09-23T15:00:00Z",
+      "participants": [
+        {
+          "name": "Kawaii Kiwis",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Veni Vidi Vici",
+          "position": 1,
+          "image_url": null,
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/les-2027-promotion-t10",
+      "competition_name": "LES 2027 Promotion"
+    },
+    "finished_at": "2026-09-23T14:51:08.741732+00:00",
+    "snapshot_id": "ee362fe6-3991-515b-a61e-c79a89d3df95",
+    "payload_sha256": "77c756dc2345e61fcca1c403642d52e48cadb6858c988b75af26c8c1cba6a84f"
+  },
+  {
+    "event_id": "27ba367f-a15d-5587-9238-a5391111e5e3",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845836-cloud9-team-liquid",
+          "name": "Cloud9 - Team Liquid",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-team-liquid",
+            "name": "Team Liquid",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-cloud9",
+            "name": "Cloud9",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-cloud9",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-cloud9"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-lcs-2026-summer-playoffs-t4",
+            "name": "LCS 2026 Summer Playoffs",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-27T20:00:00.000Z",
+          "description": "Cloud9 VS Team Liquid on Sun, 27 Sep 2026 20:00:00 GMT. Explore all LCS 2026 Summer Playoffs.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "22:00 27/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845836-cloud9-team-liquid",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "845836",
+      "starts_at": "2026-09-27T20:00:00Z",
+      "participants": [
+        {
+          "name": "Cloud9",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cloud9.png",
+          "source_id": null
+        },
+        {
+          "name": "Team Liquid",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/team-liquid.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4",
+      "competition_name": "LCS 2026 Summer Playoffs"
+    },
+    "finished_at": "2026-09-22T23:41:19.04204+00:00",
+    "snapshot_id": "8413bae2-d8dd-5ad4-9b0c-266690d8af54",
+    "payload_sha256": "54e813ac6d3cb06d6b1da421335e2a45a08d4f4533a06f47581d999797f92de0"
+  },
+  {
+    "event_id": "2897c7e1-37ba-5ce9-b052-adad739bbe82",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847754-fennel-dplus-kia-challengers",
+          "name": "FENNEL - Dplus KIA Challengers",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-dplus-kia-challengers",
+            "name": "Dplus KIA Challengers",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-fennel",
+            "name": "FENNEL",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-fennel",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-fennel"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-23T08:00:00.000Z",
+          "description": "FENNEL VS Dplus KIA Challengers on Wed, 23 Sep 2026 08:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "10:00 23/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847754-fennel-dplus-kia-challengers",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "847754",
+      "starts_at": "2026-09-23T08:00:00Z",
+      "participants": [
+        {
+          "name": "FENNEL",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Dplus KIA Challengers",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/dplus_kiac.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-22T23:42:01.007572+00:00",
+    "snapshot_id": "8c5c0e92-849e-5e93-806e-f6a07889464b",
+    "payload_sha256": "333e331c8d40edfd1a6a03e402385cad1417d33c04b2f7875628f8f9444d7948"
+  },
+  {
+    "event_id": "39bb94f1-85d8-5f6a-abb0-77cf2c378dd0",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849091-cfo-academy-kt-rolster-challengers",
+          "name": "CFO Academy - KT Rolster Challengers",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-kt-rolster-challengers",
+            "name": "KT Rolster Challengers",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-cfo-academy",
+            "name": "CFO Academy",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-cfo-academy",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-cfo-academy"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-24T13:00:00.000Z",
+          "description": "CFO Academy VS KT Rolster Challengers on Thu, 24 Sep 2026 13:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "15:00 24/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849091-cfo-academy-kt-rolster-challengers",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "849091",
+      "starts_at": "2026-09-24T13:00:00Z",
+      "participants": [
+        {
+          "name": "CFO Academy",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "KT Rolster Challengers",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/ktc.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-23T17:40:25.37827+00:00",
+    "snapshot_id": "db691471-fceb-516a-8b7c-52bb8825e20f",
+    "payload_sha256": "fafef858bd71dd0ba63825760f539ed47335132218e33f3599ade7722ba009d0"
+  },
+  {
+    "event_id": "590397ab-aca4-54f9-8d7c-8b55c73a5570",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849092-fuego-t1-esports-academy",
+          "name": "Fuego - T1 Esports Academy",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-t1-esports-academy",
+            "name": "T1 Esports Academy",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-fuego",
+            "name": "Fuego",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-fuego",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-fuego"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-24T10:00:00.000Z",
+          "description": "Fuego VS T1 Esports Academy on Thu, 24 Sep 2026 10:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "12:00 24/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849092-fuego-t1-esports-academy",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "849092",
+      "starts_at": "2026-09-24T10:00:00Z",
+      "participants": [
+        {
+          "name": "Fuego",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "T1 Esports Academy",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/t1_esports_academy.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-23T17:40:40.221097+00:00",
+    "snapshot_id": "4c79adcd-0b67-5c56-8bca-c8e2f2efa1d4",
+    "payload_sha256": "2bf4698b2928e0f2a419656a92bc005d2dc211f3bb6de629596913c3a807c8c7"
+  },
+  {
+    "event_id": "8be80570-2b23-5097-a054-4d85a19ff041",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/836114-loud-los",
+          "name": "LOUD - LOS",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-los",
+            "name": "LOS",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-loud",
+            "name": "LOUD",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-loud",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-loud"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-cblol-2026-split-2-playoffs-t5",
+            "name": "CBLOL 2026 Split 2 Playoffs",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-27T16:00:00.000Z",
+          "description": "LOUD VS LOS on Sun, 27 Sep 2026 16:00:00 GMT. Explore all CBLOL 2026 Split 2 Playoffs.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "18:00 27/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/836114-loud-los",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "836114",
+      "starts_at": "2026-09-27T16:00:00Z",
+      "participants": [
+        {
+          "name": "LOUD",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/loud.png",
+          "source_id": null
+        },
+        {
+          "name": "LOS",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/los.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5",
+      "competition_name": "CBLOL 2026 Split 2 Playoffs"
+    },
+    "finished_at": "2026-09-23T17:21:41.368233+00:00",
+    "snapshot_id": "1f2676dc-4a84-589e-9d64-d77cc369cc2f",
+    "payload_sha256": "c98c3bd3129095f17db56f3a6134492e00df197f8c0b92e97bd11a02edbdcf24"
+  },
+  {
+    "event_id": "a333c471-6d2b-5b93-a3c7-0aa476b975fd",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847757-fennel-cupid-esports",
+          "name": "FENNEL - Cupid Esports",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-cupid-esports",
+            "name": "Cupid Esports",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-fennel",
+            "name": "FENNEL",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-fennel",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-fennel"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-23T13:00:00.000Z",
+          "description": "FENNEL VS Cupid Esports on Wed, 23 Sep 2026 13:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "15:00 23/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847757-fennel-cupid-esports",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "847757",
+      "starts_at": "2026-09-23T13:00:00Z",
+      "participants": [
+        {
+          "name": "FENNEL",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Cupid Esports",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cupid.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-22T23:42:15.998587+00:00",
+    "snapshot_id": "c0decad8-2956-5684-b735-c042e9ea969a",
+    "payload_sha256": "0b442e3e1d5c692150c4c7192f097c1a154a8e83e1288613bcf1258e3ff8b609"
+  },
+  {
+    "event_id": "a4b07c16-80db-532f-ab4b-2743fdbbd9bd",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849090-movistar-koi-academy-kt-rolster-challengers",
+          "name": "Movistar KOI Academy - KT Rolster Challengers",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-kt-rolster-challengers",
+            "name": "KT Rolster Challengers",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-koi-academy",
+            "name": "KOI Academy",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-koi-academy",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-koi-academy"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-24T09:00:00.000Z",
+          "description": "KOI Academy VS KT Rolster Challengers on Thu, 24 Sep 2026 09:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "11:00 24/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849090-movistar-koi-academy-kt-rolster-challengers",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "849090",
+      "starts_at": "2026-09-24T09:00:00Z",
+      "participants": [
+        {
+          "name": "KOI Academy",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/koia.png",
+          "source_id": null
+        },
+        {
+          "name": "KT Rolster Challengers",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/ktc.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-23T17:20:28.230373+00:00",
+    "snapshot_id": "829b7dbb-8975-5c4f-a6e9-033554298db6",
+    "payload_sha256": "9ba446fc18c11fd42f3481487b9d85b33961ba5355a2146df0188043a6e9c3e3"
+  },
+  {
+    "event_id": "aa6d3dd1-7b26-50fb-a9be-964425513f94",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842137-maryville-university-zeu5-esports",
+          "name": "Maryville University - Zeu5 Esports",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-zeu5-esports",
+            "name": "Zeu5 Esports",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-maryville-university",
+            "name": "Maryville University",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-maryville-university",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-maryville-university"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-lcs-2027-promotion-t10",
+            "name": "LCS 2027 Promotion",
+            "@type": "Organization"
+          },
+          "startDate": "2026-10-05T20:00:00.000Z",
+          "description": "Maryville University VS Zeu5 Esports on Mon, 05 Oct 2026 20:00:00 GMT. Explore all LCS 2027 Promotion.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "22:00 05/10/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842137-maryville-university-zeu5-esports",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "842137",
+      "starts_at": "2026-10-05T20:00:00Z",
+      "participants": [
+        {
+          "name": "Maryville University",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Zeu5 Esports",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/zeu5.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10",
+      "competition_name": "LCS 2027 Promotion"
+    },
+    "finished_at": "2026-09-22T23:43:49.209362+00:00",
+    "snapshot_id": "4b288673-319c-5666-8c39-b09836f25dd9",
+    "payload_sha256": "d1baf69332530fc8cf948fa15fe73b605bf9bd50c145f2d54a08e29718973f43"
+  },
+  {
+    "event_id": "c13b9001-a346-5a27-967f-63f37a20f3bc",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847756-keyd-stars-academy-dplus-kia-challengers",
+          "name": "Keyd Stars Academy - Dplus KIA Challengers",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-dplus-kia-challengers",
+            "name": "Dplus KIA Challengers",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-keyd-academy",
+            "name": "Keyd Academy",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-keyd-academy",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-keyd-academy"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-23T12:00:00.000Z",
+          "description": "Keyd Academy VS Dplus KIA Challengers on Wed, 23 Sep 2026 12:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "14:00 23/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847756-keyd-stars-academy-dplus-kia-challengers",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "847756",
+      "starts_at": "2026-09-23T12:00:00Z",
+      "participants": [
+        {
+          "name": "Keyd Academy",
+          "position": 0,
+          "image_url": null,
+          "source_id": null
+        },
+        {
+          "name": "Dplus KIA Challengers",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/dplus_kiac.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-22T23:42:11.040749+00:00",
+    "snapshot_id": "a8c8a901-4f41-5746-84df-e8136cd39a94",
+    "payload_sha256": "6f07bfbba7554067aad7b4d4bfb8cb0d835bade34ba7473eaa51061ade5147e7"
+  },
+  {
+    "event_id": "c3596301-364e-5242-8b85-b12a81cdead0",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842149-estral-esports-9z-team",
+          "name": "Estral Esports - 9z Team",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-9z-team",
+            "name": "9z Team",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-estral-esports",
+            "name": "Estral Esports",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-estral-esports",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-estral-esports"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-cblol-2027-promotion-t10",
+            "name": "CBLOL 2027 Promotion",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-29T21:00:00.000Z",
+          "description": "Estral Esports VS 9z Team on Tue, 29 Sep 2026 21:00:00 GMT. Explore all CBLOL 2027 Promotion.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "23:00 29/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842149-estral-esports-9z-team",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "842149",
+      "starts_at": "2026-09-29T21:00:00Z",
+      "participants": [
+        {
+          "name": "Estral Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/estral.png",
+          "source_id": null
+        },
+        {
+          "name": "9z Team",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/9z_team.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10",
+      "competition_name": "CBLOL 2027 Promotion"
+    },
+    "finished_at": "2026-09-23T17:23:51.380195+00:00",
+    "snapshot_id": "4cc46fb2-7258-5332-8008-4b4235d85780",
+    "payload_sha256": "4acbb068852c2a8f1d9fa664254927cc5ae7d8f006969339da930df6dec8d186"
+  },
+  {
+    "event_id": "c45010fd-57a6-5806-80be-f0c3e682596c",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/845961-furia-esports-red-canids",
+          "name": "FURIA Esports - RED Canids",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-red-canids",
+            "name": "RED Canids",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-furia-esports",
+            "name": "FURIA Esports",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-furia-esports",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-furia-esports"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-cblol-2026-split-2-playoffs-t5",
+            "name": "CBLOL 2026 Split 2 Playoffs",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-26T16:00:00.000Z",
+          "description": "FURIA Esports VS RED Canids on Sat, 26 Sep 2026 16:00:00 GMT. Explore all CBLOL 2026 Split 2 Playoffs.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "18:00 26/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/845961-furia-esports-red-canids",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "845961",
+      "starts_at": "2026-09-26T16:00:00Z",
+      "participants": [
+        {
+          "name": "FURIA Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/furia-esports.png",
+          "source_id": null
+        },
+        {
+          "name": "RED Canids",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/red-canids.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5",
+      "competition_name": "CBLOL 2026 Split 2 Playoffs"
+    },
+    "finished_at": "2026-09-23T17:41:13.437191+00:00",
+    "snapshot_id": "cf0b53c3-c404-5ee7-b214-75874f3404f0",
+    "payload_sha256": "619bdf47b6ebf4c6f856f9fc8311c8de7ef6ded7255f4eb1ca7e2a5273e614b7"
+  },
+  {
+    "event_id": "da8408a2-3de5-5e0b-8f83-fbb63df49a34",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842405-kabum-ilha-das-lendas-golden-lions",
+          "name": "KaBuM! Ilha das Lendas - Golden Lions",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-golden-lions",
+            "name": "Golden Lions",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-kabum!-ilha-das-lendas",
+            "name": "KaBuM! Ilha das Lendas",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-kabum!-ilha-das-lendas",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-kabum!-ilha-das-lendas"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-cblol-2027-promotion-t10",
+            "name": "CBLOL 2027 Promotion",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-28T21:00:00.000Z",
+          "description": "KaBuM! Ilha das Lendas VS Golden Lions on Mon, 28 Sep 2026 21:00:00 GMT. Explore all CBLOL 2027 Promotion.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "23:00 28/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10/842405-kabum-ilha-das-lendas-golden-lions",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "842405",
+      "starts_at": "2026-09-28T21:00:00Z",
+      "participants": [
+        {
+          "name": "KaBuM! Ilha das Lendas",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/kab_x_idl.png",
+          "source_id": null
+        },
+        {
+          "name": "Golden Lions",
+          "position": 1,
+          "image_url": null,
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2027-promotion-t10",
+      "competition_name": "CBLOL 2027 Promotion"
+    },
+    "finished_at": "2026-09-23T17:22:41.322349+00:00",
+    "snapshot_id": "3cccb2b4-4859-5f7e-9887-3b4bf06e402e",
+    "payload_sha256": "050c533113d4fd790ef639c9994a601ea45f90075139f37a6890f5133b7baa1c"
+  },
+  {
+    "event_id": "e586c643-5ea2-50ea-90f4-6fe9370a7905",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849089-dn-soopers-challengers-t1-esports-academy",
+          "name": "DN SOOPers Challengers - T1 Esports Academy",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-t1-esports-academy",
+            "name": "T1 Esports Academy",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-dn-soopers-challengers",
+            "name": "DN SOOPers Challengers",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-dn-soopers-challengers",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-dn-soopers-challengers"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-24T06:00:00.000Z",
+          "description": "DN SOOPers Challengers VS T1 Esports Academy on Thu, 24 Sep 2026 06:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "08:00 24/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849089-dn-soopers-challengers-t1-esports-academy",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "849089",
+      "starts_at": "2026-09-24T06:00:00Z",
+      "participants": [
+        {
+          "name": "DN SOOPers Challengers",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/dn_cl.png",
+          "source_id": null
+        },
+        {
+          "name": "T1 Esports Academy",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/t1_esports_academy.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-23T17:23:23.300288+00:00",
+    "snapshot_id": "d4564895-6c04-538a-939a-a450c3ef1454",
+    "payload_sha256": "99e815c8b5b19e17a0a8d02cc1efbaa1c1a912a9ba9ba8b933eec2336dd23e71"
+  },
+  {
+    "event_id": "ee7627cb-b949-578b-bbd6-db3982686b5d",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+          "name": "FlyQuest - Shopify Rebellion",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-shopify-rebellion",
+            "name": "Shopify Rebellion",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-flyquest",
+            "name": "FlyQuest",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-flyquest",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-flyquest"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-lcs-2026-summer-playoffs-t4",
+            "name": "LCS 2026 Summer Playoffs",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-25T20:00:00.000Z",
+          "description": "FlyQuest VS Shopify Rebellion on Fri, 25 Sep 2026 20:00:00 GMT. Explore all LCS 2026 Summer Playoffs.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "22:00 25/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4/845833-flyquest-shopify-rebellion",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "845833",
+      "starts_at": "2026-09-25T20:00:00Z",
+      "participants": [
+        {
+          "name": "FlyQuest",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/flyquest.png",
+          "source_id": null
+        },
+        {
+          "name": "Shopify Rebellion",
+          "position": 1,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/sr_1685574964456.png",
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2026-summer-playoffs-t4",
+      "competition_name": "LCS 2026 Summer Playoffs"
+    },
+    "finished_at": "2026-09-23T17:23:16.425802+00:00",
+    "snapshot_id": "1bd679f1-3f08-55cf-8cad-2a052fcab7b0",
+    "payload_sha256": "4fdb6d3df7d576a8a104b06db8e248fff17ec6a57437bc20e7b55bc0ac30feae"
+  },
+  {
+    "event_id": "eeaf0d2e-05a5-55e2-bfaa-70c7df7e1f18",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842135-cupid-esports-fuego",
+          "name": "Cupid Esports - Fuego",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-fuego",
+            "name": "Fuego",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-cupid-esports",
+            "name": "Cupid Esports",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-cupid-esports",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-cupid-esports"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-lcs-2027-promotion-t10",
+            "name": "LCS 2027 Promotion",
+            "@type": "Organization"
+          },
+          "startDate": "2026-10-06T20:00:00.000Z",
+          "description": "Cupid Esports VS Fuego on Tue, 06 Oct 2026 20:00:00 GMT. Explore all LCS 2027 Promotion.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "22:00 06/10/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10/842135-cupid-esports-fuego",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "842135",
+      "starts_at": "2026-10-06T20:00:00Z",
+      "participants": [
+        {
+          "name": "Cupid Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cupid.png",
+          "source_id": null
+        },
+        {
+          "name": "Fuego",
+          "position": 1,
+          "image_url": null,
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/lcs-2027-promotion-t10",
+      "competition_name": "LCS 2027 Promotion"
+    },
+    "finished_at": "2026-09-23T17:22:11.32344+00:00",
+    "snapshot_id": "867b8c62-fe70-5cbb-80b9-dada7eda18cc",
+    "payload_sha256": "cd88799322d26b5c1502c036528878e9ea239aa3194d6ea8256c9bbc59cd54d5"
+  },
+  {
+    "event_id": "fa06191b-eba4-5ade-8113-634ebadc873b",
+    "metadata": {
+      "raw": {
+        "jsonld": {
+          "@id": "#sports-fixture",
+          "url": "https://stake.com/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847755-cupid-esports-keyd-stars-academy",
+          "name": "Cupid Esports - Keyd Stars Academy",
+          "@type": "SportsEvent",
+          "sport": "https://stake.com/fr/sports/league-of-legends",
+          "awayTeam": {
+            "@id": "#sports-team-keyd-academy",
+            "name": "Keyd Academy",
+            "@type": "SportsTeam"
+          },
+          "homeTeam": {
+            "@id": "#sports-team-cupid-esports",
+            "name": "Cupid Esports",
+            "@type": "SportsTeam"
+          },
+          "location": {
+            "@id": "#location-team-cupid-esports",
+            "@type": "Place",
+            "address": {
+              "@id": "#address-team-cupid-esports"
+            }
+          },
+          "organizer": {
+            "@id": "#tournament-org-2026-world-star-challengers-invitational-t8",
+            "name": "2026 World Star Challengers Invitational",
+            "@type": "Organization"
+          },
+          "startDate": "2026-09-23T09:00:00.000Z",
+          "description": "Cupid Esports VS Keyd Academy on Wed, 23 Sep 2026 09:00:00 GMT. Explore all 2026 World Star Challengers Invitational.",
+          "eventStatus": "https://schema.org/EventScheduled"
+        },
+        "header_time": "11:00 23/09/2026",
+        "live_marker": false,
+        "listing_time": "",
+        "time_reached": false,
+        "score_markers": [
+          "-",
+          "-"
+        ]
+      },
+      "url": "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847755-cupid-esports-keyd-stars-academy",
+      "game": "league-of-legends",
+      "status": "scheduled",
+      "source_id": "847755",
+      "starts_at": "2026-09-23T09:00:00Z",
+      "participants": [
+        {
+          "name": "Cupid Esports",
+          "position": 0,
+          "image_url": "https://cdn.oddin.gg/assets/teams/icons/cupid.png",
+          "source_id": null
+        },
+        {
+          "name": "Keyd Academy",
+          "position": 1,
+          "image_url": null,
+          "source_id": null
+        }
+      ],
+      "category_name": null,
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "competition_name": "2026 World Star Challengers Invitational"
+    },
+    "finished_at": "2026-09-22T23:42:06.109192+00:00",
+    "snapshot_id": "aba11145-c013-5e5c-a92d-497a48f7047c",
+    "payload_sha256": "0d8dbaf1f788a69fc049250437b1058ca571c26b20302c71a516b312e972dcbd"
+  }
+]

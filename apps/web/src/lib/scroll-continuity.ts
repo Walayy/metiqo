@@ -79,12 +79,11 @@ export function createScrollContinuity(surface: ScrollSurface, clock: FrameClock
     frame = clock.request(tick);
   }
 
-  function check() {
+  function check(current = surface.read()) {
     if (target !== null && surface.reducedMotion()) {
       reset();
       return;
     }
-    const current = surface.read();
     const naturalHeight = current.height - extra;
     const max = Math.max(0, naturalHeight - current.viewport);
     if (target !== null) {
@@ -126,6 +125,7 @@ export function observeScrollContinuity(document: Document) {
   const reduced = view.matchMedia('(prefers-reduced-motion: reduce)');
   let resumeTimer = 0;
   let checking = false;
+  let pending = 0;
   const routeKey = () =>
     `${view.location.pathname}:${new URLSearchParams(view.location.search).get('view') ?? ''}`;
   let route = routeKey();
@@ -145,6 +145,34 @@ export function observeScrollContinuity(document: Document) {
     checking = false;
   };
   const resize = new ResizeObserver(check);
+  const observed = new Set<Element>();
+  const syncObserved = () => {
+    const next = new Set<Element>([document.body]);
+    for (const element of regions.keys()) {
+      next.add(element);
+      for (const child of element.children) next.add(child);
+    }
+    for (const element of observed) {
+      if (!next.has(element)) {
+        resize.unobserve(element);
+        observed.delete(element);
+      }
+    }
+    for (const element of next) {
+      if (!observed.has(element)) {
+        resize.observe(element);
+        observed.add(element);
+      }
+    }
+  };
+  const scheduleCheck = () => {
+    if (pending) return;
+    pending = view.requestAnimationFrame(() => {
+      pending = 0;
+      check();
+      syncObserved();
+    });
+  };
   const track = (element: HTMLElement) => {
     if (regions.has(element)) return;
     const inlinePadding = element.style.paddingBottom;
@@ -183,12 +211,10 @@ export function observeScrollContinuity(document: Document) {
         element.style.scrollbarGutter = gutter;
       },
     });
-    resize.observe(element);
-    for (const child of element.children) resize.observe(child);
+    syncObserved();
   };
   const root = document.scrollingElement;
   if (root instanceof HTMLElement) track(root);
-  resize.observe(document.body);
 
   const scroll = (event: Event) => {
     const element = event.target === document ? root : event.target;
@@ -217,17 +243,10 @@ export function observeScrollContinuity(document: Document) {
     if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key))
       pause();
   };
-  const mutations = new MutationObserver(() => {
-    check();
-    // Replacement contents must also be observed for late images and fonts.
-    resize.disconnect();
-    resize.observe(document.body);
-    for (const element of regions.keys()) {
-      resize.observe(element);
-      for (const child of element.children) resize.observe(child);
-    }
-  });
-  mutations.observe(document.body, { subtree: true, childList: true, characterData: true });
+  // Text updates are covered by ResizeObserver if their size changes. Observe
+  // structural changes once per frame without repeatedly disconnecting it.
+  const mutations = new MutationObserver(scheduleCheck);
+  mutations.observe(document.body, { subtree: true, childList: true });
   document.addEventListener('scroll', scroll, true);
   document.addEventListener('pointerdown', capture, true);
   document.addEventListener('keydown', key, true);
@@ -238,6 +257,7 @@ export function observeScrollContinuity(document: Document) {
   return () => {
     mutations.disconnect();
     resize.disconnect();
+    view.cancelAnimationFrame(pending);
     view.clearTimeout(resumeTimer);
     document.removeEventListener('scroll', scroll, true);
     document.removeEventListener('pointerdown', capture, true);

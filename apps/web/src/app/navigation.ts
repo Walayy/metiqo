@@ -2,7 +2,7 @@ export const viewLabels = {
   matches: 'Matchs',
   values: 'Les values',
   performance: 'Performance',
-  admin: 'Scripts & planifications',
+  admin: 'Scripts',
   users: 'Utilisateurs',
 } as const;
 export type AppView = keyof typeof viewLabels;

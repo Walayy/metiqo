@@ -1,0 +1,92 @@
+{
+  "aliases": [
+    {
+      "provider": "stake",
+      "game": "league-of-legends",
+      "name": "Keyd Academy",
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "target_provider": "loltv",
+      "target_id": "clpz8g6bv01fbakxlifhqtdwk",
+      "valid_from": "2026-09-20T00:00:00Z",
+      "valid_until": "2026-10-03T00:00:00Z",
+      "evidence": {
+        "sources": [
+          "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/847755-cupid-esports-keyd-stars-academy",
+          "https://loltv.gg/match/2026-09-23-cupid-esports-vs-vivo-keyd-stars-academy",
+          "docs/audits/matching/2026-09-23/before.json",
+          "https://lolesports.com/en-US/results/117127352507559759/stage/117127385836228518"
+        ],
+        "reviewedAt": "2026-09-23T17:41:39.142758+00:00",
+        "reason": "Scoped identity review: source participants, same tournament, same opponent and exact UTC start. WSCI participant roster corroborates academy identity.",
+        "stakeEventId": "847755",
+        "loltvEventId": "83efeaaa73bcff2394cf521d"
+      }
+    },
+    {
+      "provider": "stake",
+      "game": "league-of-legends",
+      "name": "KOI Academy",
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "target_provider": "loltv",
+      "target_id": "clpz8g66e015nakxllrwnl7kp",
+      "valid_from": "2026-09-20T00:00:00Z",
+      "valid_until": "2026-10-03T00:00:00Z",
+      "evidence": {
+        "sources": [
+          "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849090-movistar-koi-academy-kt-rolster-challengers",
+          "https://loltv.gg/match/2026-09-24-movistar-koi-fenix-vs-kt-rolster-challengers",
+          "docs/audits/matching/2026-09-23/before.json",
+          "https://lolesports.com/en-US/results/117127352507559759/stage/117127385836228518"
+        ],
+        "reviewedAt": "2026-09-23T17:41:39.142758+00:00",
+        "reason": "Scoped identity review: source participants, same tournament, same opponent and exact UTC start. WSCI participant roster corroborates academy identity.",
+        "stakeEventId": "849090",
+        "loltvEventId": "75f1b483efeaaa73bcff2394"
+      }
+    },
+    {
+      "provider": "stake",
+      "game": "league-of-legends",
+      "name": "CFO Academy",
+      "competition_key": "/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8",
+      "target_provider": "loltv",
+      "target_id": "clqovtlb100adt1c36q4zvfyr",
+      "valid_from": "2026-09-20T00:00:00Z",
+      "valid_until": "2026-10-03T00:00:00Z",
+      "evidence": {
+        "sources": [
+          "https://stake.bet/fr/sports/league-of-legends/international-1/2026-world-star-challengers-invitational-t8/849091-cfo-academy-kt-rolster-challengers",
+          "https://loltv.gg/match/2026-09-24-ctbc-flying-oyster-academy-vs-kt-rolster-challengers",
+          "docs/audits/matching/2026-09-23/before.json",
+          "https://lolesports.com/en-US/results/117127352507559759/stage/117127385836228518"
+        ],
+        "reviewedAt": "2026-09-23T17:41:39.142758+00:00",
+        "reason": "Scoped identity review: source participants, same tournament, same opponent and exact UTC start. WSCI participant roster corroborates academy identity.",
+        "stakeEventId": "849091",
+        "loltvEventId": "b483efeaaa73bcff2394cf52"
+      }
+    },
+    {
+      "provider": "stake",
+      "game": "league-of-legends",
+      "name": "LOS",
+      "competition_key": "/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5",
+      "target_provider": "loltv",
+      "target_id": "clpz8g6da01kxakxl4k32fiwd",
+      "valid_from": "2026-09-20T00:00:00Z",
+      "valid_until": "2026-09-28T00:00:00Z",
+      "evidence": {
+        "sources": [
+          "https://stake.bet/fr/sports/league-of-legends/international-1/cblol-2026-split-2-playoffs-t5/836114-loud-los",
+          "https://loltv.gg/match/2026-09-27-round-4-1-cblol-split-2-2026",
+          "docs/audits/matching/2026-09-23/before.json",
+          "https://static.lolesports.com/teams/1784013312149_LOS-OLaranja.png"
+        ],
+        "reviewedAt": "2026-09-23T17:41:39.142758+00:00",
+        "reason": "Scoped identity review: LOS and LØS share the exact Riot source logo in the versioned catalog; same CBLOL opponent and UTC start.",
+        "stakeEventId": "836114",
+        "loltvEventId": "07202e0e8a4a6fd3a0f68901"
+      }
+    }
+  ]
+}

@@ -20,6 +20,7 @@ from metiquo_worker.matching import (
     resolve_team,
     serializable_source_names,
 )
+from metiquo_worker.reconciliation import lock_identities, reconcile_in_session
 from metiquo_worker.sources.loltv import SOURCE, LoltvEvent, image_url
 
 COMPETITION_PHASE_SUFFIX = re.compile(
@@ -509,8 +510,11 @@ def _save_event(
 
 
 def _publish_events(engine: Engine, events: list[LoltvEvent]) -> tuple[int, int]:
+    if not events:
+        return 0, 0
     observed_at = datetime.now(UTC)
     with Session(engine) as session, session.begin():
+        lock_identities(session)
         session.execute(select(func.pg_advisory_xact_lock(CATALOG_WRITE_LOCK_ID)))
         teams = list(session.scalars(select(Team)).all())
         leagues = list(session.scalars(select(League)).all())
@@ -545,4 +549,5 @@ def _publish_events(engine: Engine, events: list[LoltvEvent]) -> tuple[int, int]
             )
             matched += int(did_match)
             created += int(did_create)
+        reconcile_in_session(session)
     return matched, created

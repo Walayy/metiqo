@@ -299,7 +299,16 @@ def test_finished_api_match_keeps_sourced_score_with_partial_map_details(databas
 
 @pytest.mark.integration
 @pytest.mark.parametrize("format_name, expected", [("BO1", 1), ("BO3", 0), ("BO5", 0)])
-@pytest.mark.parametrize("proof", ["timestamp", "statistics", "conflicting-statistics"])
+@pytest.mark.parametrize(
+    "proof",
+    [
+        "timestamp",
+        "statistics",
+        "conflicting-statistics",
+        "verified-conflicting-statistics",
+        "timestamp-rematch",
+    ],
+)
 def test_oracle_projection_never_closes_a_partial_series(database, format_name, expected, proof):
     engine, _ = database
     league, home, away = identities()
@@ -353,22 +362,39 @@ def test_oracle_projection_never_closes_a_partial_series(database, format_name, 
         session.get(Dataset, "oracle:2026").active_version_id = version_id
         for number, row in enumerate(oracle_rows(), 1):
             row.version_id, row.row_number = version_id, number
-            if proof != "timestamp":
-                row.payload = {**row.payload, "date": "2026-09-20 12:00:00", "champion": "Ahri"}
+            if proof not in {"timestamp", "timestamp-rematch"}:
+                stamp = "2026-09-20 12:00:00"
+                if proof == "verified-conflicting-statistics":
+                    stamp += "+00:00"
+                row.payload = {**row.payload, "date": stamp, "champion": "Ahri"}
             session.add(row)
-        if proof != "timestamp":
+        if proof == "timestamp-rematch":
+            session.add(
+                EsportMatch(
+                    id=uuid4(),
+                    source="loltv",
+                    source_id="rematch",
+                    league_id=league.id,
+                    home_id=home.id,
+                    away_id=away.id,
+                    starts_at=at - timedelta(hours=6),
+                    registered_at=at,
+                    format=format_name,
+                )
+            )
+        if proof not in {"timestamp", "timestamp-rematch"}:
             session.flush()
             match = session.get(EsportMatch, match_id)
             rows = list(session.scalars(select(OracleRow)))
             game, _ = _build_map("game", rows, match, {home.id: home, away.id: away})
-            if proof == "conflicting-statistics":
+            if proof in {"conflicting-statistics", "verified-conflicting-statistics"}:
                 game["sides"][0]["players"][0]["kills"] = 99
             observation = snapshot(match, 1)
             observation.payload = {"maps": [game], "format": format_name}
             observation.source_id, observation.source_url = "42", event().url
             observation.sha256 = "b" * 64
             session.add(observation)
-    if proof == "conflicting-statistics":
+    if proof in {"conflicting-statistics", "verified-conflicting-statistics", "timestamp-rematch"}:
         expected = 0
     result = sync_oracle_match_details(engine, observed_at=at + timedelta(days=1))
     assert result["published"] == expected
@@ -489,7 +515,9 @@ def test_migration_repairs_inferred_format_from_explicit_source(database):
         row.payload["event"] = {"bestOf": 5}
         row.source = "sofascore"
         session.add(row)
-    command.upgrade(Config("alembic.ini"), "head")
+    # Verify the historical repair before 0014 intentionally purges SofaScore.
+    command.upgrade(Config("alembic.ini"), "0012")
     with Session(engine) as session:
         assert session.get(EsportMatch, match_id).format == "BO5"
         assert session.scalar(select(MatchSnapshot)).sha256 == "a" * 64
+    command.upgrade(Config("alembic.ini"), "head")

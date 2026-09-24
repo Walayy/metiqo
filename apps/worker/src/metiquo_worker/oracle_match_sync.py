@@ -31,6 +31,7 @@ from sqlalchemy import Engine, and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from metiquo_worker.matching import normalize_name, resolve_team
+from metiquo_worker.reconciliation import lock_identities, reconcile_in_session
 
 SOURCE = "oracles-elixir"
 SOURCE_URL = "https://oracleselixir.com/tools/downloads"
@@ -376,6 +377,7 @@ def sync_oracle_match_details(
     """Publish complete Oracle maps for matches already known by Metiquo."""
     now = observed_at or datetime.now(UTC)
     with Session(engine) as session, session.begin():
+        lock_identities(session)
         if not session.scalar(select(func.pg_try_advisory_xact_lock(7_346_810_208))):
             return {"deferred": "oracle-projection-busy", "published": 0, "games": 0}
         known_matches = list(
@@ -439,31 +441,40 @@ def sync_oracle_match_details(
         ambiguous_games = 0
         for game_id, game_rows in groups.items():
             dates = [at for row in game_rows if (at := _timestamp(row.payload, source_timezone))]
+            exact = []
+            incompatible_statistics: set[UUID] = set()
+            # Independent game evidence outranks clock proximity, including when
+            # the CSV has a verified timezone. A contradictory completed map
+            # cannot be overwritten merely because it happened nearby.
+            for candidate in known_matches:
+                if not signatures.get(candidate.id):
+                    continue
+                league = leagues.get(candidate.league_id)
+                if league is None or not any(
+                    _league_matches(value, league, leagues)
+                    for row in game_rows
+                    if (value := _value(row.payload, "league"))
+                ):
+                    continue
+                built = _build_map(game_id, game_rows, candidate, teams)
+                if built:
+                    signature = game_signature(built[0])
+                    if signature in signatures[candidate.id]:
+                        exact.append(candidate.id)
+                    elif any(s[0] == built[0].get("number") for s in signatures[candidate.id]):
+                        incompatible_statistics.add(candidate.id)
+            if len(exact) == 1:
+                owners[game_id] = exact[0]
+                ownership_basis[game_id] = "exact-game-statistics"
+                continue
+            if exact:
+                ambiguous_games += 1
+                continue
             if not dates:
                 # A naive timestamp never becomes UTC by assumption. Ten exact
                 # champions, roles, K/D/A, team identities, number and winner can
                 # independently prove ownership; more than one match rejects it.
-                exact = []
-                for candidate in known_matches:
-                    if not signatures.get(candidate.id):
-                        continue
-                    league = leagues.get(candidate.league_id)
-                    if league is None or not any(
-                        _league_matches(value, league, leagues)
-                        for row in game_rows
-                        if (value := _value(row.payload, "league"))
-                    ):
-                        continue
-                    built = _build_map(game_id, game_rows, candidate, teams)
-                    if built and game_signature(built[0]) in signatures[candidate.id]:
-                        exact.append(candidate.id)
-                if len(exact) == 1:
-                    owners[game_id] = exact[0]
-                    ownership_basis[game_id] = "exact-game-statistics"
-                elif exact:
-                    ambiguous_games += 1
-                else:
-                    skipped_timezone += 1
+                skipped_timezone += 1
                 continue
             start = min(dates)
             ranked: list[tuple[float, UUID]] = []
@@ -472,6 +483,8 @@ def sync_oracle_match_details(
                     known_starts, start + MATCH_WINDOW
                 )
             ]:
+                if candidate.id in incompatible_statistics:
+                    continue
                 league = leagues.get(candidate.league_id)
                 source_leagues = {_value(row.payload, "league") for row in game_rows}
                 if league is None or not any(
@@ -484,11 +497,11 @@ def sync_oracle_match_details(
                 names = (_best_name(game_rows, home), _best_name(game_rows, away))
                 if names[0] is None or names[1] is None or names[0][0] == names[1][0]:
                     continue
-                delta = abs((start - candidate.starts_at).total_seconds())
-                if delta <= MATCH_WINDOW.total_seconds():
+                delta = (start - candidate.starts_at).total_seconds()
+                if oracle_time_agrees(start, candidate.starts_at):
                     ranked.append((delta, candidate.id))
             ranked.sort(key=lambda item: item[0])
-            if ranked and (len(ranked) == 1 or ranked[1][0] - ranked[0][0] >= 6 * 3600):
+            if len(ranked) == 1:
                 owners[game_id] = ranked[0][1]
                 ownership_basis[game_id] = "teams-league-verified-time"
             elif ranked:
@@ -632,6 +645,7 @@ def sync_oracle_match_details(
                 )
                 published += 1
             games += len(maps)
+        reconcile_in_session(session)
         return {
             "matches": len(matches),
             "published": published,
@@ -644,3 +658,8 @@ def sync_oracle_match_details(
 
 def _names(rows: list[OracleRow]) -> set[str]:
     return {name for row in rows if (name := _team_name(row)) is not None}
+
+
+def oracle_time_agrees(game_start: datetime, series_start: datetime) -> bool:
+    """A map can follow a series start, never own tomorrow's rematch by proximity."""
+    return -timedelta(minutes=30) <= game_start - series_start <= timedelta(hours=8)

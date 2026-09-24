@@ -1,6 +1,12 @@
 # Metiquo
 
-Une application d’analyse des **values esport**, dédiée à League of Legends. Les données esport utilisent le mode explicite `mock` ou `api` ; l’inscription et la connexion par code email utilisent toujours la vraie API. Le worker synchronise le référentiel LoL, ses logos et les CSV Oracle’s Elixir dans PostgreSQL et un volume d’artefacts versionnés. **Stake est l’unique bookmaker prévu** ; son collecteur n’est pas implémenté et aucun accès à Stake.bet n’est effectué. Les cotes et probabilités affichées dans le frontend restent fictives.
+### Ajustements du 24 septembre 2026
+
+La liste Matchs signale les cotes consultables par un pictogramme discret. Dans le détail, chaque marché Stake apparaît une seule fois et sépare ses derniers relevés **Pré-match** et **En direct**, avec leurs dates et suspensions. Les sélections historiques gagnées, perdues ou annulées sont affichées après validation en base ; elles ne correspondent à aucun pari placé. Une phase ou un résultat absent n’est pas inventé ; les prix historiques restent sans value actuelle. Les SVG locaux LoL/LoLTV/Stake, les marges de survol et les halos des indicateurs sont documentés dans [les sources](docs/data-sources.md). Aucun nouveau paramètre d’environnement ni migration n’est nécessaire.
+
+La fluidité bénéficie d’horloges limitées aux textes qui changent, d’un suivi de géométrie mutualisé et de surbrillances sans calcul de visibilité pendant le scroll. Les [mesures et limites](docs/audits/ui-performance/2026-09-24/README.md) décrivent le protocole avant/après ; l’instrumentation temporaire est retirée du produit.
+
+Une application d’analyse des **values esport**, dédiée à League of Legends. Les données esport utilisent le mode explicite `mock` ou `api` ; l’inscription et la connexion par code email utilisent toujours la vraie API. Le worker synchronise le référentiel LoL, ses logos et les CSV Oracle’s Elixir dans PostgreSQL et un volume d’artefacts versionnés. **Stake est l’unique bookmaker suivi** ; son collecteur Chrome local conserve les marchés publics pré-match et en direct, leurs cotes horodatées et leurs suspensions. Les cotes mock sont fictives. En API, seules les cotes issues des snapshots Stake actifs et les values dont une estimation correspondante est déjà disponible peuvent apparaître ; aucune probabilité n’est fabriquée.
 
 Sur mobile, les filtres de ligue défilent horizontalement avec des cibles tactiles de 48 px. **Plus** ouvre un panneau de sélection avec recherche par ligue ou région ; une ligue choisie hors des raccourcis reste visible dans la barre. **Actualiser** se trouve près du titre. Le catalogue complet reste accessible depuis l’indicateur des ligues.
 
@@ -10,9 +16,9 @@ Les conteneurs structurels non interactifs restent focalisables pour les liens d
 
 Le détail d’une carte utilise des portraits ronds pour les bans, alignés avec chaque équipe sur ordinateur et regroupés par équipe sur mobile. Ces portraits ne sont pas cliquables : le survol ou le focus affiche le nom dans une infobulle, avec une surbrillance sans déplacement. Les noms restent accessibles aux technologies d’assistance. Un tableau commun compare éliminations, or et objectifs ; les joueurs conservent champion, rôle, niveau, K/D/A, CS et or dans deux colonnes sur ordinateur, puis une seule sur petit écran. Les inconnues restent `—`, avec une légende, et seules les équipes dont le camp est publié portent un repère bleu/rouge. Aucun changement de source ni lancement de collecte n’est nécessaire à cet affichage.
 
-La sidebar suit **Esport → Matchs**, **Analyse → Les values / Performance**, **Soutenir Metiquo → Faire un don / Parrainage Stake**, puis **Gestion** pour les administrateurs. Les modales de soutien gardent leur contenu pendant la fermeture. En mock, elles ouvrent ou copient un lien temporaire vers `example.com`, sans transaction. En API, `VITE_DONATION_URL` et `VITE_STAKE_REFERRAL_URL` fournissent les destinations HTTPS ; une destination absente ou invalide affiche l’état indisponible. Aucun compte bookmaker, don ni pari n’est créé dans Metiquo.
+La sidebar place **Gestion → Utilisateurs / Scripts** en premier pour les administrateurs, puis **Esport → Matchs**, **Analyse → Les values / Performance** et **Soutenir Metiquo → Faire un don / Parrainage Stake**. Les modales de soutien gardent leur contenu pendant la fermeture. En mock, elles ouvrent ou copient un lien temporaire vers `example.com`, sans transaction. En API, `VITE_DONATION_URL` et `VITE_STAKE_REFERRAL_URL` fournissent les destinations HTTPS ; une destination absente ou invalide affiche l’état indisponible. Aucun compte bookmaker, don ni pari n’est créé dans Metiquo.
 
-**Matchs** (`?view=matches`) affiche une journée de Paris entre J−7 et J+7, partageable (`date=AAAA-MM-JJ`) et restaurée par précédent/suivant ou F5. Les journées vides et la journée sélectionnée sont désactivées ; les flèches rejoignent la prochaine journée avec des rencontres. Aucun calendrier natif. Les ligues ont des accordéons Radix fermés initialement, animés avec respect du mouvement réduit, logos sourcés, nombre de matchs, direct pulsant ou décompte. Les rencontres sont triées par heure ; aucune value ni cote. Cliquer une rencontre ouvre son score de série et ses cartes : les cartes non commencées sont désactivées, les cartes jouées détaillent les camps, champions, joueurs, K/D/A, CS, or et objectifs. Le score de série sourcé est prioritaire ; les cartes terminées servent de repli uniquement en son absence. Les relevés sont horodatés, avec lecture périodique toutes les 15 secondes en direct, 30 secondes sinon ; aucun score n’est inféré de l’heure.
+**Matchs** (`?view=matches`) affiche une journée de Paris entre J−7 et J+7, partageable (`date=AAAA-MM-JJ`) et restaurée par précédent/suivant ou F5. Les journées vides et la journée sélectionnée sont désactivées ; les flèches rejoignent la prochaine journée avec des rencontres. Aucun calendrier natif. Les ligues ont des accordéons Radix fermés initialement, logos sourcés, nombre de matchs, point discret au-dessus de la carte live ou décompte. Les rencontres sont triées par heure. La ligne montre seulement si des cotes Stake sont consultables. Le détail regroupe les marchés validés « Vainqueur du match » et « Vainqueur de la carte N » ; chaque marché distingue son dernier relevé pré-match et live sans répéter son intitulé. Les prix, suspensions et heures suivent les équipes ; une phase absente ne laisse pas d’emplacement. Une petite flamme signale une value positive strictement pré-match ; son pourcentage et la date complète du relevé se consultent dans l’infobulle. En match terminé, les statuts validés des sélections historiques sont visibles dans cette section ; les résultats en attente restent sans conclusion. En mock, ces cotes et résultats sont fictifs ; en API, seuls les relevés liés et résultats validés en base sont utilisés. Cliquer une rencontre ouvre aussi son score de série et ses cartes : les cartes non commencées sont désactivées, les cartes jouées détaillent les camps, champions, joueurs, K/D/A, CS, or et objectifs. Le score de série sourcé est prioritaire ; les cartes terminées servent de repli uniquement en son absence. Aucun score n’est inféré de l’heure.
 
 **Performance** (`?view=performance`) est une simulation historique et non le relevé de paris personnels. Elle trace les gains nets cumulés avec une mise fixe, un seuil strict de value, une période de règlement, une ligue, plusieurs équipes sélectionnées (équipe sur laquelle porte la value) et un marché. Les paramètres de mise/seuil s’appliquent avec le bouton du formulaire, les autres filtres directement. La cote et la probabilité sont figées avant le début du match ; un seul engagement par marché, pas de résultats futurs. Le gain gagné vaut mise × cote − mise ; une perte vaut −mise ; une annulation vaut zéro et est exclue des mises réglées/du rendement. Calculs au centime. Le curseur du graphique fonctionne au clavier et le détail liste chaque règlement. Pas de capital initial, de réinvestissement automatique ni de promesse de rendement.
 
@@ -26,15 +32,31 @@ Prérequis : Docker Engine/Desktop avec Compose v2, Node.js pour générer la co
 
 ```sh
 npm run docker:init     # Génère les secrets ; complète auth/pgAdmin sans remplacer les réglages existants
-npm run docker:up       # Démarre web, API, PostgreSQL, migrations, worker, Mailpit et pgAdmin
+npm run docker:up       # Démarre web, API, PostgreSQL, migrations, workers, Mailpit et pgAdmin
+npm run docker:api      # Mode API sur Windows : stack et worker Stake local
 npm run docker:logs
 ```
 
-Ouvrir [l’application](http://127.0.0.1:8080) et [la documentation API](http://127.0.0.1:8080/api/docs). Le frontend reste en `mock`. Le worker suit les planifications persistées en base : catalogue chaque jour à 04:00, dernière année Oracle toutes les six heures et historique Oracle le dimanche à 03:00, en heure de Paris par défaut. Les premiers imports démarrent à leur prochaine échéance ou via **Gestion → Scripts & planifications → Lancer**. Les états source restent accessibles sur `/api/v1/sources/lol-esports` et `/api/v1/sources/oracles-elixir`.
+Ouvrir [l’application](http://127.0.0.1:8080) et [la documentation API](http://127.0.0.1:8080/api/docs). Le frontend reste en `mock`. Le worker suit les planifications persistées en base : catalogue chaque jour à 04:00, dernière année Oracle toutes les six heures et historique Oracle le dimanche à 03:00, en heure de Paris par défaut. Les premiers imports démarrent à leur prochaine échéance ou via **Gestion → Scripts → Lancer**. Les états source restent accessibles sur `/api/v1/sources/lol-esports` et `/api/v1/sources/oracles-elixir`.
 
 `npm run docker:down` arrête l’application **en conservant les volumes**. Ne pas ajouter `-v` pour un arrêt normal. Les secrets sont exclus de Git et des images. PostgreSQL n’expose aucun port dans la configuration standard.
 
 Le [guide backend et exploitation](docs/backend.md) détaille la collecte manuelle, l’import du catalogue, le développement, les sauvegardes et les limites avant un déploiement public.
+
+### Collecte Stake pré-match et en direct
+
+La migration `0013` conserve séparément événements, marchés, sélections, snapshots complets, cotes horodatées et preuves source ; `0016` distingue les phases pré-match et direct et archive les anciens arrêts de collecte dus au début des rencontres. Seuls les marchés de vainqueur de match et de carte ont maintenant un résultat calculé ; aucun autre marché n'est interprété. Les données historiques restaurées le 23 septembre 2026 proviennent du dump local pris avant le retour à `0012` : 20 événements, 260 marchés, 760 sélections, 227 snapshots et 14 160 relevés. Elles ne prouvent pas l’état actuel des offres.
+
+Le worker Stake utilise Chrome Stable avec interface dans la session Windows et un profil dédié. `npm run docker:api` applique `compose.dev.yaml` pour publier PostgreSQL uniquement sur `127.0.0.1`, puis lance le worker local et attend son premier heartbeat. Après un redémarrage de Windows, relancer cette commande dans une session graphique ouverte. Contrôler ou relancer le worker seul avec :
+
+```powershell
+npm run stake:status
+npm run stake:start
+```
+
+Le script `stake-markets` se planifie dans **Gestion → Scripts** ; son cron de référence est `*/20 * * * *` en heure de Paris. Le navigateur lit les marchés des événements dont le pré-match ou le direct est confirmé publiquement. Une sélection affichée mais fermée est conservée avec une cote nulle ; une ancienne cote n'est pas présentée comme ouverte. Un refus bloquant suspend la source selon `Retry-After`. Aucun compte Stake, pari ou paiement n’est utilisé. La cadence de vingt minutes et l'horodatage des relevés ne garantissent pas la disponibilité d'une cote au moment d'une consultation. Voir [le guide du collecteur](docs/stake-collector.md) pour les commandes, la base et les limites.
+
+Le service Docker `settlement-worker` conclut en base les seules sélections historiques **Vainqueur du match** et **Vainqueur de la carte N**. Il vérifie le lien Stake ↔ rencontre, privilégie LoLTV puis Oracle’s Elixir, et attend 30 minutes après la première observation durable d’un résultat final cohérent. Une carte non jouée est annulée ; un résultat contradictoire reste en cours. Les corrections sont journalisées. Aucun pari placé ni mise n’est créé. Voir [les règles et limites de règlement](docs/selection-results.md).
 
 ### Matchs live et à venir
 
@@ -68,10 +90,10 @@ Le live vise une lecture toutes les **30 secondes** avec la planification contin
 
 ### Espace Admin
 
-Connectez-vous par code email avec `metiquo@admin.fr` (email visible dans Mailpit en local). **Gestion** apparaît uniquement pour un compte administrateur, avec les entrées **Utilisateurs**, puis **Scripts & planifications**. Les liens `?view=users` et `?view=admin` sont conservés après rechargement ; les routes `/api/v1/admin/*` vérifient aussi le rôle et la session côté serveur, même en mode esport mock.
+Connectez-vous par code email avec `metiquo@admin.fr` (email visible dans Mailpit en local). **Gestion** apparaît uniquement pour un compte administrateur, avec les entrées **Utilisateurs** et **Scripts**. Les liens `?view=users` et `?view=admin` sont conservés après rechargement ; les routes `/api/v1/admin/*` vérifient aussi le rôle et la session côté serveur, même en mode esport mock.
 
 - **Utilisateurs** : recherche et pagination, changement de rôle, suspension/réactivation et déconnexion des sessions. Une modification du rôle ou du statut révoque les sessions. Votre propre accès administrateur et le dernier administrateur actif sont protégés.
-- **Scripts & planifications** : quatre scripts autorisés, fréquence lisible, statut du worker, prochaine échéance, huit dernières exécutions, lancement manuel et mise en pause. Le formulaire propose des fréquences simples ou un cron numérique à cinq champs ; il prévisualise trois dates en heure de Paris ou UTC.
+- **Scripts** : six scripts autorisés, regroupés sous des titres de familles toujours visibles, avec échéances et statuts alignés. Un seul détail s’ouvre à la fois : accès à l’historique et à la planification, lancement manuel dans le menu « … ». L’historique affiche des lignes compactes dont les dates précises et résultats se déplient à la demande. Le formulaire propose des fréquences simples ou un cron numérique à cinq champs ; il prévisualise trois dates en heure de Paris ou UTC.
 - Les horaires sont enregistrés dans PostgreSQL et pris en compte sans reconstruire les services. La migration `0004` conserve les comptes et données existants. `npm run docker:up` reconstruit les services locaux et applique cette migration.
 - La file est vérifiée toutes les cinq secondes, chaque source possède sa file indépendante. Un lancement en attente ne signifie pas que la collecte a commencé. Une interruption est visible et ne déclenche pas de reprise automatique ; relancer manuellement ou attendre le prochain cron. Une indisponibilité prolongée regroupe les échéances manquées en une collecte par script.
 - Les variables `METIQUO_CATALOG_ENABLED` et `METIQUO_ORACLE_ENABLED` gardent leur rôle d’interrupteur du worker. Les anciennes variables d’intervalle en secondes ne pilotent plus `serve` : utilisez les planifications Admin. Aucune commande shell ni nouveau script arbitraire ne peut être créé depuis l’interface.
@@ -166,7 +188,7 @@ Les versions exactes installées sont dans `package-lock.json`. Le bundle des mo
 ```text
 apps/
   api/src/metiquo_api/       # API et authentification réelle, sans navigateur
-  worker/src/metiquo_worker/ # Catalogue LoL, logos, Oracle et extension future Stake
+  worker/src/metiquo_worker/ # Catalogue LoL, logos, Oracle et collecte Stake pré-match/direct
   web/
     public/logos/          # 297 logos officiels optimisés en WebP
     src/
@@ -234,7 +256,13 @@ L’[audit du 15 septembre 2026](docs/oracles-elixir-audit.md) a validé la réc
 
 ### Audit documentaire Stake
 
-L’[audit du 22 septembre 2026](docs/stake-audit.md) documente le DOM esport/LoL, les positions responsive, 17 rencontres listées, sept fiches et 204 sélections distinctes (174 cotées, 30 désactivées), avec captures, JSON, CSV et empreintes. Le scraper Patchright existant a reçu un HTTP 403 ; le navigateur accessible a ensuite été limité par une page Cloudflare 1015. La couverture globale reste donc partielle, explicitement détaillée dans le rapport. Cet audit ponctuel ne crée aucune commande de collecte Stake, planification ou variable d’environnement, et n’alimente ni l’API ni les fixtures.
+L’[audit du 22 septembre 2026](docs/stake-audit.md) documente le DOM esport/LoL, les positions responsive, 17 rencontres listées, sept fiches et 204 sélections distinctes (174 cotées, 30 désactivées), avec captures, JSON, CSV et empreintes. Le scraper Patchright existant a reçu un HTTP 403 ; le navigateur accessible a ensuite été limité par une page Cloudflare 1015. La couverture globale reste donc partielle, explicitement détaillée dans le rapport. Cet audit ponctuel était documentaire ; le collecteur et la base rétablis le 23 septembre sont décrits dans [leur guide](docs/stake-collector.md).
+
+### Rapprochement des rencontres Stake / LoLTV / Oracle
+
+Le [mécanisme backend](docs/match-reconciliation.md) est précédé d’un [audit des données réelles](docs/audits/matching/2026-09-23/audit.md). La migration `0015` conserve les observations et décisions, exige une identité unique avec équipes/tournoi/horaire concordants, et réévalue les événements en attente à l’arrivée des sources. Les alias difficiles sont des données sourcées et limitées au tournoi, sans exceptions nominatives dans le résolveur. Aucun changement frontend, aucune value ni interprétation des marchés.
+
+Après configuration de `METIQUO_DATABASE_URL`, `uv run --frozen metiquo-worker reconcile-matches --dry-run` produit un diagnostic sans écriture ; sans `--dry-run`, la commande reprend les liens de tout le stock sans collecte réseau. `import-match-aliases <fichier.json>` importe les équivalences auditées et `revoke-match-alias <empreinte>` les révoque en réévaluant les liens. Les commandes, le SQL, la portée Oracle et les limites sont détaillés dans le guide. Aucune nouvelle variable ou dépendance.
 
 ## Vérification des états mock
 
@@ -265,7 +293,7 @@ Les favoris ont été retirés à la demande produit du 16 septembre 2026, y com
 - Dialogues et panneaux Radix conservés pendant leur animation de fermeture, puis démontés par Radix. Animations d’opacité et de transform, sans flou sur toute la page. Gouttière de scrollbar réservée et absence de double compensation lors des verrouillages imbriqués.
 - Les styles communs se trouvent dans `styles/interactions.css`. Ne pas réintroduire de padding nul pour les boutons à fond survolé, de fallback de chargement dans le flux, ou de montage conditionnel coupant la fermeture d’un dialogue.
 - Sélecteur de jeux : League of Legends disponible ; Counter-Strike 2 et Dota 2 réellement désactivés, avec la mention « À venir » et les logos officiels locaux.
-- La cote affichée, la value, les tris et la courbe reposent sur le dernier relevé Stake. Un premier relevé isolé est valide. Le graphique utilise les dates pour l’axe horizontal et des paliers entre les relevés, sans inventer une évolution intermédiaire.
+- Dans les fixtures frontend, la cote affichée, la value, les tris et la courbe reposent sur le dernier relevé fictif attribué à Stake. Un premier relevé isolé est valide. Le graphique utilise les dates pour l’axe horizontal et des paliers entre les relevés, sans inventer une évolution intermédiaire. Les relevés réels restaurés restent séparés de ces fixtures.
 
 ## Navigation, mobile et suivi
 
@@ -275,4 +303,4 @@ Les favoris ont été retirés à la demande produit du 16 septembre 2026, y com
 - L’historique propose tout le suivi, les dernières 24 heures ou les 7 derniers jours, en prenant le dernier relevé comme fin de période. Les points se sélectionnent sur la courbe ou au clavier via le curseur et les boutons précédent/suivant. Le tableau affiche la même période, avec les variations par rapport au relevé précédent, même situé hors période. Le panneau comporte une seule zone de défilement, avec en-tête et pied fixes.
 - La liste expose des rôles de tableau, lignes, colonnes et cellules, avec libellés des chiffres. L’en-tête Value n’affiche plus d’icône suggérant un bouton ; le tri reste dans son sélecteur. L’encart d’aide annonce explicitement le calcul expliqué.
 
-Les vérifications et leurs limites sont consignées dans [docs/verification.md](docs/verification.md). L’API implémente le contrat de suivi Stake, en attente du collecteur et d’un modèle d’estimation réels ; les anciens tableaux d’offres multi-bookmakers ne sont plus acceptés.
+Les vérifications et leurs limites sont consignées dans [docs/verification.md](docs/verification.md). Le collecteur Stake réel alimente les tables `bookmaker_*` ; aucun modèle d’estimation ni calcul de value réel n’est rétabli. Les anciens tableaux d’offres multi-bookmakers ne sont plus acceptés.

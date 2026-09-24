@@ -60,6 +60,15 @@ export function Sidebar({ view, onNavigate, onSupport, isAdmin, onClose }: Props
       </div>
       <GameSelector />
       <nav aria-label="Navigation principale" className="sidebar-groups">
+        {isAdmin && (
+          <div>
+            <p className="nav-label">GESTION</p>
+            <div className="main-nav">
+              {entry('users', Users)}
+              {entry('admin', Terminal)}
+            </div>
+          </div>
+        )}
         <div>
           <p className="nav-label">ESPORT</p>
           <div className="main-nav">{entry('matches', CalendarDays)}</div>
@@ -100,15 +109,6 @@ export function Sidebar({ view, onNavigate, onSupport, isAdmin, onClose }: Props
             </button>
           </div>
         </div>
-        {isAdmin && (
-          <div>
-            <p className="nav-label">GESTION</p>
-            <div className="main-nav">
-              {entry('users', Users)}
-              {entry('admin', Terminal)}
-            </div>
-          </div>
-        )}
       </nav>
     </div>
   );

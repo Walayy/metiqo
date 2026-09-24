@@ -295,12 +295,7 @@
   font-weight: 650;
   white-space: nowrap;
 }
-.live-badge > span[aria-hidden='true'] {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-}
+
 .accordion-chevron {
   color: var(--muted);
   transition: transform 180ms var(--ease-enter);
@@ -319,23 +314,56 @@
 .league-matches {
   padding: 0 var(--space-md) var(--space-xs);
 }
+.fixture-item {
+  --fixture-score-width: 88px;
+  --fixture-columns: 56px minmax(0, 1fr) var(--fixture-score-width) minmax(0, 1fr) 108px 16px;
+  border-top: 1px solid var(--border);
+  padding-block: var(--space-xs);
+}
 .fixture-row {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 68px minmax(0, 1fr) 108px 16px;
+  grid-template-columns: var(--fixture-columns);
   align-items: center;
   gap: var(--space-sm);
   width: 100%;
   min-height: 72px;
-  padding: var(--space-md) var(--space-sm);
-  border-top: 1px solid var(--border);
+  padding: var(--space-md);
   border-radius: var(--radius-sm);
 }
 .fixture-row:hover {
   background: var(--surface-hover);
 }
-.fixture-row.fixture-section-start {
-  border-top: 2px solid var(--border-strong);
+.fixture-live-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 76px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
 }
+
+.fixture-live .fixture-status {
+  align-items: center;
+  text-align: center;
+}
+.fixture-odds-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 .fixture-time {
   display: grid;
   gap: var(--space-xs);
@@ -432,7 +460,6 @@
   gap: var(--space-xl);
   min-height: 72px;
   padding: var(--space-md) var(--space-xl);
-  border-top: 1px solid var(--border);
 }
 .fixture-skeleton .skeleton {
   height: 24px;
@@ -1057,14 +1084,18 @@
   .fixture-team {
     font-size: 13px;
   }
-  .fixture-row {
-    grid-template-columns: 48px minmax(0, 1fr) 60px minmax(0, 1fr) 96px;
+  .fixture-item {
+    --fixture-score-width: 68px;
+    --fixture-columns: 48px minmax(0, 1fr) var(--fixture-score-width) minmax(0, 1fr) 96px;
   }
   .fixture-arrow {
     display: none;
   }
   .fixture-status {
     font-size: 11px;
+  }
+  .fixture-live .fixture-status {
+    align-items: center;
   }
   .map-teams {
     gap: var(--space-lg);
@@ -1168,8 +1199,12 @@
   .league-matches {
     padding-inline: var(--space-sm);
   }
+  .fixture-item {
+    --fixture-score-width: 58px;
+    --fixture-columns: minmax(0, 1fr) var(--fixture-score-width) minmax(0, 1fr);
+  }
   .fixture-row {
-    grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
+    grid-template-columns: var(--fixture-columns);
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-xs);
   }

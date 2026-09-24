@@ -8,6 +8,7 @@ from metiquo_core.models import (
     AdminAudit,
     AppUser,
     AuthSession,
+    IngestionRun,
     ScriptRun,
     ScriptSchedule,
     WorkerStatus,
@@ -46,7 +47,25 @@ def dates_for(body: CronRequest) -> list[datetime]:
         raise HTTPException(422, str(error)) from error
 
 
-def run_data(run: ScriptRun) -> dict[str, object]:
+def run_data(run: ScriptRun, ingestion: IngestionRun | None = None) -> dict[str, object]:
+    details = ingestion.details if ingestion and ingestion.source == "stake" else {}
+    summary = {
+        key: details[key]
+        for key in (
+            "eventsScanned",
+            "eventsCollected",
+            "liveEvents",
+            "eventsStopped",
+            "eventsFailed",
+            "markets",
+            "selections",
+            "quotes",
+            "openQuotes",
+            "suspendedQuotes",
+            "snapshots",
+        )
+        if isinstance(details.get(key), int)
+    }
     return {
         "id": run.id,
         "scriptId": run.script_id,
@@ -56,6 +75,9 @@ def run_data(run: ScriptRun) -> dict[str, object]:
         "startedAt": run.started_at,
         "finishedAt": run.finished_at,
         "error": run.error,
+        "availableAt": run.available_at,
+        "summary": summary or None,
+        "complete": details.get("complete") if isinstance(details.get("complete"), bool) else None,
     }
 
 
@@ -192,8 +214,15 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
     @router.get("/scripts")
     def scripts(db: Annotated[Session, Depends(context, scope="function")]) -> dict[str, object]:
         now = datetime.now(UTC)
-        worker = db.get(WorkerStatus, 1)
-        online = worker is not None and worker.seen_at > now - timedelta(seconds=90)
+        workers = db.scalars(select(WorkerStatus)).all()
+        active_scripts = {
+            script
+            for worker in workers
+            if worker.seen_at > now - timedelta(seconds=90)
+            for script in worker.scripts
+        }
+        online = bool(active_scripts)
+        last_seen = max((worker.seen_at for worker in workers), default=None)
         rows = db.scalars(select(ScriptSchedule).order_by(ScriptSchedule.id)).all()
         items = []
         for row in rows:
@@ -216,6 +245,7 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
                     "id": row.id,
                     "name": definition.name,
                     "description": definition.description,
+                    "family": definition.family,
                     "command": definition.command,
                     "cron": row.cron,
                     "timezone": row.timezone,
@@ -225,14 +255,29 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
                     "upcoming": upcoming(row.cron, row.timezone, max(now, row.next_run_at))
                     if row.enabled
                     else [],
-                    "available": online and worker is not None and row.id in worker.scripts,
-                    "activeRun": run_data(active) if active else None,
-                    "runs": [run_data(run) for run in runs],
+                    "available": row.id in active_scripts,
+                    "activeRun": run_data(
+                        active,
+                        db.get(IngestionRun, active.ingestion_run_id)
+                        if active.ingestion_run_id
+                        else None,
+                    )
+                    if active
+                    else None,
+                    "runs": [
+                        run_data(
+                            run,
+                            db.get(IngestionRun, run.ingestion_run_id)
+                            if run.ingestion_run_id
+                            else None,
+                        )
+                        for run in runs
+                    ],
                 }
             )
         return {
             "items": items,
-            "worker": {"online": online, "lastSeenAt": worker.seen_at if worker else None},
+            "worker": {"online": online, "lastSeenAt": last_seen},
         }
 
     @router.post("/scripts/preview")
@@ -276,13 +321,11 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
         row = db.get(ScriptSchedule, script_id, with_for_update=True)
         if row is None or script_id not in SCRIPTS:
             raise HTTPException(404, "Script introuvable.")
-        worker = db.get(WorkerStatus, 1)
         now = datetime.now(UTC)
-        if (
-            worker is None
-            or worker.seen_at <= now - timedelta(seconds=90)
-            or script_id not in worker.scripts
-        ):
+        workers = db.scalars(
+            select(WorkerStatus).where(WorkerStatus.seen_at > now - timedelta(seconds=90))
+        ).all()
+        if not any(script_id in worker.scripts for worker in workers):
             raise HTTPException(
                 409, "Le worker de ce script est indisponible. Réessayez après son retour."
             )

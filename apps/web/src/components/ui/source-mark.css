@@ -1,0 +1,21 @@
+.source-mark {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  object-fit: contain;
+  color: var(--muted);
+}
+.source-mark--stake,
+.source-mark--loltv {
+  background: currentColor;
+  mask: var(--source-mask) center / contain no-repeat;
+}
+.source-mark--stake {
+  --source-mask: url('/sources/stake.svg');
+  width: 42px;
+  height: 22px;
+}
+.source-mark--loltv {
+  --source-mask: url('/sources/loltv.svg');
+}
