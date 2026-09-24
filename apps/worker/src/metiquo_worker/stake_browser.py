@@ -9,11 +9,11 @@ from typing import Self
 
 from metiquo_core.config import Settings
 from patchright.sync_api import Locator, Request, Response, sync_playwright
+from pydantic import ValidationError
 
 from metiquo_worker.loltv_policy import retry_after_seconds
 from metiquo_worker.stake_audit import (
     DEFAULT_URL,
-    failure_impact,
     launch_context,
     public_url,
     response_kind,
@@ -47,8 +47,8 @@ class StakeBrowser:
         self.requests = 0
         self.actions = 0
         self.refusals: list[dict[str, object]] = []
-        self.blocked: str | None = None
-        self.retry_after = 0.0
+        self.pending_main_refusals: list[dict[str, object]] = []
+        self.pending_retry_after = 0.0
         self.last_action = 0.0
         self.deadline = time.monotonic() + settings.stake_cycle_seconds
         self.discovered: set[str] = {DEFAULT_URL}
@@ -90,30 +90,44 @@ class StakeBrowser:
     def _response(self, response: Response) -> None:
         kind = response_kind(response.status, response.headers, response.url)
         main = response.request.is_navigation_request() and response.frame == self.page.main_frame
-        impact = failure_impact(kind, main_document=main)
         if kind:
+            refusal: dict[str, object] = {
+                "at": datetime.now(UTC).isoformat(),
+                "url": public_url(response.url),
+                "status": response.status,
+                "impact": "pending" if main else "auxiliary",
+                "kind": kind,
+            }
             if len(self.refusals) < 100:
-                self.refusals.append(
-                    {
-                        "at": datetime.now(UTC).isoformat(),
-                        "url": public_url(response.url),
-                        "status": response.status,
-                        "impact": impact,
-                        "kind": kind,
-                    }
-                )
-            if impact == "blocking":
-                self.blocked = kind
-                self.retry_after = max(
-                    self.retry_after,
+                self.refusals.append(refusal)
+            if main:
+                self.pending_main_refusals.append(refusal)
+                self.pending_retry_after = max(
+                    self.pending_retry_after,
                     retry_after_seconds(response.headers.get("retry-after"), time.time()),
                 )
+
+    def _resolve_main_refusals(self) -> None:
+        for refusal in self.pending_main_refusals:
+            refusal["impact"] = "nonblocking"
+        self.pending_main_refusals.clear()
+        self.pending_retry_after = 0.0
+
+    def _block_main_refusal(self, reason: str | None = None) -> None:
+        for refusal in self.pending_main_refusals:
+            refusal["impact"] = "blocking"
+        kind = reason or str(self.pending_main_refusals[0]["kind"])
+        self.policy.block(kind, self.pending_retry_after)
+
+    def _block_visible_protection(self, reason: str) -> None:
+        if self.pending_main_refusals:
+            self._block_main_refusal(reason)
+        else:
+            self.policy.block(reason)
 
     def checkpoint(self) -> None:
         if self.settings.worker_stop_file and self.settings.worker_stop_file.exists():
             raise StakeCycleComplete("stop_requested")
-        if self.blocked:
-            self.policy.block(self.blocked, self.retry_after)
         self.policy.check()
         if time.monotonic() >= self.deadline or self.actions >= self.settings.stake_max_actions:
             raise StakeCycleComplete("cycle_budget")
@@ -137,14 +151,16 @@ class StakeBrowser:
         if url not in self.discovered:
             raise ValueError("Navigation URL was not discovered in the public DOM")
         self.before_action()
+        self.pending_main_refusals.clear()
+        self.pending_retry_after = 0.0
         self.page.goto(
             url, wait_until="domcontentloaded", timeout=self.settings.stake_timeout_seconds * 1000
         )
         self.wait(2)
         if self.page.title().casefold() in {"un instant…", "just a moment...", "just a moment…"}:
-            self.policy.block("challenge")
+            self._block_visible_protection("challenge")
         if self.page.get_by_text("You are being rate limited", exact=False).count():
-            self.policy.block("rate_limited")
+            self._block_visible_protection("rate_limited")
 
     def _listing(self, game: str, mode: str = "listing") -> Listing:
         end = time.monotonic() + self.settings.stake_timeout_seconds
@@ -160,8 +176,12 @@ class StakeBrowser:
             stable = stable + 1 if previous == shape else 0
             previous = shape
             if data.ready and stable >= 2:
+                if mode != "hub":
+                    self._resolve_main_refusals()
                 return data
             if time.monotonic() >= end:
+                if self.pending_main_refusals:
+                    self._block_main_refusal()
                 raise ValueError("Public sports listing did not become ready")
             self.wait(0.5)
 
@@ -170,7 +190,10 @@ class StakeBrowser:
         hub = self._listing(game, "hub")
         urls = {u for u in hub.links if u.endswith(f"/sports/esports/{game}")}
         if len(urls) != 1:
+            if self.pending_main_refusals:
+                self._block_main_refusal()
             raise ValueError("Configured esport is not exposed by the public hub")
+        self._resolve_main_refusals()
         self.navigate(urls.pop())
         listing = self._listing(game)
         fixtures: dict[str, EventMetadata] = {}
@@ -220,6 +243,7 @@ class StakeBrowser:
         capture = Capture.model_validate(data)
         metadata = capture.metadata
         if metadata.status == "closed":
+            self._resolve_main_refusals()
             raise StakeEventStopped(metadata, metadata.status)
         return capture
 
@@ -228,7 +252,13 @@ class StakeBrowser:
         previous: object = None
         stable = 0
         while time.monotonic() < end:
-            capture = self.read(game)
+            try:
+                capture = self.read(game)
+            except ValidationError:
+                if not self.pending_main_refusals:
+                    raise
+                self.wait(1)
+                continue
             shape = (
                 [(t.id, t.disabled) for t in capture.tabs],
                 [(m.label, m.expanded, len(m.selections)) for m in capture.markets],
@@ -241,9 +271,12 @@ class StakeBrowser:
                 )
                 and capture.markets
             ):
+                self._resolve_main_refusals()
                 return capture
             previous = shape
             self.wait(1)
+        if self.pending_main_refusals:
+            self._block_main_refusal()
         raise ValueError("No stable markets for an identified scheduled or live event")
 
     def expanded_capture(self, game: str) -> Capture:
