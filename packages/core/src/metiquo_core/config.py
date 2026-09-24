@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     stake_max_actions: int = Field(default=300, ge=10, le=1000)
     stake_request_budget: int = Field(default=30000, ge=1000, le=60000)
     stake_budget_window_seconds: int = Field(default=1200, ge=300, le=3600)
-    stake_block_cooldown_seconds: int = Field(default=3600, ge=60, le=86400)
+    stake_block_cooldown_seconds: int = Field(default=3600, ge=0, le=86400)
     stake_start_guard_seconds: int = Field(default=60, ge=0, le=600)
     # Docker enables it explicitly; local commands stay opt-in to avoid an
     # unexpected browser launch during unrelated worker tests and tooling.
