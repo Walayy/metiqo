@@ -114,6 +114,35 @@ def test_future_arrival_dry_run_idempotence_and_journal(database):
         assert db.scalar(select(func.count()).select_from(BookmakerEventObservation)) == 1
 
 
+def test_contextual_identity_recovers_from_immutable_linked_decision(database):
+    engine, _ = database
+    value = metadata(
+        participants=[
+            Participant(name="Keyd Academy", position=0),
+            Participant(name="Beta", position=1),
+        ]
+    )
+    target = seed_match(engine, value)
+    with Session(engine) as db, db.begin():
+        team = db.get(Team, "alpha")
+        team.data = {**team.data, "name": "Vivo Keyd Stars Academy"}
+    remember_event(engine, value)
+    with Session(engine) as db:
+        assert db.get(BookmakerMatchLink, value.id).match_id == target
+    with Session(engine) as db, db.begin():
+        team = db.get(Team, "alpha")
+        team.data = {**team.data, "sourceIds": {}}
+    assert reconcile_matches(engine)["counts"] == {"conflict": 1}
+    with Session(engine) as db:
+        assert db.get(BookmakerMatchLink, value.id) is None
+    with Session(engine) as db, db.begin():
+        team = db.get(Team, "alpha")
+        team.data = {**team.data, "sourceIds": {"loltv": ["alpha"]}}
+    assert reconcile_matches(engine)["counts"] == {"linked": 1}
+    with Session(engine) as db:
+        assert db.get(BookmakerMatchLink, value.id).match_id == target
+
+
 def test_loLtv_publication_resolves_waiting_event_in_same_transaction(database):
     engine, _ = database
     value = metadata()

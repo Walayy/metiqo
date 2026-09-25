@@ -101,7 +101,9 @@ def test_reviewed_competition_identity_is_reusable_but_source_scoped():
             {"provider": "loltv", "names": {"competitionSourceId": "emea-masters-summer-2026"}},
         ),
     )
-    assert resolve_fixture(value, [target]).status == "pending"
+    contextual = resolve_fixture(value, [target])
+    assert contextual.match_id == target.id
+    assert contextual.evidence["contextualCompetitionProof"]["basis"] == "unique-fixture-context"
     linked = resolve_fixture(value, [target], competition_aliases=(competition_alias(),))
     assert linked.match_id == target.id
     assert linked.evidence["candidates"][0]["competitionProof"]["basis"] == "reviewed-alias"
@@ -111,7 +113,7 @@ def test_reviewed_competition_identity_is_reusable_but_source_scoped():
             [target],
             competition_aliases=(competition_alias(),),
         ).status
-        == "pending"
+        == "linked"
     )
     assert (
         resolve_fixture(
@@ -151,6 +153,149 @@ def test_conflicting_competition_aliases_withdraw_link():
     )
     assert decision.status == "conflict"
     assert decision.evidence["reason"] == "contradictory-competition-aliases"
+
+
+def test_sourced_catalog_code_is_an_exact_participant_identity():
+    target = candidate(home=replace(HOME, codes=("AA",)))
+    value = fixture(participants=(ParticipantIdentity(0, "AA"), ParticipantIdentity(1, "Beta")))
+    decision = resolve_fixture(value, [target])
+    assert decision.match_id == target.id
+    assert decision.evidence["participants"][0]["proof"] == {
+        "basis": "sourced-team-code",
+        "codes": ["AA"],
+    }
+
+
+def test_contextual_team_requires_one_exact_opponent_and_source_identity():
+    value = fixture(
+        participants=(ParticipantIdentity(0, "Keyd Academy"), ParticipantIdentity(1, "Beta"))
+    )
+    target = candidate(
+        home=TeamIdentity("keyd", ("Vivo Keyd Stars Academy",), {"loltv": ("keyd-source",)})
+    )
+    decision = resolve_fixture(value, [target])
+    assert decision.match_id == target.id
+    assert decision.evidence["participants"][0]["proof"]["targetId"] == "keyd-source"
+    retained = resolve_fixture(
+        value, [target], previous_match_id=target.id, previous_evidence=decision.evidence
+    )
+    assert retained.match_id == target.id
+    renamed = replace(
+        target,
+        home=TeamIdentity("keyd", ("New Brand Academy",), {"loltv": ("keyd-source",)}),
+    )
+    assert (
+        resolve_fixture(
+            value, [renamed], previous_match_id=target.id, previous_evidence=decision.evidence
+        ).match_id
+        == target.id
+    )
+    changed_source = replace(
+        target,
+        home=TeamIdentity("keyd", ("New Brand Academy",), {"loltv": ("other-source",)}),
+    )
+    assert (
+        resolve_fixture(
+            value,
+            [changed_source],
+            previous_match_id=target.id,
+            previous_evidence=decision.evidence,
+        ).status
+        == "conflict"
+    )
+    changed = resolve_fixture(
+        replace(
+            value,
+            participants=(
+                ParticipantIdentity(0, "Keyd Stars Academy"),
+                ParticipantIdentity(1, "Beta"),
+            ),
+        ),
+        [target],
+        previous_match_id=target.id,
+        previous_evidence=decision.evidence,
+    )
+    assert changed.status == "conflict" and changed.match_id is None
+    assert (
+        resolve_fixture(value, [replace(target, home=replace(target.home, source_ids={}))]).status
+        == "pending"
+    )
+    assert (
+        resolve_fixture(
+            replace(
+                value,
+                participants=(
+                    ParticipantIdentity(0, "Keyd Academy"),
+                    ParticipantIdentity(1, "Unknown"),
+                ),
+            ),
+            [target],
+        ).status
+        == "pending"
+    )
+
+
+def test_contextual_ambiguity_and_edition_conflicts_never_publish_link():
+    value = fixture(
+        participants=(ParticipantIdentity(0, "Keyd Academy"), ParticipantIdentity(1, "Beta"))
+    )
+    first = candidate(home=TeamIdentity("first", ("Vivo Keyd Stars Academy",), {"loltv": ("one",)}))
+    second = candidate(home=TeamIdentity("second", ("Keyd Wolves Academy",), {"loltv": ("two",)}))
+    assert resolve_fixture(value, [first, second]).status == "ambiguous"
+    assert (
+        resolve_fixture(
+            value,
+            [replace(first, competition="Cup Spring 2026")],
+        ).status
+        == "pending"
+    )
+    assert (
+        resolve_fixture(
+            value,
+            [replace(first, home=replace(first.home, names=("Vivo Keyd Stars",)))],
+        ).status
+        == "pending"
+    )
+
+
+def test_contextual_competition_needs_a_brand_anchor_and_source_id():
+    value = fixture(competition="EM 2026 Summer Swiss")
+    source = {"provider": "loltv", "names": {"competitionSourceId": "emea-summer-2026"}}
+    target = candidate(competition="EMEA Masters Summer 2026", sources=(source,))
+    assert resolve_fixture(value, [target]).match_id == target.id
+    assert (
+        resolve_fixture(value, [replace(target, sources=({"provider": "loltv"},))]).status
+        == "pending"
+    )
+    assert (
+        resolve_fixture(
+            value,
+            [
+                replace(
+                    target,
+                    sources=(
+                        source,
+                        {"provider": "loltv", "names": {"competitionSourceId": "another-edition"}},
+                    ),
+                )
+            ],
+        ).status
+        == "pending"
+    )
+    assert (
+        resolve_fixture(value, [replace(target, competition="Other Cup Summer 2026")]).status
+        == "pending"
+    )
+    assert (
+        resolve_fixture(value, [replace(target, competition="EMEA Masters Spring 2026")]).status
+        == "pending"
+    )
+    assert (
+        resolve_fixture(
+            value, [replace(target, competition="EMEA Masters Academy Summer 2026")]
+        ).status
+        == "pending"
+    )
 
 
 def test_replay_all_eleven_captured_emea_swiss_pairs():
@@ -328,14 +473,19 @@ def test_current_other_tournaments_use_only_their_reviewed_team_alias(
         home=TeamIdentity("opponent", (opponent,)),
         away=TeamIdentity("aliased", (target_name,), {"loltv": (target_id,)}),
     )
-    assert resolve_fixture(fixture_identity, [target]).status == "pending"
+    unreviewed = resolve_fixture(fixture_identity, [target])
+    if provider_name == "Keyd Academy":
+        assert unreviewed.match_id == target.id
+        assert unreviewed.evidence["participants"][1]["proof"]["basis"] == "unique-fixture-context"
+    else:
+        assert unreviewed.status == "pending"
     assert resolve_fixture(fixture_identity, [target], (reviewed,)).match_id == target.id
-    assert (
-        resolve_fixture(
-            replace(fixture_identity, competition_key="another-tournament"), [target], (reviewed,)
-        ).status
-        == "pending"
+    other_scope = resolve_fixture(
+        replace(fixture_identity, competition_key="another-tournament"), [target], (reviewed,)
     )
+    assert other_scope.status == ("linked" if provider_name == "Keyd Academy" else "pending")
+    if other_scope.status == "linked":
+        assert other_scope.evidence["participants"][1]["proof"]["basis"] != "reviewed-alias"
 
 
 @pytest.mark.parametrize(
