@@ -34,6 +34,7 @@ from metiquo_worker.fixture_identity import (
     FixtureIdentity,
     ParticipantIdentity,
     TeamIdentity,
+    competitions_agree,
     resolve_fixture,
     team_key,
 )
@@ -86,6 +87,16 @@ def _participants(raw: object) -> tuple[ParticipantIdentity, ...]:
     return tuple(sorted(result, key=lambda p: p.position))
 
 
+def _aware_start(raw: object) -> datetime | None:
+    if not isinstance(raw, str):
+        return None
+    try:
+        value = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    return value if value.utcoffset() is not None else None
+
+
 def fixture_from_event(
     event: BookmakerEvent,
     snapshot: BookmakerSnapshot | None = None,
@@ -115,14 +126,8 @@ def fixture_from_event(
             == [(p.position, team_key(p.name)) for p in old_participants]
             and metadata.get("competition_key") == event.competition_key
         ):
-            raw_start = metadata.get("starts_at")
-            try:
-                recovered = (
-                    datetime.fromisoformat(raw_start) if isinstance(raw_start, str) else None
-                )
-            except ValueError:
-                recovered = None
-            if recovered and recovered.utcoffset() is not None and start in {None, recovered}:
+            recovered = _aware_start(metadata.get("starts_at"))
+            if recovered and start in {None, recovered}:
                 start = start or recovered
                 proof["timeEvidence"] = {
                     "snapshotId": str(snapshot.id),
@@ -141,6 +146,62 @@ def fixture_from_event(
         participants,
         proof,
     )
+
+
+def with_schedule_observations(
+    fixture: FixtureIdentity, observations: list[BookmakerEventObservation]
+) -> FixtureIdentity:
+    """Keep only dated observations of this same bookmaker fixture as time anchors."""
+    anchors: dict[datetime, BookmakerEventObservation] = {}
+    for observation in observations:
+        payload = observation.payload
+        source_start = _aware_start(payload.get("starts_at"))
+        if source_start is None:
+            continue
+        source_competition = payload.get("competition_name")
+        source_participants = _participants(payload.get("participants"))
+        if (
+            not isinstance(source_competition, str)
+            or payload.get("competition_key") != fixture.competition_key
+            or not competitions_agree(source_competition, fixture.competition)
+            or [(p.position, team_key(p.name)) for p in source_participants]
+            != [(p.position, team_key(p.name)) for p in fixture.participants]
+            or any(
+                old.source_id is not None
+                and current.source_id is not None
+                and old.source_id != current.source_id
+                for old, current in zip(source_participants, fixture.participants, strict=True)
+            )
+        ):
+            continue
+        instant = source_start.astimezone(UTC)
+        if fixture.starts_at is None or instant != fixture.starts_at.astimezone(UTC):
+            anchors.setdefault(instant, observation)
+    proof = fixture.evidence.copy()
+    if anchors:
+        proof["scheduleObservations"] = [
+            {
+                "id": anchors[at].id,
+                "sha256": anchors[at].sha256,
+                "observedAt": anchors[at].observed_at.isoformat(),
+                "startsAt": at.isoformat(),
+            }
+            for at in sorted(anchors)
+        ]
+    latest = observations[-1] if observations else None
+    if latest is not None:
+        payload = latest.payload
+        if (
+            _aware_start(payload.get("starts_at")) == fixture.starts_at
+            and _participants(payload.get("participants")) == fixture.participants
+            and payload.get("competition_name") == fixture.competition
+        ):
+            proof["sourceObservation"] = {
+                "id": latest.id,
+                "sha256": latest.sha256,
+                "observedAt": latest.observed_at.isoformat(),
+            }
+    return replace(fixture, evidence=proof, verified_starts=tuple(sorted(anchors)))
 
 
 def _team(team: Team) -> TeamIdentity:
@@ -163,7 +224,9 @@ def _team(team: Team) -> TeamIdentity:
     )
 
 
-def load_candidates(db: Session, starts: list[datetime]) -> list[Candidate]:
+def load_candidates(
+    db: Session, starts: list[datetime], retained_ids: set[UUID] | None = None
+) -> list[Candidate]:
     windows: list[tuple[datetime, datetime]] = []
     for at in sorted(set(starts)):
         first, last = at - TIME_TOLERANCE, at + TIME_TOLERANCE
@@ -171,20 +234,15 @@ def load_candidates(db: Session, starts: list[datetime]) -> list[Candidate]:
             windows[-1] = windows[-1][0], max(last, windows[-1][1])
         else:
             windows.append((first, last))
-    if not windows:
+    filters = [
+        and_(EsportMatch.starts_at >= first, EsportMatch.starts_at <= last)
+        for first, last in windows
+    ]
+    if retained_ids:
+        filters.append(EsportMatch.id.in_(retained_ids))
+    if not filters:
         return []
-    matches = list(
-        db.scalars(
-            select(EsportMatch).where(
-                or_(
-                    *[
-                        and_(EsportMatch.starts_at >= first, EsportMatch.starts_at <= last)
-                        for first, last in windows
-                    ]
-                )
-            )
-        )
-    )
+    matches = list(db.scalars(select(EsportMatch).where(or_(*filters))))
     teams = {
         t.id: _team(t)
         for t in db.scalars(
@@ -280,22 +338,16 @@ def reconcile_in_session(
         )
     }
     fixtures = {}
-    observations = {
-        row.event_id: row
-        for row in db.scalars(
-            select(BookmakerEventObservation)
-            .where(
-                BookmakerEventObservation.event_id.in_([e.id for e in events]),
-                BookmakerEventObservation.payload["starts_at"].astext.is_not(None),
-            )
-            .distinct(BookmakerEventObservation.event_id)
-            .order_by(
-                BookmakerEventObservation.event_id,
-                BookmakerEventObservation.observed_at.desc(),
-                BookmakerEventObservation.id.desc(),
-            )
+    schedule_history: dict[UUID, list[BookmakerEventObservation]] = defaultdict(list)
+    for row in db.scalars(
+        select(BookmakerEventObservation)
+        .where(
+            BookmakerEventObservation.event_id.in_([e.id for e in events]),
+            BookmakerEventObservation.payload["starts_at"].astext.is_not(None),
         )
-    }
+        .order_by(BookmakerEventObservation.observed_at, BookmakerEventObservation.id)
+    ):
+        schedule_history[row.event_id].append(row)
     latest_readings = {
         row.event_id: row
         for row in db.scalars(
@@ -311,33 +363,53 @@ def reconcile_in_session(
     }
     for event in events:
         snapshot, raw = snapshots.get(event.id, (None, None))
-        fixtures[event.id] = fixture_from_event(
-            event, snapshot, raw if isinstance(raw, dict) else None
+        fixtures[event.id] = with_schedule_observations(
+            fixture_from_event(event, snapshot, raw if isinstance(raw, dict) else None),
+            schedule_history[event.id],
         )
-        observation = observations.get(event.id)
-        if observation is not None:
-            payload = observation.payload
-            at = payload.get("starts_at")
-            if (
-                isinstance(at, str)
-                and datetime.fromisoformat(at) == fixtures[event.id].starts_at
-                and _participants(payload.get("participants")) == fixtures[event.id].participants
-                and payload.get("competition_name") == fixtures[event.id].competition
-            ):
-                fixtures[event.id].evidence["sourceObservation"] = {
-                    "id": observation.id,
-                    "sha256": observation.sha256,
-                    "observedAt": observation.observed_at.isoformat(),
-                }
-    candidates = load_candidates(db, [f.starts_at for f in fixtures.values() if f.starts_at])
+    states = {
+        state.event_id: state
+        for state in db.scalars(
+            select(BookmakerMatchResolution).where(
+                BookmakerMatchResolution.event_id.in_([e.id for e in events])
+            )
+        )
+    }
+    links = {
+        link.event_id: link
+        for link in db.scalars(
+            select(BookmakerMatchLink).where(
+                BookmakerMatchLink.event_id.in_([e.id for e in events])
+            )
+        )
+    }
+    retained_ids = {
+        state.last_match_id for state in states.values() if state.last_match_id is not None
+    } | {link.match_id for link in links.values()}
+    candidates = load_candidates(
+        db,
+        [
+            at
+            for fixture in fixtures.values()
+            for at in (fixture.starts_at, *fixture.verified_starts)
+            if at
+        ],
+        retained_ids,
+    )
     aliases = load_aliases(db)
     now = datetime.now(UTC)
     report: list[dict[str, object]] = []
     for event in events:
         fixture = fixtures[event.id]
-        state = db.get(BookmakerMatchResolution, event.id)
-        link = db.get(BookmakerMatchLink, event.id)
-        previous = state.last_match_id if state is not None else link.match_id if link else None
+        state = states.get(event.id)
+        link = links.get(event.id)
+        previous = (
+            state.last_match_id
+            if state and state.last_match_id
+            else link.match_id
+            if link
+            else None
+        )
         decision = resolve_fixture(fixture, candidates, aliases, previous)
         reading = latest_readings.get(event.id)
         if reading is not None and decision.match_id is not None:

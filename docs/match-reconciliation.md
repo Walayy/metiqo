@@ -1,6 +1,7 @@
 # Rapprochement Stake ↔ LoLTV ↔ Oracle
 
-Implémentation backend du 23 septembre 2026, précédée de
+Implémentation backend du 23 septembre 2026, corrigée le 25 septembre pour les
+reports d'horaire et précédée de
 [l'audit PostgreSQL](audits/matching/2026-09-23/audit.md). Aucun changement frontend,
 fixture, authentification, moteur de values ou règle de marché.
 
@@ -19,10 +20,12 @@ Le résolveur `fixture_identity.py` exige :
 - la même compétition, en conservant années, éditions, divisions et phases connues.
   L'année peut changer de position dans le libellé. Une phase absente ne contredit
   pas une phase publiée ; deux phases explicites différentes bloquent le lien ;
-- un horaire avec fuseau et un écart maximal de 30 minutes. Ce seuil est une règle
-  conservatrice locale, pas une précision garantie par les fournisseurs ;
+- un horaire Stake avec fuseau. Un premier lien exige un écart maximal de 30 minutes
+  avec l'horaire actuel **ou un horaire antérieur observé pour le même identifiant
+  Stake, la même paire et la même compétition**. Ce seuil sert uniquement à trouver
+  un premier candidat ; il n'impose pas une concordance permanente des calendriers ;
 - une seule rencontre et une seule orientation possibles parmi **tous** les
-  candidats de la fenêtre. Le plus proche n'est jamais choisi pour lever un doute.
+  candidats plausibles. Le plus proche n'est jamais choisi pour lever un doute.
 
 Les codes courts ne sont pas devinés à partir des noms. Academy, Junior,
 Challengers, B, II et les autres qualificatifs restent présents. Les noms inconnus
@@ -30,8 +33,11 @@ et placeholders ne deviennent pas des identités.
 
 Les candidats viennent des rencontres LoLTV ou des séries déjà établies avec
 Oracle. Les noms originaux de tournoi LoLTV priment sur la marque parent du catalogue.
-L'index temporel `ix_matches_starts_at` et des fenêtres SQL fusionnées limitent la
-lecture des candidats sans réduire leur ensemble par un classement approximatif.
+L'index temporel `ix_matches_starts_at` et des fenêtres SQL fusionnées couvrent
+l'horaire actuel et les horaires Stake observés. Le match déjà lié est également
+chargé par son ID, même si son horaire sportif est désormais éloigné. Les décisions
+citent les observations immuables utilisées et distinguent `current-schedule`,
+`observed-schedule` et `retained-identity`.
 
 ## États et réévaluation
 
@@ -46,8 +52,13 @@ Un événement à deux mois reste enregistré sans créer une rencontre fictive.
 publication Stake, LoLTV ou Oracle réévalue les données pertinentes, y compris les
 liens antérieurs. Une contradiction retire le lien actif dans la même transaction
 et conserve son historique. Une correction peut rétablir la même série ; un événement
-déjà rattaché ne migre jamais silencieusement vers une autre série. Un report dépassant
-la tolérance attend une correction concordante des sources ou une revue des preuves.
+déjà rattaché ne migre jamais silencieusement vers une autre série. Son identifiant
+sportif, les deux équipes et le tournoi sont revérifiés à chaque passage ; la durée
+d'un report ne retire plus ce lien. Une revanche compatible près du nouvel horaire,
+un changement d'adversaire ou de compétition, une contradiction d'alias ou une
+preuve devenue insuffisante le suspend. Les anciens horaires observés ne servent
+plus à proposer une autre rencontre après l'établissement d'un lien : une erreur
+temporaire d'horaire ne doit pas rendre une revanche ancienne plausible indéfiniment.
 
 Les écritures d'identité sont sérialisées par verrou transactionnel PostgreSQL,
 avant les verrous de lignes/catalogue. La transaction publie les données et leur
@@ -56,8 +67,8 @@ résolution ensemble. Les commandes de diagnostic ne contactent aucun fournisseu
 Les découvertes Stake sont enregistrées page par page avant de parcourir les marchés,
 y compris si une pagination ou un détail échoue ensuite. Une lecture partielle ne
 remplace pas une identité complète par des champs vides ou abrégés. Une observation
-ancienne est conservée, mais ne rembobine pas l'état courant. L'arrêt pré-match
-reste irréversible pour la collecte ; il n'empêche pas d'auditer l'identité déjà acquise.
+ancienne est conservée, mais ne rembobine pas l'état courant. Un arrêt de collecte
+n'empêche pas d'auditer l'identité déjà acquise.
 
 Pour les données restaurées ayant perdu leur horaire, le résolveur peut retrouver
 celui du dernier snapshot complet **si la paire ordonnée et la compétition n'ont
@@ -133,7 +144,10 @@ uv run --frozen metiquo-worker revoke-match-alias <empreinte>
 Aucune nouvelle variable d'environnement, dépendance ou planification : les
 collecteurs autorisés déclenchent la réévaluation lors de leur publication. Après
 une mise à jour du code local, reconstruire le worker Docker et redémarrer le worker
-Stake natif pour charger le nouveau mécanisme. Les commandes ci-dessus ne font aucun pari.
+Stake natif pour charger le nouveau mécanisme. Exécuter ensuite une fois
+`reconcile-matches --dry-run`, contrôler les décisions proposées, puis
+`reconcile-matches` pour restaurer les liens suspendus uniquement par un report
+d'horaire. Les commandes ci-dessus ne font aucun pari.
 
 ```sql
 SELECT source_id, competition_name, status, match_id,

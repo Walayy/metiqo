@@ -9,11 +9,15 @@ import './styles/interactions.css';
 import { AppRouter } from './app/app-router';
 import { isKnownLocation } from './features/status/status-model';
 import { retryRead } from './lib/http-error';
+import { trackFocusModality } from './lib/focus-modality';
 import { ErrorBoundary } from './app/error-boundary';
 import { RevealApp } from './app/reveal-app';
 import { catalogQuery, matchesQuery, opportunitiesQuery, performanceQuery } from './lib/api';
 import './styles/experience.css';
 import './styles/brand.css';
+
+trackFocusModality();
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: retryRead, retryOnMount: false, refetchOnWindowFocus: false },

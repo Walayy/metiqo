@@ -7,7 +7,7 @@ from uuid import UUID
 
 from metiquo_worker.matching import normalize_name
 
-VERSION = "fixture-identity-v1"
+VERSION = "fixture-identity-v2"
 TIME_TOLERANCE = timedelta(minutes=30)
 GENERIC_TEAM_WORDS = {"team", "esports", "gaming", "club"}
 UNKNOWN_NAMES = {"", "tbd", "tba", "unknown", "to be determined", "winner", "loser"}
@@ -89,6 +89,7 @@ class FixtureIdentity:
     starts_at: datetime | None
     participants: tuple[ParticipantIdentity, ...]
     evidence: dict[str, object] = field(default_factory=dict)
+    verified_starts: tuple[datetime, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -116,8 +117,11 @@ class Alias:
             and fixture.game == self.game
             and fixture.competition_key == self.competition_key
             and normalize_name(participant.name) == normalize_name(self.name)
-            and fixture.starts_at is not None
-            and self.valid_from <= fixture.starts_at < self.valid_until
+            and any(
+                self.valid_from <= at < self.valid_until
+                for at in (fixture.starts_at, *fixture.verified_starts)
+                if at is not None
+            )
         )
 
 
@@ -179,6 +183,7 @@ def resolve_fixture(
         "sourceId": fixture.source_id,
         "competition": fixture.competition,
         "startsAt": fixture.starts_at.isoformat() if fixture.starts_at else None,
+        "verifiedStartsAt": [at.isoformat() for at in fixture.verified_starts],
         "toleranceSeconds": int(TIME_TOLERANCE.total_seconds()),
     }
 
@@ -209,11 +214,20 @@ def resolve_fixture(
         }
         if len(targets) > 1:
             return result("conflict", "contradictory-aliases")
+    verified_starts = tuple(sorted({fixture.starts_at, *fixture.verified_starts}))
     considered = []
     matches: list[tuple[Candidate, list[dict[str, object]]]] = []
     for candidate in sorted(candidates, key=lambda c: str(c.id)):
         delta = abs((candidate.starts_at - fixture.starts_at).total_seconds())
-        if candidate.game != fixture.game or delta > TIME_TOLERANCE.total_seconds():
+        nearest_verified_delta = min(
+            abs((candidate.starts_at - at).total_seconds()) for at in verified_starts
+        )
+        # Once linked, old provisional schedules cannot make a later rematch
+        # plausible forever. Recheck the retained ID and today's rival fixtures.
+        eligible_delta = delta if previous_match_id is not None else nearest_verified_delta
+        if candidate.game != fixture.game or (
+            eligible_delta > TIME_TOLERANCE.total_seconds() and candidate.id != previous_match_id
+        ):
             continue
         competition_ok = competitions_agree(fixture.competition, candidate.competition)
         orientations: list[list[dict[str, object]]] = []
@@ -236,6 +250,9 @@ def resolve_fixture(
                     "competition": candidate.competition,
                     "startsAt": candidate.starts_at.isoformat(),
                     "deltaSeconds": delta,
+                    "nearestVerifiedDeltaSeconds": nearest_verified_delta,
+                    "retainedMatch": candidate.id == previous_match_id
+                    and eligible_delta > TIME_TOLERANCE.total_seconds(),
                     "competitionAgrees": competition_ok,
                     "teamOrientations": len(orientations),
                     "teams": [list(candidate.home.names), list(candidate.away.names)],
@@ -253,4 +270,15 @@ def resolve_fixture(
     evidence["sources"] = list(candidate.sources)
     evidence["candidateStartsAt"] = candidate.starts_at.isoformat()
     evidence["candidateCompetition"] = candidate.competition
-    return result("linked", "teams-competition-verified-time", candidate.id)
+    selected_delta = abs((candidate.starts_at - fixture.starts_at).total_seconds())
+    selected_verified_delta = min(
+        abs((candidate.starts_at - at).total_seconds()) for at in verified_starts
+    )
+    if selected_delta <= TIME_TOLERANCE.total_seconds():
+        basis = "current-schedule"
+    elif selected_verified_delta <= TIME_TOLERANCE.total_seconds():
+        basis = "observed-schedule"
+    else:
+        basis = "retained-identity"
+    evidence["scheduleBasis"] = basis
+    return result("linked", f"teams-competition-{basis}", candidate.id)

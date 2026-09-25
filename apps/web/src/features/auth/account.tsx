@@ -1,7 +1,16 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Check, LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  LogIn,
+  LogOut,
+  Mail,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useDialogPresence } from '@/components/ui/use-dialog-presence';
@@ -47,14 +56,23 @@ export function Account() {
   return (
     <>
       <Button
-        className="account-trigger"
-        variant={user ? 'secondary' : 'primary'}
+        className={user ? 'account-trigger account-trigger--signed-in' : 'account-trigger'}
+        variant="secondary"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-label={user ? 'Afficher mon profil' : 'Se connecter ou s’inscrire'}
+        title={user ? 'Mon profil' : 'Se connecter'}
       >
-        {session.isPending ? <Spinner /> : <UserRound size={16} />}
-        <span>{user ? 'Mon profil' : 'Se connecter'}</span>
+        <span className="account-trigger-symbol" aria-hidden="true">
+          {session.isPending ? (
+            <Spinner />
+          ) : user ? (
+            user.email.slice(0, 2).toUpperCase()
+          ) : (
+            <LogIn size={17} />
+          )}
+        </span>
+        <span className="account-trigger-label">{user ? 'Mon profil' : 'Se connecter'}</span>
       </Button>
       {dialogPresent && (
         <AccountDialog

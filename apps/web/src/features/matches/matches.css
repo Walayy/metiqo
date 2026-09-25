@@ -350,12 +350,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  min-width: 62px;
+  min-height: 24px;
+  padding: 4px 9px;
   border: 1px solid var(--accent-border);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    border-color 180ms ease,
+    transform 180ms var(--ease-enter);
+}
+.fixture-row:is(:hover, :focus-visible) .fixture-odds-indicator {
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .fixture-time {
@@ -784,10 +798,15 @@
   object-fit: cover;
   padding: 0;
 }
-.ban-portrait-target:hover .ban-portrait,
-.ban-portrait-target:focus-visible .ban-portrait {
+:root:not([data-focus-modality='pointer']) .ban-portrait-target:focus-visible .ban-portrait {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
+}
+@media (hover: hover) {
+  .ban-portrait-target:hover .ban-portrait {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
 }
 .match-tooltip {
   z-index: 80;
@@ -1442,6 +1461,9 @@
   .map-side-rail,
   .roster-role-filters button,
   .ban-portrait-target .ban-portrait {
+    transition: none;
+  }
+  .fixture-odds-indicator {
     transition: none;
   }
 }

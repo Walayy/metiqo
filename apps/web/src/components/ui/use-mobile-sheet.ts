@@ -1,5 +1,6 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
+import { useSheetOverscroll } from './use-sheet-overscroll';
 
 interface Drag {
   pointerId: number;
@@ -16,9 +17,15 @@ interface Drag {
 
 export function useMobileSheet(open: boolean, onOpenChange: (open: boolean) => void) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [contentMounted, setContentMounted] = useState(false);
+  const attachContent = useCallback((node: HTMLDivElement | null) => {
+    contentRef.current = node;
+    setContentMounted(node !== null);
+  }, []);
   const gripRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<Drag | null>(null);
   const ignoreClickRef = useRef(false);
+  useSheetOverscroll(open, contentRef, contentMounted);
 
   function setOffset(offset: number) {
     contentRef.current?.style.setProperty('--sheet-offset', `${Math.round(offset)}px`);
@@ -49,7 +56,7 @@ export function useMobileSheet(open: boolean, onOpenChange: (open: boolean) => v
       if (dragRef.current?.frame != null) cancelAnimationFrame(dragRef.current.frame);
       dragRef.current = null;
     };
-  }, [open]);
+  }, [open, contentMounted]);
 
   function onPointerDown(event: PointerEvent<HTMLButtonElement>) {
     if (!event.isPrimary || event.button !== 0 || !contentRef.current) return;
@@ -128,7 +135,7 @@ export function useMobileSheet(open: boolean, onOpenChange: (open: boolean) => v
   }
 
   return {
-    contentRef,
+    contentRef: attachContent,
     gripRef,
     onAnimationEnd: () => {
       if (contentRef.current) contentRef.current.dataset.sheetInteracted = 'true';

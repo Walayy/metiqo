@@ -79,3 +79,47 @@ test('match odds expand without moving the dialog and adapt to a narrower screen
   await trigger.click();
   await expect(content).toHaveCSS('animation-name', 'none');
 });
+
+for (const theme of ['light', 'dark'] as const) {
+  for (const width of [320, 390, 768, 1440]) {
+    test(`the odds cue fits match rows at ${width}px in ${theme} mode`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme });
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      const league = page.locator('.league-accordion').filter({ hasText: 'LCK' }).first();
+      await league.locator('.league-trigger').click();
+      const fixture = league.locator('.fixture-row').filter({
+        has: page.locator('.fixture-odds-indicator'),
+      });
+      const cue = fixture.locator('.fixture-odds-indicator');
+      await expect(league.locator('.fixture-odds-indicator')).toHaveCount(1);
+      await expect(cue).toHaveText('Cotes');
+      await expect(fixture).toHaveAttribute('aria-label', /cotes consultables dans le détail/);
+      const cueBox = await cue.boundingBox();
+      const rowBox = await fixture.boundingBox();
+      expect(cueBox).not.toBeNull();
+      expect(rowBox).not.toBeNull();
+      expect(cueBox!.x).toBeGreaterThanOrEqual(rowBox!.x);
+      expect(cueBox!.x + cueBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width);
+      expect(cueBox!.y).toBeGreaterThanOrEqual(rowBox!.y);
+      expect(cueBox!.y + cueBox!.height).toBeLessThanOrEqual(rowBox!.y + rowBox!.height);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+      ).toBeLessThanOrEqual(1);
+      if (width === 390 && theme === 'light') {
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        const duration = await cue.evaluate((element) =>
+          Number.parseFloat(getComputedStyle(element).transitionDuration),
+        );
+        expect(duration).toBeLessThan(0.001);
+      }
+      if (width === 1440 && theme === 'dark') {
+        await fixture.focus();
+        await fixture.press('Enter');
+      } else {
+        await fixture.click();
+      }
+      await expect(page.getByRole('button', { name: /Cotes & résultats/ })).toBeVisible();
+    });
+  }
+}

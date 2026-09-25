@@ -118,27 +118,23 @@ function Loading({ users = false, count = 6 }: { users?: boolean; count?: number
 export function AdminPage({ userId, section }: { userId: string; section: 'scripts' | 'users' }) {
   return (
     <div className={clsx('admin-page', section === 'scripts' && 'admin-page--scripts')}>
-      <div className="page-heading">
-        <div>
-          <div className="eyebrow">
-            <span className="eyebrow-line" />
-            ADMINISTRATION
+      {section === 'scripts' ? (
+        <>
+          <div className="page-heading">
+            <div>
+              <div className="eyebrow">
+                <span className="eyebrow-line" />
+                ADMINISTRATION
+              </div>
+              <h1>Scripts</h1>
+              <p>Collectes et horaires.</p>
+            </div>
           </div>
-          <h1>{section === 'users' ? 'Utilisateurs' : 'Scripts'}</h1>
-          <p>
-            {section === 'users'
-              ? 'Gérez les accès et les sessions de vos utilisateurs.'
-              : 'Collectes et horaires.'}
-          </p>
-        </div>
-        {section === 'users' && (
-          <span className="admin-badge">
-            <ShieldCheck size={16} />
-            Administrateur
-          </span>
-        )}
-      </div>
-      {section === 'scripts' ? <Scripts /> : <UserList userId={userId} />}
+          <Scripts />
+        </>
+      ) : (
+        <UserList userId={userId} />
+      )}
     </div>
   );
 }
@@ -714,13 +710,35 @@ function UserList({ userId }: { userId: string }) {
   const loading = useMinimumLoading(query.isFetching, JSON.stringify([deferred, page]));
   return (
     <>
-      <div className="admin-section-heading">
+      <div className="page-heading admin-users-page-heading">
         <div>
-          <h2>
-            Utilisateurs {query.data && <span className="count-pill">{query.data.total}</span>}
-          </h2>
+          <div className="eyebrow">
+            <span className="eyebrow-line" />
+            ADMINISTRATION
+          </div>
+          <h1 className="admin-users-title">
+            <span>Utilisateurs</span>
+            <span
+              className="count-pill"
+              aria-label={
+                query.data
+                  ? `${query.data.total} comptes`
+                  : query.error
+                    ? 'Nombre de comptes indisponible'
+                    : 'Nombre de comptes en chargement'
+              }
+            >
+              {query.data?.total ?? (query.error ? '—' : '…')}
+            </span>
+          </h1>
           <p>Gérez les accès et les sessions des comptes inscrits.</p>
         </div>
+        <span className="admin-badge">
+          <ShieldCheck size={16} />
+          Administrateur
+        </span>
+      </div>
+      <div className="admin-users-toolbar">
         <label className="search-field admin-search">
           <Search size={16} />
           <input
@@ -783,9 +801,13 @@ function UserList({ userId }: { userId: string }) {
                       {user.sessions}
                       <span> session{user.sessions !== 1 ? 's' : ''}</span>
                     </span>
-                    <Button onClick={() => setEditing(user)} aria-label={`Gérer ${user.email}`}>
+                    <Button
+                      className="admin-user-action"
+                      onClick={() => setEditing(user)}
+                      aria-label={`Gérer ${user.email}`}
+                    >
                       <Settings2 size={14} />
-                      Gérer
+                      <span>Gérer</span>
                     </Button>
                   </article>
                 ))}
@@ -868,6 +890,20 @@ function UserEditor({
             action.mutate({ path: `/users/${user.id}`, method: 'PATCH', body: { role, disabled } });
           }}
         >
+          <dl className="admin-user-details">
+            <div>
+              <dt>Inscription</dt>
+              <dd>{accountDate(user.createdAt)}</dd>
+            </div>
+            <div>
+              <dt>Statut</dt>
+              <dd>{user.disabled ? 'Suspendu' : user.verified ? 'Actif' : 'À vérifier'}</dd>
+            </div>
+            <div>
+              <dt>Sessions</dt>
+              <dd>{user.sessions}</dd>
+            </div>
+          </dl>
           <fieldset disabled={action.isPending || self}>
             <div className="admin-field">
               <span>Rôle</span>
