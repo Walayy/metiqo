@@ -251,7 +251,8 @@ def resolve_fixture(
                     "startsAt": candidate.starts_at.isoformat(),
                     "deltaSeconds": delta,
                     "nearestVerifiedDeltaSeconds": nearest_verified_delta,
-                    "retainedMatch": candidate.id == previous_match_id,
+                    "retainedMatch": candidate.id == previous_match_id
+                    and eligible_delta > TIME_TOLERANCE.total_seconds(),
                     "competitionAgrees": competition_ok,
                     "teamOrientations": len(orientations),
                     "teams": [list(candidate.home.names), list(candidate.away.names)],
