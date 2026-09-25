@@ -136,7 +136,9 @@ def validate_event_url(url: str, game: str) -> str:
     return url
 
 
-def market_identity(market: MarketReading) -> tuple[str, str, int | None, str | None]:
+def market_identity(
+    market: MarketReading, *, tab: str | None = None
+) -> tuple[str, str, int | None, str | None]:
     label = identity_text(market.label)
     period_match = re.match(
         r"(?:map|carte|game|manche)\s+(\d+)\b|vainqueur de la carte\s+(\d+)\b",
@@ -145,8 +147,20 @@ def market_identity(market: MarketReading) -> tuple[str, str, int | None, str | 
     period = int(period_match[1] or period_match[2]) if period_match else None
     # Family is descriptive only. Unknown families retain their complete source label.
     family = re.sub(r"^(?:map|carte|game|manche)\s+\d+\s*[-–]?\s*", "", label)
-    basis = "source-id" if market.source_id else IDENTITY_VERSION
-    return fingerprint([basis, market.source_id or label]), basis, period, family
+    if market.source_id:
+        return fingerprint(["source-id", market.source_id]), "source-id", period, family
+    if tab == "tab-players" and re.search(r"\bduel\b", label):
+        # Stake repeats the same duel heading for different player pairs and
+        # provides no market/outcome IDs. The visible pair, unlike DOM order or
+        # odds, distinguishes those sourced markets across observations.
+        if len(market.selections) != 2:
+            raise ValueError("Player duel lacks stable participant identity")
+        pair = sorted(identity_text(selection.name) for selection in market.selections)
+        if not pair[0] or pair[0] == pair[1]:
+            raise ValueError("Player duel lacks stable participant identity")
+        basis = "stake-dom-v2-player-pair"
+        return fingerprint([basis, label, pair]), basis, period, family
+    return fingerprint([IDENTITY_VERSION, label]), IDENTITY_VERSION, period, family
 
 
 def selection_identity(

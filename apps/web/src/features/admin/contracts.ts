@@ -26,20 +26,42 @@ export const runSchema = z.object({
   finishedAt: timestamp.nullable(),
   error: z.string().nullable(),
   availableAt: timestamp.optional(),
-  summary: z.object({
-    eventsScanned: z.number().int().nonnegative().optional(),
-    eventsCollected: z.number().int().nonnegative().optional(),
-    liveEvents: z.number().int().nonnegative().optional(),
-    eventsStopped: z.number().int().nonnegative().optional(),
-    eventsFailed: z.number().int().nonnegative().optional(),
-    markets: z.number().int().nonnegative().optional(),
-    selections: z.number().int().nonnegative().optional(),
-    quotes: z.number().int().nonnegative().optional(),
-    openQuotes: z.number().int().nonnegative().optional(),
-    suspendedQuotes: z.number().int().nonnegative().optional(),
-    snapshots: z.number().int().nonnegative().optional(),
-  }).nullable().optional(),
+  summary: z
+    .object({
+      eventsScanned: z.number().int().nonnegative().optional(),
+      eventsCollected: z.number().int().nonnegative().optional(),
+      liveEvents: z.number().int().nonnegative().optional(),
+      eventsStopped: z.number().int().nonnegative().optional(),
+      eventsFailed: z.number().int().nonnegative().optional(),
+      markets: z.number().int().nonnegative().optional(),
+      selections: z.number().int().nonnegative().optional(),
+      quotes: z.number().int().nonnegative().optional(),
+      openQuotes: z.number().int().nonnegative().optional(),
+      suspendedQuotes: z.number().int().nonnegative().optional(),
+      snapshots: z.number().int().nonnegative().optional(),
+    })
+    .nullable()
+    .optional(),
   complete: z.boolean().nullable().optional(),
+  eventErrors: z.array(z.object({ eventId: z.string(), reason: z.string() })).optional(),
+  interruption: z
+    .object({
+      stage: z.string(),
+      eventId: z.string().nullable(),
+      kind: z.string(),
+      frames: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
+  deferredReason: z.string().nullable().optional(),
+  statusCorrection: z
+    .object({
+      basis: z.literal('persisted_stake_quotes'),
+      previousStatus: z.literal('failed'),
+      previousError: z.string().nullable(),
+    })
+    .nullable()
+    .optional(),
 });
 export const scriptSchema = z.object({
   id: z.string(),

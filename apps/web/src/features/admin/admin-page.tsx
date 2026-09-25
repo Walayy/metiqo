@@ -42,6 +42,18 @@ const statuses: Record<ScriptRun['status'], string> = {
   failed: 'Échec',
   interrupted: 'Interrompue',
 };
+const stakeStages: Record<string, string> = {
+  browser_start: 'ouverture du navigateur',
+  listing: 'lecture des rencontres',
+  event_traversal: 'parcours de la rencontre',
+  publication: 'publication des relevés',
+};
+const stakeDeferrals: Record<string, string> = {
+  cycle_budget: 'Limite du passage atteinte ; les rencontres restantes seront reprises.',
+  stop_requested: 'Arrêt du worker demandé pendant le passage.',
+  request_budget: 'Budget de requêtes atteint ; reprise après le délai source.',
+  cooldown: 'Source en attente du délai autorisé.',
+};
 const feedbackReserve = [
   'Cette planification a changé. Fermez puis rouvrez le formulaire.',
   'Utilisez un cron à cinq champs : minute, heure, jour, mois, semaine.',
@@ -425,6 +437,9 @@ function Scripts() {
                               {scheduledShortDate(run.requestedAt, historyScript.timezone)}
                             </strong>
                             <span>{run.trigger === 'manual' ? 'Manuelle' : 'Planifiée'}</span>
+                            {run.status === 'succeeded' && run.complete === false && (
+                              <span className="run-coverage">Couverture incomplète</span>
+                            )}
                           </span>
                           <span
                             className={clsx(
@@ -457,8 +472,62 @@ function Scripts() {
                                 </dd>
                               </div>
                             </dl>
-                            {run.error && <p className="admin-error">{run.error}</p>}
                             {summary && <p>{summary}</p>}
+                            {run.status === 'succeeded' && run.complete === false && (
+                              <p className="run-coverage-note">
+                                {run.summary?.snapshots
+                                  ? 'La collecte a publié des relevés, mais le passage est incomplet.'
+                                  : 'Le passage est incomplet ; aucune nouvelle cote publiée.'}
+                              </p>
+                            )}
+                            {run.statusCorrection && (
+                              <p className="run-coverage-note">
+                                Statut historique corrigé grâce aux relevés conservés. L’ancienne
+                                version ne détaillait pas les incidents de ce passage.
+                                {run.statusCorrection.previousError &&
+                                  ` Ancien diagnostic : ${run.statusCorrection.previousError}.`}
+                              </p>
+                            )}
+                            {run.eventErrors && run.eventErrors.length > 0 && (
+                              <div className="run-issues">
+                                <strong>Rencontres non publiées</strong>
+                                <ul>
+                                  {run.eventErrors.map((issue, index) => (
+                                    <li key={`${issue.eventId}-${index}`}>
+                                      <span>Stake {issue.eventId}</span> · {issue.reason}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {run.interruption && (
+                              <div className="run-issues">
+                                <strong>
+                                  {run.summary?.snapshots
+                                    ? 'Arrêt technique après publication'
+                                    : 'Arrêt technique'}
+                                </strong>
+                                <p>
+                                  {run.interruption.kind} pendant{' '}
+                                  {stakeStages[run.interruption.stage] ?? run.interruption.stage}
+                                  {run.interruption.eventId &&
+                                    ` · rencontre Stake ${run.interruption.eventId}`}
+                                </p>
+                                {run.interruption.frames.length > 0 && (
+                                  <details>
+                                    <summary>Trace technique</summary>
+                                    <code>{run.interruption.frames.join(' → ')}</code>
+                                  </details>
+                                )}
+                              </div>
+                            )}
+                            {run.deferredReason && (
+                              <p className="run-coverage-note">
+                                {stakeDeferrals[run.deferredReason] ??
+                                  `Passage différé : ${run.deferredReason}`}
+                              </p>
+                            )}
+                            {run.error && <p className="admin-error">{run.error}</p>}
                           </div>
                         </Collapsible.Content>
                       </Collapsible.Root>

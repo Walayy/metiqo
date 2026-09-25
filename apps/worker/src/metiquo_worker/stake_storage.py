@@ -172,7 +172,7 @@ def publish(
     for capture in captures:
         seen_markets: set[UUID] = set()
         for market in capture.markets:
-            key, basis, period, family = market_identity(market)
+            key, basis, period, family = market_identity(market, tab=capture.tab)
             market_id = uuid5(closing.id, key)
             if market_id in seen_markets:
                 raise ValueError("Ambiguous source market identity")

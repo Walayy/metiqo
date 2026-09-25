@@ -78,6 +78,10 @@ def run_data(run: ScriptRun, ingestion: IngestionRun | None = None) -> dict[str,
         "availableAt": run.available_at,
         "summary": summary or None,
         "complete": details.get("complete") if isinstance(details.get("complete"), bool) else None,
+        "eventErrors": details.get("eventErrors", []),
+        "interruption": details.get("interruption"),
+        "deferredReason": details.get("deferredReason"),
+        "statusCorrection": details.get("statusCorrection"),
     }
 
 

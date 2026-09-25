@@ -1,15 +1,17 @@
 """Scheduled public Stake collection, including live markets and suspensions."""
 
 import logging
+import traceback
 from datetime import UTC, datetime
+from pathlib import Path
 from uuid import UUID
 
 from metiquo_core.config import Settings
-from metiquo_core.models import IngestionRun, ScriptRun
-from sqlalchemy import Engine
+from metiquo_core.models import BookmakerQuote, BookmakerSnapshot, IngestionRun, ScriptRun
+from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import Session
 
-from metiquo_worker.jobs import fail_run, source_lock, start_run
+from metiquo_worker.jobs import source_lock, start_run
 from metiquo_worker.stake_browser import (
     StakeBrowser,
     StakeCycleComplete,
@@ -43,7 +45,14 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
             "suspendedQuotes": 0,
             "snapshots": 0,
         }
-        details: dict[str, object] = {"mode": "scheduled-and-live", "games": settings.stake_games}
+        event_errors: list[dict[str, str]] = []
+        details: dict[str, object] = {
+            "mode": "scheduled-and-live",
+            "games": settings.stake_games,
+            "eventErrors": event_errors,
+        }
+        stage = "browser_start"
+        current_event: str | None = None
 
         def progress(browser: StakeBrowser | None = None) -> None:
             with Session(engine) as db, db.begin():
@@ -60,6 +69,38 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                     ),
                 }
 
+        def finish(failure: Exception | None = None) -> bool:
+            details["complete"] = bool(details.get("complete", True)) and not (
+                metrics["eventsFailed"] or failure
+            )
+            with Session(engine) as db, db.begin():
+                run = db.get(IngestionRun, run_id)
+                assert run is not None
+                persisted_snapshots = db.scalar(
+                    select(func.count())
+                    .select_from(BookmakerSnapshot)
+                    .where(BookmakerSnapshot.run_id == run_id)
+                )
+                persisted_quotes = db.scalar(
+                    select(func.count())
+                    .select_from(BookmakerQuote)
+                    .join(BookmakerSnapshot, BookmakerQuote.snapshot_id == BookmakerSnapshot.id)
+                    .where(BookmakerSnapshot.run_id == run_id)
+                )
+                metrics["snapshots"] = persisted_snapshots or 0
+                metrics["quotes"] = persisted_quotes or 0
+                succeeded = bool(persisted_snapshots) or not (failure or metrics["eventsFailed"])
+                run.details = {**run.details, **details, **metrics}
+                run.status = "succeeded" if succeeded else "failed"
+                run.finished_at = datetime.now(UTC)
+                if succeeded:
+                    run.error = None
+                elif failure:
+                    run.error = f"stake_collection: {type(failure).__name__}"
+                else:
+                    run.error = "No event snapshots were published; previous data preserved"
+                return succeeded
+
         if script_run_id:
             with Session(engine) as db, db.begin():
                 script = db.get(ScriptRun, script_run_id)
@@ -71,6 +112,7 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                 browser.on_discovery = lambda events: remember_events(engine, events)
                 try:
                     for game in settings.stake_games:
+                        stage, current_event = "listing", None
                         fixtures = browser.fixtures(game)
                         remember_events(engine, fixtures)
                         known = known_events(engine, game)
@@ -83,11 +125,14 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                         )
                         metrics["eventsScanned"] += len(fixtures)
                         for fixture in fixtures:
+                            current_event = fixture.source_id
                             _, stopped, _ = known.get(fixture.source_id, (None, False, 0))
                             if stopped:
                                 metrics["eventsStopped"] += 1
+                                current_event = None
                                 continue
                             try:
+                                stage = "event_traversal"
                                 for attempt in range(2):
                                     try:
                                         captures, closing = browser.event(fixture)
@@ -96,6 +141,7 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                                         remember_event(engine, error.metadata)
                                         if error.metadata.status != "live" or attempt:
                                             raise ValueError(str(error)) from error
+                                stage = "publication"
                                 counts = publish(
                                     engine,
                                     run_id,
@@ -112,33 +158,49 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                                 metrics["eventsStopped"] += 1
                             except ValueError as error:
                                 metrics["eventsFailed"] += 1
+                                event_errors.append(
+                                    {"eventId": fixture.source_id, "reason": str(error)[:200]}
+                                )
                                 logger.warning(
                                     "Stake event %s not published (%s)",
                                     fixture.source_id,
                                     str(error)[:200],
                                 )
                             progress(browser)
+                            current_event = None
                         details["complete"] = metrics["eventsFailed"] == 0
                 except StakeCycleComplete as error:
                     details["complete"] = False
                     details["deferredReason"] = str(error)
                 finally:
                     progress(browser)
-            with Session(engine) as db, db.begin():
-                run = db.get(IngestionRun, run_id)
-                assert run is not None
-                run.status = "succeeded" if not metrics["eventsFailed"] else "failed"
-                run.finished_at = datetime.now(UTC)
-                if metrics["eventsFailed"]:
-                    run.error = "Some event snapshots were incomplete; previous data preserved"
+            finish()
             return run_id
         except StakeDeferred as error:
             details.update(
                 {"complete": False, "deferredReason": error.reason, "retryAt": error.retry_at}
             )
-            progress()
-            fail_run(engine, run_id, "source_deferred", error)
+            if finish(error):
+                return run_id
             raise
         except Exception as error:
-            fail_run(engine, run_id, "stake_collection", error)
+            frames = [
+                f"{Path(frame.filename).name}:{frame.name}:{frame.lineno}"
+                for frame in traceback.extract_tb(error.__traceback__)[-8:]
+            ]
+            details["interruption"] = {
+                "stage": stage,
+                "eventId": current_event,
+                "kind": type(error).__name__,
+                "frames": frames,
+            }
+            logger.error(
+                "Stake collection interrupted (stage=%s, event=%s, kind=%s, frames=%s)",
+                stage,
+                current_event,
+                type(error).__name__,
+                frames,
+            )
+            if finish(error):
+                return run_id
             raise

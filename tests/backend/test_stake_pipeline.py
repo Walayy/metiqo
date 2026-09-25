@@ -4,15 +4,19 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from metiquo_core.config import Settings
 from metiquo_core.models import (
     BookmakerEvent,
+    BookmakerMarket,
     BookmakerPayload,
     BookmakerQuote,
     BookmakerSelection,
     BookmakerSnapshot,
     CollectorState,
     IngestionRun,
+    ScriptRun,
 )
 from metiquo_worker import stake_sync
 from metiquo_worker.stake_policy import StakeDeferred, StakePolicy
@@ -24,6 +28,7 @@ from metiquo_worker.stake_types import (
     Participant,
     SelectionReading,
     Tab,
+    market_identity,
     selection_identity,
 )
 from sqlalchemy import func, select, text
@@ -135,6 +140,61 @@ def test_row_identity_survives_loss_of_accessible_name_when_market_suspends():
     other_team = suspended.model_copy(update={"row_label": "Pyramid IV Esports"})
     assert selection_identity(item, open_selection)[0] == selection_identity(item, suspended)[0]
     assert selection_identity(item, suspended)[0] != selection_identity(item, other_team)[0]
+
+
+def player_duel(left: str, right: str, odds: str = "2,00") -> MarketReading:
+    return MarketReading(
+        label="Duel d'éliminations match nul remboursé - carte 1",
+        expanded=True,
+        controls=[],
+        selections=[
+            SelectionReading(name=name, odds_raw=odds, disabled=False) for name in (left, right)
+        ],
+    )
+
+
+def test_player_duel_identity_uses_sourced_pair_not_price_or_order():
+    first = player_duel("Gakgos", "Fudge")
+    other = player_duel("Contractz", "Gryffinn")
+    key, basis, _, _ = market_identity(first, tab="tab-players")
+    assert basis == "stake-dom-v2-player-pair"
+    assert market_identity(other, tab="tab-players")[0] != key
+    assert market_identity(player_duel("Fudge", "Gakgos", "1,50"), tab="tab-players")[0] == key
+    assert market_identity(first)[0] == market_identity(other)[0]
+    assert market_identity(market(), tab="tab-players")[0] == market_identity(market())[0]
+
+
+@pytest.mark.parametrize("pair", [("Gakgos", ""), ("Gakgos", "Gakgos")])
+def test_player_duel_without_distinct_participants_is_rejected(pair):
+    with pytest.raises(ValueError, match="lacks stable participant identity"):
+        market_identity(player_duel(*pair), tab="tab-players")
+
+
+@pytest.mark.integration
+def test_repeated_player_duel_headings_publish_distinct_markets(database):
+    engine, _ = database
+    meta = metadata("845833")
+    markets = [
+        player_duel("Gakgos", "Fudge"),
+        player_duel("Contractz", "Gryffinn"),
+        player_duel("Quad", "Zinie"),
+        player_duel("Massu", "Bvoy"),
+    ]
+    reading = Capture(
+        metadata=meta,
+        tab="tab-players",
+        tabs=[Tab(id="tab-players", label="Joueurs", disabled=False)],
+        markets=markets,
+    )
+    counts = publish(engine, ingestion(engine), [reading], meta, guard_seconds=0)
+    assert counts["markets"] == 4 and counts["quotes"] == 8
+    with Session(engine) as db:
+        assert db.scalar(select(func.count()).select_from(BookmakerMarket)) == 4
+    duplicate = reading.model_copy(update={"markets": [markets[0], markets[0]]})
+    with pytest.raises(ValueError, match="Ambiguous source market identity"):
+        publish(engine, ingestion(engine), [duplicate], meta, guard_seconds=0)
+    with Session(engine) as db:
+        assert db.scalar(select(func.count()).select_from(BookmakerSnapshot)) == 1
 
 
 @pytest.mark.integration
@@ -323,6 +383,138 @@ def test_scheduler_prioritizes_live_and_revisits_past_events(database, monkeypat
             assert details["eventsStopped"] == 1 and details["eventsCollected"] == 3
             assert details["liveEvents"] == 2
     assert opened == ["3", "2", "4", "3", "2", "4"]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("fatal", [False, True])
+def test_persisted_stake_quotes_make_a_partial_cycle_successful(database, monkeypatch, fatal):
+    engine, settings = database
+    good, bad = metadata("901001"), metadata("901002")
+
+    class Browser:
+        requests = 0
+        refusals = []
+
+        def __init__(self, *_):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            pass
+
+        def fixtures(self, _game):
+            return [good, bad]
+
+        def event(self, fixture):
+            if fixture.source_id == bad.source_id:
+                if fatal:
+                    raise RuntimeError(
+                        "private browser details must stay out of the admin response"
+                    )
+                raise ValueError("Ambiguous source market identity")
+            return [capture(fixture)], fixture
+
+    monkeypatch.setattr(stake_sync, "StakeBrowser", Browser)
+    run_id = stake_sync.sync_stake(engine, settings.model_copy(update={"stake_enabled": True}))
+    with Session(engine) as db:
+        run = db.get(IngestionRun, run_id)
+        assert run is not None and run.status == "succeeded" and run.error is None
+        assert run.details["complete"] is False
+        assert db.scalar(select(func.count()).select_from(BookmakerSnapshot)) == 1
+        assert db.scalar(select(func.count()).select_from(BookmakerQuote)) == 1
+        if fatal:
+            assert run.details["interruption"]["kind"] == "RuntimeError"
+            assert run.details["interruption"]["eventId"] == "901002"
+            assert "private browser details" not in str(run.details)
+        else:
+            assert run.details["eventsFailed"] == 1
+            assert run.details["eventErrors"] == [
+                {"eventId": "901002", "reason": "Ambiguous source market identity"}
+            ]
+
+
+@pytest.mark.integration
+def test_stake_cycle_without_any_published_quote_is_a_failure(database, monkeypatch):
+    engine, settings = database
+    bad = metadata("901002")
+
+    class Browser:
+        requests = 0
+        refusals = []
+
+        def __init__(self, *_):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            pass
+
+        def fixtures(self, _game):
+            return [bad]
+
+        def event(self, _fixture):
+            raise ValueError("Ambiguous source market identity")
+
+    monkeypatch.setattr(stake_sync, "StakeBrowser", Browser)
+    run_id = stake_sync.sync_stake(engine, settings.model_copy(update={"stake_enabled": True}))
+    with Session(engine) as db:
+        run = db.get(IngestionRun, run_id)
+        assert run is not None and run.status == "failed"
+        assert run.details["eventsFailed"] == 1
+        assert db.scalar(select(func.count()).select_from(BookmakerSnapshot)) == 0
+
+
+@pytest.mark.integration
+def test_historical_stake_failures_are_corrected_only_when_quotes_were_persisted(database):
+    engine, _ = database
+    published_id, empty_id = ingestion(engine), ingestion(engine)
+    meta = metadata("901003")
+    publish(engine, published_id, [capture(meta)], meta, guard_seconds=0)
+    now = datetime.now(UTC)
+    with Session(engine) as db, db.begin():
+        for run_id in (published_id, empty_id):
+            run = db.get(IngestionRun, run_id)
+            assert run is not None
+            run.status = "failed"
+            run.error = "stake_collection: Error"
+            run.details = {"eventsFailed": 2, "eventsCollected": 1}
+            db.add(
+                ScriptRun(
+                    script_id="stake-markets",
+                    trigger="schedule",
+                    status="failed",
+                    requested_at=now,
+                    available_at=now,
+                    started_at=now,
+                    finished_at=now,
+                    ingestion_run_id=run_id,
+                    error="La collecte a échoué.",
+                )
+            )
+    config = Config("alembic.ini")
+    command.downgrade(config, "0018")
+    command.upgrade(config, "head")
+    with Session(engine) as db:
+        published = db.get(IngestionRun, published_id)
+        empty = db.get(IngestionRun, empty_id)
+        assert published is not None and published.status == "succeeded" and published.error is None
+        assert published.details["complete"] is False
+        assert published.details["statusCorrection"] == {
+            "basis": "persisted_stake_quotes",
+            "previousStatus": "failed",
+            "previousError": "stake_collection: Error",
+        }
+        assert empty is not None and empty.status == "failed"
+        scripts = {
+            run.ingestion_run_id: run
+            for run in db.scalars(select(ScriptRun).where(ScriptRun.script_id == "stake-markets"))
+        }
+        assert scripts[published_id].status == "succeeded" and scripts[published_id].error is None
+        assert scripts[empty_id].status == "failed"
 
 
 @pytest.mark.integration
