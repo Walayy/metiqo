@@ -39,6 +39,8 @@
   --logo-bg: #252b29;
   --focus: #65a243;
   --field-error: #a32e27;
+  --warning: #86530d;
+  --warning-soft: #fff5e8;
   --live: #b63730;
   --live-soft: #fff0ed;
   --side-blue: #2968a4;
@@ -80,6 +82,8 @@
   --logo-bg: #242a26;
   --focus: #b6e598;
   --field-error: #ffb2a9;
+  --warning: #ffc078;
+  --warning-soft: #3a2b1d;
   --live: #ff9d91;
   --live-soft: #392622;
   --side-blue: #8dc0f0;

@@ -564,6 +564,10 @@
   font-size: 13px;
   font-weight: 550;
 }
+.run-coverage {
+  color: var(--warning);
+  font-weight: 600;
+}
 .run-entry .admin-status {
   width: 100%;
   min-height: 28px;
@@ -600,6 +604,38 @@
 .run-detail p {
   margin-top: var(--space-sm);
   overflow-wrap: anywhere;
+}
+.run-coverage-note,
+.run-issues {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  background: var(--warning-soft);
+  color: var(--text);
+}
+.run-issues {
+  margin-top: var(--space-sm);
+  overflow-wrap: anywhere;
+}
+.run-issues strong {
+  color: var(--warning);
+}
+.run-issues ul {
+  padding-left: var(--space-lg);
+  margin: var(--space-xs) 0 0;
+}
+.run-issues li + li {
+  margin-top: var(--space-xs);
+}
+.run-issues summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--text);
+}
+.run-issues code {
+  display: block;
+  margin-top: var(--space-xs);
+  overflow-wrap: anywhere;
+  font-size: 11px;
 }
 .admin-search {
   width: min(320px, 100%);
