@@ -20,6 +20,7 @@ from metiquo_worker.stake_browser import (
 )
 from metiquo_worker.stake_policy import StakeDeferred, StakePolicy
 from metiquo_worker.stake_storage import known_events, publish, remember_event, remember_events
+from metiquo_worker.worker_logs import emit, error_context
 
 logger = logging.getLogger(__name__)
 SOURCE_LOCK = 62883404
@@ -153,6 +154,18 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                                 metrics["liveEvents"] += int(closing.status == "live")
                                 for key, count in counts.items():
                                     metrics[key] += count
+                                if counts["snapshots"]:
+                                    emit(
+                                        engine,
+                                        settings.worker_status_id,
+                                        "stake_event_published",
+                                        event_id=fixture.source_id,
+                                        context={
+                                            "snapshots": counts["snapshots"],
+                                            "quotes": counts["quotes"],
+                                            "markets": counts["markets"],
+                                        },
+                                    )
                             except StakeEventStopped as error:
                                 remember_event(engine, error.metadata, stop_reason=error.reason)
                                 metrics["eventsStopped"] += 1
@@ -165,6 +178,15 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                                     "Stake event %s not published (%s)",
                                     fixture.source_id,
                                     str(error)[:200],
+                                )
+                                emit(
+                                    engine,
+                                    settings.worker_status_id,
+                                    "stake_market_ambiguous"
+                                    if str(error) == "Ambiguous source market identity"
+                                    else "stake_event_rejected",
+                                    event_id=fixture.source_id,
+                                    context={"kind": type(error).__name__},
                                 )
                             progress(browser)
                             current_event = None
@@ -200,6 +222,13 @@ def sync_stake(engine: Engine, settings: Settings, *, script_run_id: UUID | None
                 current_event,
                 type(error).__name__,
                 frames,
+            )
+            emit(
+                engine,
+                settings.worker_status_id,
+                "stake_cycle_interrupted",
+                event_id=current_event,
+                context={**error_context(error), "step": stage},
             )
             if finish(error):
                 return run_id

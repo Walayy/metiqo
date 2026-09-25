@@ -69,6 +69,17 @@ SCRIPTS = {
     ),
 }
 
+WORKER_SERVICES = {
+    1: "Collectes sportives",
+    2: "Cotes Stake",
+    3: "Résultats des sélections",
+}
+
+
+def worker_for_script(script_id: str) -> int:
+    source = SCRIPTS[script_id].source
+    return 2 if source == "stake" else 3 if source == "settlements" else 1
+
 
 def upcoming(cron: str, timezone: str, after: datetime, count: int = 3) -> list[datetime]:
     # Standard numeric five-field crons only: no seconds, macros or random extensions.

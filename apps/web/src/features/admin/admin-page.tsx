@@ -1,6 +1,6 @@
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { ContentTransition } from '@/components/ui/content-transition';
-import { useDeferredValue, useEffect, useId, useState } from 'react';
+import { useDeferredValue, useEffect, useId, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Accordion, Collapsible, DropdownMenu } from 'radix-ui';
 import {
@@ -35,6 +35,7 @@ import type { Frequency } from './schedule';
 import './admin.css';
 import { StatusPanel } from '@/features/status/status-panel';
 import { needsStatusScreen } from '@/lib/http-error';
+import { WorkerLogReader } from './worker-log-reader';
 const statuses: Record<ScriptRun['status'], string> = {
   queued: 'En attente',
   running: 'En cours',
@@ -95,7 +96,16 @@ function Loading({ users = false, count = 6 }: { users?: boolean; count?: number
           <div aria-hidden="true">
             <div className="scripts-toolbar">
               <span className="skeleton skeleton-medium" />
-              <span className="skeleton skeleton-medium" />
+            </div>
+            <div className="worker-services">
+              {[1, 2, 3].map((service) => (
+                <div className="worker-service" key={service}>
+                  <span className="skeleton skeleton-medium" />
+                  <span className="skeleton skeleton-medium" />
+                  <span className="skeleton skeleton-short" />
+                  <span className="skeleton skeleton-admin-action" />
+                </div>
+              ))}
             </div>
             <div className="script-families">
               {[0, 1, 2].map((family) => (
@@ -157,6 +167,12 @@ function Scripts() {
   const client = useQueryClient();
   const [editing, setEditing] = useState<Script | null>(null);
   const [history, setHistory] = useState<Script | null>(null);
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<{
+    workerId: 1 | 2 | 3;
+    runId?: string;
+  } | null>(null);
+  const restoreLogFocus = useRef<() => void>(() => undefined);
   const shownEditing = useDialogPresence(editing);
   const shownHistory = useDialogPresence(history);
   const action = useAdminAction(runSchema);
@@ -184,7 +200,21 @@ function Scripts() {
       />
     );
   if (!query.data) return <Loading />;
-  const { items, worker } = query.data;
+  const { items, workers } = query.data;
+  const openLogs = (workerId: 1 | 2 | 3, trigger: HTMLElement, runId?: string) => {
+    restoreLogFocus.current = () => {
+      if (runId) {
+        document.querySelector<HTMLButtonElement>(`[data-worker-log-run="${runId}"]`)?.focus();
+      } else {
+        trigger.focus();
+      }
+    };
+    setViewer({ workerId, runId });
+  };
+  const closeLogs = () => {
+    setViewer(null);
+    window.requestAnimationFrame(() => restoreLogFocus.current());
+  };
   const historyScript = items.find((item) => item.id === shownHistory?.id) ?? shownHistory;
   const families = Array.from(
     items.reduce((groups, script) => {
@@ -200,17 +230,37 @@ function Scripts() {
         <span>
           {items.length} scripts · {families.length} familles
         </span>
-        <span className={clsx('worker-status', worker.online && 'is-online')}>
-          <StatusDot tone={worker.online ? 'positive' : 'negative'} />
-          {worker.online ? 'Worker connecté' : 'Worker indisponible'}
-        </span>
       </div>
-      {!worker.online && (
-        <p className="admin-callout" role="status">
-          Les planifications restent enregistrées. Les exécutions reprendront au retour du worker.
-          {worker.lastSeenAt && ` Dernier contact : ${scheduledDate(worker.lastSeenAt)}.`}
-        </p>
-      )}
+      <section className="worker-services" aria-label="Services worker">
+        {workers.map((service) => (
+          <div className="worker-service" key={service.id}>
+            <div className="worker-service-name">
+              <StatusDot tone={service.online ? 'positive' : 'negative'} active={service.online} />
+              <strong>{service.name}</strong>
+              <span>{service.online ? 'Disponible' : 'Indisponible'}</span>
+            </div>
+            <span className="worker-service-activity">
+              {service.activeRuns.length
+                ? service.activeRuns.length === 1
+                  ? service.activeRuns[0]?.name
+                  : `${service.activeRuns.length} scripts en cours`
+                : 'Aucune exécution en cours'}
+            </span>
+            <span className="worker-service-contact">
+              {service.lastSeenAt
+                ? `Dernier contact · ${scheduledShortDate(service.lastSeenAt)}`
+                : 'Aucun contact enregistré'}
+            </span>
+            <Button
+              variant="ghost"
+              onClick={(event) => openLogs(service.id, event.currentTarget)}
+              aria-label={`Journaux de ${service.name}`}
+            >
+              Journaux
+            </Button>
+          </div>
+        ))}
+      </section>
       <div className="admin-action-feedback" role="status" aria-live="polite">
         {action.error?.message ??
           (action.isSuccess ? 'Lancement demandé. Le worker prendra en charge la collecte.' : '')}
@@ -335,7 +385,10 @@ function Scripts() {
                           <div className="script-actions">
                             <Button
                               variant="ghost"
-                              onClick={() => setHistory(script)}
+                              onClick={() => {
+                                setExpandedRunId(null);
+                                setHistory(script);
+                              }}
                               aria-label={`Historique de ${script.name}`}
                             >
                               <History size={16} />
@@ -397,7 +450,7 @@ function Scripts() {
           close={() => setEditing(null)}
         />
       )}
-      {historyScript && (
+      {historyScript && !viewer && (
         <Modal
           open={history !== null}
           onOpenChange={(open) => {
@@ -430,7 +483,11 @@ function Scripts() {
                     : '';
                   return (
                     <li key={run.id}>
-                      <Collapsible.Root className="run-entry">
+                      <Collapsible.Root
+                        className="run-entry"
+                        open={expandedRunId === run.id}
+                        onOpenChange={(open) => setExpandedRunId(open ? run.id : null)}
+                      >
                         <Collapsible.Trigger type="button" className="run-trigger">
                           <span className="run-identity">
                             <strong title={scheduledDate(run.requestedAt, historyScript.timezone)}>
@@ -528,6 +585,15 @@ function Scripts() {
                               </p>
                             )}
                             {run.error && <p className="admin-error">{run.error}</p>}
+                            <Button
+                              variant="ghost"
+                              data-worker-log-run={run.id}
+                              onClick={(event) =>
+                                openLogs(historyScript.workerId, event.currentTarget, run.id)
+                              }
+                            >
+                              Voir le journal
+                            </Button>
                           </div>
                         </Collapsible.Content>
                       </Collapsible.Root>
@@ -538,6 +604,15 @@ function Scripts() {
             )}
           </div>
         </Modal>
+      )}
+      {viewer && workers.find((service) => service.id === viewer.workerId) && (
+        <WorkerLogReader
+          key={`${viewer.workerId}-${viewer.runId ?? 'service'}`}
+          worker={workers.find((service) => service.id === viewer.workerId)!}
+          initialRunId={viewer.runId}
+          onClose={closeLogs}
+          onRestoreFocus={() => window.requestAnimationFrame(() => restoreLogFocus.current())}
+        />
       )}
     </ContentTransition>
   );

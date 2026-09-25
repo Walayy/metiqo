@@ -25,6 +25,7 @@ from metiquo_worker.loltv_policy import LoltvBlocked, LoltvBudgetExhausted, Lolt
 from metiquo_worker.loltv_publication import _publish_events
 from metiquo_worker.oracle_match_sync import sync_oracle_match_details
 from metiquo_worker.sources.loltv import ROOT_URL, SOURCE, LoltvEvent, detail, listing
+from metiquo_worker.worker_logs import emit, error_context
 
 logger = logging.getLogger(__name__)
 LOCK_ID = 7_346_810_210
@@ -645,7 +646,20 @@ def sync_loltv(engine: Engine, settings: Settings) -> UUID:
                     else None
                 )
                 run.details = collector.details
+        if collector.details["errors"]:
+            emit(
+                engine,
+                settings.worker_status_id,
+                "source_pages_failed",
+                context={"errors": len(cast(list[object], collector.details["errors"]))},
+            )
         if error:
+            emit(
+                engine,
+                settings.worker_status_id,
+                "collector_interrupted",
+                context=error_context(error),
+            )
             raise error
         # Historical matching runs after source pages close; it cannot keep a live page polling.
         if collector.observed_ids:
@@ -666,6 +680,12 @@ def sync_loltv(engine: Engine, settings: Settings) -> UUID:
                     run = session.get(IngestionRun, run_id)
                     assert run is not None
                     run.details = {**run.details, "oracle": matched}
-            except Exception:
+            except Exception as failure:
                 logger.exception("Oracle reconciliation failed after LoLTV publication")
+                emit(
+                    engine,
+                    settings.worker_status_id,
+                    "oracle_projection_failed",
+                    context=error_context(failure),
+                )
         return run_id

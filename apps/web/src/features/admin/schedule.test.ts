@@ -27,7 +27,11 @@ describe('Planification administrateur', () => {
   it('refuse un contrat incomplet ou un faux état de worker', () => {
     expect(scriptsSchema.safeParse({ items: [], worker: { online: 'yes' } }).success).toBe(false);
     expect(
-      scriptsSchema.safeParse({ items: [], worker: { online: false, lastSeenAt: null } }).success,
+      scriptsSchema.safeParse({
+        items: [],
+        worker: { online: false, lastSeenAt: null },
+        workers: [],
+      }).success,
     ).toBe(true);
   });
 });

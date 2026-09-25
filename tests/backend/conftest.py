@@ -33,7 +33,7 @@ def database(monkeypatch, tmp_path):
                 "ingestion_runs, "
                 "odds_observations, probability_estimates, markets, matches, teams, leagues, "
                 "catalog_metadata, app_users, auth_challenges, auth_sessions, auth_rate_limits "
-                ", script_schedules, script_runs, worker_status, admin_audit "
+                ", script_schedules, script_runs, worker_status, worker_log_entries, admin_audit "
                 "CASCADE"
             )
         )
