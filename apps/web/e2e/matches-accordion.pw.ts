@@ -89,11 +89,14 @@ for (const theme of ['light', 'dark'] as const) {
       const league = page.locator('.league-accordion').filter({ hasText: 'LCK' }).first();
       await league.locator('.league-trigger').click();
       const fixture = league.locator('.fixture-row').filter({
-        has: page.locator('.fixture-odds-indicator'),
+        has: page.locator('.fixture-odds-tab'),
       });
-      const cue = fixture.locator('.fixture-odds-indicator');
-      await expect(league.locator('.fixture-odds-indicator')).toHaveCount(1);
-      await expect(cue).toHaveText('Cotes');
+      const cue = fixture.locator('.fixture-odds-tab').filter({ visible: true });
+      await expect(league.locator('.fixture-odds-tab').filter({ visible: true })).toHaveCount(1);
+      await expect(cue).toBeEmpty();
+      await expect(page.locator('.match-odds-legend')).toHaveText(
+        'Cotes Stake dans le détail du match',
+      );
       await expect(fixture).toHaveAttribute('aria-label', /cotes consultables dans le détail/);
       const cueBox = await cue.boundingBox();
       const rowBox = await fixture.boundingBox();
@@ -103,6 +106,22 @@ for (const theme of ['light', 'dark'] as const) {
       expect(cueBox!.x + cueBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width);
       expect(cueBox!.y).toBeGreaterThanOrEqual(rowBox!.y);
       expect(cueBox!.y + cueBox!.height).toBeLessThanOrEqual(rowBox!.y + rowBox!.height);
+      const timeBox = await fixture.locator('.fixture-time').boundingBox();
+      const scoreBox = await fixture.locator('.fixture-score').boundingBox();
+      const legendBox = await page.locator('.match-odds-legend').boundingBox();
+      const resultsBox = await page.locator('.match-results').boundingBox();
+      expect(timeBox).not.toBeNull();
+      expect(scoreBox).not.toBeNull();
+      expect(legendBox).not.toBeNull();
+      expect(resultsBox).not.toBeNull();
+      if (width <= 680) {
+        expect(cueBox!.y).toBeLessThan(scoreBox!.y + scoreBox!.height / 2);
+        expect(Math.abs(cueBox!.x + cueBox!.width / 2 - scoreBox!.x - scoreBox!.width / 2)).toBeLessThan(2);
+        expect(legendBox!.y + legendBox!.height).toBeLessThanOrEqual(resultsBox!.y);
+      } else {
+        expect(cueBox!.x).toBeGreaterThan(timeBox!.x + timeBox!.width / 2);
+        expect(legendBox!.y).toBeGreaterThanOrEqual(resultsBox!.y + resultsBox!.height);
+      }
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
       ).toBeLessThanOrEqual(1);
