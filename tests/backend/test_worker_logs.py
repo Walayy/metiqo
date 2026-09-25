@@ -85,7 +85,9 @@ def test_worker_logs_are_scoped_paginated_sanitized_and_admin_only(database, mon
             "metiquo_api.admin.authenticated_user",
             lambda *_: SimpleNamespace(id=uuid4(), role="admin"),
         )
-        newest = client.get(f"{path}&limit=1").json()
+        newest_response = client.get(f"{path}&limit=1")
+        assert newest_response.status_code == 200, newest_response.text
+        newest = newest_response.json()
         assert newest["items"][0]["id"] == error_id and newest["hasMore"] is True
         assert newest["run"]["id"] == str(run_id)
         older = client.get(f"{path}&before={error_id}&limit=1").json()
