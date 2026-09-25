@@ -5,11 +5,33 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from metiquo_worker.matching import normalize_name
+from metiquo_worker.matching import TEAM_GENERIC_WORDS, TEAM_QUALIFIERS, normalize_name
 
-VERSION = "fixture-identity-v3"
+VERSION = "fixture-identity-v4"
 TIME_TOLERANCE = timedelta(minutes=30)
 GENERIC_TEAM_WORDS = {"team", "esports", "gaming", "club"}
+GENERIC_COMPETITION_WORDS = {
+    "league",
+    "cup",
+    "tournament",
+    "championship",
+    "series",
+    "esports",
+    "international",
+    "masters",
+    "invitational",
+}
+COMPETITION_DIVISIONS = {
+    "academy",
+    "academies",
+    "challenger",
+    "challengers",
+    "junior",
+    "youth",
+    "women",
+    "female",
+    "cl",
+}
 UNKNOWN_NAMES = {"", "tbd", "tba", "unknown", "to be determined", "winner", "loser"}
 
 
@@ -50,6 +72,8 @@ def competition_identity(name: str) -> Competition:
         "qualifiers": "qualifier",
         "qualifier": "qualifier",
         "lcq": "lcq",
+        "swiss stage": "swiss",
+        "swiss": "swiss",
     }
     phase = None
     for suffix, identity in phases.items():
@@ -97,6 +121,7 @@ class TeamIdentity:
     id: str
     names: tuple[str, ...]
     source_ids: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    codes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -193,7 +218,94 @@ def _participant_proof(
             return None
         return {"basis": "provider-team-id", "sourceId": participant.source_id}
     names = sorted({value for value in team.names if team_key(value) == key})
-    return {"basis": "exact-name", "names": names} if names else None
+    if names:
+        return {"basis": "exact-name", "names": names}
+    codes = sorted({value for value in team.codes if team_key(value) == key})
+    return {"basis": "sourced-team-code", "codes": codes} if codes else None
+
+
+def _edition_compatible(left: str, right: str) -> bool:
+    """A fixture can corroborate a differently named tournament, never a different edition."""
+    a, b = competition_identity(left), competition_identity(right)
+    return not (
+        (a.years and b.years and a.years != b.years)
+        or (a.edition and b.edition and a.edition != b.edition)
+        or (a.phase and b.phase and a.phase != b.phase)
+    )
+
+
+def _brand_anchor(left: str, right: str) -> bool:
+    a, b = competition_identity(left).brand, competition_identity(right).brand
+    if not a or not b:
+        return False
+    if a == "".join(word[0] for word in b.split()) or b == "".join(word[0] for word in a.split()):
+        return len(a) >= 2 and len(b) >= 2
+    if (set(a.split()) & COMPETITION_DIVISIONS) != (set(b.split()) & COMPETITION_DIVISIONS):
+        return False
+    first = set(a.split()) - GENERIC_COMPETITION_WORDS
+    second = set(b.split()) - GENERIC_COMPETITION_WORDS
+    return bool(first & second)
+
+
+def _source_competition(candidate: Candidate) -> dict[str, str] | None:
+    source_ids: set[str] = set()
+    for source in candidate.sources:
+        names = source.get("names")
+        source_id = names.get("competitionSourceId") if isinstance(names, dict) else None
+        if source.get("provider") == "loltv" and isinstance(source_id, str) and source_id:
+            source_ids.add(source_id)
+    if len(source_ids) != 1:
+        return None
+    return {"provider": "loltv", "sourceId": next(iter(source_ids))}
+
+
+def _distinctive_team_words(name: str) -> set[str]:
+    return {
+        word
+        for word in normalize_name(name).split()
+        if len(word) >= 3 and word not in TEAM_GENERIC_WORDS | TEAM_QUALIFIERS | {"the"}
+    }
+
+
+def _contextual_team_proof(
+    fixture: FixtureIdentity,
+    participant: ParticipantIdentity,
+    team: TeamIdentity,
+    aliases: tuple[Alias, ...],
+    known_names: dict[str, set[str]],
+    retained_target_id: str | None = None,
+) -> dict[str, object] | None:
+    """Use a unique sourced fixture to identify one otherwise unknown participant."""
+    key = team_key(participant.name)
+    if (
+        key in UNKNOWN_NAMES
+        or re.match(r"^(?:winner|loser|tbd|tba)\b", key)
+        or any(
+            alias.provider == fixture.provider
+            and alias.game == fixture.game
+            and alias.competition_key == fixture.competition_key
+            and normalize_name(alias.name) == normalize_name(participant.name)
+            for alias in aliases
+        )
+        or participant.source_id is not None
+        or known_names.get(key, set()) - {team.id}
+    ):
+        return None
+    # Academy and other squad qualifiers are part of the identity, never decoration.
+    qualifiers = set(normalize_name(participant.name).split()) & TEAM_QUALIFIERS
+    if not team.names or not any(
+        set(normalize_name(name).split()) & TEAM_QUALIFIERS == qualifiers for name in team.names
+    ):
+        return None
+    meaningful = _distinctive_team_words(participant.name)
+    if retained_target_id is None and (
+        not meaningful or not any(meaningful & _distinctive_team_words(name) for name in team.names)
+    ):
+        return None
+    source_ids = team.source_ids.get("loltv", ())
+    if len(source_ids) != 1 or (retained_target_id and source_ids[0] != retained_target_id):
+        return None
+    return {"basis": "unique-fixture-context", "targetProvider": "loltv", "targetId": source_ids[0]}
 
 
 def _competition_proof(
@@ -231,6 +343,7 @@ def resolve_fixture(
     aliases: tuple[Alias, ...] = (),
     previous_match_id: UUID | None = None,
     competition_aliases: tuple[CompetitionAlias, ...] = (),
+    previous_evidence: dict[str, object] | None = None,
 ) -> Decision:
     evidence: dict[str, object] = {
         "version": VERSION,
@@ -278,6 +391,49 @@ def resolve_fixture(
     verified_starts = tuple(sorted({fixture.starts_at, *fixture.verified_starts}))
     considered = []
     matches: list[tuple[Candidate, list[dict[str, object]]]] = []
+    contextual: list[tuple[Candidate, list[dict[str, object]], dict[str, object]]] = []
+    known_names: dict[str, set[str]] = {}
+    for candidate in candidates:
+        for team in (candidate.home, candidate.away):
+            for name in (*team.names, *team.codes):
+                known_names.setdefault(team_key(name), set()).add(team.id)
+    has_competition_alias = any(
+        alias.provider == fixture.provider
+        and alias.game == fixture.game
+        and alias.competition_key == fixture.competition_key
+        and normalize_name(alias.name) == normalize_name(fixture.competition)
+        for alias in competition_aliases
+    )
+
+    def retained_contextual_team(
+        candidate: Candidate, missing: int, team: TeamIdentity
+    ) -> str | None:
+        if previous_match_id != candidate.id or previous_evidence is None:
+            return None
+        if previous_evidence.get("matchId") != str(candidate.id):
+            return None
+        mapping = previous_evidence.get("participants")
+        if not isinstance(mapping, list):
+            return None
+        participant = fixture.participants[missing]
+        for row in mapping:
+            if not isinstance(row, dict):
+                continue
+            proof = row.get("proof")
+            if (
+                row.get("position") == participant.position
+                and row.get("teamId") == team.id
+                and isinstance(row.get("name"), str)
+                and team_key(row["name"]) == team_key(participant.name)
+                and isinstance(proof, dict)
+                and proof.get("basis") == "unique-fixture-context"
+                and isinstance(proof.get("targetId"), str)
+            ):
+                target_id = proof["targetId"]
+                if isinstance(target_id, str):
+                    return target_id
+        return None
+
     for candidate in sorted(candidates, key=lambda c: str(c.id)):
         delta = abs((candidate.starts_at - fixture.starts_at).total_seconds())
         nearest_verified_delta = min(
@@ -293,6 +449,7 @@ def resolve_fixture(
         competition_proof = _competition_proof(fixture, candidate, competition_aliases)
         competition_ok = competition_proof is not None
         orientations: list[list[dict[str, object]]] = []
+        contextual_orientations: list[tuple[list[dict[str, object]], dict[str, object]]] = []
         for teams in ((candidate.home, candidate.away), (candidate.away, candidate.home)):
             proofs = [
                 _participant_proof(fixture, p, team, aliases)
@@ -305,7 +462,55 @@ def resolve_fixture(
                         for p, team, proof in zip(fixture.participants, teams, proofs, strict=True)
                     ]
                 )
-        if competition_ok or orientations:
+            if teams[0].id == teams[1].id:
+                continue
+            contextual_competition = None
+            contextual_proofs = proofs[:]
+            if competition_ok and sum(proof is not None for proof in proofs) == 1:
+                missing = 0 if proofs[0] is None else 1
+                retained_target_id = retained_contextual_team(candidate, missing, teams[missing])
+                if previous_match_id is None or retained_target_id is not None:
+                    contextual_proofs[missing] = _contextual_team_proof(
+                        fixture,
+                        fixture.participants[missing],
+                        teams[missing],
+                        aliases,
+                        known_names,
+                        retained_target_id,
+                    )
+                    if contextual_proofs[missing] is not None:
+                        contextual_competition = competition_proof
+            elif (
+                not competition_ok
+                and not has_competition_alias
+                and all(proofs)
+                and _edition_compatible(fixture.competition, candidate.competition)
+                and _brand_anchor(fixture.competition, candidate.competition)
+            ):
+                source_competition = _source_competition(candidate)
+                if source_competition is not None:
+                    contextual_competition = {
+                        "basis": "unique-fixture-context",
+                        "source": source_competition,
+                    }
+            if contextual_competition is not None and all(contextual_proofs):
+                contextual_orientations.append(
+                    (
+                        [
+                            {
+                                "position": p.position,
+                                "name": p.name,
+                                "teamId": team.id,
+                                "proof": proof,
+                            }
+                            for p, team, proof in zip(
+                                fixture.participants, teams, contextual_proofs, strict=True
+                            )
+                        ],
+                        contextual_competition,
+                    )
+                )
+        if competition_ok or orientations or contextual_orientations:
             considered.append(
                 {
                     "matchId": str(candidate.id),
@@ -318,17 +523,30 @@ def resolve_fixture(
                     "competitionAgrees": competition_ok,
                     "competitionProof": competition_proof,
                     "teamOrientations": len(orientations),
+                    "contextualOrientations": len(contextual_orientations),
                     "teams": [list(candidate.home.names), list(candidate.away.names)],
                 }
             )
         if competition_ok:
             matches.extend((candidate, orientation) for orientation in orientations)
+        contextual.extend(
+            (candidate, orientation, proof) for orientation, proof in contextual_orientations
+        )
     evidence["candidates"] = considered
     if len(matches) > 1:
         return result("ambiguous", "multiple-plausible-identities")
-    if not matches:
+    if matches:
+        candidate, mapping = matches[0]
+        # Contextual evidence cannot override a fully demonstrated but different fixture.
+        if any(other.id != candidate.id for other, _, _ in contextual):
+            return result("ambiguous", "conflicting-contextual-identity")
+    elif len(contextual) == 1:
+        candidate, mapping, competition_proof = contextual[0]
+        evidence["contextualCompetitionProof"] = competition_proof
+    elif contextual:
+        return result("ambiguous", "multiple-contextual-identities")
+    else:
         return result("pending", "no-demonstrated-candidate")
-    candidate, mapping = matches[0]
     evidence["participants"] = mapping
     evidence["sources"] = list(candidate.sources)
     evidence["candidateStartsAt"] = candidate.starts_at.isoformat()

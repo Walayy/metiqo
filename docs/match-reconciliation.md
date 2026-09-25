@@ -15,7 +15,7 @@ appartenaient au même espace.
 Le résolveur `fixture_identity.py` exige :
 
 - deux équipes identifiées par ID du même fournisseur, nom/alias observé exact,
-  ou correspondance auditée ; casse, accents, ponctuation et les mots génériques
+  code Riot publié pour cette identité sportive, ou correspondance auditée ; casse, accents, ponctuation et les mots génériques
   Team/Esports/Gaming/Club sont normalisés, sans rapprochement flou ni sous-chaîne ;
 - la même compétition, en conservant années, éditions, divisions et phases connues.
   L'année peut changer de position dans le libellé. Une phase absente ne contredit
@@ -27,7 +27,7 @@ Le résolveur `fixture_identity.py` exige :
 - une seule rencontre et une seule orientation possibles parmi **tous** les
   candidats plausibles. Le plus proche n'est jamais choisi pour lever un doute.
 
-Les codes courts ne sont pas devinés à partir des noms. Academy, Junior,
+Les codes courts ne sont pas devinés à partir des noms : seul le champ `code` sourcé du catalogue est admis. Academy, Junior,
 Challengers, B, II et les autres qualificatifs restent présents. Les noms inconnus
 et placeholders ne deviennent pas des identités.
 
@@ -38,6 +38,23 @@ l'horaire actuel et les horaires Stake observés. Le match déjà lié est égal
 chargé par son ID, même si son horaire sportif est désormais éloigné. Les décisions
 citent les observations immuables utilisées et distinguent `current-schedule`,
 `observed-schedule` et `retained-identity`.
+
+Si les libellés divergent, le résolveur peut établir une **preuve propre à une
+rencontre**, sans enregistrer d'alias réutilisable. Pour une équipe, il exige un
+mot distinctif commun et le même qualificatif d'équipe, l'autre équipe prouvée
+exactement, un tournoi déjà prouvé, un ID d'équipe LoLTV, l'horaire vérifié et
+une seule orientation possible. Pour une compétition, il exige les **deux équipes
+prouvées exactement**, une marque commune ou son acronyme, des années, éditions,
+phases et divisions non contradictoires, un ID de compétition LoLTV et un seul
+candidat. Une autre rencontre plausible bloque cette voie ; un alias explicite
+pour le même contexte garde priorité même quand sa période est expirée. Une
+preuve contextuelle d'équipe ne justifie pas un changement d'adversaire sur un
+lien existant. Les décisions enregistrent la base et l'identifiant source du
+rapprochement. Les variantes sans mot distinctif, sans source ou sans candidat
+sportif publié exigent encore une revue et un alias sourcé.
+Lorsqu'une source disparaît temporairement, la dernière décision liée du journal
+immuable permet de revérifier la même identité à son retour ; elle ne permet
+jamais de basculer vers un autre match ou un autre ID d'équipe.
 
 ## États et réévaluation
 
@@ -170,6 +187,12 @@ Tyler1, LES Promotion, Cloud9/Team Liquid et quatre promotions futures.
 « Pending » ne distingue pas magiquement une rencontre inexistante d'une source
 pas encore collectée. Une offre visible au dernier relevé ne prouve pas qu'elle
 est encore disponible maintenant ni qu'un pari serait accepté.
+
+Le contrôle en lecture seule du 25 septembre sur la base publiée compte 339
+équipes, dont 271 avec un code de catalogue, 20 événements rapprochés et cinq
+événements « Promotion 2027 » encore en attente de rencontre sportive publiée.
+Ce relevé daté n'est ni une promesse de couverture exhaustive ni une preuve de
+disponibilité actuelle des cotes.
 
 Depuis la migration `0017`, seules les sélections des marchés « Vainqueur du match »
 et « Vainqueur de la carte N » sont interprétées par le

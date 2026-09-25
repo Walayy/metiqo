@@ -221,8 +221,10 @@ def _team(team: Team) -> TeamIdentity:
         if isinstance(ids, dict)
         else {}
     )
+    code = team.data.get("code")
+    codes = (code,) if isinstance(code, str) and code.strip() else ()
     return TeamIdentity(
-        team.id, tuple(sorted({n for n in names if isinstance(n, str) and n})), source_ids
+        team.id, tuple(sorted({n for n in names if isinstance(n, str) and n})), source_ids, codes
     )
 
 
@@ -404,6 +406,18 @@ def reconcile_in_session(
             )
         )
     }
+    prior_linked_evidence = {
+        decision.event_id: decision.evidence
+        for decision in db.scalars(
+            select(BookmakerMatchDecision)
+            .where(
+                BookmakerMatchDecision.event_id.in_([e.id for e in events]),
+                BookmakerMatchDecision.evidence["status"].astext == "linked",
+            )
+            .distinct(BookmakerMatchDecision.event_id)
+            .order_by(BookmakerMatchDecision.event_id, BookmakerMatchDecision.id.desc())
+        )
+    }
     retained_ids = {
         state.last_match_id for state in states.values() if state.last_match_id is not None
     } | {link.match_id for link in links.values()}
@@ -432,7 +446,14 @@ def reconcile_in_session(
             if link
             else None
         )
-        decision = resolve_fixture(fixture, candidates, aliases, previous, competition_aliases)
+        previous_evidence = (
+            state.evidence
+            if state and state.status == "linked"
+            else prior_linked_evidence.get(event.id) or (link.evidence if link else None)
+        )
+        decision = resolve_fixture(
+            fixture, candidates, aliases, previous, competition_aliases, previous_evidence
+        )
         reading = latest_readings.get(event.id)
         if reading is not None and decision.match_id is not None:
             participants = _participants(reading.payload.get("participants"))
@@ -449,7 +470,12 @@ def reconcile_in_session(
                     else fixture.competition,
                 )
                 checked = resolve_fixture(
-                    alternate, candidates, aliases, decision.match_id, competition_aliases
+                    alternate,
+                    candidates,
+                    aliases,
+                    decision.match_id,
+                    competition_aliases,
+                    decision.evidence,
                 )
                 if checked.match_id != decision.match_id:
                     decision = Decision(
