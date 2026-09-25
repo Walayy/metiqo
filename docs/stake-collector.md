@@ -110,6 +110,16 @@ Ces limites locales ne sont pas des quotas publiés par Stake. Un budget compte 
 
 Sur le VPS, la pause locale fixe vaut zéro. Un challenge arrête et marque en échec le passage courant ; seul le prochain passage cron ou un lancement manuel réessaie. Un en-tête `Retry-After` explicite reste prioritaire et place le passage en attente jusqu'à son échéance. Cette configuration ne fait pas disparaître un refus Cloudflare.
 
+Le profil Chrome Stake est conservé dans un volume Docker. Après un arrêt ou un
+remplacement de conteneur pendant une collecte, Chrome peut y laisser ses trois
+liens `SingletonLock`, `SingletonSocket` et `SingletonCookie` alors que son
+processus et sa socket `/tmp` ont disparu. Au début d'un passage, sous le verrou
+PostgreSQL exclusif de la source, le worker retire uniquement ces liens s'ils
+sont orphelins. Il conserve un verrou appartenant à un processus local vivant
+ou dont la socket est encore présente ; les autres fichiers du profil ne sont
+pas touchés. Cette récupération évite qu'une boîte de dialogue Chrome sans
+réponse bloque chaque passage jusqu'au délai de trois minutes.
+
 Un **403/429 auxiliaire** est journalisé, avec URL expurgée, et le parcours continue tant que les données requises sont disponibles. Aucune requête directe ne rejoue ces ressources. Un 403/429 du document principal reste provisoire jusqu'à la vérification du contenu rendu : si la liste ou les marchés attendus sont lisibles, le refus est classé `nonblocking` et le cycle continue. Si la page affiche une protection explicite ou si les données attendues restent indisponibles après le délai de lecture, la source est mise en pause en respectant `Retry-After`. Le planificateur replace la demande en attente avec sa date de reprise. Les données précédentes restent disponibles ; LoLTV et Oracle continuent indépendamment.
 
 Une couverture interrompue par le budget apparaît avec `complete=false` dans `ingestion_runs.details`. Les rencontres les plus anciennes sont prioritaires au cycle suivant. Les erreurs de parsing par événement sont comptées ; elles ne doivent pas être interprétées comme une absence de marchés. L’historique Admin affiche les nombres de matchs collectés/écartés/échoués, marchés, sélections et relevés ; son contrat fournit aussi le nombre de snapshots. Les journaux ne contiennent ni cookies ni jetons.

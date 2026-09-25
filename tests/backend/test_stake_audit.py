@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from types import SimpleNamespace
 
@@ -105,6 +106,56 @@ def test_persisted_pause_prevents_browser_launch(monkeypatch, tmp_path):
     monkeypatch.setattr(stake_audit, "sync_playwright", forbidden_launch)
     with pytest.raises(SystemExit, match="aucune requête"):
         stake_audit.main()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Chrome singleton symlinks require POSIX")
+def test_recover_orphaned_chrome_profile_after_container_replacement(monkeypatch, tmp_path):
+    monkeypatch.setattr(stake_browser.socket, "gethostname", lambda: "new-container")
+    (tmp_path / "SingletonLock").symlink_to("old-container-2249")
+    (tmp_path / "SingletonSocket").symlink_to("/tmp/old-container/SingletonSocket")
+    (tmp_path / "SingletonCookie").symlink_to("old-cookie")
+    (tmp_path / "Preferences").write_text("preserved", encoding="utf-8")
+
+    assert stake_browser.recover_stale_chrome_profile(tmp_path)
+    assert not any(
+        (tmp_path / name).is_symlink()
+        for name in ("SingletonLock", "SingletonSocket", "SingletonCookie")
+    )
+    assert (tmp_path / "Preferences").read_text(encoding="utf-8") == "preserved"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Chrome singleton symlinks require POSIX")
+def test_live_chrome_profile_lock_is_preserved(monkeypatch, tmp_path):
+    monkeypatch.setattr(stake_browser.socket, "gethostname", lambda: "current-container")
+    (tmp_path / "SingletonLock").symlink_to(f"current-container-{os.getpid()}")
+
+    assert not stake_browser.recover_stale_chrome_profile(tmp_path)
+    assert (tmp_path / "SingletonLock").is_symlink()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Chrome singleton symlinks require POSIX")
+def test_dead_local_chrome_profile_lock_is_recovered(monkeypatch, tmp_path):
+    monkeypatch.setattr(stake_browser.socket, "gethostname", lambda: "current-container")
+    (tmp_path / "SingletonLock").symlink_to("current-container-2249")
+
+    def no_such_process(_pid: int, _signal: int) -> None:
+        raise ProcessLookupError
+
+    monkeypatch.setattr(stake_browser.os, "kill", no_such_process)
+    assert stake_browser.recover_stale_chrome_profile(tmp_path)
+    assert not (tmp_path / "SingletonLock").is_symlink()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Chrome singleton symlinks require POSIX")
+def test_reachable_chrome_socket_is_preserved(monkeypatch, tmp_path):
+    monkeypatch.setattr(stake_browser.socket, "gethostname", lambda: "new-container")
+    active_socket = tmp_path / "active-socket"
+    active_socket.touch()
+    (tmp_path / "SingletonLock").symlink_to("old-container-2249")
+    (tmp_path / "SingletonSocket").symlink_to(active_socket)
+
+    assert not stake_browser.recover_stale_chrome_profile(tmp_path)
+    assert (tmp_path / "SingletonLock").is_symlink()
 
 
 @pytest.mark.parametrize("clears", [True, False])

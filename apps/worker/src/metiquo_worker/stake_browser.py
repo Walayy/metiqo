@@ -1,5 +1,8 @@
 """Headed local Chrome: discovered navigation and guarded public DOM reads only."""
 
+import logging
+import os
+import socket
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -24,6 +27,40 @@ from metiquo_worker.stake_policy import StakePolicy
 from metiquo_worker.stake_types import Capture, EventMetadata, Listing, validate_event_url
 
 SCRIPT = Path(__file__).with_name("sources") / "stake_scrape.js"
+logger = logging.getLogger(__name__)
+
+
+def recover_stale_chrome_profile(profile_dir: Path) -> bool:
+    """Remove Chrome's orphaned singleton links while the Stake source lock is held.
+
+    A persistent Docker volume survives container replacement, but its /tmp socket
+    and Chrome process do not. Never remove a lock owned by a live local process or
+    when the old socket path is still present in this process namespace.
+    """
+    lock = profile_dir / "SingletonLock"
+    if not lock.is_symlink():
+        return False
+    owner, separator, pid_text = os.readlink(lock).rpartition("-")
+    if not separator or not owner or not pid_text.isdecimal():
+        return False
+    if owner == socket.gethostname():
+        try:
+            os.kill(int(pid_text), 0)
+        except ProcessLookupError:
+            pass
+        except PermissionError:
+            return False
+        else:
+            return False
+    singleton_socket = profile_dir / "SingletonSocket"
+    if singleton_socket.is_symlink() and singleton_socket.exists():
+        return False
+    for name in ("SingletonLock", "SingletonSocket", "SingletonCookie"):
+        entry = profile_dir / name
+        if entry.is_symlink():
+            entry.unlink()
+    logger.warning("Removed orphaned Chrome singleton links from Stake profile")
+    return True
 
 
 class StakeEventStopped(RuntimeError):
@@ -58,6 +95,7 @@ class StakeBrowser:
 
     def __enter__(self) -> Self:
         self.policy.check()
+        recover_stale_chrome_profile(self.settings.stake_profile_dir)
         self.runtime = sync_playwright().start()
         try:
             self.context = launch_context(self.runtime, self.settings.stake_profile_dir)
