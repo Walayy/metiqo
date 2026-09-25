@@ -216,7 +216,7 @@ def test_partial_listing_keeps_verified_identity_and_stops_collection(database):
         assert db.scalar(select(func.count()).select_from(BookmakerEventObservation)) == 2
 
 
-def test_changed_schedule_withdraws_link_and_correction_restores_it(database):
+def test_changed_schedule_keeps_a_proven_link_and_journals_the_correction(database):
     engine, _ = database
     value = metadata()
     first = seed_match(engine, value)
@@ -229,8 +229,10 @@ def test_changed_schedule_withdraws_link_and_correction_restores_it(database):
     )
     remember_event(engine, changed)
     with Session(engine) as db:
-        assert db.get(BookmakerMatchResolution, value.id).status == "conflict"
-        assert db.get(BookmakerMatchLink, value.id) is None
+        state = db.get(BookmakerMatchResolution, value.id)
+        assert state.status == "linked"
+        assert state.evidence["scheduleBasis"] == "observed-schedule"
+        assert db.get(BookmakerMatchLink, value.id).match_id == first
     remember_event(
         engine, value.model_copy(update={"observed_at": value.observed_at + timedelta(seconds=2)})
     )
@@ -239,7 +241,63 @@ def test_changed_schedule_withdraws_link_and_correction_restores_it(database):
         decisions = list(
             db.scalars(select(BookmakerMatchDecision).order_by(BookmakerMatchDecision.id))
         )
-        assert [d.evidence["status"] for d in decisions] == ["linked", "conflict", "linked"]
+        assert [d.evidence["status"] for d in decisions] == ["linked", "linked", "linked"]
+
+
+def test_historical_schedule_links_after_late_sport_publication(database):
+    engine, _ = database
+    value = metadata()
+    remember_event(engine, value)
+    changed = value.model_copy(
+        update={
+            "starts_at": value.starts_at + timedelta(days=1),
+            "observed_at": value.observed_at + timedelta(seconds=1),
+        }
+    )
+    remember_event(engine, changed)
+    first = seed_match(engine, value)
+    assert reconcile_matches(engine)["counts"] == {"linked": 1}
+    with Session(engine) as db:
+        state = db.get(BookmakerMatchResolution, value.id)
+        assert state.evidence["scheduleBasis"] == "observed-schedule"
+        assert state.evidence["fixture"]["scheduleObservations"]
+        assert db.get(BookmakerMatchLink, value.id).match_id == first
+
+
+def test_a_sporting_schedule_shift_keeps_the_same_match_id(database):
+    engine, _ = database
+    value = metadata()
+    first = seed_match(engine, value)
+    remember_event(engine, value)
+    with Session(engine) as db, db.begin():
+        db.get(EsportMatch, first).starts_at = value.starts_at + timedelta(days=1)
+    assert reconcile_matches(engine)["counts"] == {"linked": 1}
+    with Session(engine) as db:
+        state = db.get(BookmakerMatchResolution, value.id)
+        assert state.evidence["scheduleBasis"] == "retained-identity"
+        assert db.get(BookmakerMatchLink, value.id).match_id == first
+
+
+def test_a_new_rematch_at_the_shifted_time_suspends_the_retained_link(database):
+    engine, _ = database
+    value = metadata()
+    first = seed_match(engine, value)
+    remember_event(engine, value)
+    changed = value.model_copy(
+        update={
+            "starts_at": value.starts_at + timedelta(days=1),
+            "observed_at": value.observed_at + timedelta(seconds=1),
+        }
+    )
+    remember_event(engine, changed)
+    second = seed_match(engine, changed, source_id="rematch")
+    assert first != second
+    assert reconcile_matches(engine)["counts"] == {"conflict": 1}
+    with Session(engine) as db:
+        state = db.get(BookmakerMatchResolution, value.id)
+        assert state.last_match_id == first
+        assert state.evidence["reason"] == "multiple-plausible-identities"
+        assert db.get(BookmakerMatchLink, value.id) is None
 
 
 def test_partial_listing_with_a_changed_opponent_suspends_the_retained_identity(database):

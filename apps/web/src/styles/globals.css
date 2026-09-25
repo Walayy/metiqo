@@ -158,14 +158,34 @@ input[type='range'] {
   background: var(--primary);
   color: var(--primary-ink);
 }
-:focus-visible {
+:where(
+  a[href],
+  button,
+  input:not([type='hidden']),
+  textarea,
+  select,
+  summary,
+  [contenteditable='true'],
+  [tabindex]:not([tabindex='-1']),
+  [role='button'],
+  [role='checkbox'],
+  [role='radio'],
+  [role='switch'],
+  [role='combobox'],
+  [role='slider'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='option']
+):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 4px;
   border-radius: 4px;
 }
-/* Landmarks remain focusable for skip links and focus restoration. A click
-   followed by F5 can make them :focus-visible, outlining the entire page.
-   Keep indicators on controls, custom widgets and navigation headings. */
+:root[data-focus-modality='pointer'] :focus-visible {
+  outline: none;
+}
+/* Programmatic focus targets remain available to assistive technology without
+   drawing a ring around an entire page region or dialog. */
 :where(main, section, article, aside, nav, header, footer)[tabindex='-1']:not([role]):not(
     [contenteditable]
   ):focus {
@@ -753,6 +773,10 @@ h2 {
 .search-field:focus-within {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+:root[data-focus-modality='pointer'] .search-field:focus-within {
+  outline: none;
+  border-color: var(--border-strong);
 }
 .search-field input {
   width: 100%;

@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
-from metiquo_core.models import BookmakerEvent, BookmakerSnapshot
+from metiquo_core.models import BookmakerEvent, BookmakerEventObservation, BookmakerSnapshot
 from metiquo_worker.fixture_identity import (
     Alias,
     Candidate,
@@ -16,7 +16,11 @@ from metiquo_worker.fixture_identity import (
     resolve_fixture,
 )
 from metiquo_worker.oracle_match_sync import oracle_time_agrees
-from metiquo_worker.reconciliation import AliasDocument, fixture_from_event
+from metiquo_worker.reconciliation import (
+    AliasDocument,
+    fixture_from_event,
+    with_schedule_observations,
+)
 
 AT = datetime(2026, 9, 24, 9, tzinfo=UTC)
 HOME = TeamIdentity("a", ("Alpha Academy",), {"loltv": ("alpha",)})
@@ -161,6 +165,131 @@ def test_future_arrival_and_new_bookmaker_ids_do_not_create_fake_matches():
         resolve_fixture(replace(value, id=uuid4(), source_id="different"), [target]).match_id
         == target.id
     )
+
+
+def test_a_proven_link_survives_a_day_shift_without_weakening_first_links():
+    target = candidate()
+    shifted = fixture(starts_at=AT + timedelta(days=1))
+    assert resolve_fixture(shifted, [target]).status == "pending"
+    decision = resolve_fixture(shifted, [target], previous_match_id=target.id)
+    assert decision.status == "linked" and decision.match_id == target.id
+    assert decision.evidence["scheduleBasis"] == "retained-identity"
+    assert decision.evidence["candidates"][0]["deltaSeconds"] == 86400
+
+
+def test_an_old_verified_schedule_can_establish_a_link_after_a_shift():
+    target = candidate()
+    shifted = fixture(starts_at=AT + timedelta(days=1), verified_starts=(AT,))
+    decision = resolve_fixture(shifted, [target])
+    assert decision.status == "linked" and decision.match_id == target.id
+    assert decision.evidence["scheduleBasis"] == "observed-schedule"
+
+
+def test_only_prior_observations_of_the_same_fixture_can_anchor_a_shift():
+    shifted = fixture(
+        starts_at=AT + timedelta(days=1),
+        participants=(
+            ParticipantIdentity(0, "Alpha Academy", "stake-alpha"),
+            ParticipantIdentity(1, "Beta", "stake-beta"),
+        ),
+    )
+    base_payload = {
+        "starts_at": AT.isoformat(),
+        "competition_key": "cup",
+        "competition_name": "Cup 2026 Summer Playoffs",
+        "participants": [
+            {"position": 0, "name": "Alpha Academy", "source_id": "stake-alpha"},
+            {"position": 1, "name": "Beta", "source_id": "stake-beta"},
+        ],
+    }
+
+    def observation(index, payload):
+        return BookmakerEventObservation(
+            id=index,
+            event_id=shifted.id,
+            observed_at=AT + timedelta(minutes=index),
+            sha256=str(index) * 64,
+            payload=payload,
+        )
+
+    unrelated = [
+        observation(1, {**base_payload, "competition_name": "Other 2026 Summer"}),
+        observation(
+            2,
+            {
+                **base_payload,
+                "participants": [base_payload["participants"][0], {"position": 1, "name": "Gamma"}],
+            },
+        ),
+        observation(
+            3,
+            {
+                **base_payload,
+                "participants": [
+                    {"position": 0, "name": "Alpha Academy", "source_id": "different"},
+                    base_payload["participants"][1],
+                ],
+            },
+        ),
+        observation(4, {**base_payload, "starts_at": "2026-09-24T09:00:00"}),
+    ]
+    assert not with_schedule_observations(shifted, unrelated).verified_starts
+    verified = with_schedule_observations(shifted, [*unrelated, observation(5, base_payload)])
+    assert verified.verified_starts == (AT,)
+    assert [item["id"] for item in verified.evidence["scheduleObservations"]] == [5]
+    assert resolve_fixture(verified, [candidate()]).status == "linked"
+
+
+def test_schedule_basis_belongs_to_the_selected_candidate():
+    target = candidate(id=UUID(int=1))
+    irrelevant = candidate(
+        id=UUID(int=2),
+        starts_at=AT + timedelta(days=1),
+        away=replace(AWAY, names=("Other",)),
+    )
+    decision = resolve_fixture(fixture(), [irrelevant, target], previous_match_id=target.id)
+    assert decision.match_id == target.id
+    assert decision.evidence["scheduleBasis"] == "current-schedule"
+
+
+def test_reviewed_alias_remains_scoped_to_the_observed_schedule_after_a_shift():
+    shifted = fixture(
+        starts_at=AT + timedelta(days=1),
+        verified_starts=(AT,),
+        participants=(ParticipantIdentity(0, "A Acad"), ParticipantIdentity(1, "Beta")),
+    )
+    decision = resolve_fixture(shifted, [candidate()], (alias(),))
+    assert decision.status == "linked"
+    assert decision.evidence["scheduleBasis"] == "observed-schedule"
+
+
+def test_a_rematch_at_the_new_time_blocks_an_old_link_without_reassignment():
+    original = candidate()
+    rematch = candidate(starts_at=AT + timedelta(days=1))
+    shifted = fixture(starts_at=rematch.starts_at, verified_starts=(AT,))
+    decision = resolve_fixture(shifted, [original, rematch], previous_match_id=original.id)
+    assert decision.status == "conflict" and decision.match_id is None
+    assert decision.evidence["reason"] == "multiple-plausible-identities"
+    assert len(decision.evidence["candidates"]) == 2
+
+
+def test_an_old_transient_schedule_does_not_poison_a_corrected_link():
+    original = candidate()
+    rematch = candidate(starts_at=AT + timedelta(days=1))
+    corrected = fixture(starts_at=AT, verified_starts=(rematch.starts_at,))
+    decision = resolve_fixture(corrected, [original, rematch], previous_match_id=original.id)
+    assert decision.status == "linked" and decision.match_id == original.id
+    assert len(decision.evidence["candidates"]) == 1
+
+
+def test_a_changed_opponent_still_blocks_the_retained_link_after_a_day_shift():
+    original = candidate()
+    changed = fixture(
+        starts_at=AT + timedelta(days=1),
+        participants=(ParticipantIdentity(0, "Alpha Academy"), ParticipantIdentity(1, "Gamma")),
+    )
+    decision = resolve_fixture(changed, [original], previous_match_id=original.id)
+    assert decision.status == "conflict" and decision.match_id is None
 
 
 @pytest.mark.parametrize("at", [None, AT.replace(tzinfo=None)])

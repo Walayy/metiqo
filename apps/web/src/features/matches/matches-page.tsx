@@ -11,7 +11,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CirclePercent,
   Minus,
   Search,
   Swords,
@@ -601,11 +600,10 @@ function Fixture({
           {!!match.oddsMarkets?.length && (
             <span
               className="fixture-odds-indicator"
-              role="img"
-              aria-label="Cotes Stake consultables dans le détail"
+              aria-hidden="true"
               title="Cotes Stake consultables dans le détail"
             >
-              <CirclePercent size={15} aria-hidden="true" />
+              Cotes
             </span>
           )}
         </span>
