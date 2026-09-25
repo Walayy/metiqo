@@ -329,7 +329,7 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
     @router.get("/worker-logs")
     def worker_logs(
         db: Annotated[Session, Depends(context, scope="function")],
-        worker_id: Annotated[Literal[1, 2, 3], Query(alias="workerId")],
+        worker_id: Annotated[int, Query(alias="workerId", ge=1, le=3)],
         run_id: Annotated[UUID | None, Query(alias="runId")] = None,
         before: Annotated[int | None, Query(ge=1)] = None,
         after: Annotated[int | None, Query(ge=0)] = None,

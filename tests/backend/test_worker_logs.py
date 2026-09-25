@@ -99,6 +99,7 @@ def test_worker_logs_are_scoped_paginated_sanitized_and_admin_only(database, mon
         assert [entry["id"] for entry in filtered["incidents"]] == [error_id, warning_id]
         assert client.get(f"{path}&q=845833").json()["items"][0]["id"] == warning_id
         assert client.get(f"{path}&before=1&after=1").status_code == 422
+        assert client.get("/api/v1/admin/worker-logs?workerId=0").status_code == 422
         assert client.get(f"/api/v1/admin/worker-logs?workerId=1&runId={run_id}").status_code == 404
         services = client.get("/api/v1/admin/scripts").json()["workers"]
         assert [service["id"] for service in services] == [1, 2, 3]
