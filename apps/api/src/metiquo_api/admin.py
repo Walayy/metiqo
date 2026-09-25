@@ -81,6 +81,7 @@ def run_data(run: ScriptRun, ingestion: IngestionRun | None = None) -> dict[str,
         "eventErrors": details.get("eventErrors", []),
         "interruption": details.get("interruption"),
         "deferredReason": details.get("deferredReason"),
+        "statusCorrection": details.get("statusCorrection"),
     }
 
 

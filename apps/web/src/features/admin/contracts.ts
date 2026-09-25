@@ -54,6 +54,14 @@ export const runSchema = z.object({
     .nullable()
     .optional(),
   deferredReason: z.string().nullable().optional(),
+  statusCorrection: z
+    .object({
+      basis: z.literal('persisted_stake_quotes'),
+      previousStatus: z.literal('failed'),
+      previousError: z.string().nullable(),
+    })
+    .nullable()
+    .optional(),
 });
 export const scriptSchema = z.object({
   id: z.string(),

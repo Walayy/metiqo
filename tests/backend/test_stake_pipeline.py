@@ -4,6 +4,8 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from metiquo_core.config import Settings
 from metiquo_core.models import (
     BookmakerEvent,
@@ -14,6 +16,7 @@ from metiquo_core.models import (
     BookmakerSnapshot,
     CollectorState,
     IngestionRun,
+    ScriptRun,
 )
 from metiquo_worker import stake_sync
 from metiquo_worker.stake_policy import StakeDeferred, StakePolicy
@@ -463,6 +466,55 @@ def test_stake_cycle_without_any_published_quote_is_a_failure(database, monkeypa
         assert run is not None and run.status == "failed"
         assert run.details["eventsFailed"] == 1
         assert db.scalar(select(func.count()).select_from(BookmakerSnapshot)) == 0
+
+
+@pytest.mark.integration
+def test_historical_stake_failures_are_corrected_only_when_quotes_were_persisted(database):
+    engine, _ = database
+    published_id, empty_id = ingestion(engine), ingestion(engine)
+    meta = metadata("901003")
+    publish(engine, published_id, [capture(meta)], meta, guard_seconds=0)
+    now = datetime.now(UTC)
+    with Session(engine) as db, db.begin():
+        for run_id in (published_id, empty_id):
+            run = db.get(IngestionRun, run_id)
+            assert run is not None
+            run.status = "failed"
+            run.error = "stake_collection: Error"
+            run.details = {"eventsFailed": 2, "eventsCollected": 1}
+            db.add(
+                ScriptRun(
+                    script_id="stake-markets",
+                    trigger="schedule",
+                    status="failed",
+                    requested_at=now,
+                    available_at=now,
+                    started_at=now,
+                    finished_at=now,
+                    ingestion_run_id=run_id,
+                    error="La collecte a échoué.",
+                )
+            )
+    config = Config("alembic.ini")
+    command.downgrade(config, "0018")
+    command.upgrade(config, "head")
+    with Session(engine) as db:
+        published = db.get(IngestionRun, published_id)
+        empty = db.get(IngestionRun, empty_id)
+        assert published is not None and published.status == "succeeded" and published.error is None
+        assert published.details["complete"] is False
+        assert published.details["statusCorrection"] == {
+            "basis": "persisted_stake_quotes",
+            "previousStatus": "failed",
+            "previousError": "stake_collection: Error",
+        }
+        assert empty is not None and empty.status == "failed"
+        scripts = {
+            run.ingestion_run_id: run
+            for run in db.scalars(select(ScriptRun).where(ScriptRun.script_id == "stake-markets"))
+        }
+        assert scripts[published_id].status == "succeeded" and scripts[published_id].error is None
+        assert scripts[empty_id].status == "failed"
 
 
 @pytest.mark.integration

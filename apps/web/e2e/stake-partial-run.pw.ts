@@ -86,6 +86,31 @@ for (const { width, height, theme } of [
                         },
                         deferredReason: null,
                       },
+                      {
+                        id: '33333333-3333-4333-8333-333333333333',
+                        scriptId: 'stake-markets',
+                        trigger: 'schedule',
+                        status: 'succeeded',
+                        requestedAt: '2026-09-25T16:00:00Z',
+                        startedAt: '2026-09-25T16:00:00Z',
+                        finishedAt: '2026-09-25T16:09:00Z',
+                        error: null,
+                        complete: false,
+                        summary: {
+                          eventsCollected: 12,
+                          quotes: 324,
+                          eventsFailed: 2,
+                          snapshots: 12,
+                        },
+                        eventErrors: [],
+                        interruption: null,
+                        deferredReason: null,
+                        statusCorrection: {
+                          basis: 'persisted_stake_quotes',
+                          previousStatus: 'failed',
+                          previousError: 'stake_collection: Error',
+                        },
+                      },
                     ],
                   },
                 ],
@@ -105,11 +130,15 @@ for (const { width, height, theme } of [
     await historyButton.click();
     const dialog = page.getByRole('dialog', { name: 'Historique' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText('Couverture incomplète')).toBeVisible();
-    await expect(dialog.getByText('Terminée', { exact: true })).toBeVisible();
-    await dialog.locator('.run-trigger').click();
+    await expect(dialog.getByText('Couverture incomplète').first()).toBeVisible();
+    await expect(dialog.getByText('Terminée', { exact: true }).first()).toBeVisible();
+    await dialog.locator('.run-trigger').first().click();
     await expect(dialog.getByText('Stake 845833', { exact: true })).toBeVisible();
     await expect(dialog.getByText('Arrêt technique après publication')).toBeVisible();
+    await dialog.locator('.run-trigger').nth(1).click();
+    await expect(
+      dialog.getByText(/Statut historique corrigé grâce aux relevés conservés/),
+    ).toBeVisible();
     const bounds = await dialog.boundingBox();
     expect(bounds).not.toBeNull();
     expect(bounds!.x).toBeGreaterThanOrEqual(0);

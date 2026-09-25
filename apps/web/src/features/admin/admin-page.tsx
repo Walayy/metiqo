@@ -480,6 +480,14 @@ function Scripts() {
                                   : 'Le passage est incomplet ; aucune nouvelle cote publiée.'}
                               </p>
                             )}
+                            {run.statusCorrection && (
+                              <p className="run-coverage-note">
+                                Statut historique corrigé grâce aux relevés conservés. L’ancienne
+                                version ne détaillait pas les incidents de ce passage.
+                                {run.statusCorrection.previousError &&
+                                  ` Ancien diagnostic : ${run.statusCorrection.previousError}.`}
+                              </p>
+                            )}
                             {run.eventErrors && run.eventErrors.length > 0 && (
                               <div className="run-issues">
                                 <strong>Rencontres non publiées</strong>
