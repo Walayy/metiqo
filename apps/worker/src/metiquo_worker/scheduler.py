@@ -2,8 +2,10 @@
 
 import logging
 import threading
+import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import cast
 
 from metiquo_core.config import Settings
 from metiquo_core.models import (
@@ -27,6 +29,7 @@ from metiquo_worker.loltv_sync import next_live_due, sync_loltv
 from metiquo_worker.selection_results import settle_selections
 from metiquo_worker.stake_policy import StakeDeferred
 from metiquo_worker.stake_sync import sync_stake
+from metiquo_worker.worker_logs import bind_run, emit, error_context, prune
 
 logger = logging.getLogger(__name__)
 SCHEDULER_LOCK = 62883200
@@ -82,7 +85,7 @@ def _tick_source(
     with source_lock(engine, lock_id):
         now = datetime.now(UTC)
         with Session(engine) as db, db.begin():
-            db.execute(
+            interrupted = db.execute(
                 update(ScriptRun)
                 .where(ScriptRun.status == "running", ScriptRun.script_id.in_(scripts))
                 .values(
@@ -90,7 +93,8 @@ def _tick_source(
                     finished_at=now,
                     error="Exécution interrompue par un arrêt du worker.",
                 )
-            )
+                .returning(ScriptRun.id, ScriptRun.script_id)
+            ).all()
             rows = db.scalars(
                 select(ScriptSchedule)
                 .where(ScriptSchedule.id.in_(scripts))
@@ -142,6 +146,12 @@ def _tick_source(
                     .order_by(ScriptRun.requested_at)
                 )
             )
+        for interrupted_id, interrupted_script in interrupted:
+            binding = bind_run(interrupted_script, interrupted_id)
+            try:
+                emit(engine, settings.worker_status_id, "run_interrupted")
+            finally:
+                binding.reset()
         for run_id in ids:
             if stopping.is_set():
                 break
@@ -151,7 +161,10 @@ def _tick_source(
                 script_id = run.script_id
                 run.status, run.started_at = "running", datetime.now(UTC)
                 run.error = None
+            binding = bind_run(script_id, run_id)
+            emit(engine, settings.worker_status_id, "run_started")
             try:
+                settlement_details: dict[str, int] | None = None
                 if script_id == "lol-catalog":
                     ingestion_id = sync_catalog(engine, settings)
                 elif script_id in {"oracle-latest", "oracle-full"}:
@@ -161,7 +174,7 @@ def _tick_source(
                 elif script_id == "stake-markets":
                     ingestion_id = sync_stake(engine, settings, script_run_id=run_id)
                 elif script_id == "settle-selections":
-                    settle_selections(engine)
+                    settlement_details = settle_selections(engine)
                     ingestion_id = None
                 else:
                     raise ValueError("Unregistered script")
@@ -174,6 +187,42 @@ def _tick_source(
                     run.finished_at = datetime.now(UTC)
                     if ingestion is not None and ingestion.status != "succeeded":
                         run.error = "La collecte a échoué. Consultez les journaux du worker."
+                    outcome = run.status
+                    details = ingestion.details if ingestion else settlement_details or {}
+                counts = {
+                    key: details[key]
+                    for key in (
+                        "snapshots",
+                        "quotes",
+                        "markets",
+                        "eventsFailed",
+                        "leagues",
+                        "teams",
+                        "imported",
+                        "unchanged",
+                        "published",
+                        "created",
+                        "knownEvents",
+                        "pendingDetails",
+                        "examined",
+                        "changed",
+                        "pending",
+                        "won",
+                        "lost",
+                        "void",
+                    )
+                    if isinstance(details.get(key), int)
+                }
+                if isinstance(details.get("errors"), list):
+                    counts["errors"] = len(cast(list[object], details["errors"]))
+                code = (
+                    "run_partial"
+                    if outcome == "succeeded" and details.get("complete") is False
+                    else "run_succeeded"
+                    if outcome == "succeeded"
+                    else "run_failed"
+                )
+                emit(engine, settings.worker_status_id, code, context={"status": outcome, **counts})
             except StakeDeferred as error:
                 now = datetime.now(UTC)
                 with Session(engine) as db, db.begin():
@@ -199,6 +248,12 @@ def _tick_source(
                                 error="Stake différé : délai source ou budget en attente.",
                             )
                         )
+                emit(
+                    engine,
+                    settings.worker_status_id,
+                    "run_failed" if error.retry_at <= now.timestamp() else "run_deferred",
+                    context={"retryAt": datetime.fromtimestamp(error.retry_at, UTC)},
+                )
             except LoltvBlocked as error:
                 retry_at = (
                     datetime.fromtimestamp(error.retry_at, UTC)
@@ -218,6 +273,9 @@ def _tick_source(
                             error="Loltv indisponible. Reprise après le délai source.",
                         )
                     )
+                emit(
+                    engine, settings.worker_status_id, "run_deferred", context={"retryAt": retry_at}
+                )
             except CollectionBusy:
                 with Session(engine) as db, db.begin():
                     db.execute(
@@ -229,6 +287,7 @@ def _tick_source(
                             available_at=datetime.now(UTC) + timedelta(seconds=60),
                         )
                     )
+                emit(engine, settings.worker_status_id, "run_busy")
             except Exception as error:
                 logger.error("Script %s failed (%s)", script_id, type(error).__name__)
                 with Session(engine) as db, db.begin():
@@ -241,6 +300,9 @@ def _tick_source(
                             error="La collecte a échoué. Consultez les journaux du worker.",
                         )
                     )
+                emit(engine, settings.worker_status_id, "run_failed", context=error_context(error))
+            finally:
+                binding.reset()
 
 
 def serve_schedules(
@@ -252,13 +314,25 @@ def serve_schedules(
 ) -> None:
     scripts = enabled_scripts(settings, only)
     heartbeat(engine, scripts, path, settings.worker_status_id)
+    prune(engine)
+    emit(engine, settings.worker_status_id, "worker_started")
 
     def pulse() -> None:
+        last_prune = time.monotonic()
         while not stopping.wait(20):
             try:
                 heartbeat(engine, scripts, path, settings.worker_status_id)
             except Exception as error:
                 logger.error("Worker heartbeat failed (%s)", type(error).__name__)
+                emit(
+                    engine,
+                    settings.worker_status_id,
+                    "heartbeat_failed",
+                    context=error_context(error),
+                )
+            if time.monotonic() - last_prune >= 3600:
+                prune(engine)
+                last_prune = time.monotonic()
 
     thread = threading.Thread(target=pulse, daemon=True)
     thread.start()
@@ -272,6 +346,12 @@ def serve_schedules(
                     logger.info("Another scheduler owns the queue")
                 except Exception as error:
                     logger.error("Scheduler failed (%s)", type(error).__name__)
+                    emit(
+                        engine,
+                        settings.worker_status_id,
+                        "scheduler_failed",
+                        context=error_context(error),
+                    )
                 stopping.wait(5)
         finally:
             if "loltv-matches" in group:
@@ -302,3 +382,4 @@ def serve_schedules(
                 timeout=settings.stake_timeout_seconds + 10 if settings.stake_enabled else 5
             )
         thread.join(timeout=5)
+        emit(engine, settings.worker_status_id, "worker_stopped")

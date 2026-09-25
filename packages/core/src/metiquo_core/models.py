@@ -7,6 +7,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Identity,
     Index,
     Numeric,
     String,
@@ -204,6 +205,32 @@ class WorkerStatus(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     scripts: Mapped[list[str]] = mapped_column(JSONB)
+
+
+class WorkerLogEntry(Base):
+    """Sanitized operational events written by worker services, never raw output."""
+
+    __tablename__ = "worker_log_entries"
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    worker_id: Mapped[int]
+    script_id: Mapped[str | None] = mapped_column(String(80))
+    run_id: Mapped[UUID | None]
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    level: Mapped[str] = mapped_column(String(10))
+    code: Mapped[str] = mapped_column(String(80))
+    stage: Mapped[str] = mapped_column(String(80))
+    message: Mapped[str] = mapped_column(String(255))
+    event_id: Mapped[str | None] = mapped_column(String(80))
+    context: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict)
+    __table_args__ = (
+        CheckConstraint("worker_id IN (1, 2, 3)", name="ck_worker_log_service"),
+        CheckConstraint("level IN ('info', 'warning', 'error')", name="ck_worker_log_level"),
+        Index("ix_worker_logs_worker_id", "worker_id", "id"),
+        Index("ix_worker_logs_run_id", "run_id", "id"),
+        Index("ix_worker_logs_recorded_at", "recorded_at"),
+    )
 
 
 class AdminAudit(Base):

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { sessionQuery } from '@/features/auth/api';
-import { scriptsSchema, usersSchema } from './contracts';
+import { scriptsSchema, usersSchema, workerLogsSchema } from './contracts';
 import { fetchResponse, readResponse } from '@/lib/http';
 import { HttpError } from '@/lib/http-error';
 
@@ -45,6 +45,26 @@ export const usersQuery = (search: string, page: number) =>
       adminRequest(`/users?q=${encodeURIComponent(search)}&page=${page}`, usersSchema, signal),
     retry: false,
   });
+
+export function workerLogsRequest(
+  params: {
+    workerId: 1 | 2 | 3;
+    runId?: string;
+    before?: number;
+    after?: number;
+    level?: 'all' | 'warning' | 'error';
+    q?: string;
+  },
+  signal: AbortSignal,
+) {
+  const query = new URLSearchParams({ workerId: String(params.workerId) });
+  if (params.runId) query.set('runId', params.runId);
+  if (params.before !== undefined) query.set('before', String(params.before));
+  if (params.after !== undefined) query.set('after', String(params.after));
+  if (params.level && params.level !== 'all') query.set('level', params.level);
+  if (params.q?.trim()) query.set('q', params.q.trim());
+  return adminRequest(`/worker-logs?${query}`, workerLogsSchema, signal);
+}
 
 export function useAdminAction<T>(schema: z.ZodType<T>, onSuccess?: () => void) {
   const client = useQueryClient();

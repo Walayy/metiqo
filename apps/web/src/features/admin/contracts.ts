@@ -65,6 +65,7 @@ export const runSchema = z.object({
 });
 export const scriptSchema = z.object({
   id: z.string(),
+  workerId: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   family: z.string().min(1),
   name: z.string(),
   description: z.string(),
@@ -82,9 +83,48 @@ export const scriptSchema = z.object({
 export const scriptsSchema = z.object({
   items: z.array(scriptSchema),
   worker: z.object({ online: z.boolean(), lastSeenAt: timestamp.nullable() }),
+  workers: z.array(
+    z.object({
+      id: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+      name: z.string(),
+      online: z.boolean(),
+      lastSeenAt: timestamp.nullable(),
+      activeRuns: z.array(z.object({ id: z.uuid(), scriptId: z.string(), name: z.string() })),
+    }),
+  ),
+});
+export const workerLogEntrySchema = z.object({
+  id: z.number().int().positive(),
+  workerId: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  scriptId: z.string().nullable(),
+  runId: z.uuid().nullable(),
+  recordedAt: timestamp,
+  level: z.enum(['info', 'warning', 'error']),
+  stage: z.string(),
+  message: z.string(),
+  eventId: z.string().nullable(),
+  context: z.record(z.string(), z.unknown()),
+});
+export const workerLogsSchema = z.object({
+  items: z.array(workerLogEntrySchema),
+  incidents: z.array(workerLogEntrySchema),
+  hasMore: z.boolean(),
+  recentRuns: z.array(
+    z.object({
+      id: z.uuid(),
+      scriptId: z.string(),
+      name: z.string(),
+      status: runSchema.shape.status,
+      requestedAt: timestamp,
+    }),
+  ),
+  run: runSchema.nullable(),
 });
 export const previewSchema = z.object({ upcoming: z.array(timestamp) });
 export const successSchema = z.object({ ok: z.literal(true) });
 export type AdminUser = z.infer<typeof adminUserSchema>;
 export type Script = z.infer<typeof scriptSchema>;
 export type ScriptRun = z.infer<typeof runSchema>;
+export type WorkerService = z.infer<typeof scriptsSchema>['workers'][number];
+export type WorkerLogEntry = z.infer<typeof workerLogEntrySchema>;
+export type WorkerLogs = z.infer<typeof workerLogsSchema>;

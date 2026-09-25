@@ -39,9 +39,27 @@ for (const { width, height, theme } of [
             new Response(
               JSON.stringify({
                 worker: { online: true, lastSeenAt: at },
+                workers: [
+                  {
+                    id: 1,
+                    name: 'Collectes sportives',
+                    online: true,
+                    lastSeenAt: at,
+                    activeRuns: [],
+                  },
+                  { id: 2, name: 'Cotes Stake', online: true, lastSeenAt: at, activeRuns: [] },
+                  {
+                    id: 3,
+                    name: 'Résultats des sélections',
+                    online: false,
+                    lastSeenAt: null,
+                    activeRuns: [],
+                  },
+                ],
                 items: [
                   {
                     id: 'stake-markets',
+                    workerId: 2,
                     family: 'Stake',
                     name: 'Stake · cotes pré-match et direct',
                     description: 'Historise les marchés et les cotes.',

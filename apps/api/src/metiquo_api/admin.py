@@ -11,9 +11,10 @@ from metiquo_core.models import (
     IngestionRun,
     ScriptRun,
     ScriptSchedule,
+    WorkerLogEntry,
     WorkerStatus,
 )
-from metiquo_core.scheduling import SCRIPTS, upcoming
+from metiquo_core.scheduling import SCRIPTS, WORKER_SERVICES, upcoming, worker_for_script
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Engine, delete, func, insert, select, text
 from sqlalchemy.orm import Session
@@ -227,6 +228,31 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
         }
         online = bool(active_scripts)
         last_seen = max((worker.seen_at for worker in workers), default=None)
+        worker_by_id = {worker.id: worker for worker in workers}
+        running = db.scalars(select(ScriptRun).where(ScriptRun.status == "running")).all()
+        services = [
+            {
+                "id": worker_id,
+                "name": name,
+                "online": bool(
+                    worker_by_id.get(worker_id)
+                    and worker_by_id[worker_id].seen_at > now - timedelta(seconds=90)
+                ),
+                "lastSeenAt": worker_by_id[worker_id].seen_at
+                if worker_id in worker_by_id
+                else None,
+                "activeRuns": [
+                    {
+                        "id": run.id,
+                        "scriptId": run.script_id,
+                        "name": SCRIPTS[run.script_id].name,
+                    }
+                    for run in running
+                    if run.script_id in SCRIPTS and worker_for_script(run.script_id) == worker_id
+                ],
+            }
+            for worker_id, name in WORKER_SERVICES.items()
+        ]
         rows = db.scalars(select(ScriptSchedule).order_by(ScriptSchedule.id)).all()
         items = []
         for row in rows:
@@ -247,6 +273,7 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
             items.append(
                 {
                     "id": row.id,
+                    "workerId": worker_for_script(row.id),
                     "name": definition.name,
                     "description": definition.description,
                     "family": definition.family,
@@ -282,6 +309,113 @@ def create_admin_router(engine: Engine, settings: AuthSettings) -> APIRouter:
         return {
             "items": items,
             "worker": {"online": online, "lastSeenAt": last_seen},
+            "workers": services,
+        }
+
+    def log_data(entry: WorkerLogEntry) -> dict[str, object]:
+        return {
+            "id": entry.id,
+            "workerId": entry.worker_id,
+            "scriptId": entry.script_id,
+            "runId": entry.run_id,
+            "recordedAt": entry.recorded_at,
+            "level": entry.level,
+            "stage": entry.stage,
+            "message": entry.message,
+            "eventId": entry.event_id,
+            "context": entry.context,
+        }
+
+    @router.get("/worker-logs")
+    def worker_logs(
+        db: Annotated[Session, Depends(context, scope="function")],
+        worker_id: Annotated[int, Query(alias="workerId", ge=1, le=3)],
+        run_id: Annotated[UUID | None, Query(alias="runId")] = None,
+        before: Annotated[int | None, Query(ge=1)] = None,
+        after: Annotated[int | None, Query(ge=0)] = None,
+        level: Literal["all", "warning", "error"] = "all",
+        q: str = Query(default="", max_length=80),
+        limit: int = Query(default=50, ge=1, le=100),
+    ) -> dict[str, object]:
+        if before is not None and after is not None:
+            raise HTTPException(422, "Choisissez un seul sens de pagination.")
+        selected = db.get(ScriptRun, run_id) if run_id else None
+        if run_id and (
+            selected is None
+            or selected.script_id not in SCRIPTS
+            or worker_for_script(selected.script_id) != worker_id
+        ):
+            raise HTTPException(404, "Exécution introuvable pour ce worker.")
+        condition: ColumnElement[bool] = (WorkerLogEntry.worker_id == worker_id) & (
+            WorkerLogEntry.recorded_at >= datetime.now(UTC) - timedelta(days=14)
+        )
+        if run_id:
+            condition = condition & (WorkerLogEntry.run_id == run_id)
+        incident_rows = db.scalars(
+            select(WorkerLogEntry)
+            .where(condition, WorkerLogEntry.level.in_(["warning", "error"]))
+            .order_by(WorkerLogEntry.id.desc())
+            .limit(4)
+        ).all()
+        filtered = condition
+        if level != "all":
+            filtered = filtered & (WorkerLogEntry.level == level)
+        term = q.strip()
+        if term:
+            filtered = filtered & (
+                WorkerLogEntry.message.icontains(term, autoescape=True)
+                | WorkerLogEntry.stage.icontains(term, autoescape=True)
+                | WorkerLogEntry.event_id.icontains(term, autoescape=True)
+                | WorkerLogEntry.script_id.icontains(term, autoescape=True)
+            )
+        if before is not None:
+            filtered = filtered & (WorkerLogEntry.id < before)
+        if after is not None:
+            filtered = filtered & (WorkerLogEntry.id > after)
+        ascending = after is not None
+        rows = db.scalars(
+            select(WorkerLogEntry)
+            .where(filtered)
+            .order_by(WorkerLogEntry.id.asc() if ascending else WorkerLogEntry.id.desc())
+            .limit(limit + 1)
+        ).all()
+        has_more = len(rows) > limit
+        page = list(rows[:limit])
+        if not ascending:
+            page.reverse()
+        script_ids = [key for key in SCRIPTS if worker_for_script(key) == worker_id]
+        recent = list(
+            db.scalars(
+                select(ScriptRun)
+                .where(ScriptRun.script_id.in_(script_ids))
+                .order_by(ScriptRun.requested_at.desc(), ScriptRun.id.desc())
+                .limit(12)
+            ).all()
+        )
+        if selected and all(run.id != selected.id for run in recent):
+            recent.append(selected)
+        return {
+            "items": [log_data(entry) for entry in page],
+            "incidents": [log_data(entry) for entry in incident_rows],
+            "hasMore": has_more,
+            "recentRuns": [
+                {
+                    "id": run.id,
+                    "scriptId": run.script_id,
+                    "name": SCRIPTS[run.script_id].name,
+                    "status": run.status,
+                    "requestedAt": run.requested_at,
+                }
+                for run in recent
+            ],
+            "run": run_data(
+                selected,
+                db.get(IngestionRun, selected.ingestion_run_id)
+                if selected and selected.ingestion_run_id
+                else None,
+            )
+            if selected
+            else None,
         }
 
     @router.post("/scripts/preview")

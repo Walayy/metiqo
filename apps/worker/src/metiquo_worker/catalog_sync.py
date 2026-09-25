@@ -31,6 +31,7 @@ from metiquo_worker.jobs import fail_run, source_lock, start_run
 from metiquo_worker.loltv_policy import LoltvPolicy
 from metiquo_worker.loltv_publication import _competition_brand_from_source
 from metiquo_worker.sources.lol import ROOT_URL, SOURCE, Reference, parse_page, text
+from metiquo_worker.worker_logs import emit, error_context
 
 logger = logging.getLogger(__name__)
 LOCK_ID = CATALOG_LOCK_ID
@@ -378,6 +379,12 @@ def sync_catalog(engine: Engine, settings: Settings, *, allow_coverage_drop: boo
             )
             return run_id
         except Exception as error:
+            emit(
+                engine,
+                settings.worker_status_id,
+                "collector_interrupted",
+                context={**error_context(error), "step": stage},
+            )
             message = fail_run(engine, run_id, stage, error)
             logger.error("LoL catalog %s failed: %s", run_id, message)
             raise RuntimeError(message) from None
