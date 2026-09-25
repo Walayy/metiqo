@@ -1,5 +1,13 @@
 # Vérifications
 
+## Scripts et journaux allégés — 25 septembre 2026
+
+- Scripts reprend le titre avec compteur de l’administration ; les workers tiennent dans une barre dépliable et les lignes mobiles donnent priorité au nom, à la prochaine échéance et à l’état. Le lecteur de journal utilise `Modal`, `Select`, l’indicateur de sélection et les transitions de dépliage partagés. Les informations techniques se consultent au dépliage ; les incidents restent accessibles même avec un filtre de gravité.
+- Inspection dans le navigateur à 390 × 844 (clair), 768 × 1024 et 1440 × 900 (sombre), puis 320 × 568 et 844 × 390. Correction du débordement des options longues dans le sélecteur commun et de la hauteur disponible en paysage. Les tests couvrent les deux thèmes de 320 à 1920 px, l’ouverture au clavier, les états vides, la réduction des mouvements, le glissement de fermeture et le retour du focus, y compris journal → historique.
+- `npm run check` : 81 tests frontend, 213 tests backend réussis et 4 tests environnementaux ignorés, types, lint et build valides. Les avertissements existants de taille du bundle mock et de dépréciation Starlette restent présents.
+- Suite Playwright : 51 scénarios réussis au premier passage, puis correction de l’horloge du scénario Matchs qui dépendait de la fin de journée de Paris et rejeu réussi. Les cas des journaux vérifient aussi le suivi des nouvelles lignes sans doublon ni déplacement pendant la lecture.
+- Les parcours Admin utilisent uniquement les fixtures explicites sous `apps/web/e2e/fixtures`, sans changement de l’authentification produit. Le lanceur temporaire utilisé pour l’inspection manuelle a été retiré. Docker Desktop local échoue au démarrage ; l’intégration PostgreSQL locale n’a pas été rejouée. La CI reste requise avant fusion. Aucun téléphone physique, Safari, lecteur d’écran complet ou clavier virtuel iOS/Android testé ; aucune mesure de gain de fréquence d’affichage revendiquée.
+
 ## Cotes dans le détail et statuts des sélections — 24 septembre 2026
 
 - `npm run check` réussi : TypeScript, ESLint, 80 tests frontend, build, Ruff, mypy et 183 tests backend hors intégration. Les 88 tests d’intégration PostgreSQL passent sur une base isolée ; `uv run --frozen alembic check` ne détecte aucune dérive. Le contrat frontend refuse deux relevés de même marché et phase. Les builds Docker `api`, `worker` et `web` réussissent. Les avertissements de taille du bundle mock Vite et les deux dépréciations Starlette subsistent.

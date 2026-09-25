@@ -94,18 +94,9 @@ function Loading({ users = false, count = 6 }: { users?: boolean; count?: number
           </div>
         ) : (
           <div aria-hidden="true">
-            <div className="scripts-toolbar">
+            <div className="worker-overview worker-overview-skeleton">
               <span className="skeleton skeleton-medium" />
-            </div>
-            <div className="worker-services">
-              {[1, 2, 3].map((service) => (
-                <div className="worker-service" key={service}>
-                  <span className="skeleton skeleton-medium" />
-                  <span className="skeleton skeleton-medium" />
-                  <span className="skeleton skeleton-short" />
-                  <span className="skeleton skeleton-admin-action" />
-                </div>
-              ))}
+              <span className="skeleton skeleton-short" />
             </div>
             <div className="script-families">
               {[0, 1, 2].map((family) => (
@@ -123,8 +114,12 @@ function Loading({ users = false, count = 6 }: { users?: boolean; count?: number
                             <span className="skeleton skeleton-short" />
                           </span>
                         </span>
-                        <span className="skeleton skeleton-medium" />
-                        <span className="skeleton skeleton-short" />
+                        <span className="script-entry-next">
+                          <span className="skeleton skeleton-medium" />
+                        </span>
+                        <span className="script-entry-state">
+                          <span className="skeleton skeleton-short" />
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -140,23 +135,7 @@ function Loading({ users = false, count = 6 }: { users?: boolean; count?: number
 export function AdminPage({ userId, section }: { userId: string; section: 'scripts' | 'users' }) {
   return (
     <div className={clsx('admin-page', section === 'scripts' && 'admin-page--scripts')}>
-      {section === 'scripts' ? (
-        <>
-          <div className="page-heading">
-            <div>
-              <div className="eyebrow">
-                <span className="eyebrow-line" />
-                ADMINISTRATION
-              </div>
-              <h1>Scripts</h1>
-              <p>Collectes et horaires.</p>
-            </div>
-          </div>
-          <Scripts />
-        </>
-      ) : (
-        <UserList userId={userId} />
-      )}
+      {section === 'scripts' ? <Scripts /> : <UserList userId={userId} />}
     </div>
   );
 }
@@ -181,25 +160,55 @@ function Scripts() {
       void client.invalidateQueries({ queryKey: sessionQuery.queryKey });
     }
   }, [client, query.error]);
-  if (!query.error && (loading || query.isPending)) return <Loading />;
+  const heading = (
+    <div className="page-heading admin-users-page-heading">
+      <h1 className="admin-users-title">
+        <span>Scripts</span>
+        {query.data && <span className="count-pill">{query.data.items.length}</span>}
+      </h1>
+    </div>
+  );
+  if (!query.error && (loading || query.isPending))
+    return (
+      <>
+        {heading}
+        <Loading />
+      </>
+    );
   if (query.error)
     return (
-      <ErrorState error={query.error} retry={() => void query.refetch()} busy={query.isFetching} />
+      <>
+        {heading}
+        <ErrorState
+          error={query.error}
+          retry={() => void query.refetch()}
+          busy={query.isFetching}
+        />
+      </>
     );
   if (needsStatusScreen(action.error))
     return (
-      <StatusPanel
-        error={action.error}
-        headingLevel={2}
-        retryLabel="Vérifier l’état des scripts"
-        busy={query.isFetching}
-        onRetry={() => {
-          void query.refetch().then(() => action.reset());
-        }}
-        description={`${action.error.message} Vérifiez l’historique avant de demander un nouveau lancement : la première demande a pu être reçue.`}
-      />
+      <>
+        {heading}
+        <StatusPanel
+          error={action.error}
+          headingLevel={2}
+          retryLabel="Vérifier l’état des scripts"
+          busy={query.isFetching}
+          onRetry={() => {
+            void query.refetch().then(() => action.reset());
+          }}
+          description={`${action.error.message} Vérifiez l’historique avant de demander un nouveau lancement : la première demande a pu être reçue.`}
+        />
+      </>
     );
-  if (!query.data) return <Loading />;
+  if (!query.data)
+    return (
+      <>
+        {heading}
+        <Loading />
+      </>
+    );
   const { items, workers } = query.data;
   const openLogs = (workerId: 1 | 2 | 3, trigger: HTMLElement, runId?: string) => {
     restoreLogFocus.current = () => {
@@ -213,7 +222,6 @@ function Scripts() {
   };
   const closeLogs = () => {
     setViewer(null);
-    window.requestAnimationFrame(() => restoreLogFocus.current());
   };
   const historyScript = items.find((item) => item.id === shownHistory?.id) ?? shownHistory;
   const families = Array.from(
@@ -224,397 +232,419 @@ function Scripts() {
       return groups;
     }, new Map<string, Script[]>()),
   ).sort(([left], [right]) => left.localeCompare(right, 'fr'));
+  const online = workers.filter((worker) => worker.online).length;
+  const activeRuns = workers.reduce((count, worker) => count + worker.activeRuns.length, 0);
   return (
-    <ContentTransition id="scripts-ready">
-      <div className="scripts-toolbar">
-        <span>
-          {items.length} scripts · {families.length} familles
-        </span>
-      </div>
-      <section className="worker-services" aria-label="Services worker">
-        {workers.map((service) => (
-          <div className="worker-service" key={service.id}>
-            <div className="worker-service-name">
-              <StatusDot tone={service.online ? 'positive' : 'negative'} active={service.online} />
-              <strong>{service.name}</strong>
-              <span>{service.online ? 'Disponible' : 'Indisponible'}</span>
-            </div>
-            <span className="worker-service-activity">
-              {service.activeRuns.length
-                ? service.activeRuns.length === 1
-                  ? service.activeRuns[0]?.name
-                  : `${service.activeRuns.length} scripts en cours`
-                : 'Aucune exécution en cours'}
+    <>
+      {heading}
+      <ContentTransition id="scripts-ready">
+        <Collapsible.Root className="worker-overview">
+          <Collapsible.Trigger className="worker-overview-trigger">
+            <StatusDot
+              tone={online === workers.length && workers.length > 0 ? 'positive' : 'negative'}
+              active={online > 0}
+            />
+            <span>
+              Services{' '}
+              <span className="worker-overview-count">
+                {online}/{workers.length} disponibles
+                {activeRuns > 0 ? ` · ${activeRuns} en cours` : ''}
+              </span>
             </span>
-            <span className="worker-service-contact">
-              {service.lastSeenAt
-                ? `Dernier contact · ${scheduledShortDate(service.lastSeenAt)}`
-                : 'Aucun contact enregistré'}
-            </span>
-            <Button
-              variant="ghost"
-              onClick={(event) => openLogs(service.id, event.currentTarget)}
-              aria-label={`Journaux de ${service.name}`}
-            >
-              Journaux
-            </Button>
-          </div>
-        ))}
-      </section>
-      <div className="admin-action-feedback" role="status" aria-live="polite">
-        {action.error?.message ??
-          (action.isSuccess ? 'Lancement demandé. Le worker prendra en charge la collecte.' : '')}
-      </div>
-      {!items.length ? (
-        <div className="admin-empty">Aucun script configuré.</div>
-      ) : (
-        <Accordion.Root type="single" collapsible className="script-families">
-          {families.map(([family, scripts], index) => (
-            <section
-              className="script-family"
-              key={family}
-              aria-labelledby={`${familyHeadingId}-${index}`}
-            >
-              <div className="script-family-heading">
-                <div className="script-family-title">
-                  <SourceMark source={family} decorative />
-                  <h2 id={`${familyHeadingId}-${index}`}>{family}</h2>
-                  <span className="script-family-count" aria-label={`${scripts.length} scripts`}>
-                    {scripts.length}
+            <span className="worker-overview-action">Journaux</span>
+            <ChevronDown size={16} className="script-chevron" aria-hidden="true" />
+          </Collapsible.Trigger>
+          <Collapsible.Content className="ui-disclosure-content">
+            <section className="worker-services" aria-label="Services worker">
+              {workers.map((service) => (
+                <button
+                  type="button"
+                  className="worker-service"
+                  key={service.id}
+                  onClick={(event) => openLogs(service.id, event.currentTarget)}
+                  aria-label={`Journaux de ${service.name}`}
+                >
+                  <StatusDot
+                    tone={service.online ? 'positive' : 'negative'}
+                    active={service.online}
+                  />
+                  <span className="worker-service-name">
+                    <strong>{service.name}</strong>
+                    <span>
+                      {!service.online
+                        ? 'Indisponible'
+                        : service.activeRuns.length
+                          ? `${service.activeRuns.length} en cours`
+                          : 'Disponible'}
+                    </span>
+                  </span>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </button>
+              ))}
+            </section>
+          </Collapsible.Content>
+        </Collapsible.Root>
+        <div className="admin-action-feedback" role="status" aria-live="polite">
+          {action.error?.message ??
+            (action.isSuccess ? 'Lancement demandé. Le worker prendra en charge la collecte.' : '')}
+        </div>
+        {!items.length ? (
+          <div className="admin-empty">Aucun script configuré.</div>
+        ) : (
+          <Accordion.Root type="single" collapsible className="script-families">
+            {families.map(([family, scripts], index) => (
+              <section
+                className="script-family"
+                key={family}
+                aria-labelledby={`${familyHeadingId}-${index}`}
+              >
+                <div className="script-family-heading">
+                  <div className="script-family-title">
+                    <SourceMark source={family} decorative />
+                    <h2 id={`${familyHeadingId}-${index}`}>{family}</h2>
+                    <span className="script-family-count" aria-label={`${scripts.length} scripts`}>
+                      {scripts.length}
+                    </span>
+                  </div>
+                  <span className="script-column-label" aria-hidden="true">
+                    Prochain passage
+                  </span>
+                  <span className="script-column-label script-column-state" aria-hidden="true">
+                    État
                   </span>
                 </div>
-                <span className="script-column-label" aria-hidden="true">
-                  Prochain passage
-                </span>
-                <span className="script-column-label script-column-state" aria-hidden="true">
-                  État
-                </span>
-              </div>
-              <div className="script-list">
-                {scripts.map((script) => {
-                  const last = script.runs[0];
-                  const active = script.activeRun;
-                  const state = active
-                    ? statuses[active.status]
-                    : !script.available
-                      ? 'Indisponible'
-                      : script.enabled
-                        ? 'Actif'
-                        : 'En pause';
-                  const next = script.enabled ? script.nextRunAt : null;
-                  const timezone = script.timezone === 'Europe/Paris' ? 'Paris' : 'UTC';
-                  const shortName = script.name.startsWith(`${family} · `)
-                    ? script.name.slice(family.length + 3)
-                    : script.name;
-                  const name = shortName.charAt(0).toLocaleUpperCase('fr-FR') + shortName.slice(1);
-                  return (
-                    <Accordion.Item className="script-entry" value={script.id} key={script.id}>
-                      <Accordion.Header>
-                        <Accordion.Trigger className="script-entry-trigger">
-                          <span className="script-entry-identity">
-                            <span className="script-entry-mark">
-                              <SourceMark source={script.id} decorative />
-                            </span>
-                            <span className="script-entry-copy">
-                              <span className="script-entry-name">{name}</span>
-                              <span className="script-entry-schedule">
-                                {scheduleLabel(script.cron)}
+                <div className="script-list">
+                  {scripts.map((script) => {
+                    const last = script.runs[0];
+                    const active = script.activeRun;
+                    const state = active
+                      ? statuses[active.status]
+                      : !script.available
+                        ? 'Indisponible'
+                        : script.enabled
+                          ? 'Actif'
+                          : 'En pause';
+                    const next = script.enabled ? script.nextRunAt : null;
+                    const timezone = script.timezone === 'Europe/Paris' ? 'Paris' : 'UTC';
+                    const shortName = script.name.startsWith(`${family} · `)
+                      ? script.name.slice(family.length + 3)
+                      : script.name;
+                    const name =
+                      shortName.charAt(0).toLocaleUpperCase('fr-FR') + shortName.slice(1);
+                    return (
+                      <Accordion.Item className="script-entry" value={script.id} key={script.id}>
+                        <Accordion.Header>
+                          <Accordion.Trigger className="script-entry-trigger">
+                            <span className="script-entry-identity">
+                              <span className="script-entry-mark">
+                                <SourceMark source={script.id} decorative />
+                              </span>
+                              <span className="script-entry-copy">
+                                <span className="script-entry-name">{name}</span>
+                                <span className="script-entry-schedule">
+                                  {scheduleLabel(script.cron)}
+                                </span>
                               </span>
                             </span>
-                          </span>
-                          <span
-                            className="script-entry-next"
-                            role="group"
-                            aria-label={
-                              next
-                                ? `Prochain passage : ${scheduledDate(next, script.timezone)} · ${timezone}`
-                                : 'Aucun passage planifié'
-                            }
-                            title={
-                              next
-                                ? `${scheduledDate(next, script.timezone)} · ${timezone}`
-                                : undefined
-                            }
-                          >
-                            <span>Prochain passage</span>
-                            <strong>
-                              {next ? scheduledShortDate(next, script.timezone) : '—'}
-                            </strong>
-                          </span>
-                          <span
-                            className={clsx(
-                              'script-entry-state',
-                              active && 'is-running',
-                              script.enabled && script.available && !active && 'is-active',
-                            )}
-                          >
-                            <StatusDot
-                              tone={
-                                !script.available
-                                  ? 'negative'
-                                  : script.enabled || active
-                                    ? 'positive'
-                                    : 'muted'
+                            <span
+                              className="script-entry-next"
+                              role="group"
+                              aria-label={
+                                next
+                                  ? `Prochain passage : ${scheduledDate(next, script.timezone)} · ${timezone}`
+                                  : 'Aucun passage planifié'
                               }
-                              active={!!active || !script.available || script.enabled}
-                            />
-                            {state}
-                          </span>
-                          <ChevronDown size={16} className="script-chevron" aria-hidden="true" />
-                        </Accordion.Trigger>
-                      </Accordion.Header>
-                      <Accordion.Content className="ui-accordion-content script-entry-content">
-                        <div className="script-entry-detail">
-                          <p>{script.description}</p>
-                          <div className="script-last-run">
-                            <Clock3 size={14} aria-hidden="true" />
-                            <span>Dernière exécution</span>
-                            <strong>{last ? statuses[last.status] : 'Aucune'}</strong>
-                            {last && (
-                              <time
-                                dateTime={last.finishedAt ?? last.startedAt ?? last.requestedAt}
-                              >
-                                {scheduledShortDate(
-                                  last.finishedAt ?? last.startedAt ?? last.requestedAt,
-                                  script.timezone,
-                                )}{' '}
-                                · {timezone}
-                              </time>
-                            )}
-                          </div>
-                          <div className="script-actions">
-                            <Button
-                              variant="ghost"
-                              onClick={() => {
-                                setExpandedRunId(null);
-                                setHistory(script);
-                              }}
-                              aria-label={`Historique de ${script.name}`}
+                              title={
+                                next
+                                  ? `${scheduledDate(next, script.timezone)} · ${timezone}`
+                                  : undefined
+                              }
                             >
-                              <History size={16} />
-                              Historique
-                            </Button>
-                            <div className="script-actions-end">
+                              <span>Prochain</span>
+                              <strong>
+                                {next ? scheduledShortDate(next, script.timezone) : '—'}
+                              </strong>
+                            </span>
+                            <span
+                              className={clsx(
+                                'script-entry-state',
+                                active && 'is-running',
+                                script.enabled && script.available && !active && 'is-active',
+                              )}
+                            >
+                              <StatusDot
+                                tone={
+                                  !script.available
+                                    ? 'negative'
+                                    : script.enabled || active
+                                      ? 'positive'
+                                      : 'muted'
+                                }
+                                active={!!active || !script.available || script.enabled}
+                              />
+                              {state}
+                            </span>
+                            <ChevronDown size={16} className="script-chevron" aria-hidden="true" />
+                          </Accordion.Trigger>
+                        </Accordion.Header>
+                        <Accordion.Content className="ui-accordion-content script-entry-content">
+                          <div className="script-entry-detail">
+                            <p>{script.description}</p>
+                            <p className="script-detail-schedule">
+                              {scheduleLabel(script.cron)} · {timezone}
+                            </p>
+                            <div className="script-last-run">
+                              <Clock3 size={14} aria-hidden="true" />
+                              <span>Dernière exécution</span>
+                              <strong>{last ? statuses[last.status] : 'Aucune'}</strong>
+                              {last && (
+                                <time
+                                  dateTime={last.finishedAt ?? last.startedAt ?? last.requestedAt}
+                                >
+                                  {scheduledShortDate(
+                                    last.finishedAt ?? last.startedAt ?? last.requestedAt,
+                                    script.timezone,
+                                  )}{' '}
+                                  · {timezone}
+                                </time>
+                              )}
+                            </div>
+                            <div className="script-actions">
                               <Button
-                                onClick={() => setEditing(script)}
-                                aria-label={`Planifier ${script.name}`}
+                                variant="ghost"
+                                onClick={() => {
+                                  setExpandedRunId(null);
+                                  setHistory(script);
+                                }}
+                                aria-label={`Historique de ${script.name}`}
                               >
-                                <Settings2 size={16} />
-                                Planifier
+                                <History size={16} />
+                                Historique
                               </Button>
-                              <DropdownMenu.Root>
-                                <DropdownMenu.Trigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    iconOnly
-                                    aria-label={`Autres actions pour ${script.name}`}
-                                  >
-                                    <Ellipsis size={19} />
-                                  </Button>
-                                </DropdownMenu.Trigger>
-                                <DropdownMenu.Portal>
-                                  <DropdownMenu.Content
-                                    className="script-menu"
-                                    align="end"
-                                    sideOffset={6}
-                                  >
-                                    <DropdownMenu.Item
-                                      className="script-menu-item"
-                                      disabled={!script.available || !!active || action.isPending}
-                                      onSelect={() =>
-                                        action.mutate({ path: `/scripts/${script.id}/run` })
-                                      }
+                              <div className="script-actions-end">
+                                <Button
+                                  onClick={() => setEditing(script)}
+                                  aria-label={`Planifier ${script.name}`}
+                                >
+                                  <Settings2 size={16} />
+                                  Planifier
+                                </Button>
+                                <DropdownMenu.Root>
+                                  <DropdownMenu.Trigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      iconOnly
+                                      aria-label={`Autres actions pour ${script.name}`}
                                     >
-                                      <Play size={15} />
-                                      {active ? statuses[active.status] : 'Lancer maintenant'}
-                                    </DropdownMenu.Item>
-                                  </DropdownMenu.Content>
-                                </DropdownMenu.Portal>
-                              </DropdownMenu.Root>
+                                      <Ellipsis size={19} />
+                                    </Button>
+                                  </DropdownMenu.Trigger>
+                                  <DropdownMenu.Portal>
+                                    <DropdownMenu.Content
+                                      className="script-menu"
+                                      align="end"
+                                      sideOffset={6}
+                                    >
+                                      <DropdownMenu.Item
+                                        className="script-menu-item"
+                                        disabled={!script.available || !!active || action.isPending}
+                                        onSelect={() =>
+                                          action.mutate({ path: `/scripts/${script.id}/run` })
+                                        }
+                                      >
+                                        <Play size={15} />
+                                        {active ? statuses[active.status] : 'Lancer maintenant'}
+                                      </DropdownMenu.Item>
+                                    </DropdownMenu.Content>
+                                  </DropdownMenu.Portal>
+                                </DropdownMenu.Root>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </Accordion.Content>
-                    </Accordion.Item>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
-        </Accordion.Root>
-      )}
-      {shownEditing && (
-        <ScheduleEditor
-          script={shownEditing}
-          open={editing !== null}
-          close={() => setEditing(null)}
-        />
-      )}
-      {historyScript && !viewer && (
-        <Modal
-          open={history !== null}
-          onOpenChange={(open) => {
-            if (!open) setHistory(null);
-          }}
-          title="Historique"
-          description={historyScript.name}
-          className="admin-dialog"
-        >
-          <div className="admin-dialog-body">
-            <p className="admin-muted">
-              Dernières exécutions · {historyScript.timezone === 'Europe/Paris' ? 'Paris' : 'UTC'}
-            </p>
-            {!historyScript.runs.length ? (
-              <div className="admin-empty">Aucune exécution pour le moment.</div>
-            ) : (
-              <ol className="run-list">
-                {historyScript.runs.map((run) => {
-                  const summary = run.summary
-                    ? [
-                        run.summary.eventsCollected !== undefined &&
-                          `${run.summary.eventsCollected} matchs`,
-                        run.summary.markets !== undefined && `${run.summary.markets} marchés`,
-                        run.summary.quotes !== undefined && `${run.summary.quotes} relevés`,
-                        run.summary.eventsFailed !== undefined &&
-                          `${run.summary.eventsFailed} erreurs`,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')
-                    : '';
-                  return (
-                    <li key={run.id}>
-                      <Collapsible.Root
-                        className="run-entry"
-                        open={expandedRunId === run.id}
-                        onOpenChange={(open) => setExpandedRunId(open ? run.id : null)}
-                      >
-                        <Collapsible.Trigger type="button" className="run-trigger">
-                          <span className="run-identity">
-                            <strong title={scheduledDate(run.requestedAt, historyScript.timezone)}>
-                              {scheduledShortDate(run.requestedAt, historyScript.timezone)}
-                            </strong>
-                            <span>{run.trigger === 'manual' ? 'Manuelle' : 'Planifiée'}</span>
-                            {run.status === 'succeeded' && run.complete === false && (
-                              <span className="run-coverage">Couverture incomplète</span>
-                            )}
-                          </span>
-                          <span
-                            className={clsx(
-                              'admin-status',
-                              run.status === 'succeeded' && 'is-positive',
-                              ['failed', 'interrupted'].includes(run.status) && 'is-error',
-                            )}
-                          >
-                            {statuses[run.status]}
-                          </span>
-                          <ChevronDown size={15} className="run-chevron" aria-hidden="true" />
-                        </Collapsible.Trigger>
-                        <Collapsible.Content className="ui-disclosure-content">
-                          <div className="run-detail">
-                            <dl>
-                              <div>
-                                <dt>Début</dt>
-                                <dd>
-                                  {run.startedAt
-                                    ? scheduledDate(run.startedAt, historyScript.timezone)
-                                    : 'En attente'}
-                                </dd>
-                              </div>
-                              <div>
-                                <dt>Fin</dt>
-                                <dd>
-                                  {run.finishedAt
-                                    ? scheduledDate(run.finishedAt, historyScript.timezone)
-                                    : '—'}
-                                </dd>
-                              </div>
-                            </dl>
-                            {summary && <p>{summary}</p>}
-                            {run.status === 'succeeded' && run.complete === false && (
-                              <p className="run-coverage-note">
-                                {run.summary?.snapshots
-                                  ? 'La collecte a publié des relevés, mais le passage est incomplet.'
-                                  : 'Le passage est incomplet ; aucune nouvelle cote publiée.'}
-                              </p>
-                            )}
-                            {run.statusCorrection && (
-                              <p className="run-coverage-note">
-                                Statut historique corrigé grâce aux relevés conservés. L’ancienne
-                                version ne détaillait pas les incidents de ce passage.
-                                {run.statusCorrection.previousError &&
-                                  ` Ancien diagnostic : ${run.statusCorrection.previousError}.`}
-                              </p>
-                            )}
-                            {run.eventErrors && run.eventErrors.length > 0 && (
-                              <div className="run-issues">
-                                <strong>Rencontres non publiées</strong>
-                                <ul>
-                                  {run.eventErrors.map((issue, index) => (
-                                    <li key={`${issue.eventId}-${index}`}>
-                                      <span>Stake {issue.eventId}</span> · {issue.reason}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {run.interruption && (
-                              <div className="run-issues">
-                                <strong>
-                                  {run.summary?.snapshots
-                                    ? 'Arrêt technique après publication'
-                                    : 'Arrêt technique'}
-                                </strong>
-                                <p>
-                                  {run.interruption.kind} pendant{' '}
-                                  {stakeStages[run.interruption.stage] ?? run.interruption.stage}
-                                  {run.interruption.eventId &&
-                                    ` · rencontre Stake ${run.interruption.eventId}`}
-                                </p>
-                                {run.interruption.frames.length > 0 && (
-                                  <details>
-                                    <summary>Trace technique</summary>
-                                    <code>{run.interruption.frames.join(' → ')}</code>
-                                  </details>
-                                )}
-                              </div>
-                            )}
-                            {run.deferredReason && (
-                              <p className="run-coverage-note">
-                                {stakeDeferrals[run.deferredReason] ??
-                                  `Passage différé : ${run.deferredReason}`}
-                              </p>
-                            )}
-                            {run.error && <p className="admin-error">{run.error}</p>}
-                            <Button
-                              variant="ghost"
-                              data-worker-log-run={run.id}
-                              onClick={(event) =>
-                                openLogs(historyScript.workerId, event.currentTarget, run.id)
-                              }
+                        </Accordion.Content>
+                      </Accordion.Item>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </Accordion.Root>
+        )}
+        {shownEditing && (
+          <ScheduleEditor
+            script={shownEditing}
+            open={editing !== null}
+            close={() => setEditing(null)}
+          />
+        )}
+        {historyScript && !viewer && (
+          <Modal
+            open={history !== null}
+            onOpenChange={(open) => {
+              if (!open) setHistory(null);
+            }}
+            title="Historique"
+            description={historyScript.name}
+            className="admin-dialog"
+          >
+            <div className="admin-dialog-body">
+              <p className="admin-muted">
+                Dernières exécutions · {historyScript.timezone === 'Europe/Paris' ? 'Paris' : 'UTC'}
+              </p>
+              {!historyScript.runs.length ? (
+                <div className="admin-empty">Aucune exécution pour le moment.</div>
+              ) : (
+                <ol className="run-list">
+                  {historyScript.runs.map((run) => {
+                    const summary = run.summary
+                      ? [
+                          run.summary.eventsCollected !== undefined &&
+                            `${run.summary.eventsCollected} matchs`,
+                          run.summary.markets !== undefined && `${run.summary.markets} marchés`,
+                          run.summary.quotes !== undefined && `${run.summary.quotes} relevés`,
+                          run.summary.eventsFailed !== undefined &&
+                            `${run.summary.eventsFailed} erreurs`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')
+                      : '';
+                    return (
+                      <li key={run.id}>
+                        <Collapsible.Root
+                          className="run-entry"
+                          open={expandedRunId === run.id}
+                          onOpenChange={(open) => setExpandedRunId(open ? run.id : null)}
+                        >
+                          <Collapsible.Trigger type="button" className="run-trigger">
+                            <span className="run-identity">
+                              <strong
+                                title={scheduledDate(run.requestedAt, historyScript.timezone)}
+                              >
+                                {scheduledShortDate(run.requestedAt, historyScript.timezone)}
+                              </strong>
+                              <span>{run.trigger === 'manual' ? 'Manuelle' : 'Planifiée'}</span>
+                              {run.status === 'succeeded' && run.complete === false && (
+                                <span className="run-coverage">Couverture incomplète</span>
+                              )}
+                            </span>
+                            <span
+                              className={clsx(
+                                'admin-status',
+                                run.status === 'succeeded' && 'is-positive',
+                                ['failed', 'interrupted'].includes(run.status) && 'is-error',
+                              )}
                             >
-                              Voir le journal
-                            </Button>
-                          </div>
-                        </Collapsible.Content>
-                      </Collapsible.Root>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </div>
-        </Modal>
-      )}
-      {viewer && workers.find((service) => service.id === viewer.workerId) && (
-        <WorkerLogReader
-          key={`${viewer.workerId}-${viewer.runId ?? 'service'}`}
-          worker={workers.find((service) => service.id === viewer.workerId)!}
-          initialRunId={viewer.runId}
-          onClose={closeLogs}
-          onRestoreFocus={() => window.requestAnimationFrame(() => restoreLogFocus.current())}
-        />
-      )}
-    </ContentTransition>
+                              {statuses[run.status]}
+                            </span>
+                            <ChevronDown size={15} className="run-chevron" aria-hidden="true" />
+                          </Collapsible.Trigger>
+                          <Collapsible.Content className="ui-disclosure-content">
+                            <div className="run-detail">
+                              <dl>
+                                <div>
+                                  <dt>Début</dt>
+                                  <dd>
+                                    {run.startedAt
+                                      ? scheduledDate(run.startedAt, historyScript.timezone)
+                                      : 'En attente'}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt>Fin</dt>
+                                  <dd>
+                                    {run.finishedAt
+                                      ? scheduledDate(run.finishedAt, historyScript.timezone)
+                                      : '—'}
+                                  </dd>
+                                </div>
+                              </dl>
+                              {summary && <p>{summary}</p>}
+                              {run.status === 'succeeded' && run.complete === false && (
+                                <p className="run-coverage-note">
+                                  {run.summary?.snapshots
+                                    ? 'La collecte a publié des relevés, mais le passage est incomplet.'
+                                    : 'Le passage est incomplet ; aucune nouvelle cote publiée.'}
+                                </p>
+                              )}
+                              {run.statusCorrection && (
+                                <p className="run-coverage-note">
+                                  Statut historique corrigé grâce aux relevés conservés. L’ancienne
+                                  version ne détaillait pas les incidents de ce passage.
+                                  {run.statusCorrection.previousError &&
+                                    ` Ancien diagnostic : ${run.statusCorrection.previousError}.`}
+                                </p>
+                              )}
+                              {run.eventErrors && run.eventErrors.length > 0 && (
+                                <div className="run-issues">
+                                  <strong>Rencontres non publiées</strong>
+                                  <ul>
+                                    {run.eventErrors.map((issue, index) => (
+                                      <li key={`${issue.eventId}-${index}`}>
+                                        <span>Stake {issue.eventId}</span> · {issue.reason}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {run.interruption && (
+                                <div className="run-issues">
+                                  <strong>
+                                    {run.summary?.snapshots
+                                      ? 'Arrêt technique après publication'
+                                      : 'Arrêt technique'}
+                                  </strong>
+                                  <p>
+                                    {run.interruption.kind} pendant{' '}
+                                    {stakeStages[run.interruption.stage] ?? run.interruption.stage}
+                                    {run.interruption.eventId &&
+                                      ` · rencontre Stake ${run.interruption.eventId}`}
+                                  </p>
+                                  {run.interruption.frames.length > 0 && (
+                                    <details>
+                                      <summary>Trace technique</summary>
+                                      <code>{run.interruption.frames.join(' → ')}</code>
+                                    </details>
+                                  )}
+                                </div>
+                              )}
+                              {run.deferredReason && (
+                                <p className="run-coverage-note">
+                                  {stakeDeferrals[run.deferredReason] ??
+                                    `Passage différé : ${run.deferredReason}`}
+                                </p>
+                              )}
+                              {run.error && <p className="admin-error">{run.error}</p>}
+                              <Button
+                                variant="ghost"
+                                data-worker-log-run={run.id}
+                                onClick={(event) =>
+                                  openLogs(historyScript.workerId, event.currentTarget, run.id)
+                                }
+                              >
+                                Voir le journal
+                              </Button>
+                            </div>
+                          </Collapsible.Content>
+                        </Collapsible.Root>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
+          </Modal>
+        )}
+        {viewer && workers.find((service) => service.id === viewer.workerId) && (
+          <WorkerLogReader
+            key={`${viewer.workerId}-${viewer.runId ?? 'service'}`}
+            worker={workers.find((service) => service.id === viewer.workerId)!}
+            initialRunId={viewer.runId}
+            onClose={closeLogs}
+            onRestoreFocus={() => window.requestAnimationFrame(() => restoreLogFocus.current())}
+          />
+        )}
+      </ContentTransition>
+    </>
   );
 }
 function ScheduleEditor({

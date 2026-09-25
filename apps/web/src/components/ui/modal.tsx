@@ -8,11 +8,12 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
-  description: string;
+  description: ReactNode;
   children: ReactNode;
   className?: string;
   initialFocusRef?: RefObject<HTMLElement | null>;
   returnFocus?: boolean;
+  onRestoreFocus?: () => void;
 }
 export function Modal({
   open,
@@ -23,6 +24,7 @@ export function Modal({
   className = '',
   initialFocusRef,
   returnFocus = true,
+  onRestoreFocus,
 }: Props) {
   const opener = useRef<HTMLElement | null>(null);
   const {
@@ -61,6 +63,10 @@ export function Modal({
           }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
+            if (onRestoreFocus) {
+              onRestoreFocus();
+              return;
+            }
             if (!returnFocus) return;
             if (
               opener.current?.isConnected &&
