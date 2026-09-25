@@ -7,7 +7,7 @@ from uuid import UUID
 
 from metiquo_worker.matching import normalize_name
 
-VERSION = "fixture-identity-v2"
+VERSION = "fixture-identity-v3"
 TIME_TOLERANCE = timedelta(minutes=30)
 GENERIC_TEAM_WORDS = {"team", "esports", "gaming", "club"}
 UNKNOWN_NAMES = {"", "tbd", "tba", "unknown", "to be determined", "winner", "loser"}
@@ -126,6 +126,32 @@ class Alias:
 
 
 @dataclass(frozen=True)
+class CompetitionAlias:
+    id: str
+    provider: str
+    game: str
+    name: str
+    competition_key: str
+    target_provider: str
+    target_id: str
+    valid_from: datetime
+    valid_until: datetime
+
+    def applies(self, fixture: FixtureIdentity) -> bool:
+        return bool(
+            fixture.provider == self.provider
+            and fixture.game == self.game
+            and fixture.competition_key == self.competition_key
+            and normalize_name(fixture.competition) == normalize_name(self.name)
+            and any(
+                self.valid_from <= at < self.valid_until
+                for at in (fixture.starts_at, *fixture.verified_starts)
+                if at is not None
+            )
+        )
+
+
+@dataclass(frozen=True)
 class Candidate:
     id: UUID
     starts_at: datetime
@@ -170,11 +196,41 @@ def _participant_proof(
     return {"basis": "exact-name", "names": names} if names else None
 
 
+def _competition_proof(
+    fixture: FixtureIdentity,
+    candidate: Candidate,
+    aliases: tuple[CompetitionAlias, ...],
+) -> dict[str, object] | None:
+    scoped = [alias for alias in aliases if alias.applies(fixture)]
+    if scoped:
+        targets = {(alias.target_provider, alias.target_id) for alias in scoped}
+        if len(targets) != 1:
+            return None
+        provider, target_id = next(iter(targets))
+        for source in candidate.sources:
+            names = source.get("names")
+            if (
+                source.get("provider") == provider
+                and isinstance(names, dict)
+                and names.get("competitionSourceId") == target_id
+            ):
+                return {
+                    "basis": "reviewed-alias",
+                    "aliasIds": sorted(a.id for a in scoped),
+                    "targetId": target_id,
+                }
+        return None
+    if competitions_agree(fixture.competition, candidate.competition):
+        return {"basis": "exact-competition"}
+    return None
+
+
 def resolve_fixture(
     fixture: FixtureIdentity,
     candidates: list[Candidate],
     aliases: tuple[Alias, ...] = (),
     previous_match_id: UUID | None = None,
+    competition_aliases: tuple[CompetitionAlias, ...] = (),
 ) -> Decision:
     evidence: dict[str, object] = {
         "version": VERSION,
@@ -214,6 +270,11 @@ def resolve_fixture(
         }
         if len(targets) > 1:
             return result("conflict", "contradictory-aliases")
+    competition_targets = {
+        (a.target_provider, a.target_id) for a in competition_aliases if a.applies(fixture)
+    }
+    if len(competition_targets) > 1:
+        return result("conflict", "contradictory-competition-aliases")
     verified_starts = tuple(sorted({fixture.starts_at, *fixture.verified_starts}))
     considered = []
     matches: list[tuple[Candidate, list[dict[str, object]]]] = []
@@ -229,7 +290,8 @@ def resolve_fixture(
             eligible_delta > TIME_TOLERANCE.total_seconds() and candidate.id != previous_match_id
         ):
             continue
-        competition_ok = competitions_agree(fixture.competition, candidate.competition)
+        competition_proof = _competition_proof(fixture, candidate, competition_aliases)
+        competition_ok = competition_proof is not None
         orientations: list[list[dict[str, object]]] = []
         for teams in ((candidate.home, candidate.away), (candidate.away, candidate.home)):
             proofs = [
@@ -254,6 +316,7 @@ def resolve_fixture(
                     "retainedMatch": candidate.id == previous_match_id
                     and eligible_delta > TIME_TOLERANCE.total_seconds(),
                     "competitionAgrees": competition_ok,
+                    "competitionProof": competition_proof,
                     "teamOrientations": len(orientations),
                     "teams": [list(candidate.home.names), list(candidate.away.names)],
                 }

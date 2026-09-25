@@ -18,6 +18,7 @@ from metiquo_core.models import (
     BookmakerSnapshot,
     EsportMatch,
     League,
+    MatchCompetitionAlias,
     MatchIdentityAlias,
     MatchSourceLink,
     Team,
@@ -30,6 +31,7 @@ from metiquo_worker.fixture_identity import (
     TIME_TOLERANCE,
     Alias,
     Candidate,
+    CompetitionAlias,
     Decision,
     FixtureIdentity,
     ParticipantIdentity,
@@ -311,6 +313,25 @@ def load_aliases(db: Session) -> tuple[Alias, ...]:
     )
 
 
+def load_competition_aliases(db: Session) -> tuple[CompetitionAlias, ...]:
+    return tuple(
+        CompetitionAlias(
+            a.id,
+            a.provider,
+            a.game,
+            a.name,
+            a.competition_key,
+            a.target_provider,
+            a.target_id,
+            a.valid_from,
+            a.valid_until,
+        )
+        for a in db.scalars(
+            select(MatchCompetitionAlias).where(MatchCompetitionAlias.active.is_(True))
+        )
+    )
+
+
 def reconcile_in_session(
     db: Session,
     *,
@@ -397,6 +418,7 @@ def reconcile_in_session(
         retained_ids,
     )
     aliases = load_aliases(db)
+    competition_aliases = load_competition_aliases(db)
     now = datetime.now(UTC)
     report: list[dict[str, object]] = []
     for event in events:
@@ -410,7 +432,7 @@ def reconcile_in_session(
             if link
             else None
         )
-        decision = resolve_fixture(fixture, candidates, aliases, previous)
+        decision = resolve_fixture(fixture, candidates, aliases, previous, competition_aliases)
         reading = latest_readings.get(event.id)
         if reading is not None and decision.match_id is not None:
             participants = _participants(reading.payload.get("participants"))
@@ -426,7 +448,9 @@ def reconcile_in_session(
                     if isinstance(competition, str) and competition
                     else fixture.competition,
                 )
-                checked = resolve_fixture(alternate, candidates, aliases, decision.match_id)
+                checked = resolve_fixture(
+                    alternate, candidates, aliases, decision.match_id, competition_aliases
+                )
                 if checked.match_id != decision.match_id:
                     decision = Decision(
                         "conflict",
@@ -522,7 +546,8 @@ class AliasRecord(BaseModel):
 
 class AliasDocument(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    aliases: list[AliasRecord]
+    aliases: list[AliasRecord] = Field(default_factory=list)
+    competition_aliases: list[AliasRecord] = Field(default_factory=list)
 
 
 def import_aliases(engine: Engine, path: Path) -> dict[str, object]:
@@ -533,6 +558,10 @@ def import_aliases(engine: Engine, path: Path) -> dict[str, object]:
             digest = fingerprint(record.model_dump(mode="json"))
             if db.get(MatchIdentityAlias, digest) is None:
                 db.add(MatchIdentityAlias(id=digest, **record.model_dump(), active=True))
+        for record in document.competition_aliases:
+            digest = fingerprint({"kind": "competition", "record": record.model_dump(mode="json")})
+            if db.get(MatchCompetitionAlias, digest) is None:
+                db.add(MatchCompetitionAlias(id=digest, **record.model_dump(), active=True))
         db.flush()
         return reconcile_in_session(db)
 
@@ -540,7 +569,7 @@ def import_aliases(engine: Engine, path: Path) -> dict[str, object]:
 def revoke_alias(engine: Engine, alias_id: str) -> dict[str, object]:
     with Session(engine) as db, db.begin():
         lock_identities(db)
-        alias = db.get(MatchIdentityAlias, alias_id)
+        alias = db.get(MatchIdentityAlias, alias_id) or db.get(MatchCompetitionAlias, alias_id)
         if alias is None:
             raise ValueError("Unknown alias")
         alias.active = False

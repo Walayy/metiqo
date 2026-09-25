@@ -471,6 +471,24 @@ class MatchIdentityAlias(Base):
     __table_args__ = (CheckConstraint("valid_until > valid_from"),)
 
 
+class MatchCompetitionAlias(Base):
+    """Reviewed bookmaker tournament identity scoped to one edition and source period."""
+
+    __tablename__ = "match_competition_aliases"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    provider: Mapped[str]
+    game: Mapped[str]
+    name: Mapped[str]
+    competition_key: Mapped[str]
+    target_provider: Mapped[str]
+    target_id: Mapped[str]
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    evidence: Mapped[dict[str, object]] = mapped_column(JSONB)
+    active: Mapped[bool] = mapped_column(default=True)
+    __table_args__ = (CheckConstraint("valid_until > valid_from"),)
+
+
 class BookmakerMatchResolution(Base):
     __tablename__ = "bookmaker_match_resolutions"
     event_id: Mapped[UUID] = mapped_column(ForeignKey("bookmaker_events.id"), primary_key=True)

@@ -362,153 +362,161 @@ export function MatchesPage({
           )}
         </div>
       </div>
-      <div className="match-results-caption">
-        <p role="status">
-          {loading
-            ? 'Chargement des rencontres…'
-            : `${matches.length} match${matches.length > 1 ? 's' : ''} · ${groups.length} ligue${groups.length > 1 ? 's' : ''}`}
-        </p>
-        <span id="match-search-scope">Recherche dans cette journée</span>
-      </div>
-      <div
-        className="match-results"
-        ref={resultsRef}
-        aria-busy={loading}
-        style={loading && resultsHeight ? { minHeight: resultsHeight } : undefined}
-      >
-        {loading ? (
-          <div className="league-skeletons" role="status" aria-label="Chargement des rencontres">
-            {(groups.length
-              ? groups.map((g) => ({
-                  id: g.competition.id,
-                  rows: opened.includes(g.competition.id) ? g.matches : [],
-                }))
-              : [
-                  { id: 'loading', rows: [] },
-                  { id: 'loading-2', rows: [] },
-                ]
-            ).map((group) => (
-              <div key={group.id} className="league-accordion" aria-hidden="true">
-                <div className="league-trigger">
-                  <span className="skeleton league-loading-logo" />
-                  <span className="league-title">
-                    <span className="skeleton league-loading-name" />
-                    <span className="skeleton league-loading-count" />
-                  </span>
-                  <span className="league-timing skeleton league-loading-time" />
-                </div>
-                {group.rows.length > 0 && (
-                  <div className="league-matches">
-                    {group.rows.map((match) => (
-                      <div className="fixture-item" key={match.id}>
-                        <div className="fixture-skeleton">
-                          <span className="skeleton" />
-                          <span className="skeleton" />
-                          <span className="skeleton" />
-                        </div>
-                      </div>
-                    ))}
+      <div className="match-results-region">
+        <div className="match-results-caption">
+          <p role="status">
+            {loading
+              ? 'Chargement des rencontres…'
+              : `${matches.length} match${matches.length > 1 ? 's' : ''} · ${groups.length} ligue${groups.length > 1 ? 's' : ''}`}
+          </p>
+          <span id="match-search-scope">Recherche dans cette journée</span>
+        </div>
+        {!loading && matches.some((match) => match.oddsMarkets?.length) && (
+          <p className="match-odds-legend">
+            <span className="match-odds-legend-mark" aria-hidden="true" />
+            Cotes Stake dans le détail du match
+          </p>
+        )}
+        <div
+          className="match-results"
+          ref={resultsRef}
+          aria-busy={loading}
+          style={loading && resultsHeight ? { minHeight: resultsHeight } : undefined}
+        >
+          {loading ? (
+            <div className="league-skeletons" role="status" aria-label="Chargement des rencontres">
+              {(groups.length
+                ? groups.map((g) => ({
+                    id: g.competition.id,
+                    rows: opened.includes(g.competition.id) ? g.matches : [],
+                  }))
+                : [
+                    { id: 'loading', rows: [] },
+                    { id: 'loading-2', rows: [] },
+                  ]
+              ).map((group) => (
+                <div key={group.id} className="league-accordion" aria-hidden="true">
+                  <div className="league-trigger">
+                    <span className="skeleton league-loading-logo" />
+                    <span className="league-title">
+                      <span className="skeleton league-loading-name" />
+                      <span className="skeleton league-loading-count" />
+                    </span>
+                    <span className="league-timing skeleton league-loading-time" />
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : !matches.length ? (
-          <div className="empty-state matches-empty">
-            <span className="empty-icon">
-              <Swords size={26} />
-            </span>
-            <h3>Aucun match dans cette sélection.</h3>
-            <p>
-              {search
-                ? `Aucun résultat pour « ${search} » dans cette journée.`
-                : status !== 'all'
-                  ? 'Aucune rencontre avec ce statut pour les filtres choisis.'
-                  : league !== 'all'
-                    ? 'Cette ligue n’a pas de rencontre publiée pour cette journée.'
-                    : 'Aucune rencontre publiée pour cette journée.'}
-            </p>
-            <div className="empty-actions">
-              {search && <Button onClick={() => setSearch('')}>Effacer la recherche</Button>}
-              {status !== 'all' && (
-                <Button onClick={() => setStatus('all')}>Tous les statuts</Button>
-              )}
-              {league !== 'all' && (
-                <Button onClick={() => setLeague('all')}>Toutes les ligues</Button>
-              )}
-              {!search && status === 'all' && league === 'all' && next && (
-                <Button onClick={() => onDay(next)}>Prochaine journée avec des matchs</Button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <Accordion.Root
-            type="multiple"
-            className="league-accordions"
-            value={opened}
-            onValueChange={(value) =>
-              setOpenedDays((current) => ({ ...current, [selectedDay]: value }))
-            }
-          >
-            {groups.map(({ competition, matches: rows }) => {
-              const summary = statusCounts(rows);
-              const upcoming = rows.find((m) => m.status === 'scheduled');
-              return (
-                <Accordion.Item
-                  key={competition.id}
-                  value={competition.id}
-                  className="league-accordion"
-                >
-                  <Accordion.Header>
-                    <Accordion.Trigger className="league-trigger">
-                      <Logo src={competition.image} name={competition.name} league />
-                      <span className="league-title">
-                        <strong>{competition.name}</strong>
-                        <small>
-                          {[
-                            summary.live && `${rows.length} match${rows.length > 1 ? 's' : ''}`,
-                            summary.scheduled && `${summary.scheduled} à venir`,
-                            summary.finished &&
-                              `${summary.finished} terminé${summary.finished > 1 ? 's' : ''}`,
-                            summary.changed &&
-                              `${summary.changed} reporté${summary.changed > 1 ? 's' : ''} / annulé${summary.changed > 1 ? 's' : ''}`,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </small>
-                      </span>
-                      <span className="league-timing">
-                        {summary.live ? (
-                          <LiveBadge count={summary.live} />
-                        ) : upcoming ? (
-                          <span className="match-countdown">
-                            <Countdown startsAt={upcoming.startsAt} />
-                          </span>
-                        ) : null}
-                      </span>
-                      <ChevronDown size={18} className="accordion-chevron" />
-                    </Accordion.Trigger>
-                  </Accordion.Header>
-                  <Accordion.Content className="ui-accordion-content league-content">
+                  {group.rows.length > 0 && (
                     <div className="league-matches">
-                      {rows.map((match) => (
-                        <Fixture
-                          key={match.id}
-                          match={match}
-                          catalog={catalog}
-                          onSelect={() => {
-                            setSelected(match);
-                            setDetailOpen(true);
-                          }}
-                        />
+                      {group.rows.map((match) => (
+                        <div className="fixture-item" key={match.id}>
+                          <div className="fixture-skeleton">
+                            <span className="skeleton" />
+                            <span className="skeleton" />
+                            <span className="skeleton" />
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  </Accordion.Content>
-                </Accordion.Item>
-              );
-            })}
-          </Accordion.Root>
-        )}
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : !matches.length ? (
+            <div className="empty-state matches-empty">
+              <span className="empty-icon">
+                <Swords size={26} />
+              </span>
+              <h3>Aucun match dans cette sélection.</h3>
+              <p>
+                {search
+                  ? `Aucun résultat pour « ${search} » dans cette journée.`
+                  : status !== 'all'
+                    ? 'Aucune rencontre avec ce statut pour les filtres choisis.'
+                    : league !== 'all'
+                      ? 'Cette ligue n’a pas de rencontre publiée pour cette journée.'
+                      : 'Aucune rencontre publiée pour cette journée.'}
+              </p>
+              <div className="empty-actions">
+                {search && <Button onClick={() => setSearch('')}>Effacer la recherche</Button>}
+                {status !== 'all' && (
+                  <Button onClick={() => setStatus('all')}>Tous les statuts</Button>
+                )}
+                {league !== 'all' && (
+                  <Button onClick={() => setLeague('all')}>Toutes les ligues</Button>
+                )}
+                {!search && status === 'all' && league === 'all' && next && (
+                  <Button onClick={() => onDay(next)}>Prochaine journée avec des matchs</Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <Accordion.Root
+              type="multiple"
+              className="league-accordions"
+              value={opened}
+              onValueChange={(value) =>
+                setOpenedDays((current) => ({ ...current, [selectedDay]: value }))
+              }
+            >
+              {groups.map(({ competition, matches: rows }) => {
+                const summary = statusCounts(rows);
+                const upcoming = rows.find((m) => m.status === 'scheduled');
+                return (
+                  <Accordion.Item
+                    key={competition.id}
+                    value={competition.id}
+                    className="league-accordion"
+                  >
+                    <Accordion.Header>
+                      <Accordion.Trigger className="league-trigger">
+                        <Logo src={competition.image} name={competition.name} league />
+                        <span className="league-title">
+                          <strong>{competition.name}</strong>
+                          <small>
+                            {[
+                              summary.live && `${rows.length} match${rows.length > 1 ? 's' : ''}`,
+                              summary.scheduled && `${summary.scheduled} à venir`,
+                              summary.finished &&
+                                `${summary.finished} terminé${summary.finished > 1 ? 's' : ''}`,
+                              summary.changed &&
+                                `${summary.changed} reporté${summary.changed > 1 ? 's' : ''} / annulé${summary.changed > 1 ? 's' : ''}`,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </small>
+                        </span>
+                        <span className="league-timing">
+                          {summary.live ? (
+                            <LiveBadge count={summary.live} />
+                          ) : upcoming ? (
+                            <span className="match-countdown">
+                              <Countdown startsAt={upcoming.startsAt} />
+                            </span>
+                          ) : null}
+                        </span>
+                        <ChevronDown size={18} className="accordion-chevron" />
+                      </Accordion.Trigger>
+                    </Accordion.Header>
+                    <Accordion.Content className="ui-accordion-content league-content">
+                      <div className="league-matches">
+                        {rows.map((match) => (
+                          <Fixture
+                            key={match.id}
+                            match={match}
+                            catalog={catalog}
+                            onSelect={() => {
+                              setSelected(match);
+                              setDetailOpen(true);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </Accordion.Content>
+                  </Accordion.Item>
+                );
+              })}
+            </Accordion.Root>
+          )}
+        </div>
       </div>
       {selected && (
         <MatchDetail
@@ -558,6 +566,9 @@ function Fixture({
           <small>
             <UpdatedValue value={match.format ?? 'Format inconnu'} />
           </small>
+          {!!match.oddsMarkets?.length && (
+            <span className="fixture-odds-tab fixture-odds-tab--desktop" aria-hidden="true" />
+          )}
         </span>
         <span className={clsx('fixture-team home', winnerId === home.id && 'is-winner')}>
           <span className="fixture-team-copy">
@@ -567,6 +578,9 @@ function Fixture({
         </span>
         <span className={clsx('fixture-score', match.status === 'scheduled' && 'fixture-vs')}>
           <MatchScore match={match} fallback={match.status === 'scheduled' ? 'vs' : '—'} />
+          {!!match.oddsMarkets?.length && (
+            <span className="fixture-odds-tab fixture-odds-tab--mobile" aria-hidden="true" />
+          )}
         </span>
         <span className={clsx('fixture-team away', winnerId === away.id && 'is-winner')}>
           <FixtureTeamMark team={away} winnerId={winnerId} />
@@ -597,15 +611,6 @@ function Fixture({
               </span>
             )}
           </UpdatedValue>
-          {!!match.oddsMarkets?.length && (
-            <span
-              className="fixture-odds-indicator"
-              aria-hidden="true"
-              title="Cotes Stake consultables dans le détail"
-            >
-              Cotes
-            </span>
-          )}
         </span>
         <ChevronRight size={17} className="fixture-arrow" aria-hidden="true" />
       </button>
