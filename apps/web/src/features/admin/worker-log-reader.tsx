@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import { Dialog } from 'radix-ui';
-import { ChevronLeft, Filter, Search, X } from 'lucide-react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
+import { Collapsible } from 'radix-ui';
+import { AlertCircle, AlertTriangle, ChevronDown, Filter, Info, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { scheduledDate, scheduledShortDate } from '@/lib/format';
+import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
+import { StatusDot } from '@/components/ui/status-dot';
+import { SelectionIndicator } from '@/components/ui/selection-indicator';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
+import { decimal, scheduledDate, scheduledShortDate } from '@/lib/format';
 import { workerLogsRequest } from './api';
 import type { ScriptRun, WorkerLogEntry, WorkerLogs, WorkerService } from './contracts';
 import './worker-log-reader.css';
@@ -45,11 +50,15 @@ const contextNames: Record<string, string> = {
 };
 const timeFormat = new Intl.DateTimeFormat('fr-FR', {
   timeZone: 'Europe/Paris',
-  day: 'numeric',
-  month: 'short',
   hour: '2-digit',
   minute: '2-digit',
   second: '2-digit',
+});
+const dayFormat = new Intl.DateTimeFormat('fr-FR', {
+  timeZone: 'Europe/Paris',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
 });
 
 function sameEntries(old: WorkerLogEntry[], fresh: WorkerLogEntry[]) {
@@ -68,14 +77,15 @@ function FilterControls({
   search: string;
   setSearch: (search: string) => void;
 }) {
+  const indicatorId = useId();
   return (
     <div className="log-filters">
       <div className="log-filter-levels" role="group" aria-label="Gravité">
         {(
           [
-            ['error', 'Erreurs'],
-            ['warning', 'Avertissements'],
             ['all', 'Tout'],
+            ['warning', 'Alertes'],
+            ['error', 'Erreurs'],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -85,7 +95,8 @@ function FilterControls({
             aria-pressed={level === value}
             onClick={() => setLevel(value)}
           >
-            {label}
+            {level === value && <SelectionIndicator id={indicatorId} />}
+            <span>{label}</span>
           </button>
         ))}
       </div>
@@ -96,7 +107,7 @@ function FilterControls({
           value={search}
           maxLength={80}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Rencontre, étape, message…"
+          placeholder="Rechercher…"
         />
       </label>
     </div>
@@ -107,46 +118,86 @@ function LogLine({
   entry,
   scriptName,
   onSelectRun,
+  onInspect,
 }: {
   entry: WorkerLogEntry;
   scriptName?: string;
   onSelectRun?: (runId: string) => void;
+  onInspect: () => void;
 }) {
   const detail = Object.entries(entry.context);
+  const LevelIcon =
+    entry.level === 'error' ? AlertCircle : entry.level === 'warning' ? AlertTriangle : Info;
   return (
     <li className={`log-line log-line--${entry.level}`}>
-      <div className="log-line-primary">
-        <time dateTime={entry.recordedAt} title={scheduledDate(entry.recordedAt)}>
-          {timeFormat.format(new Date(entry.recordedAt))}
-        </time>
-        <span className="log-level">{levelNames[entry.level]}</span>
-        <span className="log-stage">{entry.stage}</span>
-      </div>
-      <div className="log-line-content">
-        {entry.scriptId && (
-          <strong className="log-line-script">{scriptName ?? entry.scriptId}</strong>
-        )}
-        <p>{entry.message}</p>
-        {entry.eventId && <span className="log-event-id">Rencontre {entry.eventId}</span>}
-        {entry.runId && onSelectRun && (
-          <button type="button" className="log-line-run" onClick={() => onSelectRun(entry.runId!)}>
-            Voir cette exécution
-          </button>
-        )}
-        {detail.length > 0 && (
-          <details>
-            <summary>Contexte</summary>
-            <dl>
+      <Collapsible.Root
+        onOpenChange={(expanded) => {
+          if (expanded) onInspect();
+        }}
+      >
+        <Collapsible.Trigger className="log-line-trigger">
+          <time dateTime={entry.recordedAt} title={scheduledDate(entry.recordedAt)}>
+            {timeFormat.format(new Date(entry.recordedAt))}
+          </time>
+          <span className="log-level" title={levelNames[entry.level]}>
+            <LevelIcon size={15} aria-hidden="true" />
+            <span className="sr-only">{levelNames[entry.level]} : </span>
+          </span>
+          <span className="log-message">{entry.message}</span>
+          <ChevronDown size={14} className="script-chevron" aria-hidden="true" />
+        </Collapsible.Trigger>
+        <Collapsible.Content className="ui-disclosure-content">
+          <div className="log-line-detail">
+            <dl className="log-context">
+              <div>
+                <dt>Date</dt>
+                <dd>{scheduledDate(entry.recordedAt)}</dd>
+              </div>
+              {entry.scriptId && (
+                <div>
+                  <dt>Script</dt>
+                  <dd>{scriptName ?? entry.scriptId}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Niveau</dt>
+                <dd>{levelNames[entry.level]}</dd>
+              </div>
+              <div>
+                <dt>Étape</dt>
+                <dd>{entry.stage}</dd>
+              </div>
+              {entry.eventId && (
+                <div>
+                  <dt>Rencontre</dt>
+                  <dd>{entry.eventId}</dd>
+                </div>
+              )}
               {detail.map(([key, value]) => (
                 <div key={key}>
                   <dt>{contextNames[key] ?? key}</dt>
-                  <dd>{Array.isArray(value) ? <code>{value.join(' → ')}</code> : String(value)}</dd>
+                  <dd>
+                    {Array.isArray(value) ? (
+                      <code>{value.join(' → ')}</code>
+                    ) : key === 'status' && typeof value === 'string' && value in statusNames ? (
+                      statusNames[value as ScriptRun['status']]
+                    ) : typeof value === 'object' ? (
+                      JSON.stringify(value)
+                    ) : (
+                      String(value)
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>
-          </details>
-        )}
-      </div>
+            {entry.runId && onSelectRun && (
+              <Button variant="ghost" onClick={() => onSelectRun(entry.runId!)}>
+                Voir cette exécution
+              </Button>
+            )}
+          </div>
+        </Collapsible.Content>
+      </Collapsible.Root>
     </li>
   );
 }
@@ -166,32 +217,31 @@ export function WorkerLogReader({
   const [level, setLevel] = useState<Level>('all');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
-  const [filterSheet, setFilterSheet] = useState(false);
+  const [open, setOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [issuesOpen, setIssuesOpen] = useState(false);
   const [data, setData] = useState<WorkerLogs | null>(null);
   const [entries, setEntries] = useState<WorkerLogEntry[]>([]);
   const [hasOlder, setHasOlder] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState(false);
   const [follow, setFollow] = useState(true);
   const [newLines, setNewLines] = useState(0);
   const [critical, setCritical] = useState('');
   const [retryKey, setRetryKey] = useState(0);
+  const showLoading = useMinimumLoading(
+    loading,
+    `${worker.id}-${runId}-${level}-${query}-${retryKey}`,
+  );
   const listRef = useRef<HTMLDivElement>(null);
   const lastId = useRef(0);
   const requestId = useRef(0);
   const polling = useRef(false);
+  const olderRequest = useRef<AbortController | null>(null);
   const followRef = useRef(true);
   const initializingScroll = useRef(true);
-
-  useEffect(() => {
-    const desktopFilters = window.matchMedia('(min-width: 641px)');
-    const closeMobileFilters = () => {
-      if (desktopFilters.matches) setFilterSheet(false);
-    };
-    desktopFilters.addEventListener('change', closeMobileFilters);
-    return () => desktopFilters.removeEventListener('change', closeMobileFilters);
-  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setQuery(search.trim()), 300);
@@ -201,6 +251,7 @@ export function WorkerLogReader({
   useEffect(() => {
     const current = ++requestId.current;
     const controller = new AbortController();
+    olderRequest.current?.abort();
     lastId.current = 0;
     followRef.current = true;
     initializingScroll.current = true;
@@ -208,7 +259,9 @@ export function WorkerLogReader({
       if (controller.signal.aborted || requestId.current !== current) return;
       setLoading(true);
       setError(null);
-      setData(null);
+      setRefreshError(false);
+      setLoadingOlder(false);
+      setIssuesOpen(false);
       setEntries([]);
       setHasOlder(false);
       setNewLines(0);
@@ -221,12 +274,6 @@ export function WorkerLogReader({
         setEntries(response.items);
         setHasOlder(response.hasMore);
         lastId.current = response.items.at(-1)?.id ?? 0;
-        window.requestAnimationFrame(() => {
-          if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
-          window.requestAnimationFrame(() => {
-            initializingScroll.current = false;
-          });
-        });
       })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted && requestId.current === current) {
@@ -236,10 +283,23 @@ export function WorkerLogReader({
       .finally(() => {
         if (requestId.current === current) setLoading(false);
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      olderRequest.current?.abort();
+    };
   }, [worker.id, runId, level, query, retryKey]);
 
-  const ready = data !== null && !loading;
+  useEffect(() => {
+    if (showLoading) return;
+    // Wait for the skeleton to leave before positioning the real list.
+    const frame = window.requestAnimationFrame(() => {
+      if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+      initializingScroll.current = false;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [showLoading]);
+
+  const ready = data !== null && !loading && !error && open;
   useEffect(() => {
     if (!ready) return;
     const current = requestId.current;
@@ -256,6 +316,7 @@ export function WorkerLogReader({
           controller.signal,
         );
         if (disposed || requestId.current !== current) return;
+        setRefreshError(false);
         setData(response);
         if (response.items.length) {
           lastId.current = response.items.at(-1)!.id;
@@ -285,6 +346,8 @@ export function WorkerLogReader({
         }
       } catch {
         // Keep the last lines and resume from the last received ID on reconnect.
+        if (!disposed && requestId.current === current && !controller.signal.aborted)
+          setRefreshError(true);
       } finally {
         controllers.delete(controller);
         polling.current = false;
@@ -306,6 +369,7 @@ export function WorkerLogReader({
     if (!oldest || loadingOlder) return;
     const current = requestId.current;
     const controller = new AbortController();
+    olderRequest.current = controller;
     setLoadingOlder(true);
     const height = listRef.current?.scrollHeight ?? 0;
     try {
@@ -320,9 +384,10 @@ export function WorkerLogReader({
         if (listRef.current) listRef.current.scrollTop += listRef.current.scrollHeight - height;
       });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Chargement impossible.');
+      if (!controller.signal.aborted && requestId.current === current)
+        setError(cause instanceof Error ? cause.message : 'Chargement impossible.');
     } finally {
-      setLoadingOlder(false);
+      if (requestId.current === current) setLoadingOlder(false);
     }
   };
 
@@ -332,24 +397,25 @@ export function WorkerLogReader({
     setNewLines(0);
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   };
-  const run = data?.run;
+  const run = data?.run && data.run.id === runId ? data.run : null;
   const summary = run?.summary;
   const summaryParts = [
-    summary?.eventsCollected !== undefined && `${summary.eventsCollected} rencontres publiées`,
-    summary?.quotes !== undefined && `${summary.quotes} relevés`,
-    summary?.eventsFailed !== undefined && `${summary.eventsFailed} rencontres non publiées`,
+    summary?.eventsCollected !== undefined &&
+      `${decimal(summary.eventsCollected, 0)} rencontre${summary.eventsCollected > 1 ? 's publiées' : ' publiée'}`,
+    summary?.quotes !== undefined &&
+      `${decimal(summary.quotes, 0)} relevé${summary.quotes > 1 ? 's' : ''}`,
+    summary?.eventsFailed !== undefined &&
+      `${decimal(summary.eventsFailed, 0)} rencontre${summary.eventsFailed > 1 ? 's non publiées' : ' non publiée'}`,
   ].filter(Boolean);
   const runIssues = [
-    ...(run?.eventErrors
-      ?.slice(0, 4)
-      .map(
-        (issue) =>
-          `Événement ${issue.eventId} — ${
-            issue.reason === 'Ambiguous source market identity'
-              ? 'identité de marché ambiguë'
-              : issue.reason
-          }`,
-      ) ?? []),
+    ...(run?.eventErrors?.map(
+      (issue) =>
+        `Événement ${issue.eventId} — ${
+          issue.reason === 'Ambiguous source market identity'
+            ? 'identité de marché ambiguë'
+            : issue.reason
+        }`,
+    ) ?? []),
     ...(run?.interruption ? [`Arrêt technique : ${run.interruption.kind}`] : []),
     ...(run?.error && !run.interruption ? [run.error] : []),
   ];
@@ -359,231 +425,243 @@ export function WorkerLogReader({
         (entry) => `${entry.eventId ? `Événement ${entry.eventId} — ` : ''}${entry.message}`,
       );
 
+  const filtered = level !== 'all' || search.trim().length > 0;
+  const runs = data?.recentRuns ?? [];
+  const runOptions = [
+    { value: 'service', label: 'Tout le service' },
+    ...runs.map((recent) => ({
+      value: recent.id,
+      label: `${scheduledShortDate(recent.requestedAt)} · ${recent.name}`,
+    })),
+  ];
+  if (runId && !runs.some((recent) => recent.id === runId)) {
+    runOptions.push({ value: runId, label: 'Exécution sélectionnée' });
+  }
+
   return (
-    <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="log-reader-overlay" />
-        <Dialog.Content
-          className="log-reader"
-          aria-describedby={undefined}
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            onRestoreFocus();
-          }}
-        >
-          <header className="log-reader-header">
-            <div>
-              <span className="log-reader-eyebrow">JOURNAL D’EXPLOITATION</span>
-              <Dialog.Title>{worker.name}</Dialog.Title>
-              <p>
-                {worker.online ? 'Service connecté' : 'Service indisponible'} · Dernier contact :{' '}
-                {worker.lastSeenAt ? scheduledDate(worker.lastSeenAt) : 'inconnu'}
-              </p>
-            </div>
-            <Dialog.Close asChild>
-              <Button iconOnly aria-label="Fermer les journaux">
-                <X size={20} />
-              </Button>
-            </Dialog.Close>
-          </header>
-          <div className="log-reader-layout">
-            <nav className="log-run-nav" aria-label="Exécutions du worker">
-              <strong>Exécutions</strong>
-              <button
-                type="button"
-                className={!runId ? 'is-selected' : ''}
-                onClick={() => setRunId(undefined)}
+    <Modal
+      open={open}
+      onOpenChange={setOpen}
+      title={worker.name}
+      description={
+        <span className="log-service-status">
+          <StatusDot tone={worker.online ? 'positive' : 'negative'} active={worker.online} />
+          {worker.online ? 'Disponible' : 'Indisponible'}
+          <span title={worker.lastSeenAt ? scheduledDate(worker.lastSeenAt) : undefined}>
+            {worker.lastSeenAt
+              ? ` · contact ${scheduledShortDate(worker.lastSeenAt)}`
+              : ' · aucun contact'}
+          </span>
+        </span>
+      }
+      className="log-reader"
+      onRestoreFocus={() => {
+        onClose();
+        onRestoreFocus();
+      }}
+    >
+      <div className="log-reader-body">
+        <Collapsible.Root open={filtersOpen} onOpenChange={setFiltersOpen} className="log-controls">
+          <div className="log-toolbar">
+            <Select
+              label="Exécution"
+              value={runId ?? 'service'}
+              onChange={(value) => setRunId(value === 'service' ? undefined : value)}
+              options={runOptions}
+              className="log-run-picker"
+            />
+            <Collapsible.Trigger asChild>
+              <Button
+                variant={filtered ? 'primary' : 'secondary'}
+                aria-label={filtered ? 'Filtres actifs' : 'Filtres'}
               >
-                Tout le service
-              </button>
-              {(data?.recentRuns ?? []).map((recent) => (
-                <button
-                  type="button"
-                  key={recent.id}
-                  className={runId === recent.id ? 'is-selected' : ''}
-                  onClick={() => setRunId(recent.id)}
-                >
-                  <span>{recent.name}</span>
-                  <small>
-                    {scheduledShortDate(recent.requestedAt)} · {statusNames[recent.status]}
-                  </small>
-                </button>
-              ))}
-            </nav>
-            <div className="log-reader-main">
-              <label className="log-run-picker">
-                Exécution
-                <select
-                  value={runId ?? ''}
-                  onChange={(event) => setRunId(event.target.value || undefined)}
-                >
-                  <option value="">Tout le service</option>
-                  {(data?.recentRuns ?? []).map((recent) => (
-                    <option key={recent.id} value={recent.id}>
-                      {recent.name} · {scheduledShortDate(recent.requestedAt)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <section className="log-summary" aria-label="Résumé du journal">
-                <div className="log-summary-heading">
-                  <div>
-                    <h3>
-                      {runId && run
-                        ? `${data?.recentRuns.find((item) => item.id === runId)?.name ?? run.scriptId} · ${scheduledShortDate(run.requestedAt)}`
-                        : 'Tous les événements du service'}
-                    </h3>
-                    {run && (
-                      <span>
-                        {statusNames[run.status]}
-                        {run.complete === false ? ' · couverture incomplète' : ''}
-                      </span>
-                    )}
-                  </div>
-                  {runId && (
-                    <button type="button" onClick={() => setRunId(undefined)}>
-                      <ChevronLeft size={16} aria-hidden="true" /> Tout le service
-                    </button>
-                  )}
-                </div>
-                {summaryParts.length > 0 && <p>{summaryParts.join(' · ')}</p>}
-                {issues.length > 0 && (
-                  <div className="log-important">
-                    <strong>À examiner</strong>
-                    <ul>
-                      {issues.map((issue, index) => (
-                        <li key={`${index}-${issue}`}>{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {run?.statusCorrection && (
-                  <p>
-                    Statut historique corrigé à partir des relevés conservés ; détails anciens
-                    indisponibles.
-                  </p>
-                )}
-              </section>
-              <div className="log-filter-desktop">
-                <FilterControls
-                  level={level}
-                  setLevel={setLevel}
-                  search={search}
-                  setSearch={setSearch}
-                />
-              </div>
-              <div className="log-filter-mobile">
-                <Button onClick={() => setFilterSheet(true)}>
-                  <Filter size={16} aria-hidden="true" /> Filtres
-                  {level !== 'all' || query ? ' actifs' : ''}
-                </Button>
-              </div>
-              <div
-                className="log-lines-scroll"
-                ref={listRef}
-                onScroll={() => {
-                  if (!listRef.current || !followRef.current || initializingScroll.current) return;
-                  const away =
-                    listRef.current.scrollHeight -
-                      listRef.current.scrollTop -
-                      listRef.current.clientHeight >
-                    88;
-                  if (away) {
-                    followRef.current = false;
-                    setFollow(false);
-                  }
-                }}
-              >
-                {hasOlder && (
-                  <Button onClick={() => void loadOlder()} disabled={loadingOlder}>
-                    {loadingOlder ? 'Chargement…' : 'Afficher les lignes précédentes'}
-                  </Button>
-                )}
-                {loading && (
-                  <p className="log-empty" role="status">
-                    Chargement des journaux…
-                  </p>
-                )}
-                {error && (
-                  <p className="log-empty" role="alert">
-                    {error}{' '}
-                    <button type="button" onClick={() => setRetryKey((value) => value + 1)}>
-                      Réessayer
-                    </button>
-                  </p>
-                )}
-                {!loading && !error && !entries.length && (
-                  <p className="log-empty">
-                    {level !== 'all' || query
-                      ? 'Aucune ligne pour ces filtres.'
-                      : 'Aucun journal conservé pour cette sélection.'}
-                  </p>
-                )}
-                <ol className="log-lines" aria-live="off">
-                  {entries.map((entry) => (
-                    <LogLine
-                      key={entry.id}
-                      entry={entry}
-                      scriptName={
-                        data?.recentRuns.find((recent) => recent.scriptId === entry.scriptId)?.name
-                      }
-                      onSelectRun={runId ? undefined : setRunId}
-                    />
-                  ))}
-                </ol>
-              </div>
-              <footer className="log-reader-footer">
-                {run?.status === 'running' && (
-                  <label className="log-follow">
-                    <input
-                      type="checkbox"
-                      checked={follow}
-                      onChange={(event) => {
-                        followRef.current = event.target.checked;
-                        setFollow(event.target.checked);
-                        if (event.target.checked) jumpToLive();
-                      }}
-                    />
-                    Suivre en direct
-                  </label>
-                )}
-                {newLines > 0 && (
-                  <Button onClick={jumpToLive}>
-                    {newLines} nouvelles lignes · Revenir au direct
-                  </Button>
-                )}
-                <span className="sr-only" aria-live="polite">
-                  {critical}
+                <Filter size={16} aria-hidden="true" />
+                <span>
+                  Filtres
+                  {filtered
+                    ? ` · ${Number(level !== 'all') + Number(search.trim().length > 0)}`
+                    : ''}
                 </span>
-              </footer>
-            </div>
+              </Button>
+            </Collapsible.Trigger>
           </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-      <Dialog.Root open={filterSheet} onOpenChange={setFilterSheet}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="log-filter-overlay" />
-          <Dialog.Content className="log-filter-sheet" aria-describedby={undefined}>
-            <div className="log-filter-sheet-header">
-              <Dialog.Title>Filtrer les journaux</Dialog.Title>
-              <Dialog.Close asChild>
-                <Button iconOnly aria-label="Fermer les filtres">
-                  <X size={18} />
-                </Button>
-              </Dialog.Close>
-            </div>
+          <Collapsible.Content className="ui-disclosure-content">
             <FilterControls
               level={level}
               setLevel={setLevel}
               search={search}
               setSearch={setSearch}
             />
-            <Button variant="primary" onClick={() => setFilterSheet(false)}>
-              Afficher les résultats
-            </Button>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-    </Dialog.Root>
+            {filtered && (
+              <button
+                type="button"
+                className="log-reset"
+                onClick={() => {
+                  setLevel('all');
+                  setSearch('');
+                }}
+              >
+                Effacer les filtres
+              </button>
+            )}
+          </Collapsible.Content>
+        </Collapsible.Root>
+        {!loading && !error && data && (run || issues.length > 0) && (
+          <section className="log-summary" aria-label="Résumé du journal">
+            {run && (
+              <div className="log-run-summary">
+                <span className={`log-run-status log-run-status--${run.status}`}>
+                  {statusNames[run.status]}
+                </span>
+                {run.complete === false && (
+                  <span className="log-coverage">Couverture incomplète</span>
+                )}
+                {summaryParts.length > 0 && <p>{summaryParts.join(' · ')}</p>}
+              </div>
+            )}
+            {(issues.length > 0 || run?.statusCorrection) && (
+              <button
+                type="button"
+                className="log-issues-trigger"
+                aria-expanded={issuesOpen}
+                aria-controls="log-issues-detail"
+                onClick={() => {
+                  setIssuesOpen((value) => !value);
+                  followRef.current = false;
+                  setFollow(false);
+                  if (listRef.current) listRef.current.scrollTop = 0;
+                }}
+              >
+                <AlertTriangle size={15} aria-hidden="true" />
+                <span>
+                  {issues.length
+                    ? `${issues.length} incident${issues.length > 1 ? 's' : ''}${run ? '' : ' récent' + (issues.length > 1 ? 's' : '')}`
+                    : 'Statut corrigé'}
+                </span>
+                <ChevronDown size={14} className="script-chevron" aria-hidden="true" />
+              </button>
+            )}
+          </section>
+        )}
+        <div
+          className="log-lines-scroll"
+          ref={listRef}
+          aria-busy={showLoading}
+          onScroll={() => {
+            if (!listRef.current || !followRef.current || initializingScroll.current) return;
+            if (
+              listRef.current.scrollHeight -
+                listRef.current.scrollTop -
+                listRef.current.clientHeight >
+              88
+            ) {
+              followRef.current = false;
+              setFollow(false);
+            }
+          }}
+        >
+          <Collapsible.Root open={issuesOpen}>
+            <Collapsible.Content className="ui-disclosure-content" id="log-issues-detail">
+              <div className="log-important">
+                <strong>À examiner</strong>
+                <ul>
+                  {issues.map((issue, index) => (
+                    <li key={`${index}-${issue}`}>{issue}</li>
+                  ))}
+                </ul>
+                {run?.statusCorrection && (
+                  <p>
+                    Statut historique corrigé à partir des relevés conservés ; détails anciens
+                    indisponibles.
+                  </p>
+                )}
+              </div>
+            </Collapsible.Content>
+          </Collapsible.Root>
+          {error && (
+            <div className="log-empty" role="alert">
+              <p>{error}</p>
+              <Button onClick={() => setRetryKey((value) => value + 1)}>Réessayer</Button>
+            </div>
+          )}
+          {showLoading && !error ? (
+            <div className="log-skeleton" role="status" aria-label="Chargement des journaux">
+              {Array.from({ length: 8 }, (_, index) => (
+                <div key={index} aria-hidden="true">
+                  <span className="skeleton skeleton-short" />
+                  <span className="skeleton" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {hasOlder && (
+                <Button variant="ghost" onClick={() => void loadOlder()} disabled={loadingOlder}>
+                  {loadingOlder ? 'Chargement…' : 'Afficher les lignes précédentes'}
+                </Button>
+              )}
+              {!error && !entries.length && (
+                <p className="log-empty">
+                  {filtered ? 'Aucun événement pour ces filtres.' : 'Aucun journal pour le moment.'}
+                </p>
+              )}
+              <ol className="log-lines" aria-live="off">
+                {entries.map((entry, index) => (
+                  <Fragment key={entry.id}>
+                    {(index === 0 ||
+                      dayFormat.format(new Date(entries[index - 1]!.recordedAt)) !==
+                        dayFormat.format(new Date(entry.recordedAt))) && (
+                      <li className="log-day">
+                        <time dateTime={entry.recordedAt}>
+                          {dayFormat.format(new Date(entry.recordedAt))}
+                        </time>
+                      </li>
+                    )}
+                    <LogLine
+                      entry={entry}
+                      scriptName={runs.find((recent) => recent.scriptId === entry.scriptId)?.name}
+                      onSelectRun={runId ? undefined : setRunId}
+                      onInspect={() => {
+                        followRef.current = false;
+                        setFollow(false);
+                      }}
+                    />
+                  </Fragment>
+                ))}
+              </ol>
+            </>
+          )}
+        </div>
+        {(run?.status === 'running' || newLines > 0 || refreshError) && (
+          <footer className="log-reader-footer">
+            {refreshError && (
+              <span role="status">Actualisation indisponible · dernières lignes conservées</span>
+            )}
+            {run?.status === 'running' && (
+              <label className="log-follow">
+                <input
+                  type="checkbox"
+                  checked={follow}
+                  onChange={(event) => {
+                    followRef.current = event.target.checked;
+                    setFollow(event.target.checked);
+                    if (event.target.checked) jumpToLive();
+                  }}
+                />
+                Suivre en direct
+              </label>
+            )}
+            {newLines > 0 && (
+              <Button variant="ghost" onClick={jumpToLive}>
+                {newLines} nouvelle{newLines > 1 ? 's' : ''} · Revenir au direct
+              </Button>
+            )}
+          </footer>
+        )}
+        <span className="sr-only" aria-live="polite">
+          {critical}
+        </span>
+      </div>
+    </Modal>
   );
 }

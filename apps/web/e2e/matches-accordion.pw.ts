@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  // Relative live/upcoming fixtures must stay on the selected Paris day, even near midnight.
+  await page.clock.setFixedTime(new Date('2026-09-25T10:00:00Z'));
+});
+
 test('match accordions animate in both directions and keep team names accessible', async ({
   page,
 }) => {
@@ -116,7 +121,9 @@ for (const theme of ['light', 'dark'] as const) {
       expect(resultsBox).not.toBeNull();
       if (width <= 680) {
         expect(cueBox!.y).toBeLessThan(scoreBox!.y + scoreBox!.height / 2);
-        expect(Math.abs(cueBox!.x + cueBox!.width / 2 - scoreBox!.x - scoreBox!.width / 2)).toBeLessThan(2);
+        expect(
+          Math.abs(cueBox!.x + cueBox!.width / 2 - scoreBox!.x - scoreBox!.width / 2),
+        ).toBeLessThan(2);
         expect(legendBox!.y + legendBox!.height).toBeLessThanOrEqual(resultsBox!.y);
       } else {
         expect(cueBox!.x).toBeGreaterThan(timeBox!.x + timeBox!.width / 2);
