@@ -6,6 +6,21 @@ import { performanceSchema } from '@/features/performance/simulation';
 import { expectedValue } from './value';
 describe('Rencontres et données de simulation', () => {
   const live = matches.items.find((m) => m.status === 'live')!;
+  it('conserve le score administratif d’un forfait sans inventer de cartes ni de vainqueur sportif', () => {
+    const walkover = matchSchema.parse({
+      ...live,
+      status: 'walkover',
+      maps: [],
+      seriesScore: { home: 1, away: 0 },
+      currentScore: { home: 1, away: 0 },
+    });
+    expect(seriesScore(walkover, walkover.homeId)).toBe(1);
+    expect(matchWinnerId(walkover)).toBeNull();
+    expect(matchSchema.safeParse({ ...walkover, maps: live.maps }).success).toBe(false);
+    expect(matchSchema.safeParse({ ...walkover, seriesScore: { home: 3, away: 0 } }).success).toBe(
+      true,
+    );
+  });
   it('conserve un format inconnu sans déduire de vainqueur ou de cartes manquantes', () => {
     const finished = matches.items.find((m) => m.status === 'finished')!;
     const partial = {

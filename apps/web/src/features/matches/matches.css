@@ -147,7 +147,10 @@
 .match-status-filters {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-columns: minmax(max-content, 1fr);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
   align-items: center;
   width: min(100%, 460px);
   gap: var(--space-xs);

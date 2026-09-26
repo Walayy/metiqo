@@ -110,7 +110,7 @@ def _match_maps(
     history: list[MatchSnapshot], match: EsportMatch, status: str, snapshot: MatchSnapshot | None
 ) -> list[dict[str, object]]:
     """Keep independently captured maps without mixing impossible live states."""
-    if status in {"scheduled", "cancelled", "postponed"} or snapshot is None:
+    if status in {"scheduled", "cancelled", "postponed", "walkover"} or snapshot is None:
         return []
     by_number: dict[int, dict[str, object]] = {}
     format_name = _snapshot_format(snapshot, match)
@@ -448,7 +448,14 @@ def create_app(
             )
             # A complete Oracle series is the historical truth, even when a
             # newer live snapshot was captured before the worker stopped.
-            snapshot = oracle_snapshot or (usable_history[-1] if usable_history else None)
+            latest_loltv = next(
+                (item for item in reversed(usable_history) if item.source == "loltv"), None
+            )
+            snapshot = (
+                latest_loltv
+                if latest_loltv and latest_loltv.status == "walkover"
+                else oracle_snapshot or (usable_history[-1] if usable_history else None)
+            )
             detail_snapshot = oracle_snapshot or next(
                 (
                     item
@@ -459,7 +466,14 @@ def create_app(
             )
             selected_format = _snapshot_format(snapshot, match) if snapshot is not None else None
             status = snapshot.status if snapshot else "scheduled"
-            if status not in {"scheduled", "live", "finished", "cancelled", "postponed"}:
+            if status not in {
+                "scheduled",
+                "live",
+                "finished",
+                "cancelled",
+                "postponed",
+                "walkover",
+            }:
                 status = "scheduled"
             statuses[match.id] = status
             items.append(

@@ -416,9 +416,12 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
   const away = catalog.teams.find((t) => t.id === match.awayId)!;
   const winnerId = matchWinnerId(match);
   const hasSeriesScore = Boolean(match.seriesScore) || match.maps.some((map) => map.winnerId);
-  const mapNumbers = match.format
-    ? Array.from({ length: Number(match.format.slice(2)) }, (_, i) => i + 1)
-    : match.maps.map((map) => map.number).sort((a, b) => a - b);
+  const mapNumbers =
+    match.status === 'walkover'
+      ? []
+      : match.format
+        ? Array.from({ length: Number(match.format.slice(2)) }, (_, i) => i + 1)
+        : match.maps.map((map) => map.number).sort((a, b) => a - b);
   const showMapTabs = mapNumbers.length > 1;
   return (
     <motion.div className="match-detail-scroll" layoutScroll>
@@ -448,6 +451,8 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
               <span>
                 {match.status === 'finished' ? (
                   'Terminé'
+                ) : match.status === 'walkover' ? (
+                  'Forfait'
                 ) : match.status === 'cancelled' ? (
                   'Annulé'
                 ) : match.status === 'postponed' ? (
@@ -639,22 +644,26 @@ function MatchContent({ match, catalog }: { match: EsportMatch; catalog: Catalog
             <h3>
               {match.status === 'live'
                 ? 'Le direct est en cours.'
-                : match.status === 'finished'
-                  ? 'Le match est terminé.'
-                  : match.status === 'cancelled'
-                    ? 'Le match est annulé.'
-                    : match.status === 'postponed'
-                      ? 'Le programme a changé.'
-                      : 'Le match se prépare.'}
+                : match.status === 'walkover'
+                  ? 'La rencontre est déclarée forfait.'
+                  : match.status === 'finished'
+                    ? 'Le match est terminé.'
+                    : match.status === 'cancelled'
+                      ? 'Le match est annulé.'
+                      : match.status === 'postponed'
+                        ? 'Le programme a changé.'
+                        : 'Le match se prépare.'}
             </h3>
             <p>
               {match.status === 'live'
                 ? 'Le dernier score disponible est affiché. Les détails apparaîtront si la source les publie.'
-                : match.status === 'finished'
-                  ? 'Les détails des cartes ne sont pas encore disponibles pour cette rencontre.'
-                  : match.status === 'cancelled' || match.status === 'postponed'
-                    ? 'Le statut sera actualisé dès que la source publiera une nouvelle information.'
-                    : 'Compositions, côtés et statistiques apparaîtront pendant la rencontre, selon leur disponibilité.'}
+                : match.status === 'walkover'
+                  ? 'Le score publié est conservé. Il ne représente pas des cartes jouées et aucun détail de carte n’est déduit du forfait.'
+                  : match.status === 'finished'
+                    ? 'Les détails des cartes ne sont pas encore disponibles pour cette rencontre.'
+                    : match.status === 'cancelled' || match.status === 'postponed'
+                      ? 'Le statut sera actualisé dès que la source publiera une nouvelle information.'
+                      : 'Compositions, côtés et statistiques apparaîtront pendant la rencontre, selon leur disponibilité.'}
             </p>
           </div>
         )}

@@ -24,6 +24,7 @@ from pydantic import JsonValue
 
 from metiquo_worker.artifacts import store_bytes
 from metiquo_worker.loltv_clock import frame_duration
+from metiquo_worker.loltv_diagnostics import LoltvSourceError, record_issue
 from metiquo_worker.loltv_policy import LoltvPolicy
 from metiquo_worker.sources.lol import array, obj, text
 from metiquo_worker.sources.loltv import ROOT_URL, LoltvEvent, _position, source_maps, timestamp
@@ -370,6 +371,30 @@ class FeedReader:
             try:
                 raw = self.request(client, url, "feed")
                 data = json.loads(raw)
+                if (
+                    isinstance(data, dict)
+                    and data.get("id") == game_id
+                    and data.get("type") == "feed"
+                    and data.get("state") == "UNSTARTED"
+                    and data.get("timestamp") is None
+                    and data.get("teams") == []
+                    and data.get("events") == []
+                ):
+                    record_issue(
+                        self.metrics,
+                        url,
+                        LoltvSourceError(
+                            "loltv_feed_unavailable",
+                            "LoLTV feed is not available yet",
+                            sourceState="UNSTARTED",
+                        ),
+                        event_id=event.source_id,
+                        unavailable=True,
+                    )
+                    self.metrics["unavailableFeeds"] = (
+                        int(cast(int, self.metrics.get("unavailableFeeds", 0))) + 1
+                    )
+                    continue
                 event = merge_feed(event, game_id, data)
                 resources = cast(list[dict[str, object]], self.metrics["resources"])
                 resources[-1].update(
@@ -380,8 +405,13 @@ class FeedReader:
                     ),
                 )
             except (ValueError, httpx.HTTPError) as error:
-                cast(list[object], self.metrics.setdefault("errors", [])).append(
-                    {"url": url, "error": type(error).__name__, "message": str(error)[:250]}
+                record_issue(
+                    self.metrics,
+                    url,
+                    error
+                    if isinstance(error, httpx.HTTPError)
+                    else LoltvSourceError("loltv_feed_invalid", "LoLTV feed validation failed"),
+                    event_id=event.source_id,
                 )
                 if isinstance(error, httpx.HTTPStatusError) and error.response.status_code == 401:
                     self.sessions.entries.pop(event.source_id, None)

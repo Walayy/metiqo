@@ -6,6 +6,7 @@ export const matchStatuses = [
   { id: 'live', label: 'En direct' },
   { id: 'scheduled', label: 'À venir' },
   { id: 'finished', label: 'Terminés' },
+  { id: 'walkover', label: 'Forfaits' },
   { id: 'changed', label: 'Reportés / annulés' },
 ] as const;
 export type MatchFilter = (typeof matchStatuses)[number]['id'];
@@ -22,7 +23,7 @@ export function statusCounts(matches: EsportMatch[]) {
     matchStatuses.map(({ id }) => [id, matches.filter((m) => matchesStatus(m, id)).length]),
   ) as Record<MatchFilter, number>;
 }
-const statusOrder = { live: 0, scheduled: 1, postponed: 2, cancelled: 2, finished: 3 };
+const statusOrder = { live: 0, scheduled: 1, postponed: 2, cancelled: 2, finished: 3, walkover: 3 };
 export function compareMatches(a: EsportMatch, b: EsportMatch) {
   return (
     statusOrder[a.status] - statusOrder[b.status] ||

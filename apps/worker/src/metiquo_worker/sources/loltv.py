@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urljoin, urlsplit
 from bs4 import BeautifulSoup
 from pydantic import JsonValue
 
+from metiquo_worker.loltv_diagnostics import LoltvSourceError, record_issue
 from metiquo_worker.matching import normalize_name
 from metiquo_worker.sources.lol import array, obj, objects, text
 
@@ -24,6 +25,7 @@ STATES = {
     "CANCELLED": "cancelled",
     "CANCELED": "cancelled",
     "POSTPONED": "postponed",
+    "WALKOVER": "walkover",
 }
 ROLES = {"TOP": "TOP", "JUNGLE": "JGL", "MID": "MID", "BOTTOM": "BOT", "SUPPORT": "SUP"}
 
@@ -132,7 +134,9 @@ def page_objects(html: str) -> list[dict[str, JsonValue]]:
     return objects(cast(JsonValue, flight_records(html)))
 
 
-def listing(html: str, url: str) -> tuple[list[LoltvEvent], list[str], list[datetime]]:
+def listing(
+    html: str, url: str, *, metrics: dict[str, object] | None = None
+) -> tuple[list[LoltvEvent], list[str], list[datetime]]:
     soup = BeautifulSoup(html, "html.parser")
     main = soup.find("main")
     if main is None:
@@ -159,7 +163,11 @@ def listing(html: str, url: str) -> tuple[list[LoltvEvent], list[str], list[date
             continue
         state = STATES.get(text(row.get("state")))
         if state is None:
-            raise ValueError(f"Unknown LoLTV match state: {row.get('state')}")
+            error = LoltvSourceError("loltv_unknown_state", "Unknown LoLTV match state")
+            if metrics is None:
+                raise error
+            record_issue(metrics, url, error, event_id=text(row["id"]))
+            continue
         if row.get("postponed") is True:
             state = "postponed"
         competition_slug = re.sub(r"[^a-z0-9]+", "-", normalize_name(competition)).strip("-")
@@ -352,7 +360,9 @@ def detail(html: str, event: LoltvEvent, *, require_score: bool = False) -> Lolt
     rows = page_objects(html)
     candidates = [row for row in rows if row.get("matchId") == event.source_id and "games" in row]
     if len(candidates) != 1:
-        raise ValueError("LoLTV HTML does not identify the requested match")
+        raise LoltvSourceError(
+            "loltv_detail_missing", "LoLTV HTML does not identify the requested match"
+        )
     data = candidates[0]
     names = [str(a.get("aria-label")) for a in header.select('a[href^="/team/"][aria-label]')]
     if len(names) != 2 or any(
