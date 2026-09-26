@@ -204,6 +204,7 @@ def _tick_source(
                         "created",
                         "knownEvents",
                         "pendingDetails",
+                        "unavailableFeeds",
                         "examined",
                         "changed",
                         "pending",

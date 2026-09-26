@@ -313,7 +313,10 @@ export function MatchesPage({
         >
           {matchStatuses
             .filter(
-              (option) => option.id !== 'changed' || counts.changed > 0 || status === 'changed',
+              (option) =>
+                !['changed', 'walkover'].includes(option.id) ||
+                counts[option.id] > 0 ||
+                status === option.id,
             )
             .map((option) => (
               <button
@@ -477,6 +480,8 @@ export function MatchesPage({
                               summary.scheduled && `${summary.scheduled} à venir`,
                               summary.finished &&
                                 `${summary.finished} terminé${summary.finished > 1 ? 's' : ''}`,
+                              summary.walkover &&
+                                `${summary.walkover} forfait${summary.walkover > 1 ? 's' : ''}`,
                               summary.changed &&
                                 `${summary.changed} reporté${summary.changed > 1 ? 's' : ''} / annulé${summary.changed > 1 ? 's' : ''}`,
                             ]
@@ -557,7 +562,7 @@ function Fixture({
         type="button"
         className={clsx('fixture-row', match.status === 'live' && 'fixture-live')}
         onClick={onSelect}
-        aria-label={`${home.name} contre ${away.name}, ${match.status === 'live' ? 'en direct' : time(match.startsAt)}, ${score}${winnerId ? `, victoire ${winnerId === home.id ? home.name : away.name}` : ''}${match.oddsMarkets?.length ? ', cotes consultables dans le détail' : ''}, voir le match`}
+        aria-label={`${home.name} contre ${away.name}, ${match.status === 'live' ? 'en direct' : match.status === 'walkover' ? 'forfait' : time(match.startsAt)}, ${score}${winnerId ? `, victoire ${winnerId === home.id ? home.name : away.name}` : ''}${match.oddsMarkets?.length ? ', cotes consultables dans le détail' : ''}, voir le match`}
       >
         <span className="fixture-time">
           <time dateTime={match.startsAt}>
@@ -601,6 +606,8 @@ function Fixture({
               </span>
             ) : match.status === 'finished' ? (
               <span>Terminé</span>
+            ) : match.status === 'walkover' ? (
+              <span>Forfait</span>
             ) : match.status === 'cancelled' ? (
               <span>Annulé</span>
             ) : match.status === 'postponed' ? (

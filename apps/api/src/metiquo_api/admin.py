@@ -15,6 +15,7 @@ from metiquo_core.models import (
     WorkerStatus,
 )
 from metiquo_core.scheduling import SCRIPTS, WORKER_SERVICES, upcoming, worker_for_script
+from metiquo_core.source_issues import historical_loltv_issues, safe_source_issues
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Engine, delete, func, insert, select, text
 from sqlalchemy.orm import Session
@@ -49,7 +50,7 @@ def dates_for(body: CronRequest) -> list[datetime]:
 
 
 def run_data(run: ScriptRun, ingestion: IngestionRun | None = None) -> dict[str, object]:
-    details = ingestion.details if ingestion and ingestion.source == "stake" else {}
+    details = ingestion.details if ingestion and ingestion.source in {"stake", "loltv"} else {}
     summary = {
         key: details[key]
         for key in (
@@ -64,6 +65,11 @@ def run_data(run: ScriptRun, ingestion: IngestionRun | None = None) -> dict[str,
             "openQuotes",
             "suspendedQuotes",
             "snapshots",
+            "published",
+            "created",
+            "knownEvents",
+            "pendingDetails",
+            "unavailableFeeds",
         )
         if isinstance(details.get(key), int)
     }
@@ -83,6 +89,13 @@ def run_data(run: ScriptRun, ingestion: IngestionRun | None = None) -> dict[str,
         "interruption": details.get("interruption"),
         "deferredReason": details.get("deferredReason"),
         "statusCorrection": details.get("statusCorrection"),
+        "sourceIssues": (
+            safe_source_issues(details.get("sourceIssues"))
+            if "sourceIssues" in details
+            else historical_loltv_issues(details.get("errors"))
+        )
+        if ingestion and ingestion.source == "loltv"
+        else [],
     }
 
 

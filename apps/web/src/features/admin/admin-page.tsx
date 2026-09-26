@@ -504,6 +504,10 @@ function Scripts() {
                           run.summary.quotes !== undefined && `${run.summary.quotes} relevés`,
                           run.summary.eventsFailed !== undefined &&
                             `${run.summary.eventsFailed} erreurs`,
+                          run.summary.published !== undefined &&
+                            `${run.summary.published} rencontres observées`,
+                          run.summary.unavailableFeeds !== undefined &&
+                            `${run.summary.unavailableFeeds} flux indisponibles`,
                         ]
                           .filter(Boolean)
                           .join(' · ')
@@ -561,15 +565,33 @@ function Scripts() {
                               {summary && <p>{summary}</p>}
                               {run.status === 'succeeded' && run.complete === false && (
                                 <p className="run-coverage-note">
-                                  {run.summary?.snapshots
-                                    ? 'La collecte a publié des relevés, mais le passage est incomplet.'
-                                    : 'Le passage est incomplet ; aucune nouvelle cote publiée.'}
+                                  {run.summary?.snapshots || run.summary?.published
+                                    ? 'La collecte a publié des données, mais le passage est incomplet.'
+                                    : 'Le passage est incomplet ; aucune nouvelle donnée publiée.'}
                                 </p>
+                              )}
+                              {!!run.sourceIssues?.length && (
+                                <div className="run-issues">
+                                  <strong>Incidents source</strong>
+                                  <ul>
+                                    {run.sourceIssues.map((issue, index) => (
+                                      <li key={`${issue.code}-${index}`}>
+                                        {issue.reason}
+                                        {issue.resource && (
+                                          <>
+                                            {' '}
+                                            <span>{issue.resource}</span>
+                                          </>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
                               )}
                               {run.statusCorrection && (
                                 <p className="run-coverage-note">
                                   Statut historique corrigé grâce aux relevés conservés. L’ancienne
-                                  version ne détaillait pas les incidents de ce passage.
+                                  erreur reste conservée dans l’historique technique.
                                   {run.statusCorrection.previousError &&
                                     ` Ancien diagnostic : ${run.statusCorrection.previousError}.`}
                                 </p>

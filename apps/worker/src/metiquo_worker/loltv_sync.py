@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from metiquo_worker.artifacts import store_bytes
 from metiquo_worker.jobs import source_lock, start_run
 from metiquo_worker.loltv_archive import discover_archived_events
+from metiquo_worker.loltv_diagnostics import LoltvSourceError, record_issue
 from metiquo_worker.loltv_policy import LoltvBlocked, LoltvBudgetExhausted, LoltvPolicy
 from metiquo_worker.loltv_publication import _publish_events
 from metiquo_worker.oracle_match_sync import sync_oracle_match_details
@@ -225,7 +226,9 @@ class Collector:
             raise ValueError("LoLTV document URL outside the source allowlist")
         self.policy.before_request()
         started = time.monotonic()
-        with client.stream("GET", url) as response:
+        # Ask intermediaries to revalidate naturally, without alternate URLs or
+        # identities. A stale response is still rejected if the source ignores it.
+        with client.stream("GET", url, headers={"Cache-Control": "max-age=0"}) as response:
             if response.status_code in {403, 429}:
                 raise self.policy.block(
                     response.status_code,
@@ -279,8 +282,13 @@ class Collector:
         if isinstance(age, str) and age.isdecimal() and int(age) > MAX_LISTING_CACHE_AGE_SECONDS:
             root = str(self.pages[url]["root"])
             self.state.pop("resultsBoundary" if "/results" in root else "upcomingBoundary", None)
-            raise ValueError(f"LoLTV listing cache is stale (Age: {age} seconds)")
-        found, links, dates = listing(html, url)
+            raise LoltvSourceError(
+                "loltv_stale_listing",
+                f"LoLTV listing cache is stale (Age: {age} seconds)",
+                cacheAgeSeconds=int(age),
+            )
+        found, links, dates = listing(html, url, metrics=self.details)
+        self.pages[url].pop("sourceFailures", None)
         found = [event for event in found if self.in_window(event.starts_at)]
         self.publish(found)
         for event in found:
@@ -349,7 +357,7 @@ class Collector:
         feed_states = feed_states if isinstance(feed_states, dict) else {}
         metadata_ttl = (
             self.settings.loltv_future_listing_interval_seconds
-            if cached and has_active_feed(cached, feed_states)
+            if cached and has_active_feed(cached, feed_states) and not item.get("feedUnavailable")
             else self.settings.loltv_listing_interval_seconds
         )
         use_metadata = (
@@ -412,6 +420,7 @@ class Collector:
                 raise ValueError("LoLTV archived discovery lacks a validated finished detail")
             event = updated
             self.publish([event])
+            item.pop("sourceFailures", None)
             item["metadataEvent"] = encode_event(event)
             item["metadataAt"] = time.time()
             pages = self.details["pages"]
@@ -447,6 +456,8 @@ class Collector:
         if self.settings.loltv_feed_enabled and not complete(event, acquired):
             from metiquo_worker.loltv_feed import FeedReader
 
+            unavailable_before = int(cast(int, self.details.get("unavailableFeeds", 0)))
+
             def publish_map(updated: LoltvEvent) -> None:
                 self.publish([updated])
                 item["event"] = encode_event(updated)
@@ -458,6 +469,9 @@ class Collector:
 
             event = FeedReader(self.settings, self.policy, self.state, self.details).enrich(
                 client, html, event, acquired | waiting_results, publish_map
+            )
+            item["feedUnavailable"] = (
+                int(cast(int, self.details.get("unavailableFeeds", 0))) > unavailable_before
             )
             if complete(event, acquired):
                 item["due"] = time.time() + self.settings.loltv_finished_refresh_seconds
@@ -477,7 +491,9 @@ class Collector:
         if event.status == "live":
             # Due from the final read, so the next wakeup cannot race this request.
             states = item.get("feedStates")
-            active = has_active_feed(event, states if isinstance(states, dict) else {})
+            active = has_active_feed(
+                event, states if isinstance(states, dict) else {}
+            ) and not item.get("feedUnavailable")
             item["due"] = time.time() + max(
                 self.live_interval(),
                 0 if active else self.settings.loltv_listing_interval_seconds,
@@ -554,19 +570,30 @@ class Collector:
                 except (LoltvBlocked, LoltvBudgetExhausted):
                     raise
                 except (ValueError, httpx.HTTPError, RuntimeError) as error:
-                    cast(list[object], self.details["errors"]).append(
-                        {"url": url, "error": type(error).__name__, "message": str(error)[:250]}
+                    record_issue(
+                        self.details, url, error, event_id=key if kind == "detail" else None
                     )
                     target = self.pages[key] if kind == "listing" else self.events[key]
                     live = (
                         kind == "detail"
                         and decode_event(cast(dict[str, object], target["event"])).status == "live"
                     )
-                    target["due"] = time.time() + (
+                    delay = (
                         max(60, self.live_interval())
                         if live
                         else self.settings.loltv_incomplete_refresh_seconds
                     )
+                    if isinstance(error, LoltvSourceError) and error.code in {
+                        "loltv_stale_listing",
+                        "loltv_detail_missing",
+                    }:
+                        attempts = min(6, int(cast(int, target.get("sourceFailures", 0))) + 1)
+                        target["sourceFailures"] = attempts
+                        delay = min(
+                            self.settings.loltv_finished_refresh_seconds,
+                            delay * 2 ** (attempts - 1),
+                        )
+                    target["due"] = time.time() + delay
                     logger.warning("LoLTV page failed: %s (%s)", url, type(error).__name__)
                 if kind == "detail":
                     item = self.events[key]
@@ -633,19 +660,48 @@ def sync_loltv(engine: Engine, settings: Settings) -> UUID:
                 )
         finally:
             collector.checkpoint()
+            incomplete = bool(
+                error
+                or collector.details["errors"]
+                or collector.details.get("sourceIssues")
+                or collector.details.get("deferred")
+            )
+            collector.details["complete"] = not incomplete
+            if error:
+                collector.details["interruption"] = {
+                    "stage": "collecte",
+                    "eventId": None,
+                    **error_context(error),
+                }
             with Session(engine) as session, session.begin():
                 run = session.get(IngestionRun, run_id)
                 assert run is not None
-                run.status = "failed" if error or collector.details["errors"] else "succeeded"
+                # publish() only increments after the source transaction commits.
+                # An unchanged but freshly read identity is also a real observation.
+                run.status = (
+                    "failed"
+                    if (error or collector.details["errors"]) and not collector.details["published"]
+                    else "succeeded"
+                )
                 run.finished_at = datetime.now(UTC)
                 run.error = (
-                    type(error).__name__
+                    None
+                    if run.status == "succeeded"
+                    else type(error).__name__
                     if error
                     else "Some source pages failed"
                     if collector.details["errors"]
                     else None
                 )
                 run.details = collector.details
+        for issue in cast(list[dict[str, object]], collector.details.get("sourceIssues", [])):
+            emit(
+                engine,
+                settings.worker_status_id,
+                str(issue["code"]),
+                event_id=cast(str | None, issue.get("eventId")),
+                context=issue,
+            )
         if collector.details["errors"]:
             emit(
                 engine,
@@ -660,7 +716,9 @@ def sync_loltv(engine: Engine, settings: Settings) -> UUID:
                 "collector_interrupted",
                 context=error_context(error),
             )
-            raise error
+            if isinstance(error, LoltvBlocked) and not collector.details["published"]:
+                raise error
+            return run_id
         # Historical matching runs after source pages close; it cannot keep a live page polling.
         if collector.observed_ids:
             with Session(engine) as session:

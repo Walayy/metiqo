@@ -39,10 +39,28 @@ export const runSchema = z.object({
       openQuotes: z.number().int().nonnegative().optional(),
       suspendedQuotes: z.number().int().nonnegative().optional(),
       snapshots: z.number().int().nonnegative().optional(),
+      published: z.number().int().nonnegative().optional(),
+      created: z.number().int().nonnegative().optional(),
+      knownEvents: z.number().int().nonnegative().optional(),
+      pendingDetails: z.number().int().nonnegative().optional(),
+      unavailableFeeds: z.number().int().nonnegative().optional(),
     })
     .nullable()
     .optional(),
   complete: z.boolean().nullable().optional(),
+  sourceIssues: z
+    .array(
+      z.object({
+        code: z.string(),
+        stage: z.string(),
+        reason: z.string(),
+        resource: z.string().optional(),
+        eventId: z.string().optional(),
+        cacheAgeSeconds: z.number().int().nonnegative().optional(),
+        sourceState: z.string().optional(),
+      }),
+    )
+    .optional(),
   eventErrors: z.array(z.object({ eventId: z.string(), reason: z.string() })).optional(),
   interruption: z
     .object({
@@ -56,7 +74,7 @@ export const runSchema = z.object({
   deferredReason: z.string().nullable().optional(),
   statusCorrection: z
     .object({
-      basis: z.literal('persisted_stake_quotes'),
+      basis: z.enum(['persisted_stake_quotes', 'persisted_loltv_snapshots']),
       previousStatus: z.literal('failed'),
       previousError: z.string().nullable(),
     })

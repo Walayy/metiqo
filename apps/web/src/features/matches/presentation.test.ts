@@ -23,11 +23,25 @@ describe('Lecture des rencontres', () => {
       'postponed',
       'finished',
     ]);
-    expect(statusCounts(rows)).toEqual({ all: 5, live: 1, scheduled: 1, finished: 1, changed: 2 });
+    expect(statusCounts(rows)).toEqual({
+      all: 5,
+      live: 1,
+      scheduled: 1,
+      finished: 1,
+      walkover: 0,
+      changed: 2,
+    });
     expect(rows.filter((row) => matchesStatus(row, 'changed')).map((row) => row.status)).toEqual([
       'cancelled',
       'postponed',
     ]);
+  });
+  it('distingue les forfaits des matchs terminés et des rencontres à venir', () => {
+    const walkover = { ...fixture, status: 'walkover' as const, maps: [] };
+    expect(matchesStatus(walkover, 'walkover')).toBe(true);
+    expect(matchesStatus(walkover, 'finished')).toBe(false);
+    expect(matchesStatus(walkover, 'scheduled')).toBe(false);
+    expect(statusCounts([walkover])).toMatchObject({ all: 1, walkover: 1, finished: 0 });
   });
   it('départage un même statut par horaire puis identifiant stable', () => {
     const rows = [

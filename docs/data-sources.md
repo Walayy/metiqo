@@ -1,5 +1,18 @@
 # Sources et provenance
 
+## Correction LoLTV du 26 septembre 2026
+
+L'incident VPS a été vérifié dans les exécutions du 26 septembre à 00:45 Paris
+et leurs documents HTTP archivés. `WALKOVER` provient de la liste publique de
+résultats (Solary–Saigon Warriors, score administratif 1:0) ; il reste un forfait
+distinct d'une rencontre jouée. Les flux `UNSTARTED` identifiés mais sans
+horodatage, équipes ni événements ne sont pas des observations live. Les
+rejets de pagination périmée, identités absentes et contradictions restent
+visibles, sans inventer de couverture ou de résultats. Les [preuves, règles
+de reprise et limites](loltv.md#incident-du-26-septembre-2026) décrivent cette
+correction. Les fixtures de test ajoutées sont synthétiques et ne remplacent
+pas les fixtures esport du frontend ni les preuves conservées en production.
+
 La durée LoLTV d’une carte live est calculée sur les événements horodatés du flux public, en retranchant les pauses publiées. Elle reste attachée à la date source de la trame, sans extrapolation locale ni nouvelle date pour un cache. La méthode et la comparaison réelle **34:15** de Pyramid–LODIS sont consignées dans [l’analyse LoLTV](loltv.md). Le rafraîchissement frontend ne crée aucune nouvelle mesure : il consulte la projection API et conserve les dernières données valides pendant une panne transitoire.
 
 ## Identité Metiquo fournie le 16 septembre 2026

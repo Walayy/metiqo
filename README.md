@@ -1,5 +1,9 @@
 # Metiquo
 
+### Correction LoLTV du 26 septembre 2026
+
+Les rencontres `WALKOVER` affichent **Forfait**, avec un filtre **Forfaits** et le score administratif publié. Ce score ne crée ni cartes jouées ni règlement des sélections Stake. Les flux anonymes identifiés mais encore vides restent indisponibles, sans nouveau relevé live. Une collecte ayant publié des observations valides se termine avec **Couverture incomplète** si d’autres lectures ont échoué ; Scripts et le journal expliquent les incidents sans exposer les réponses brutes. La migration **0021** corrige les anciens statuts uniquement avec une preuve de publication conservée, et garde les diagnostics historiques. Aucune variable d’environnement supplémentaire. Les pages périmées restent rejetées et la disponibilité de LoLTV n’est pas garantie ; voir [les détails et limites](docs/loltv.md#incident-du-26-septembre-2026).
+
 ### Ajustements du 24 septembre 2026
 
 La liste Matchs signale les cotes consultables par un pictogramme discret. Dans le détail, chaque marché Stake apparaît une seule fois et sépare ses derniers relevés **Pré-match** et **En direct**, avec leurs dates et suspensions. Les sélections historiques gagnées, perdues ou annulées sont affichées après validation en base ; elles ne correspondent à aucun pari placé. Une phase ou un résultat absent n’est pas inventé ; les prix historiques restent sans value actuelle. Les SVG locaux LoL/LoLTV/Stake, les marges de survol et les halos des indicateurs sont documentés dans [les sources](docs/data-sources.md). Aucun nouveau paramètre d’environnement ni migration n’est nécessaire.

@@ -10,6 +10,7 @@ from pathlib import Path
 from uuid import UUID
 
 from metiquo_core.models import WorkerLogEntry
+from metiquo_core.source_issues import LOLTV_ISSUES, source_resource
 from sqlalchemy import Engine, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -59,6 +60,7 @@ EVENTS = {
         "Détail des rencontres Oracle non actualisé après import.",
     ),
 }
+EVENTS.update({code: ("warning", stage, reason) for code, (stage, reason) in LOLTV_ISSUES.items()})
 
 
 @dataclass(frozen=True)
@@ -94,6 +96,8 @@ def _safe_context(context: dict[str, object] | None) -> dict[str, object]:
         "knownEvents",
         "pendingDetails",
         "errors",
+        "unavailableFeeds",
+        "cacheAgeSeconds",
         "examined",
         "changed",
         "pending",
@@ -107,6 +111,17 @@ def _safe_context(context: dict[str, object] | None) -> dict[str, object]:
     kind = context.get("kind")
     if isinstance(kind, str) and _kind.fullmatch(kind):
         safe["kind"] = kind
+    resource = source_resource(context.get("resource"))
+    if resource:
+        safe["resource"] = resource
+    source_state = context.get("sourceState")
+    if isinstance(source_state, str) and source_state in {
+        "UNSTARTED",
+        "STARTED",
+        "PAUSED",
+        "COMPLETED",
+    }:
+        safe["sourceState"] = source_state
     status = context.get("status")
     if isinstance(status, str) and status in {"succeeded", "failed", "interrupted", "queued"}:
         safe["status"] = status

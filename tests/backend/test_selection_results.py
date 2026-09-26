@@ -365,6 +365,29 @@ def test_settlement_delay_void_fallback_correction_and_retraction(database):
             "source-conflict"
         )
     with Session(engine) as db, db.begin():
+        db.add(
+            snapshot(
+                fixture_id,
+                "loltv",
+                "walkover",
+                {"home": 1, "away": 0},
+                [],
+                T0 + timedelta(minutes=135),
+            )
+        )
+        # A newer Oracle projection must not treat an administrative forfeit as played games.
+        db.add(
+            snapshot(
+                fixture_id,
+                "oracles-elixir",
+                "finished",
+                {"home": 2, "away": 0},
+                ["alpha", "alpha"],
+                T0 + timedelta(minutes=136),
+            )
+        )
+    assert settle_selections(engine, now=T0 + timedelta(minutes=166))["pending"] == 6
+    with Session(engine) as db, db.begin():
         link = db.get(BookmakerMatchLink, event_id)
         db.delete(link)
         db.get(BookmakerMatchResolution, event_id).status = "conflict"

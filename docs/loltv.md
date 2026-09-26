@@ -55,8 +55,56 @@ Le 24 septembre 2026, les pages paginées `/matches/results/all/2` et
 35 jours, tandis que les premières pages avaient moins de quinze minutes.
 Leurs dates d'août ne prouvaient donc pas que la fenêtre de septembre était
 couverte. Le collecteur conserve la preuve HTTP mais refuse une liste dont
-`Age` dépasse 24 heures, garde les rencontres déjà acquises et retente après
-son délai normal.
+`Age` dépasse 24 heures et garde les rencontres déjà acquises. Depuis le
+26 septembre, les reprises de pages périmées ou sans détail identifié s'espacent
+progressivement : 15 minutes, 30 minutes, une heure, jusqu'à six heures avec les
+réglages par défaut. Une lecture validée réinitialise ce délai. Les refus et
+`Retry-After` restent prioritaires. Les demandes HTML utilisent
+`Cache-Control: max-age=0` pour demander une revalidation normale ; une réponse
+toujours périmée reste rejetée, sans URL alternative ni changement d'identité.
+
+## Incident du 26 septembre 2026
+
+Diagnostic en lecture sur le VPS, à partir des exécutions PostgreSQL et des
+artefacts HTTP enregistrés. À 00:45:02 Paris, `/matches/results` répondait 200
+mais contenait `WALKOVER` pour Solary–Saigon Warriors, avec un score publié
+1:0 et un BO1. Le statut non reconnu rejetait toute la liste, bien que ce
+passage ait publié 24 autres observations. À 00:45:36, le flux de la carte
+`f118b3b749f57f6c5fd42bb2` répondait 200 avec `state=UNSTARTED`,
+`timestamp=null`, `teams=[]` et `events=[]`. Le contrôle d'horodatage le
+classait en erreur. Les pages paginées périmées et la fiche ZSK–Saigon Warriors
+sans objet `matchId/games` expliquaient d'autres incidents ; le worker restait sain.
+
+Le parseur reconnaît `WALKOVER` comme un statut de rencontre distinct
+`walkover`, affiché **Forfait** avec son score administratif et un filtre dédié.
+Les cartes ne sont pas inventées à partir du score ou du BO. Un complément
+Oracle ne remplace pas ce statut, même s'il est plus récent ; aucun règlement
+Stake ni vainqueur sportif n'est déduit du forfait. Les snapshots antérieurs
+restent historiques. Un autre statut inconnu est écarté individuellement et
+signalé ; les autres rencontres valides de la liste restent publiables.
+
+Le flux vide ci-dessus est reconnu uniquement si l'identité de carte, le type
+`feed`, l'état `UNSTARTED` et tous les champs vides concordent. Aucun relevé ni
+horodatage n'est créé. Les métadonnées live sont alors revalidées à la cadence
+du calendrier, au lieu de rester en cache quinze minutes. Un état commencé
+sans horodatage ou une identité différente reste une erreur. Une carte
+indisponible ne bloque pas l'acquisition des autres cartes.
+
+Un passage avec des observations publiées est **Terminée**, avec
+`complete=false` après incident ou interruption. Un passage en erreur sans
+publication reste **Échec** ; un passage vide sans erreur reste normal.
+Les causes structurées, chemins source sans query string, âge de cache et
+identifiants validés sont consultables dans l'historique et les événements du
+journal Admin, avec raisons issues d'un catalogue local. Aucun message brut
+de fournisseur, cookie ni exception complète n'est transmis au lecteur.
+La migration `0021` corrige seulement les passages historiques ayant à la fois
+un compteur positif et un snapshot LoLTV enregistré entre leur début et leur
+fin. Les anciens diagnostics d'ingestion et d'exécution sont conservés ; les
+journaux historiques ne sont pas réécrits. Les passages sans preuve restent
+inchangés, y compris ceux ayant seulement relu un état identique.
+
+Ces corrections ne prouvent pas une couverture complète de J−7/J+7 lorsque
+LoLTV continue de servir une pagination ancienne ou des statistiques absentes.
 
 Les captures de listes publiques sont déclarées dans
 `archive/manifest.json`, avec leur période, date de récupération et empreintes.

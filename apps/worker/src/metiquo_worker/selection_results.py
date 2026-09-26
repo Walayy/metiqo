@@ -295,7 +295,10 @@ def settle_selections(engine: Engine, *, now: datetime | None = None) -> dict[st
                         if (
                             latest_loltv is not None
                             and latest_oracle is not None
-                            and latest_loltv.observed_at >= latest_oracle.observed_at
+                            and (
+                                latest_loltv.status == "walkover"
+                                or latest_loltv.observed_at >= latest_oracle.observed_at
+                            )
                         ):
                             # A newer unresolved LoLTV state can signal a correction.
                             oracle = None

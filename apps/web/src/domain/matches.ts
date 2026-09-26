@@ -125,7 +125,7 @@ export const matchSchema = z
     startsAt: z.iso.datetime({ offset: true }),
     updatedAt: z.iso.datetime({ offset: true }),
     format: z.enum(['BO1', 'BO3', 'BO5']).nullable(),
-    status: z.enum(['scheduled', 'live', 'finished', 'cancelled', 'postponed']),
+    status: z.enum(['scheduled', 'live', 'finished', 'cancelled', 'postponed', 'walkover']),
     patch: z.string().nullable(),
     stage: z.string().nullable(),
     currentScore: z.object({ home: count, away: count }).nullable().optional(),
@@ -135,6 +135,7 @@ export const matchSchema = z
   })
   .superRefine((match, ctx) => {
     if (
+      (match.status === 'walkover' && match.maps.length > 0) ||
       match.homeId === match.awayId ||
       new Set(match.maps.map((m) => m.number)).size !== match.maps.length ||
       match.maps.some(
@@ -172,6 +173,7 @@ export const matchSchema = z
     const score = match.seriesScore ?? match.currentScore;
     if (
       score &&
+      match.status !== 'walkover' &&
       (scores[0]! > score.home ||
         scores[1]! > score.away ||
         Math.max(score.home, score.away) > target ||
